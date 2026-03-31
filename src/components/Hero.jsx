@@ -1,5 +1,6 @@
 import React from 'react';
 import { ArrowRight, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export default function Hero() {
   return (
@@ -16,9 +17,11 @@ export default function Hero() {
             Offering brand owners the opportunity to get a full-stack e-commerce web platform and domain to themselves for just ₦50,000. Enjoy a 40% discount for your first payment.
           </p>
           <div className="flex gap-4">
-            <button className="btn btn-primary" style={{ padding: '18px 36px', fontSize: '16px', fontWeight: '700', boxShadow: '0 4px 14px 0 var(--bg-gray)' }}>
-              Launch My Store Now <ArrowRight size={18} style={{ marginLeft: '8px' }} />
-            </button>
+            <Link to="/auth" style={{ textDecoration: 'none' }}>
+              <button className="btn btn-primary" style={{ padding: '18px 36px', fontSize: '16px', fontWeight: '700', boxShadow: '0 4px 14px 0 var(--bg-gray)' }}>
+                Launch My Store Now <ArrowRight size={18} style={{ marginLeft: '8px' }} />
+              </button>
+            </Link>
           </div>
 
           <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>

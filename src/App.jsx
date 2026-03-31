@@ -1,51 +1,38 @@
 import React from 'react';
-import Navbar from './components/Navbar';
-import Hero from './components/Hero';
-import Features from './components/Features';
-import Reviews from './components/Reviews';
-import HowItWorks from './components/HowItWorks';
-import Packages from './components/Packages';
-import FAQ from './components/FAQ';
-import CTASection from './components/CTASection';
-import Footer from './components/Footer';
-import { MessageCircle } from 'lucide-react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Home from './pages/Home';
+import Auth from './pages/Auth';
+import Dashboard from './pages/Dashboard';
+import Profile from './pages/Profile';
+import Edit from './pages/Edit';
+import Activation from './pages/Activation';
+import Storefront from './pages/Storefront';
+import ExploreBrand from './pages/ExploreBrand';
+import FinalizeActivation from './pages/FinalizeActivation';
+import ShopBrand from './pages/ShopBrand';
+import Cart from './pages/Cart';
+import Checkout from './pages/Checkout';
+import ProductDetail from './pages/ProductDetail';
 
 function App() {
   return (
-    <>
-      <Navbar />
-      <Hero />
-      <Features />
-      <HowItWorks />
-      <Reviews />
-      <Packages />
-      <FAQ />
-      <CTASection />
-      <Footer />
-      <div 
-        style={{
-          position: 'fixed',
-          bottom: '32px',
-          right: '32px',
-          backgroundColor: '#089cff',
-          color: 'white',
-          width: '64px',
-          height: '64px',
-          borderRadius: '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer',
-          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-          zIndex: 1000,
-          transition: 'transform 0.2s ease',
-        }}
-        onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
-        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-      >
-        <MessageCircle size={32} />
-      </div>
-    </>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/edit" element={<Edit />} />
+        <Route path="/activation" element={<Activation />} />
+        <Route path="/store" element={<Storefront />} />
+        <Route path="/explore-brand" element={<ExploreBrand />} />
+        <Route path="/finalize-activation" element={<FinalizeActivation />} />
+        <Route path="/shop-brand" element={<ShopBrand />} />
+        <Route path="/cart" element={<Cart />} />
+        <Route path="/checkout" element={<Checkout />} />
+        <Route path="/product" element={<ProductDetail />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 

@@ -1,14 +1,15 @@
 import React from 'react';
 import { Search, ShoppingCart } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export default function Navbar() {
   return (
     <nav className="navbar">
       <div className="container flex justify-between items-center" style={{ width: '100%' }}>
         <div className="flex items-center gap-8">
-          <a href="/" className="font-bold" style={{ fontSize: '20px', letterSpacing: '-0.03em' }}>
+          <Link to="/" className="font-bold" style={{ fontSize: '20px', letterSpacing: '-0.03em', color: 'inherit', textDecoration: 'none' }}>
             ZizzyStores.
-          </a>
+          </Link>
           <div className="nav-links">
             <a href="#marketplace">Marketplace</a>
             <a href="#solutions">Solutions</a>
@@ -26,8 +27,8 @@ export default function Navbar() {
               style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: '14px', width: '150px' }}
             />
           </div>
-          <a href="#signin" className="font-semibold" style={{ fontSize: '14px' }}>Sign In</a>
-          <button className="btn btn-primary">Get Started</button>
+          <Link to="/auth" className="font-semibold" style={{ fontSize: '14px', textDecoration: 'none', color: 'inherit' }}>Sign In</Link>
+          <Link to="/auth" className="btn btn-primary" style={{ textDecoration: 'none' }}>Get Started</Link>
         </div>
       </div>
     </nav>

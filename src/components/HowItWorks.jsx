@@ -27,18 +27,18 @@ export default function HowItWorks() {
           <h2 style={{ fontSize: '32px', fontWeight: '700', marginBottom: '16px' }}>How It Works</h2>
           <p className="text-secondary">Three simple steps to launch your digital storefront.</p>
         </div>
-        
+
         <div className="grid grid-cols-3 gap-8" style={{ position: 'relative' }}>
-          
+
           {steps.map((step, i) => (
             <div key={i} style={{ textAlign: 'center', position: 'relative', zIndex: 1 }}>
-              <div style={{ 
-                width: '64px', 
-                height: '64px', 
-                backgroundColor: 'var(--bg-dark)', 
-                borderRadius: '50%', 
-                display: 'flex', 
-                alignItems: 'center', 
+              <div style={{
+                width: '64px',
+                height: '64px',
+                backgroundColor: 'var(--bg-dark)',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
                 justifyContent: 'center',
                 margin: '0 auto 24px',
                 boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
