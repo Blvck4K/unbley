@@ -47,22 +47,46 @@ export default function Dashboard() {
   };
 
   return (
-    <div style={s.page}>
+    <div style={s.page} className="dash-page">
+      <style>{`
+        @media (max-width: 768px) {
+          .dash-page { flex-direction: column !important; height: auto !important; min-height: 100vh; overflow: visible !important; }
+          .dash-sidebar { width: 100% !important; border-right: none !important; border-bottom: 1px solid #1F1F1F; }
+          .dash-logo-container { padding: 24px !important; flex-direction: row !important; justify-content: space-between; align-items: center; }
+          .dash-nav { display: flex; overflow-x: auto; padding-bottom: 8px !important; white-space: nowrap; }
+          .dash-nav a, .dash-nav div { border-left: none !important; border-bottom: 3px solid transparent; padding: 12px 24px !important; margin-top: 0 !important; }
+          .dash-nav a[style*="border-left"] { border-bottom: 3px solid #06acf8ff !important; }
+          .dash-user-profile { display: none !important; } /* Hide heavy user profile on mobile nav */
+          
+          .dash-header { height: auto !important; padding: 24px !important; flex-wrap: wrap; gap: 16px; justify-content: space-between; }
+          .dash-search-bar { width: 100% !important; order: 3; }
+          
+          .dash-content { padding: 24px !important; overflow: visible !important; }
+          .dash-brand-header { flex-direction: column !important; align-items: flex-start !important; gap: 24px !important; padding-bottom: 24px !important; }
+          .dash-brand-info { flex-direction: column !important; gap: 16px !important; }
+          .dash-live-domain { align-items: flex-start !important; width: 100%; box-sizing: border-box; }
+          
+          .dash-stats-grid { grid-template-columns: 1fr !important; gap: 16px !important; margin-top: 32px !important; }
+          .dash-bottom-grid { grid-template-columns: 1fr !important; margin-top: 32px !important; }
+          .dash-list-row { flex-direction: column !important; align-items: flex-start !important; gap: 16px; padding: 24px !important; }
+          .dash-list-row > div:last-child { text-align: left !important; }
+        }
+      `}</style>
       {/* Sidebar */}
-      <div style={s.sidebar}>
-        <div style={s.logoContainer}>
+      <div style={s.sidebar} className="dash-sidebar">
+        <div style={s.logoContainer} className="dash-logo-container">
           <div style={s.logo}>Zizzystores.</div>
           <div style={{ fontFamily: 'Inter', fontSize: '9px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', marginTop: '8px', textTransform: 'uppercase' }}>Digital Store</div>
         </div>
 
-        <div style={s.nav}>
+        <div style={s.nav} className="dash-nav">
           <Link to="/dashboard" style={s.navItem(true)}><LayoutGrid size={16} /> Overview</Link>
           <Link to="/profile" style={s.navItem(false)}><User size={16} /> Profile</Link>
           <Link to="/edit" style={s.navItem(false)}><Edit size={16} /> Edit</Link>
           <div style={{ ...s.navItem(false), marginTop: '48px' }}><HeadphonesIcon size={16} /> Customer Service</div>
         </div>
 
-        <div style={s.userProfile}>
+        <div style={s.userProfile} className="dash-user-profile">
           <div style={s.userAvatar}>
             <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop" alt="Julian Vane" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
@@ -76,9 +100,9 @@ export default function Dashboard() {
       {/* Main Content */}
       <div style={s.main}>
         {/* Header */}
-        <div style={s.header}>
+        <div style={s.header} className="dash-header">
           <div style={s.headerTitle}>Dashboard</div>
-          <div style={s.searchBar}>
+          <div style={s.searchBar} className="dash-search-bar">
             <Search size={14} color="#666" />
             <input type="text" placeholder="SEARCH ..." style={s.searchInput} />
           </div>
@@ -90,10 +114,10 @@ export default function Dashboard() {
         </div>
 
         {/* Content Area */}
-        <div style={s.content}>
+        <div style={s.content} className="dash-content">
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: '1px solid #1F1F1F', paddingBottom: '40px' }}>
-            <div style={{ display: 'flex', gap: '32px', alignItems: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: '1px solid #1F1F1F', paddingBottom: '40px' }} className="dash-brand-header">
+            <div style={{ display: 'flex', gap: '32px', alignItems: 'center' }} className="dash-brand-info">
               <div style={{ width: '100px', height: '100px', border: '1px solid #333', backgroundColor: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                 <img src="https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=200&h=200&fit=crop" alt="Brand Logo" style={{ width: '100%', height: '100%', objectFit: '', filter: 'grayscale(0%)' }} />
               </div>
@@ -113,7 +137,7 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
-            <div style={{ padding: '24px', border: '1px solid #1F1F1F', backgroundColor: '#111', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+            <div style={{ padding: '24px', border: '1px solid #1F1F1F', backgroundColor: '#111', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }} className="dash-live-domain">
               <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', textTransform: 'uppercase', marginBottom: '8px' }}>Live Domain</div>
               <a href="https://zizzywears.com" target="_blank" rel="noopener noreferrer" style={{ fontSize: '14px', color: '#FFF', textDecoration: 'none', borderBottom: '1px solid #FFF', paddingBottom: '2px', display: 'flex', alignItems: 'center' }}>
                 zizzywears.com <ArrowUpRight size={14} style={{ marginLeft: '6px' }} />
@@ -122,7 +146,7 @@ export default function Dashboard() {
           </div>
 
           {/* Stats Grid */}
-          <div style={s.statsGrid}>
+          <div style={s.statsGrid} className="dash-stats-grid">
             <div style={s.card}>
               <div style={s.cardHeader}>
                 <div style={{ border: '1px solid #333', padding: '8px' }}>
@@ -160,14 +184,14 @@ export default function Dashboard() {
           </div>
 
           {/* Bottom Grid */}
-          <div style={s.bottomGrid}>
+          <div style={s.bottomGrid} className="dash-bottom-grid">
             <div style={{ backgroundColor: '#111', border: '1px solid #1F1F1F' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '32px', borderBottom: '1px solid #1F1F1F' }}>
                 <div style={{ fontFamily: '"Playfair Display", serif', fontSize: '24px', color: '#FFF', fontStyle: 'italic' }}>Recent Orders</div>
                 <div style={{ fontSize: '10px', color: '#FFF', letterSpacing: '0.1em', fontWeight: '700', textTransform: 'uppercase', cursor: 'pointer', borderBottom: '1px solid #FFF' }}>View Full Ledger</div>
               </div>
 
-              <div style={s.listRow}>
+              <div style={s.listRow} className="dash-list-row">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
                   <div style={{ width: '48px', height: '48px', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <ShoppingBag size={18} color="#666" />
@@ -183,7 +207,7 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div style={s.listRow}>
+              <div style={s.listRow} className="dash-list-row">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
                   <div style={{ width: '48px', height: '48px', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <ShoppingBag size={18} color="#666" />
@@ -199,7 +223,7 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div style={s.listRow}>
+              <div style={s.listRow} className="dash-list-row">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
                   <div style={{ width: '48px', height: '48px', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <ShoppingBag size={18} color="#666" />

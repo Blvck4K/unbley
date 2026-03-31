@@ -62,9 +62,28 @@ export default function Activation() {
   };
 
   return (
-    <div style={s.page}>
+    <div style={s.page} className="act-page">
+      <style>{`
+        @media (max-width: 768px) {
+          .act-page { flex-direction: column !important; height: auto !important; min-height: 100vh; overflow: visible !important; }
+          .act-sidebar { width: 100% !important; border-right: none !important; border-bottom: 1px solid #1F1F1F; display: none !important; } /* Hidden entirely on mobile since it's inactive anyway */
+          
+          .act-top-banner { padding: 16px 24px !important; flex-direction: column; gap: 16px; text-align: center; }
+          .act-top-banner button { width: 100%; }
+          
+          .act-header { height: auto !important; padding: 24px !important; flex-wrap: wrap; gap: 16px; justify-content: space-between; }
+          .act-search { width: 100% !important; order: 3; }
+          
+          .act-blurred-content { padding: 24px !important; }
+          
+          .act-overlay { padding: 16px !important; align-items: flex-start !important; overflow-y: auto !important; position: fixed !important; }
+          .act-modal { padding: 32px 24px !important; margin-top: 40px; }
+          .act-modal-badge { top: -20px !important; padding: 8px 16px !important; width: 90%; box-sizing: border-box; text-align: center; }
+          .act-modal-title { font-size: 28px !important; }
+        }
+      `}</style>
       {/* Sidebar - Blurred/Disabled visually via opacity & pointerEvents */}
-      <div style={s.sidebar}>
+      <div style={s.sidebar} className="act-sidebar">
         <div style={s.logoContainer}>
           <div style={s.logo}>Zizzystores.</div>
           <div style={{ fontFamily: 'Inter', fontSize: '9px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', marginTop: '8px', textTransform: 'uppercase' }}>Digital Store</div>
@@ -89,7 +108,7 @@ export default function Activation() {
       {/* Main Container */}
       <div style={s.main}>
         {/* Top Lock Banner */}
-        <div style={s.topBanner}>
+        <div style={s.topBanner} className="act-top-banner">
           <div style={s.topBannerText}>
             <Lock size={16} color={brandColor} />
             Your store is not active yet. Complete your setup to start selling.
@@ -104,9 +123,9 @@ export default function Activation() {
           {/* Blurred Background Dashboard */}
           <div style={s.blurredBg}>
             {/* Header */}
-            <div style={s.header}>
+            <div style={s.header} className="act-header">
               <div style={s.headerTitle}>Dashboard <Lock size={16} color="#666" /></div>
-              <div style={s.searchBar}>
+              <div style={s.searchBar} className="act-search">
                 <Search size={14} color="#666" />
                 <input type="text" placeholder="SEARCH ..." style={s.searchInput} disabled />
               </div>
@@ -117,7 +136,7 @@ export default function Activation() {
               </div>
             </div>
 
-            <div style={s.blurredContent}>
+            <div style={s.blurredContent} className="act-blurred-content">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: '1px solid #1F1F1F', paddingBottom: '40px' }}>
                 <div style={{ display: 'flex', gap: '32px', alignItems: 'center' }}>
                   <div style={{ width: '100px', height: '100px', border: '1px solid #333', backgroundColor: '#111' }}></div>
@@ -159,14 +178,14 @@ export default function Activation() {
           </div>
 
           {/* Foreground Modal Overlay */}
-          <div style={s.overlay}>
-            <div style={s.modal}>
-              <div style={{ position: 'absolute', top: '-40px', left: '50%', transform: 'translateX(-50%)', backgroundColor: '#000', padding: '12px 24px', borderRadius: '24px', fontSize: '11px', color: '#FFF', fontWeight: '600', letterSpacing: '0.05em', border: '1px solid #1F1F1F', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={s.overlay} className="act-overlay">
+            <div style={s.modal} className="act-modal">
+              <div style={{ position: 'absolute', top: '-40px', left: '50%', transform: 'translateX(-50%)', backgroundColor: '#000', padding: '12px 24px', borderRadius: '24px', fontSize: '11px', color: '#FFF', fontWeight: '600', letterSpacing: '0.05em', border: '1px solid #1F1F1F', display: 'flex', alignItems: 'center', gap: '8px' }} className="act-modal-badge">
                 <Lock size={14} color={brandColor} /> Activate your store to start selling and unlock your dashboard
               </div>
 
               <div style={s.stepLabel}>Step 2 of 2: Activate Your Store</div>
-              <h2 style={s.modalTitle}>Activate Your Store</h2>
+              <h2 style={s.modalTitle} className="act-modal-title">Activate Your Store</h2>
               <div style={{ fontSize: '15px', color: brandColor, fontWeight: '500', marginBottom: '16px', letterSpacing: '-0.01em' }}>You’re one step away from launching your business.</div>
               <p style={s.modalDesc}>
                 Your store is ready. Complete activation to go live, accept payments, and start selling.

@@ -352,7 +352,7 @@ export default function Storefront() {
       <div style={s.ambientGlow}></div>
 
       {/* Navbar */}
-      <nav style={s.navbar}>
+      <nav style={s.navbar} className="store-nav">
         <div style={{
           fontFamily: '"Playfair Display", serif',
           fontSize: '28px',
@@ -361,7 +361,7 @@ export default function Storefront() {
           textTransform: 'uppercase',
           letterSpacing: '0.05em',
           textShadow: `0 0 12px ${brandColor}40`
-        }}>ZIZZYSTORES.</div>
+        }} className="store-logo">ZIZZYSTORES.</div>
 
         <div style={s.navIcons}>
           <div title="Customer Service" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#888', transition: 'color 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.color = '#FFF'} onMouseLeave={(e) => e.currentTarget.style.color = '#888'}>
@@ -374,8 +374,8 @@ export default function Storefront() {
       </nav>
 
       {/* Hero */}
-      <section style={s.hero}>
-        <h1 style={s.heroTitle}>
+      <section style={s.hero} className="store-hero">
+        <h1 style={s.heroTitle} className="store-hero-title">
           Discover the<br />
           <span style={s.heroHighlight}>Digital Ateliers.</span>
         </h1>
@@ -386,7 +386,7 @@ export default function Storefront() {
       </section>
 
       {/* Filters & Search */}
-      <div style={s.filterBar}>
+      <div style={s.filterBar} className="store-filter-bar">
         <div style={s.filterLinks}>
           <div style={s.filterLink(true)}>ALL</div>
           <div style={s.filterLink(false)}>FOOTWEAR</div>
@@ -400,7 +400,7 @@ export default function Storefront() {
       </div>
 
       {/* Product Grid */}
-      <div style={s.grid}>
+      <div style={s.grid} className="store-grid">
         {products.map((p, idx) => (
           <Link key={idx} to="/explore-brand" style={{...s.card, textDecoration: 'none'}} className="product-card">
             {/* Standard hover trick utilizing inline styles -> we will just use basic scaling for now */}
@@ -427,21 +427,21 @@ export default function Storefront() {
       </div>
 
       {/* Newsletter */}
-      <section style={s.newsletter}>
+      <section style={s.newsletter} className="store-newsletter">
         <h2 style={s.newsletterTitle}>Join the inner circle.</h2>
         <p style={s.newsletterDesc}>
           Early access to limited releases and designer narratives, delivered monthly to your inbox.
         </p>
-        <div style={s.newsletterForm}>
+        <div style={s.newsletterForm} className="store-newsletter-form">
           <input type="email" placeholder="EMAIL ADDRESS" style={s.newsletterInput} />
           <button style={s.newsletterBtn}>Subscribe</button>
         </div>
       </section>
 
       {/* Footer */}
-      <footer style={s.footer}>
+      <footer style={s.footer} className="store-footer">
         <div style={s.footerBrand}>Zizzystores</div>
-        <div style={s.footerLinks}>
+        <div style={s.footerLinks} className="store-footer-links">
           <div style={s.footerLink}>Terms</div>
           <div style={s.footerLink}>Privacy</div>
           <div style={s.footerLink}>Instagram</div>
@@ -453,6 +453,20 @@ export default function Storefront() {
 
       {/* Simple global style for image hover */}
       <style>{`
+        @media (max-width: 768px) {
+          .store-nav { padding: 24px !important; flex-wrap: wrap; gap: 16px; justify-content: space-between; }
+          .store-logo { font-size: 20px !important; }
+          .store-hero { padding: 64px 24px 40px 24px !important; }
+          .store-hero-title { font-size: 40px !important; }
+          .store-filter-bar { padding: 0 24px !important; flex-direction: column; gap: 24px; align-items: flex-start !important; }
+          .store-grid { padding: 0 24px !important; grid-template-columns: 1fr !important; gap: 32px !important; margin-bottom: 64px !important; }
+          .store-newsletter { padding: 64px 24px !important; }
+          .store-newsletter-form { flex-direction: column; padding: 0 24px; box-sizing: border-box; }
+          .store-footer { flex-direction: column; padding: 40px 24px !important; gap: 24px; text-align: center; }
+          .store-footer-links { position: static !important; transform: none !important; }
+          .card-hover-actions { opacity: 1 !important; }
+          .show-more-btn { opacity: 1 !important; transform: none !important; }
+        }
         .product-card:hover img {
           transform: scale(1.05);
         }

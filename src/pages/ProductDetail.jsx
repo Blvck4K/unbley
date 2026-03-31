@@ -104,8 +104,23 @@ export default function ProductDetail() {
 
   return (
     <div style={s.page}>
+      <style>{`
+        @media (max-width: 768px) {
+          .detail-header { padding: 16px 24px !important; flex-wrap: wrap; justify-content: space-between; gap: 16px; }
+          .detail-content { padding: 32px 24px !important; gap: 48px !important; }
+          .detail-hero { grid-template-columns: 1fr !important; gap: 32px !important; }
+          .detail-main-img { height: 400px !important; }
+          .detail-thumbnails { height: 100px !important; }
+          .detail-stories-header { flex-direction: column; align-items: flex-start !important; gap: 16px; }
+          .detail-stories-grid { grid-template-columns: 1fr !important; }
+          .detail-rec-grid { grid-template-columns: 1fr 1fr !important; gap: 16px !important; }
+          .detail-footer { flex-direction: column; padding: 32px 24px !important; gap: 24px; align-items: flex-start !important; }
+          .detail-footer-links { flex-wrap: wrap; }
+          .detail-nav-center { display: none !important; }
+        }
+      `}</style>
       {/* Header */}
-      <div style={s.header}>
+      <div style={s.header} className="detail-header">
         <div style={s.logo}>Digital Atelier</div>
 
         <div style={s.headerRight}>
@@ -113,15 +128,15 @@ export default function ProductDetail() {
         </div>
       </div>
 
-      <div style={s.contentWrap}>
+      <div style={s.contentWrap} className="detail-content">
 
         {/* Hero Section */}
-        <div style={s.heroLayout}>
+        <div style={s.heroLayout} className="detail-hero">
           <div style={s.imageGallery}>
-            <div style={s.mainImageWrap}>
+            <div style={s.mainImageWrap} className="detail-main-img">
               <img src="https://images.unsplash.com/photo-1610701596007-11502861dcfa?w=800&q=80" alt="Vessel" style={s.mainImage} />
             </div>
-            <div style={s.thumbnailsRow}>
+            <div style={s.thumbnailsRow} className="detail-thumbnails">
               <div style={s.thumbnail}>
                 <img src="https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=400&q=80" alt="Detail 1" style={s.mainImage} />
               </div>
@@ -183,7 +198,7 @@ export default function ProductDetail() {
 
         {/* Community Stories */}
         <div>
-          <div style={s.sectionHeader}>
+          <div style={s.sectionHeader} className="detail-stories-header">
             <div>
               <h2 style={s.sectionTitleText}>Reviews</h2>
               <div style={s.sectionSubtitleText}>Hear from other customers.</div>
@@ -191,7 +206,7 @@ export default function ProductDetail() {
             <div style={s.linkText}>View all reviews <ArrowRight size={14} /></div>
           </div>
 
-          <div style={s.storiesGrid}>
+          <div style={s.storiesGrid} className="detail-stories-grid">
             <div style={s.storyCol}>
               <div style={s.reviewCard}>
                 <div style={s.stars}><Star size={12} fill={accentColor} /><Star size={12} fill={accentColor} /><Star size={12} fill={accentColor} /><Star size={12} fill={accentColor} /><Star size={12} fill={accentColor} /></div>
@@ -244,7 +259,7 @@ export default function ProductDetail() {
         {/* Recommendations */}
         <div>
           <h2 style={{ ...s.sectionTitleText, marginBottom: '32px' }}>Explore More ...</h2>
-          <div style={s.recGrid}>
+          <div style={s.recGrid} className="detail-rec-grid">
             <div style={s.recCard} onClick={() => navigate('/product')}>
               <div style={s.recImgWrap}>
                 <img src="https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=400&q=80" alt="Chronos" style={s.recImg} />
@@ -282,13 +297,13 @@ export default function ProductDetail() {
       </div>
 
       {/* Footer */}
-      <div style={s.footer}>
+      <div style={s.footer} className="detail-footer">
         <div style={s.footerLeft}>
           <div style={s.footerLogo}>Digital Atelier</div>
           <div style={s.copyright}>© 2024 Digital Atelier. All rights reserved.</div>
         </div>
 
-        <div style={s.footerLinks}>
+        <div style={s.footerLinks} className="detail-footer-links">
           <a style={s.footerLinkItem}>Privacy Policy</a>
           <a style={s.footerLinkItem}>Terms of Service</a>
           <a style={s.footerLinkItem}>Shipping & Returns</a>

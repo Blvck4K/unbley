@@ -107,22 +107,49 @@ export default function Edit() {
   };
 
   return (
-    <div style={s.page}>
+    <div style={s.page} className="edit-page">
+      <style>{`
+        @media (max-width: 768px) {
+          .edit-page { flex-direction: column !important; height: auto !important; min-height: 100vh; overflow: visible !important; }
+          .edit-sidebar { width: 100% !important; border-right: none !important; border-bottom: 1px solid #1F1F1F; }
+          .edit-logo-container { padding: 24px !important; flex-direction: row !important; justify-content: space-between; align-items: center; }
+          .edit-nav { display: flex; overflow-x: auto; padding-bottom: 8px !important; white-space: nowrap; }
+          .edit-nav a, .edit-nav div { border-left: none !important; border-bottom: 3px solid transparent; padding: 12px 24px !important; margin-top: 0 !important; }
+          .edit-nav a[style*="border-left"] { border-bottom: 3px solid #06acf8ff !important; }
+          .edit-user-profile { display: none !important; }
+          
+          .edit-header { padding: 24px !important; flex-direction: column; gap: 24px; }
+          .edit-save-btn { width: 100%; }
+          
+          .edit-content { padding: 24px !important; }
+          .edit-two-col { grid-template-columns: 1fr !important; gap: 32px !important; }
+          
+          .edit-banner-box { padding: 24px !important; flex-direction: column; align-items: center; justify-content: center; gap: 16px; height: auto !important; min-height: 200px; }
+          .edit-banner-text { font-size: 48px !important; }
+          .edit-banner-info { margin-left: 0 !important; }
+          
+          .edit-card { padding: 24px !important; }
+          .edit-input-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
+          .edit-color-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
+          
+          .edit-product-grid { grid-template-columns: 1fr 1fr !important; gap: 16px !important; }
+        }
+      `}</style>
       {/* Sidebar */}
-      <div style={s.sidebar}>
-        <div style={s.logoContainer}>
+      <div style={s.sidebar} className="edit-sidebar">
+        <div style={s.logoContainer} className="edit-logo-container">
           <div style={s.logo}>Zizzystores.</div>
           <div style={{ fontFamily: 'Inter', fontSize: '9px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', marginTop: '8px', textTransform: 'uppercase' }}>Digital Store</div>
         </div>
 
-        <div style={s.nav}>
+        <div style={s.nav} className="edit-nav">
           <Link to="/dashboard" style={s.navItem(false)}><LayoutGrid size={16} /> Overview</Link>
           <Link to="/profile" style={s.navItem(false)}><User size={16} /> Profile</Link>
           <Link to="/edit" style={s.navItem(true)}><Settings size={16} /> Edit</Link>
           <div style={{ ...s.navItem(false), marginTop: '48px' }}><HeadphonesIcon size={16} /> Customer Service</div>
         </div>
 
-        <div style={s.userProfile}>
+        <div style={s.userProfile} className="edit-user-profile">
           <div style={s.userAvatar}>
             <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop" alt="Alex Zizzy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
@@ -136,32 +163,32 @@ export default function Edit() {
       {/* Main Content */}
       <div style={s.main}>
         {/* Header Special for Edit Page */}
-        <div style={s.editHeader}>
+        <div style={s.editHeader} className="edit-header">
           <div>
             <h1 style={s.headerTitle}>Brand Profile</h1>
             <p style={s.headerSubtitle}>Curate your digital atelier. The narrative you build here defines the prestige of your collections.</p>
           </div>
-          <button style={s.saveBtn}>Save Changes</button>
+          <button style={s.saveBtn} className="edit-save-btn">Save Changes</button>
         </div>
 
         {/* Form Content Area */}
-        <div style={s.content}>
-          <div style={s.twoColLayout}>
+        <div style={s.content} className="edit-content">
+          <div style={s.twoColLayout} className="edit-two-col">
 
             {/* Left Column: Core Identity */}
             <div>
               {/* Banner Upload */}
-              <div style={s.bannerBox}>
-                <div style={s.bannerText}>BRAND</div>
+              <div style={s.bannerBox} className="edit-banner-box">
+                <div style={s.bannerText} className="edit-banner-text">BRAND</div>
                 <button style={s.bannerBtn}>Change Banner</button>
-                <div style={s.bannerInfo}>Recommended: 2400x800px</div>
+                <div style={s.bannerInfo} className="edit-banner-info">Recommended: 2400x800px</div>
               </div>
 
               {/* Core Identity Form */}
-              <div style={s.card}>
+              <div style={s.card} className="edit-card">
                 <h2 style={s.cardTitle}>Core Identity</h2>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px 48px', marginBottom: '40px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px 48px', marginBottom: '40px' }} className="edit-input-grid">
                   <div style={s.inputGroup}>
                     <label style={s.label}>Brand Name</label>
                     <input type="text" defaultValue="Zizzystores" style={s.input} />
@@ -196,10 +223,10 @@ export default function Edit() {
               </div>
 
               {/* Geography Section */}
-              <div style={{ ...s.card, marginTop: '40px' }}>
+              <div style={{ ...s.card, marginTop: '40px' }} className="edit-card">
                 <h2 style={s.cardTitle}>Geography & Location</h2>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px 48px', marginBottom: '32px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px 48px', marginBottom: '32px' }} className="edit-input-grid">
                   <div style={{ ...s.inputGroup, marginBottom: 0 }}>
                     <label style={s.label}>Country</label>
                     <input type="text" defaultValue="Nigeria" style={s.input} />
@@ -229,8 +256,8 @@ export default function Edit() {
               </div>
 
               {/* Store Theme Colors */}
-              <div style={{ ...s.card, marginTop: '40px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' }}>
+              <div style={{ ...s.card, marginTop: '40px' }} className="edit-card">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px', flexWrap: 'wrap', gap: '16px' }}>
                   <h2 style={{ ...s.cardTitle, marginBottom: 0 }}>Brand Aesthetics</h2>
                   <div style={{ fontSize: '10px', color: '#F59E0B', fontWeight: 'bold', border: '1px solid #F59E0B', padding: '4px 8px', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.05em', backgroundColor: 'rgba(245, 158, 11, 0.1)' }}>
                     🔒 Can only be changed three times a year
@@ -241,7 +268,7 @@ export default function Edit() {
                   Define the chromatic signature of your storefront. Pick your 3 core brand colors using the gradient sliders below. Click the blocks to open the picker.
                 </p>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }} className="edit-color-grid">
 
                   {/* Primary Background */}
                   <div>
@@ -293,7 +320,7 @@ export default function Edit() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
 
               {/* Logo Upload Box */}
-              <div style={s.card}>
+              <div style={s.card} className="edit-card">
                 <label style={{ ...s.label, marginBottom: '40px' }}>Brand Logo</label>
                 <div style={s.logoPreview}>
                   <span style={s.logoInitial}>Z</span>
@@ -305,7 +332,7 @@ export default function Edit() {
               </div>
 
               {/* Social Handles Box */}
-              <div style={s.card}>
+              <div style={s.card} className="edit-card">
                 <label style={{ ...s.label, marginBottom: '32px' }}>Social Handles</label>
 
                 <div style={s.socialRow}>
@@ -350,7 +377,7 @@ export default function Edit() {
               </div>
 
               {/* Payment Section */}
-              <div style={s.card}>
+              <div style={s.card} className="edit-card">
                 <h2 style={{ ...s.cardTitle, marginBottom: '24px' }}>Payout Details</h2>
                 <div style={{ fontSize: '12px', color: '#888', marginBottom: '32px', lineHeight: '1.6' }}>Select the bank account where your sales revenue will be deposited automatically.</div>
 
@@ -390,7 +417,7 @@ export default function Edit() {
 
             </div>
 
-            <div style={s.productGrid}>
+            <div style={s.productGrid} className="edit-product-grid">
               <div style={s.productSquare}>
                 <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&q=80" alt="Product 1" style={{ ...s.productImage, mixBlendMode: 'luminosity' }} />
               </div>

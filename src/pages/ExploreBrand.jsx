@@ -83,10 +83,38 @@ export default function ExploreBrand() {
 
   return (
     <div style={s.page}>
+      <style>{`
+        @media (max-width: 768px) {
+          .explore-header { padding: 16px 20px !important; flex-wrap: wrap; height: auto !important; gap: 16px; justify-content: center !important; }
+          .header-right { flex-direction: column; width: 100%; gap: 16px !important; }
+          .search-bar { width: 100% !important; }
+          .shop-btn { width: 100%; text-align: center; }
+          .explore-content { padding: 24px 20px !important; }
+          .hero-banner { padding: 32px 20px !important; height: auto !important; min-height: 300px; }
+          .brand-badge { width: 60px !important; height: 60px !important; }
+          .brand-badge span { font-size: 18px !important; }
+          .hero-title { font-size: 32px !important; }
+          .split-layout { grid-template-columns: 1fr !important; gap: 32px !important; margin-bottom: 32px !important; }
+          .narrative-box { padding: 32px 24px !important; }
+          .narrative-title { font-size: 24px !important; max-width: 100% !important; }
+          .cta-container { padding: 32px 24px !important; }
+          .cta-title { font-size: 28px !important; }
+          .cta-btn { width: 100%; justify-content: center; font-size: 16px !important; padding: 16px !important; }
+          .triggers-grid { grid-template-columns: 1fr !important; gap: 16px !important; }
+          .products-header { flex-direction: column; align-items: flex-start !important; gap: 16px; }
+          .product-grid { grid-template-columns: 1fr !important; }
+          .product-main { height: 300px !important; }
+          .product-sub-grid { height: auto !important; grid-template-columns: 1fr !important; grid-template-rows: repeat(3, 200px) !important; }
+          .product-item-card { grid-column: auto !important; }
+          .similar-grid { grid-template-columns: 1fr 1fr !important; gap: 16px !important; }
+          .footer { flex-direction: column; gap: 24px; text-align: center; padding: 24px 0 !important; }
+          .footer-links { flex-wrap: wrap; justify-content: center; gap: 16px !important; }
+        }
+      `}</style>
       {/* Main Content */}
       <div style={s.main}>
         {/* Header */}
-        <div style={s.header}>
+        <div style={s.header} className="explore-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
             <button
               onClick={() => navigate(-1)}
@@ -100,13 +128,13 @@ export default function ExploreBrand() {
             <div style={s.headerTitle}>Brand Profile</div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
-            <div style={s.searchBar}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }} className="header-right">
+            <div style={s.searchBar} className="search-bar">
               <Search size={14} color="#666" />
               <input type="text" placeholder="Search ..." style={s.searchInput} />
             </div>
 
-            <button onClick={() => navigate('/shop-brand')} style={s.shopBtn}>Shop Zizzystores Now</button>
+            <button onClick={() => navigate('/shop-brand')} style={s.shopBtn} className="shop-btn">Shop Zizzystores Now</button>
             <div style={s.headerActions}>
               <div title="Like Brand" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#888', transition: 'color 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.color = '#FFF'} onMouseLeave={(e) => e.currentTarget.style.color = '#888'}>
                 <Heart size={18} />
@@ -119,27 +147,27 @@ export default function ExploreBrand() {
         </div>
 
         {/* Content Area */}
-        <div style={s.content}>
+        <div style={s.content} className="explore-content">
 
           {/* Top: Brand Identity + Narrative */}
-          <div style={s.banner}>
+          <div style={s.banner} className="hero-banner">
             <div style={s.bannerBg}></div>
             <div style={s.bannerContent}>
-              <div style={s.brandBadge}>
+              <div style={s.brandBadge} className="brand-badge">
                 <span style={s.brandBadgeText}>Zs</span>
               </div>
               <div>
                 <div style={{ ...s.sectionTitleBase, color: brandColor }}>Curated by ZizzyStores — premium digital ateliers only.</div>
-                <h1 style={{ fontFamily: '"Playfair Display", serif', fontStyle: 'italic', fontSize: '48px', color: '#FFF', margin: 0 }}>Zizzystores</h1>
+                <h1 style={{ fontFamily: '"Playfair Display", serif', fontStyle: 'italic', fontSize: '48px', color: '#FFF', margin: 0 }} className="hero-title">Zizzystores</h1>
               </div>
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.8fr) minmax(0, 1fr)', gap: '24px', marginBottom: '64px' }}>
-            <div style={{ ...s.narrativeBox, marginBottom: 0 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.8fr) minmax(0, 1fr)', gap: '24px', marginBottom: '64px' }} className="split-layout">
+            <div style={{ ...s.narrativeBox, marginBottom: 0 }} className="narrative-box">
               <div style={{ position: 'relative', zIndex: 1 }}>
                 <div style={{ ...s.sectionTitleBase, color: brandColor }}>The Brand Narrative</div>
-                <h2 style={s.narrativeTitle}>Transcending the ordinary through the Digital Atelier experience.</h2>
+                <h2 style={s.narrativeTitle} className="narrative-title">Transcending the ordinary through the Digital Atelier experience.</h2>
                 <p style={s.narrativeText}>
                   Zizzystores isn't just a marketplace. It's a curated ecosystem where digital craftsmanship meets commercial viability. We believe that every product carries a soul, and every store should be an architectural masterpiece. Our mission is to redefine luxury in the digital age by prioritizing breathing room and editorial excellence over sheer volume.
                 </p>
@@ -206,11 +234,11 @@ export default function ExploreBrand() {
           </div>
 
           {/* Middle: BIG CTA Section (Optimized for Conversion) */}
-          <div style={s.ctaContainer}>
+          <div style={s.ctaContainer} className="cta-container">
             <div style={{ ...s.sectionTitleBase, color: brandColor }}>Official Partner</div>
-            <h2 style={s.ctaTitle}>Experience the Full Collection</h2>
+            <h2 style={s.ctaTitle} className="cta-title">Experience the Full Collection</h2>
 
-            <a href="/shop-brand" style={s.ctaButton}>
+            <a href="/shop-brand" style={s.ctaButton} className="cta-btn">
               Visit Official Store
               <ExternalLink size={24} />
             </a>
@@ -219,8 +247,8 @@ export default function ExploreBrand() {
               You'll be redirected to the brand's official store to complete your purchase.
             </div>
 
-            <div style={s.triggersTitle}>Why Explore Zizzystores:</div>
-            <div style={s.triggersGrid}>
+            <div style={s.triggersTitle} className="triggers-title">Why Explore Zizzystores:</div>
+            <div style={s.triggersGrid} className="triggers-grid">
               <div style={s.triggerItem}>
                 <ShieldCheck size={20} color={brandColor} />
                 <span>Unique handcrafted designs</span>
@@ -239,7 +267,7 @@ export default function ExploreBrand() {
           {/* Below: Featured Pieces (Preview) */}
           <div style={s.productsSection}>
             <div style={{ ...s.sectionTitleBase, color: brandColor }}>Featured Pieces</div>
-            <div style={s.productsHeader}>
+            <div style={s.productsHeader} className="products-header">
               <h2 style={s.productsTitle}>A Glimpse into the Collection</h2>
               <div
                 onClick={() => navigate('/shop-brand')}
@@ -249,15 +277,15 @@ export default function ExploreBrand() {
               </div>
             </div>
 
-            <div style={s.productGrid}>
-              <div style={s.productMain}></div>
-              <div style={s.productSubGrid}>
+            <div style={s.productGrid} className="product-grid">
+              <div style={s.productMain} className="product-main"></div>
+              <div style={s.productSubGrid} className="product-sub-grid">
                 {/* Top Bag */}
-                <div style={{ ...s.productItemCard, gridColumn: '1 / span 2', backgroundImage: 'url("https://images.unsplash.com/photo-1584916201218-f4242ceb4809?w=600&q=80")', borderRadius: '4px' }}></div>
+                <div style={{ ...s.productItemCard, gridColumn: '1 / span 2', backgroundImage: 'url("https://images.unsplash.com/photo-1584916201218-f4242ceb4809?w=600&q=80")', borderRadius: '4px' }} className="product-item-card"></div>
                 {/* Bottom Left Face */}
-                <div style={{ ...s.productItemCard, backgroundImage: 'url("https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&q=80")', borderRadius: '4px', filter: 'grayscale(100%)' }}></div>
+                <div style={{ ...s.productItemCard, backgroundImage: 'url("https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&q=80")', borderRadius: '4px', filter: 'grayscale(100%)' }} className="product-item-card"></div>
                 {/* Bottom Right Mixer */}
-                <div style={{ ...s.productItemCard, backgroundImage: 'url("https://images.unsplash.com/photo-1516280440502-617513511eb4?w=300&q=80")', borderRadius: '4px', filter: 'grayscale(100%)' }}></div>
+                <div style={{ ...s.productItemCard, backgroundImage: 'url("https://images.unsplash.com/photo-1516280440502-617513511eb4?w=300&q=80")', borderRadius: '4px', filter: 'grayscale(100%)' }} className="product-item-card"></div>
               </div>
             </div>
           </div>
@@ -267,7 +295,7 @@ export default function ExploreBrand() {
             <div style={{ ...s.sectionTitleBase, color: '#888' }}>Keep Exploring</div>
             <h2 style={{ ...s.productsTitle, marginBottom: '40px' }}>You may also like</h2>
 
-            <div style={s.similarGrid}>
+            <div style={s.similarGrid} className="similar-grid">
               {[1, 2, 3, 4].map((i) => (
                 <div key={i} style={s.similarCard} onMouseEnter={(e) => e.currentTarget.style.borderColor = brandColor} onMouseLeave={(e) => e.currentTarget.style.borderColor = '#1F1F1F'}>
                   <div style={s.similarLogo}>
@@ -281,12 +309,12 @@ export default function ExploreBrand() {
           </div>
 
           {/* Footer Area */}
-          <div style={s.footer}>
+          <div style={s.footer} className="footer">
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ fontFamily: '"Playfair Display", serif', fontSize: '14px', fontStyle: 'italic', fontWeight: 'bold', color: brandColor }}>Zizzystores</span>
               <span style={{ fontSize: '9px', color: '#555', letterSpacing: '0.05em' }}>© 2024 DIGITAL ATELIER</span>
             </div>
-            <div style={s.footerLinks}>
+            <div style={s.footerLinks} className="footer-links">
               <span style={{ cursor: 'pointer' }}>Privacy Policy</span>
               <span style={{ cursor: 'pointer' }}>Terms of Curation</span>
               <span style={{ cursor: 'pointer' }}>Legal Information</span>

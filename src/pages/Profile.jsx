@@ -104,22 +104,59 @@ export default function Profile() {
   };
 
   return (
-    <div style={s.page}>
+    <div style={s.page} className="prof-page">
+      <style>{`
+        @media (max-width: 768px) {
+          .prof-page { flex-direction: column !important; height: auto !important; min-height: 100vh; overflow: visible !important; }
+          .prof-sidebar { width: 100% !important; border-right: none !important; border-bottom: 1px solid #1F1F1F; }
+          .prof-logo-container { padding: 24px !important; flex-direction: row !important; justify-content: space-between; align-items: center; }
+          .prof-nav { display: flex; overflow-x: auto; padding-bottom: 8px !important; white-space: nowrap; }
+          .prof-nav a, .prof-nav div { border-left: none !important; border-bottom: 3px solid transparent; padding: 12px 24px !important; margin-top: 0 !important; }
+          .prof-nav a[style*="border-left"] { border-bottom: 3px solid #06acf8ff !important; }
+          .prof-user-profile { display: none !important; }
+          
+          .prof-header { height: auto !important; padding: 24px !important; flex-wrap: wrap; gap: 16px; justify-content: space-between; }
+          .prof-search { width: 100% !important; order: 3; }
+          
+          .prof-content { padding: 24px !important; overflow: visible !important; }
+          .prof-banner { padding: 32px 24px !important; height: auto !important; min-height: 300px; }
+          .prof-banner-content { flex-direction: column; align-items: flex-start !important; text-align: left; }
+          .prof-grid-container { grid-template-columns: 1fr !important; gap: 32px !important; }
+          .prof-narrative-box { padding: 32px 24px !important; }
+          .prof-narrative-title { font-size: 24px !important; max-width: 100% !important; }
+          .prof-narrative-text { max-width: 100% !important; }
+          .prof-sub-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
+          
+          .prof-products-header { flex-direction: column; align-items: flex-start !important; gap: 16px; }
+          .prof-product-grid { grid-template-columns: 1fr !important; }
+          .prof-product-main { height: 300px !important; }
+          .prof-product-sub-grid { height: auto !important; grid-template-columns: 1fr !important; grid-template-rows: repeat(3, 200px) !important; }
+          .prof-product-item-card { grid-column: auto !important; }
+          
+          .prof-newsletter { padding: 32px 24px !important; }
+          .prof-newsletter-form { flex-direction: column; padding-bottom: 0 !important; border-bottom: none !important; }
+          .prof-newsletter-input { width: 100%; border-bottom: 1px solid #333; padding-bottom: 16px; margin-bottom: 16px; }
+          .prof-newsletter-btn { width: 100%; }
+          
+          .prof-footer { flex-direction: column; gap: 24px; text-align: center; }
+          .prof-footer-links { flex-wrap: wrap; justify-content: center; }
+        }
+      `}</style>
       {/* Sidebar */}
-      <div style={s.sidebar}>
-        <div style={s.logoContainer}>
+      <div style={s.sidebar} className="prof-sidebar">
+        <div style={s.logoContainer} className="prof-logo-container">
           <div style={s.logo}>Zizzystores.</div>
           <div style={{ fontFamily: 'Inter', fontSize: '9px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', marginTop: '8px', textTransform: 'uppercase' }}>Digital Store</div>
         </div>
 
-        <div style={s.nav}>
+        <div style={s.nav} className="prof-nav">
           <Link to="/dashboard" style={s.navItem(false)}><LayoutGrid size={16} /> Overview</Link>
           <Link to="/profile" style={s.navItem(true)}><User size={16} /> Profile</Link>
           <Link to="/edit" style={s.navItem(false)}><Edit size={16} /> Edit</Link>
           <div style={{ ...s.navItem(false), marginTop: '48px' }}><HeadphonesIcon size={16} /> Customer Service</div>
         </div>
 
-        <div style={s.userProfile}>
+        <div style={s.userProfile} className="prof-user-profile">
           <div style={s.userAvatar}>
             <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop" alt="Alex Zizzy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
@@ -133,11 +170,11 @@ export default function Profile() {
       {/* Main Content */}
       <div style={s.main}>
         {/* Header */}
-        <div style={s.header}>
+        <div style={s.header} className="prof-header">
           <div style={s.headerTitle}>Brand Profile</div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
-            <div style={s.searchBar}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }} className="prof-search">
+            <div style={s.searchBar} className="prof-search">
               <Search size={14} color="#666" />
               <input type="text" placeholder="Search ..." style={s.searchInput} />
             </div>
@@ -153,12 +190,12 @@ export default function Profile() {
         </div>
 
         {/* Content Area */}
-        <div style={s.content}>
+        <div style={s.content} className="prof-content">
 
           {/* Hero Banner */}
-          <div style={s.banner}>
+          <div style={s.banner} className="prof-banner">
             <div style={s.bannerBg}></div>
-            <div style={s.bannerContent}>
+            <div style={s.bannerContent} className="prof-banner-content">
               <div style={s.brandBadge}>
                 <span style={s.brandBadgeText}>Zs</span>
               </div>
@@ -170,7 +207,7 @@ export default function Profile() {
           </div>
 
           {/* Grid Layout */}
-          <div style={s.gridContainer}>
+          <div style={s.gridContainer} className="prof-grid-container">
             {/* Left Column */}
             <div>
               <div style={s.infoBox}>
@@ -220,16 +257,16 @@ export default function Profile() {
             </div>
 
             {/* Right Column */}
-            <div style={s.narrativeBox}>
+            <div style={s.narrativeBox} className="prof-narrative-box">
               <div style={s.narrativeBg}></div>
               <div style={{ position: 'relative', zIndex: 1 }}>
                 <div style={{ ...s.sectionTitleBase, color: brandColor }}>The Brand Narrative</div>
-                <h2 style={s.narrativeTitle}>Transcending the ordinary through the Digital Atelier experience.</h2>
-                <p style={s.narrativeText}>
+                <h2 style={s.narrativeTitle} className="prof-narrative-title">Transcending the ordinary through the Digital Atelier experience.</h2>
+                <p style={s.narrativeText} className="prof-narrative-text">
                   Zizzystores isn't just a marketplace. It's a curated ecosystem where digital craftsmanship meets commercial viability. We believe that every product carries a soul, and every store should be an architectural masterpiece. Our mission is to redefine luxury in the digital age by prioritizing breathing room and editorial excellence over sheer volume.
                 </p>
 
-                <div style={s.subGrid}>
+                <div style={s.subGrid} className="prof-sub-grid">
                   <div>
                     <div style={s.subTitle}>Our Manifesto</div>
                     <p style={s.subText}>
@@ -250,26 +287,26 @@ export default function Profile() {
           {/* The Selection */}
           <div style={s.productsSection}>
             <div style={{ ...s.sectionTitleBase, color: brandColor }}>The Selection</div>
-            <div style={s.productsHeader}>
+            <div style={s.productsHeader} className="prof-products-header">
               <h2 style={s.productsTitle}>List of Items</h2>
               <a href="/shop-brand" style={s.exploreLink}>Explore Full Inventory <ArrowRight size={14} /></a>
             </div>
 
-            <div style={s.productGrid}>
-              <div style={s.productMain}></div>
-              <div style={s.productSubGrid}>
+            <div style={s.productGrid} className="prof-product-grid">
+              <div style={s.productMain} className="prof-product-main"></div>
+              <div style={s.productSubGrid} className="prof-product-sub-grid">
                 {/* Top Bag */}
-                <div style={{ ...s.productItemCard, gridColumn: '1 / span 2', backgroundImage: 'url("https://images.unsplash.com/photo-1584916201218-f4242ceb4809?w=600&q=80")', borderRadius: '4px' }}></div>
+                <div style={{ ...s.productItemCard, gridColumn: '1 / span 2', backgroundImage: 'url("https://images.unsplash.com/photo-1584916201218-f4242ceb4809?w=600&q=80")', borderRadius: '4px' }} className="prof-product-item-card"></div>
                 {/* Bottom Left Face */}
-                <div style={{ ...s.productItemCard, backgroundImage: 'url("https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&q=80")', borderRadius: '4px', filter: 'grayscale(100%)' }}></div>
+                <div style={{ ...s.productItemCard, backgroundImage: 'url("https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&q=80")', borderRadius: '4px', filter: 'grayscale(100%)' }} className="prof-product-item-card"></div>
                 {/* Bottom Right Mixer */}
-                <div style={{ ...s.productItemCard, backgroundImage: 'url("https://images.unsplash.com/photo-1516280440502-617513511eb4?w=300&q=80")', borderRadius: '4px', filter: 'grayscale(100%)' }}></div>
+                <div style={{ ...s.productItemCard, backgroundImage: 'url("https://images.unsplash.com/photo-1516280440502-617513511eb4?w=300&q=80")', borderRadius: '4px', filter: 'grayscale(100%)' }} className="prof-product-item-card"></div>
               </div>
             </div>
           </div>
 
           {/* Newsletter / Footer Box */}
-          <div style={s.newsletterBox}>
+          <div style={s.newsletterBox} className="prof-newsletter">
             <div style={{ display: 'inline-block', backgroundColor: '#111', padding: '16px', borderRadius: '50%', marginBottom: '16px' }}>
               <Mail size={24} color={brandColor} />
             </div>
@@ -277,19 +314,19 @@ export default function Profile() {
             <p style={s.newsletterDesc}>
               Receive early access to seasonal collections and insights into the digital curation process.
             </p>
-            <div style={s.newsletterForm}>
-              <input type="email" placeholder="Email Address" style={s.newsletterInput} />
-              <button style={s.newsletterBtn}>Subscribe</button>
+            <div style={s.newsletterForm} className="prof-newsletter-form">
+              <input type="email" placeholder="Email Address" style={s.newsletterInput} className="prof-newsletter-input" />
+              <button style={s.newsletterBtn} className="prof-newsletter-btn">Subscribe</button>
             </div>
           </div>
 
           {/* Footer Area */}
-          <div style={s.footer}>
+          <div style={s.footer} className="prof-footer">
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ fontFamily: '"Playfair Display", serif', fontSize: '14px', fontStyle: 'italic', fontWeight: 'bold', color: brandColor }}>Zizzystores</span>
               <span style={{ fontSize: '9px', color: '#555', letterSpacing: '0.05em' }}>© 2024 DIGITAL ATELIER</span>
             </div>
-            <div style={s.footerLinks}>
+            <div style={s.footerLinks} className="prof-footer-links">
               <span style={{ cursor: 'pointer' }}>Privacy Policy</span>
               <span style={{ cursor: 'pointer' }}>Terms of Curation</span>
               <span style={{ cursor: 'pointer' }}>Legal Information</span>

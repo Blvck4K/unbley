@@ -108,15 +108,27 @@ export default function FinalizeActivation() {
   };
 
   return (
-    <div style={s.page}>
-
+    <div style={s.page} className="fin-page">
+      <style>{`
+        @media (max-width: 768px) {
+          .fin-page { flex-direction: column !important; height: auto !important; min-height: 100vh; overflow-y: auto !important; }
+          .fin-left { padding: 48px 24px !important; border-right: none !important; border-bottom: 1px solid #1F1F1F; }
+          .fin-logo { left: 24px !important; top: 24px !important; }
+          .fin-left-title { font-size: 36px !important; margin-bottom: 32px !important; }
+          .fin-right { padding: 48px 24px !important; overflow-y: visible !important; }
+          .fin-main-title { font-size: 32px !important; }
+          .fin-price { font-size: 28px !important; }
+          .fin-express-row { flex-direction: column !important; }
+          .fin-pagination { display: none !important; } /* Hide pagination dots on mobile */
+        }
+      `}</style>
       {/* LEFT PANE */}
-      <div style={s.leftPane}>
+      <div style={s.leftPane} className="fin-left">
         <div style={s.bgEffect}></div>
-        <div style={{ ...s.logo, position: 'absolute', top: '48px', left: '64px' }}>Zizzystores.</div>
+        <div style={{ ...s.logo, position: 'absolute', top: '48px', left: '64px' }} className="fin-logo">Zizzystores.</div>
 
         <div style={s.leftContent}>
-          <h1 style={s.leftTitle}>
+          <h1 style={s.leftTitle} className="fin-left-title">
             Crafting <span style={{ fontStyle: 'italic' }}>distinction</span> in the digital marketplace.
           </h1>
 
@@ -141,13 +153,13 @@ export default function FinalizeActivation() {
       </div>
 
       {/* RIGHT PANE */}
-      <div style={s.rightPane}>
+      <div style={s.rightPane} className="fin-right">
         <div style={s.supportLink}>SUPPORT</div>
 
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div style={s.formWrapper}>
             <div style={s.subTitle}>FINALIZE ACTIVATION</div>
-            <h2 style={s.mainTitle}>Unlock Your Brand's<br />Potential</h2>
+            <h2 style={s.mainTitle} className="fin-main-title">Unlock Your Brand's<br />Potential</h2>
             <p style={s.mainDesc}>
               To activate your professional store and secure your complimentary domain, a yearly subscription fee is required. This grants you lifetime access to the Digital Atelier.
             </p>
@@ -158,7 +170,7 @@ export default function FinalizeActivation() {
                 <div style={s.totalLabel}>TOTAL DUE</div>
                 <div style={s.priceRow}>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
-                    <div style={s.price}>₦30,000</div>
+                    <div style={s.price} className="fin-price">₦30,000</div>
                     <div style={{ fontSize: '18px', color: '#666', textDecoration: 'line-through' }}>₦50,000</div>
                   </div>
                   <div style={{ ...s.oneTimeBadge, whiteSpace: 'nowrap' }}>40% OFF – First Year</div>
@@ -177,7 +189,7 @@ export default function FinalizeActivation() {
 
             <div style={{ marginBottom: '32px' }}>
               <div style={s.expressCheckoutLabel}>PAYMENT METHODS (NIGERIA)</div>
-              <div style={{ display: 'flex', gap: '12px' }}>
+              <div style={{ display: 'flex', gap: '12px' }} className="fin-express-row">
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px', backgroundColor: '#1C1C1C', borderRadius: '4px', border: '1px solid #2A2A2A', fontSize: '13px', color: '#CCC' }}>
                   <CreditCard size={16} color={brandColor} /> Card
                 </div>
@@ -242,7 +254,7 @@ export default function FinalizeActivation() {
           </div>
         </div>
 
-        <div style={s.pagination}>
+        <div style={s.pagination} className="fin-pagination">
           <div style={s.dot(true)}></div>
           <div style={s.dot(false)}></div>
           <div style={s.dot(false)}></div>
