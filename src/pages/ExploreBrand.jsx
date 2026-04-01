@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Globe, Camera, Share2, Mail, ArrowRight, ArrowLeft, Heart, Bookmark, ExternalLink, Bell, ShieldCheck } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
 
 const FacebookIcon = ({ size = 14, color = "currentColor" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke="none">
@@ -24,8 +25,54 @@ const TwitterIcon = ({ size = 14, color = "currentColor" }) => (
 );
 
 export default function ExploreBrand() {
-  const brandColor = '#06acf8ff';
+  const { id } = useParams();
   const navigate = useNavigate();
+
+  const [brand, setBrand] = useState(null);
+  const [products, setProducts] = useState([]);
+  const [similarBrands, setSimilarBrands] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadBrand() {
+      if (!id) return;
+      try {
+        setLoading(true);
+        const { data: bData, error: bErr } = await supabase
+          .from('brand_profiles')
+          .select('*')
+          .eq('id', id)
+          .single();
+          
+        if (bErr) throw bErr;
+        setBrand(bData);
+
+        const { data: pData } = await supabase
+          .from('products')
+          .select('*')
+          .eq('brand_id', id)
+          .limit(3);
+          
+        if (pData) setProducts(pData);
+
+        const { data: sData } = await supabase
+          .from('brand_profiles')
+          .select('*')
+          .neq('id', id)
+          .eq('profile_completed', true)
+          .limit(4);
+          
+        if (sData) setSimilarBrands(sData);
+      } catch (err) {
+        console.error("Error loading brand details:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadBrand();
+  }, [id]);
+
+  const brandColor = brand?.accent_color || '#06acf8ff';
 
   const s = {
     page: { backgroundColor: '#0A0A0A', color: '#E5E5E5', height: '100vh', overflow: 'hidden', display: 'flex', fontFamily: '"Inter", sans-serif' },
@@ -40,9 +87,9 @@ export default function ExploreBrand() {
 
     // Components
     banner: { position: 'relative', height: '400px', backgroundColor: '#111', border: '1px solid #1F1F1F', display: 'flex', flexDirection: 'column', padding: '64px', overflow: 'hidden', marginBottom: '32px' },
-    bannerBg: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundImage: 'url("https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1200&q=80")', backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.2 },
+    bannerBg: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundImage: `url("${brand?.banner_url || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1200&q=80'}")`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.2 },
     bannerContent: { position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: '32px', marginTop: 'auto' },
-    brandBadge: { width: '80px', height: '80px', border: `2px solid ${brandColor}`, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#111' },
+    brandBadge: { width: '80px', height: '80px', border: `2px solid ${brandColor}`, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#111', overflow: 'hidden' },
     brandBadgeText: { fontFamily: '"Playfair Display", serif', fontSize: '24px', fontStyle: 'italic', color: brandColor },
 
     sectionTitleBase: { fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '16px' },
@@ -65,10 +112,10 @@ export default function ExploreBrand() {
     productsTitle: { fontFamily: '"Playfair Display", serif', fontSize: '36px', fontStyle: 'italic', color: '#FFF' },
     exploreLink: { fontSize: '12px', color: '#FFF', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px', letterSpacing: '0.05em', cursor: 'pointer' },
 
-    productGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' },
-    productMain: { backgroundColor: '#111', height: '500px', backgroundImage: 'url("https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=800&q=80")', backgroundSize: 'cover', backgroundPosition: 'center', borderRadius: '4px' },
-    productSubGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: '16px', height: '500px' },
-    productItemCard: { backgroundColor: '#111', backgroundSize: 'cover', backgroundPosition: 'center' },
+    productGrid: { display: 'grid', gridTemplateColumns: 'minmax(300px, 1.2fr) minmax(200px, 0.8fr)', gap: '16px' },
+    productMain: { backgroundColor: '#111', minHeight: '500px', backgroundImage: `url("${brand?.product_1_url || 'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=800&q=80'}")`, backgroundSize: 'cover', backgroundPosition: 'center', borderRadius: '4px', cursor: 'pointer' },
+    productSubGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: '16px', minHeight: '500px' },
+    productItemCard: { backgroundColor: '#111', backgroundSize: 'cover', backgroundPosition: 'center', borderRadius: '4px', cursor: 'pointer' },
 
     similarSection: { marginBottom: '64px' },
     similarGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px' },
@@ -111,7 +158,17 @@ export default function ExploreBrand() {
           .footer-links { flex-wrap: wrap; justify-content: center; gap: 16px !important; }
         }
       `}</style>
-      {/* Main Content */}
+      
+      {loading ? (
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888' }}>
+          Syncing Brand Data...
+        </div>
+      ) : !brand ? (
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#888' }}>
+          <h2>Brand Not Found</h2>
+          <button style={s.shopBtn} onClick={() => navigate('/store')}>Return to Storefront</button>
+        </div>
+      ) : (
       <div style={s.main}>
         {/* Header */}
         <div style={s.header} className="explore-header">
@@ -134,7 +191,7 @@ export default function ExploreBrand() {
               <input type="text" placeholder="Search ..." style={s.searchInput} />
             </div>
 
-            <button onClick={() => navigate('/shop-brand')} style={s.shopBtn} className="shop-btn">Shop Zizzystores Now</button>
+            <button onClick={() => navigate(`/shop-brand/${id}`)} style={s.shopBtn} className="shop-btn">Shop {brand.brand_name} Now</button>
             <div style={s.headerActions}>
               <div title="Like Brand" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#888', transition: 'color 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.color = '#FFF'} onMouseLeave={(e) => e.currentTarget.style.color = '#888'}>
                 <Heart size={18} />
@@ -154,11 +211,15 @@ export default function ExploreBrand() {
             <div style={s.bannerBg}></div>
             <div style={s.bannerContent}>
               <div style={s.brandBadge} className="brand-badge">
-                <span style={s.brandBadgeText}>Zs</span>
+                {brand.logo_url ? (
+                  <img src={brand.logo_url} alt="Brand Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <span style={s.brandBadgeText}>{brand.brand_name?.charAt(0)?.toUpperCase()}s</span>
+                )}
               </div>
               <div>
                 <div style={{ ...s.sectionTitleBase, color: brandColor }}>Curated by ZizzyStores — premium digital ateliers only.</div>
-                <h1 style={{ fontFamily: '"Playfair Display", serif', fontStyle: 'italic', fontSize: '48px', color: '#FFF', margin: 0 }} className="hero-title">Zizzystores</h1>
+                <h1 style={{ fontFamily: '"Playfair Display", serif', fontStyle: 'italic', fontSize: '48px', color: '#FFF', margin: 0 }} className="hero-title">{brand.brand_name}</h1>
               </div>
             </div>
           </div>
@@ -169,7 +230,7 @@ export default function ExploreBrand() {
                 <div style={{ ...s.sectionTitleBase, color: brandColor }}>The Brand Narrative</div>
                 <h2 style={s.narrativeTitle} className="narrative-title">Transcending the ordinary through the Digital Atelier experience.</h2>
                 <p style={s.narrativeText}>
-                  Zizzystores isn't just a marketplace. It's a curated ecosystem where digital craftsmanship meets commercial viability. We believe that every product carries a soul, and every store should be an architectural masterpiece. Our mission is to redefine luxury in the digital age by prioritizing breathing room and editorial excellence over sheer volume.
+                  {brand.brand_narrative || "Zizzystores isn't just a marketplace. It's a curated ecosystem where digital craftsmanship meets commercial viability. We believe that every product carries a soul, and every store should be an architectural masterpiece. Our mission is to redefine luxury in the digital age by prioritizing breathing room and editorial excellence over sheer volume."}
                 </p>
               </div>
             </div>
@@ -180,32 +241,32 @@ export default function ExploreBrand() {
 
                 <div style={{ marginBottom: '24px' }}>
                   <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', textTransform: 'uppercase', marginBottom: '8px' }}>Brand Name</div>
-                  <div style={{ fontFamily: '"Playfair Display", serif', fontSize: '20px', fontStyle: 'italic', color: '#FFF' }}>Zizzystores</div>
+                  <div style={{ fontFamily: '"Playfair Display", serif', fontSize: '20px', fontStyle: 'italic', color: '#FFF' }}>{brand.brand_name}</div>
                 </div>
 
                 <div style={{ marginBottom: '24px' }}>
                   <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', textTransform: 'uppercase', marginBottom: '8px' }}>Brand Owner</div>
-                  <div style={{ fontFamily: '"Playfair Display", serif', fontSize: '20px', fontStyle: 'italic', color: '#FFF' }}>Alex Zizzy</div>
+                  <div style={{ fontFamily: '"Playfair Display", serif', fontSize: '20px', fontStyle: 'italic', color: '#FFF' }}>{brand.owner_name || 'Anonymous Artisan'}</div>
                 </div>
 
                 <div style={{ marginBottom: '24px' }}>
                   <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', textTransform: 'uppercase', marginBottom: '8px' }}>Email Inquiry</div>
-                  <div style={{ fontSize: '14px', fontWeight: '700', letterSpacing: '0.05em', color: brandColor, textTransform: 'uppercase' }}>INFO@ZIZZYSTORES.COM</div>
+                  <div style={{ fontSize: '14px', fontWeight: '700', letterSpacing: '0.05em', color: brandColor, textTransform: 'uppercase' }}>{brand.email_address || 'INFO@BRAND.COM'}</div>
                 </div>
 
                 <div style={{ marginBottom: '24px' }}>
                   <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', textTransform: 'uppercase', marginBottom: '8px' }}>Phone Number</div>
-                  <div style={{ fontSize: '14px', fontWeight: '700', letterSpacing: '0.05em', color: brandColor, textTransform: 'uppercase' }}>1 (555) 012-3456</div>
+                  <div style={{ fontSize: '14px', fontWeight: '700', letterSpacing: '0.05em', color: brandColor, textTransform: 'uppercase' }}>{brand.phone_number || '1 (555) 012-3456'}</div>
                 </div>
 
                 <div style={{ marginBottom: '24px' }}>
                   <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', textTransform: 'uppercase', marginBottom: '8px' }}>Location</div>
-                  <div style={{ fontSize: '14px', fontWeight: '700', letterSpacing: '0.05em', color: '#FFF' }}>New York, NY</div>
+                  <div style={{ fontSize: '14px', fontWeight: '700', letterSpacing: '0.05em', color: '#FFF' }}>{brand.location || 'Undisclosed Studio'}</div>
                 </div>
 
                 <div>
                   <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', textTransform: 'uppercase', marginBottom: '8px' }}>Delivery Duration</div>
-                  <div style={{ fontSize: '14px', fontWeight: '700', letterSpacing: '0.05em', color: '#FFF' }}>2-3 days</div>
+                  <div style={{ fontSize: '14px', fontWeight: '700', letterSpacing: '0.05em', color: '#FFF' }}>{brand.delivery_info || '2-3 days standard'}</div>
                 </div>
               </div>
 
@@ -238,10 +299,10 @@ export default function ExploreBrand() {
             <div style={{ ...s.sectionTitleBase, color: brandColor }}>Official Partner</div>
             <h2 style={s.ctaTitle} className="cta-title">Experience the Full Collection</h2>
 
-            <a href="/shop-brand" style={s.ctaButton} className="cta-btn">
+            <button onClick={() => navigate(`/shop-brand/${id}`)} style={s.ctaButton} className="cta-btn">
               Visit Official Store
               <ExternalLink size={24} />
-            </a>
+            </button>
 
             <div style={s.ctaBridgeMessage}>
               You'll be redirected to the brand's official store to complete your purchase.
@@ -270,22 +331,35 @@ export default function ExploreBrand() {
             <div style={s.productsHeader} className="products-header">
               <h2 style={s.productsTitle}>A Glimpse into the Collection</h2>
               <div
-                onClick={() => navigate('/shop-brand')}
+                onClick={() => navigate(`/shop-brand/${id}`)}
                 style={s.exploreLink}
               >
-                <a href='/shop-brand'>View full collection on store <ArrowRight size={14} /></a>
+                View full collection on store <ArrowRight size={14} />
               </div>
             </div>
 
             <div style={s.productGrid} className="product-grid">
-              <div style={s.productMain} className="product-main"></div>
+              <div 
+                style={s.productMain} 
+                className="product-main"
+                onClick={() => navigate(`/shop-brand/${id}`)}
+              ></div>
               <div style={s.productSubGrid} className="product-sub-grid">
-                {/* Top Bag */}
-                <div style={{ ...s.productItemCard, gridColumn: '1 / span 2', backgroundImage: 'url("https://images.unsplash.com/photo-1584916201218-f4242ceb4809?w=600&q=80")', borderRadius: '4px' }} className="product-item-card"></div>
-                {/* Bottom Left Face */}
-                <div style={{ ...s.productItemCard, backgroundImage: 'url("https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&q=80")', borderRadius: '4px', filter: 'grayscale(100%)' }} className="product-item-card"></div>
-                {/* Bottom Right Mixer */}
-                <div style={{ ...s.productItemCard, backgroundImage: 'url("https://images.unsplash.com/photo-1516280440502-617513511eb4?w=300&q=80")', borderRadius: '4px', filter: 'grayscale(100%)' }} className="product-item-card"></div>
+                <div 
+                  style={{ ...s.productItemCard, gridColumn: '1 / span 2', backgroundImage: `url("${brand?.product_2_url || 'https://images.unsplash.com/photo-1584916201218-f4242ceb4809?w=600&q=80'}")` }} 
+                  className="product-item-card"
+                  onClick={() => navigate(`/shop-brand/${id}`)}
+                ></div>
+                <div 
+                  style={{ ...s.productItemCard, backgroundImage: `url("${brand?.product_3_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&q=80'}")` }} 
+                  className="product-item-card"
+                  onClick={() => navigate(`/shop-brand/${id}`)}
+                ></div>
+                <div 
+                  style={{ ...s.productItemCard, backgroundImage: `url("${brand?.product_4_url || 'https://images.unsplash.com/photo-1516280440502-617513511eb4?w=300&q=80'}")` }} 
+                  className="product-item-card"
+                  onClick={() => navigate(`/shop-brand/${id}`)}
+                ></div>
               </div>
             </div>
           </div>
@@ -296,23 +370,25 @@ export default function ExploreBrand() {
             <h2 style={{ ...s.productsTitle, marginBottom: '40px' }}>You may also like</h2>
 
             <div style={s.similarGrid} className="similar-grid">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} style={s.similarCard} onMouseEnter={(e) => e.currentTarget.style.borderColor = brandColor} onMouseLeave={(e) => e.currentTarget.style.borderColor = '#1F1F1F'}>
-                  <div style={s.similarLogo}>
-                    <span style={{ fontFamily: '"Playfair Display", serif', fontSize: '24px', fontStyle: 'italic', color: '#555' }}>B{i}</span>
+              {similarBrands.length > 0 ? similarBrands.map((b) => (
+                <div key={b.id} style={s.similarCard} onClick={() => navigate(`/explore-brand/${b.id}`)} onMouseEnter={(e) => e.currentTarget.style.borderColor = brandColor} onMouseLeave={(e) => e.currentTarget.style.borderColor = '#1F1F1F'}>
+                  <div style={{...s.similarLogo, backgroundImage: b.logo_url ? `url(${b.logo_url})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center'}}>
+                    {!b.logo_url && <span style={{ fontFamily: '"Playfair Display", serif', fontSize: '24px', fontStyle: 'italic', color: '#555' }}>{b.brand_name?.charAt(0)?.toUpperCase() || 'B'}</span>}
                   </div>
-                  <div style={s.similarName}>Oversight Brand {i}</div>
-                  <div style={s.similarCategory}>Clothing</div>
+                  <div style={s.similarName}>{b.brand_name || 'Curated Selection'}</div>
+                  <div style={s.similarCategory}>{b.brand_category || 'View Directory'}</div>
                 </div>
-              ))}
+              )) : (
+                 <div style={{ color: '#888', gridColumn: '1 / -1', textAlign: 'center', padding: '40px 0' }}>More brands joining soon...</div>
+              )}
             </div>
           </div>
 
           {/* Footer Area */}
           <div style={s.footer} className="footer">
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontFamily: '"Playfair Display", serif', fontSize: '14px', fontStyle: 'italic', fontWeight: 'bold', color: brandColor }}>Zizzystores</span>
-              <span style={{ fontSize: '9px', color: '#555', letterSpacing: '0.05em' }}>© 2024 DIGITAL ATELIER</span>
+              <span style={{ fontFamily: '"Playfair Display", serif', fontSize: '14px', fontStyle: 'italic', fontWeight: 'bold', color: brandColor }}>{brand.brand_name}</span>
+              <span style={{ fontSize: '9px', color: '#555', letterSpacing: '0.05em' }}>© {new Date().getFullYear()} DIGITAL ATELIER</span>
             </div>
             <div style={s.footerLinks} className="footer-links">
               <span style={{ cursor: 'pointer' }}>Privacy Policy</span>
@@ -323,6 +399,7 @@ export default function ExploreBrand() {
 
         </div>
       </div>
+      )}
     </div>
   );
 }

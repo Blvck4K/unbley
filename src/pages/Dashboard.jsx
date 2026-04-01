@@ -1,9 +1,99 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Bell, Moon, LayoutGrid, Store, User, Settings, HeadphonesIcon, TrendingUp, Package, BarChart3, CheckCircle2, ChevronRight, ShoppingBag, ArrowUpRight, Edit } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
 
 export default function Dashboard() {
+  const { user } = useAuth();
+  
+  const [profileData, setProfileData] = useState({
+    brand_name: 'Your Brand',
+    owner_name: 'Brand Owner',
+    email_address: 'business@example.com',
+    phone_number: 'N/A',
+    website_url: '',
+    logo_url: ''
+  });
+
+  // Real-Time Store Metrics
+  const [metrics, setMetrics] = useState({
+    totalSales: 0,
+    activeStock: 0,
+    totalTraffic: 0,
+    recentOrders: []
+  });
+
+  const [loadingMetrics, setLoadingMetrics] = useState(true);
+
+  useEffect(() => {
+    async function fetchDashboardData() {
+      if (!user) return;
+      try {
+        // --- 1. Fetch Profile Data ---
+        const { data: pData, error: pError } = await supabase
+          .from('brand_profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+          
+        if (pData) {
+          setProfileData(prev => ({
+            ...prev,
+            ...Object.fromEntries(Object.entries(pData).filter(([_, v]) => v != null && v !== ''))
+          }));
+        }
+
+        // --- 2. Fetch Live System Metrics ---
+        // Warning: This silently fails if store_data_schema.sql hasn't been run yet, 
+        // falling back to the 0 defaults neatly.
+        
+        // Sum total sales
+        const { data: salesData } = await supabase
+          .from('orders')
+          .select('total_amount')
+          .eq('brand_id', user.id);
+        const calcSales = salesData ? salesData.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0) : 0;
+
+        // Count active products
+        const { count: stockCount } = await supabase
+          .from('products')
+          .select('*', { count: 'exact', head: true })
+          .eq('brand_id', user.id)
+          .eq('status', 'active');
+
+        // Count traffic views
+        const { count: trafficCount } = await supabase
+          .from('store_traffic')
+          .select('*', { count: 'exact', head: true })
+          .eq('brand_id', user.id);
+
+        // Fetch the 3 most recent orders for Ledger
+        const { data: lastOrders } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('brand_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(3);
+
+        setMetrics({
+          totalSales: calcSales,
+          activeStock: stockCount || 0,
+          totalTraffic: trafficCount || 0,
+          recentOrders: lastOrders || []
+        });
+
+      } catch (err) {
+        console.error("Error loading live dashboard data:", err);
+      } finally {
+        setLoadingMetrics(false);
+      }
+    }
+    fetchDashboardData();
+  }, [user]);
+
   const brandColor = '#06acf8ff';
+  
   const s = {
     page: { backgroundColor: '#0A0A0A', color: '#E5E5E5', height: '100vh', overflow: 'hidden', display: 'flex', fontFamily: '"Inter", sans-serif' },
     sidebar: { width: '280px', borderRight: '1px solid #1F1F1F', padding: '0', display: 'flex', flexDirection: 'column' },
@@ -12,7 +102,7 @@ export default function Dashboard() {
     nav: { padding: '0', flex: 1 },
     navItem: (active) => ({ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px 40px', color: active ? '#FFF' : '#888', backgroundColor: active ? '#111' : 'transparent', borderLeft: active ? `3px solid ${brandColor}` : '3px solid transparent', cursor: 'pointer', fontSize: '12px', fontWeight: active ? '600' : '400', letterSpacing: '0.05em', transition: 'all 0.2s', textTransform: 'uppercase', textDecoration: 'none' }),
     userProfile: { padding: '24px 40px', borderTop: '1px solid #1F1F1F', display: 'flex', alignItems: 'center', gap: '16px', backgroundColor: '#111' },
-    userAvatar: { width: '40px', height: '40px', backgroundColor: '#333', overflow: 'hidden' },
+    userAvatar: { width: '40px', height: '40px', backgroundColor: '#333', overflow: 'hidden', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' },
     main: { flex: 1, display: 'flex', flexDirection: 'column' },
     header: { height: '80px', padding: '0 80px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #1F1F1F' },
     headerTitle: { fontFamily: '"Playfair Display", serif', fontSize: '24px', color: '#FFF', fontStyle: 'italic' },
@@ -29,21 +119,19 @@ export default function Dashboard() {
     cardTitle: { fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', textTransform: 'uppercase' },
     cardValue: { fontFamily: '"Playfair Display", serif', fontSize: '36px', color: '#FFF' },
     cardSubtitle: { fontSize: '11px', color: '#888', marginTop: '12px', letterSpacing: '0.05em', textTransform: 'uppercase' },
-    banner: { marginTop: '64px', position: 'relative', display: 'flex', backgroundColor: '#111', padding: '64px', border: '1px solid #1F1F1F' },
-    bannerBg: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'radial-gradient(circle at right, rgba(255, 255, 255, 0.03) 0%, transparent 60%)', pointerEvents: 'none' },
-    bannerContent: { flex: 1, zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' },
-    bannerBadge: { backgroundColor: brandColor, color: '#000', fontSize: '10px', fontWeight: '700', padding: '8px 16px', letterSpacing: '0.1em', marginBottom: '32px', textTransform: 'uppercase' },
-    bannerTitle: { fontFamily: '"Playfair Display", serif', fontSize: '40px', fontStyle: 'italic', color: '#FFF', lineHeight: '1.2', marginBottom: '24px' },
-    bannerDesc: { color: '#888', fontSize: '14px', lineHeight: '1.6', maxWidth: '400px', marginBottom: '40px' },
-    upgradeBtn: { backgroundColor: brandColor, color: '#000', padding: '16px 32px', fontSize: '12px', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '12px', border: 'none', cursor: 'pointer', transition: 'background-color 0.2s' },
-    bannerCard: { width: '320px', backgroundColor: '#0A0A0A', padding: '40px', border: '1px solid #1F1F1F', zIndex: 1, transform: 'rotate(2deg)', alignSelf: 'center', boxShadow: '0 20px 40px rgba(0,0,0,0.5)' },
     bottomGrid: { display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '32px', marginTop: '64px' },
     listRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '24px 32px', borderBottom: '1px solid #1F1F1F', ':last-child': { borderBottom: 'none' } },
-    statusBadge: (status) => ({ fontSize: '10px', fontWeight: '700', padding: '6px 12px', border: `1px solid ${status === 'green' ? brandColor : '#333'}`, color: status === 'green' ? '#000' : '#888', backgroundColor: status === 'green' ? brandColor : 'transparent', textTransform: 'uppercase', letterSpacing: '0.1em' }),
-    progressRow: { marginBottom: '32px' },
-    progressLabel: { display: 'flex', justifyContent: 'space-between', fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', textTransform: 'uppercase', marginBottom: '16px' },
-    progressBar: { height: '1px', backgroundColor: '#1F1F1F', width: '100%', position: 'relative' },
-    progressFill: (color, width) => ({ position: 'absolute', left: 0, top: 0, bottom: 0, backgroundColor: color, width: width })
+    statusBadge: (status) => ({ fontSize: '10px', fontWeight: '700', padding: '6px 12px', border: `1px solid ${status === 'green' ? brandColor : status === 'gray' ? '#444' : '#333'}`, color: status === 'green' ? '#000' : status === 'gray' ? '#CCC' : '#888', backgroundColor: status === 'green' ? brandColor : 'transparent', textTransform: 'uppercase', letterSpacing: '0.1em' })
+  };
+
+  // Safe formatting helpers
+  const formatMoney = (amount) => {
+    return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 }).format(amount);
+  };
+  
+  const formatCompact = (num) => {
+    if (num < 1000) return num;
+    return (num / 1000).toFixed(1) + 'k';
   };
 
   return (
@@ -72,6 +160,7 @@ export default function Dashboard() {
           .dash-list-row > div:last-child { text-align: left !important; }
         }
       `}</style>
+      
       {/* Sidebar */}
       <div style={s.sidebar} className="dash-sidebar">
         <div style={s.logoContainer} className="dash-logo-container">
@@ -88,10 +177,14 @@ export default function Dashboard() {
 
         <div style={s.userProfile} className="dash-user-profile">
           <div style={s.userAvatar}>
-            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop" alt="Julian Vane" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            {profileData.logo_url ? (
+              <img src={profileData.logo_url} alt={profileData.owner_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <span style={{ color: '#FFF' }}>{profileData.owner_name ? profileData.owner_name.charAt(0).toUpperCase() : 'U'}</span>
+            )}
           </div>
           <div>
-            <div style={{ fontSize: '12px', fontWeight: '700', color: '#FFF', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Julian Vane</div>
+            <div style={{ fontSize: '12px', fontWeight: '700', color: '#FFF', letterSpacing: '0.05em', textTransform: 'uppercase' }}>{profileData.owner_name}</div>
             <div style={{ fontSize: '10px', color: '#666', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: '4px' }}>Brand Director</div>
           </div>
         </div>
@@ -109,7 +202,11 @@ export default function Dashboard() {
           <div style={s.headerActions}>
             <Bell size={16} color="#888" cursor="pointer" />
             <Moon size={16} color="#888" cursor="pointer" />
-            <div style={s.premiumBadge}>MEMBERSHIP</div>
+            <Link to={`/shop-brand/${user?.id}`} style={{ textDecoration: 'none' }}>
+              <div style={{ ...s.premiumBadge, backgroundColor: brandColor, color: '#000', padding: '6px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Store size={14} /> MANAGE STORE
+              </div>
+            </Link>
           </div>
         </div>
 
@@ -119,128 +216,120 @@ export default function Dashboard() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: '1px solid #1F1F1F', paddingBottom: '40px' }} className="dash-brand-header">
             <div style={{ display: 'flex', gap: '32px', alignItems: 'center' }} className="dash-brand-info">
               <div style={{ width: '100px', height: '100px', border: '1px solid #333', backgroundColor: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                <img src="https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=200&h=200&fit=crop" alt="Brand Logo" style={{ width: '100%', height: '100%', objectFit: '', filter: 'grayscale(0%)' }} />
+                {profileData.logo_url ? (
+                  <img src={profileData.logo_url} alt="Brand Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <span style={{ fontSize: '48px', color: '#FFF', fontFamily: '"Playfair Display", serif', fontStyle: 'italic' }}>{profileData.brand_name.charAt(0).toUpperCase()}</span>
+                )}
               </div>
               <div>
                 <div style={s.sectionLabel}>
                   <div style={{ width: '2px', height: '12px', backgroundColor: '#FFF' }}></div>
                   Brand Profile
                 </div>
-                <h1 style={{ ...s.mainTitle, fontSize: '36px', marginBottom: '16px', lineHeight: '1' }}>Zizzy W3ars</h1>
-                <div style={{ display: 'flex', gap: '24px', color: '#888', fontSize: '12px', letterSpacing: '0.05em' }}>
+                <h1 style={{ ...s.mainTitle, fontSize: '36px', marginBottom: '16px', lineHeight: '1' }}>{profileData.brand_name}</h1>
+                <div style={{ display: 'flex', gap: '24px', color: '#888', fontSize: '12px', letterSpacing: '0.05em', flexWrap: 'wrap' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ color: '#FFF', fontWeight: '600' }}>Email:</span> contact@zizzywears.com
+                    <span style={{ color: '#FFF', fontWeight: '600' }}>Email:</span> {profileData.email_address}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ color: '#FFF', fontWeight: '600' }}>Phone:</span> +1 (555) 123-4567
+                    <span style={{ color: '#FFF', fontWeight: '600' }}>Phone:</span> {profileData.phone_number}
                   </div>
                 </div>
               </div>
             </div>
+            
             <div style={{ padding: '24px', border: '1px solid #1F1F1F', backgroundColor: '#111', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }} className="dash-live-domain">
               <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', textTransform: 'uppercase', marginBottom: '8px' }}>Live Domain</div>
-              <a href="https://zizzywears.com" target="_blank" rel="noopener noreferrer" style={{ fontSize: '14px', color: '#FFF', textDecoration: 'none', borderBottom: '1px solid #FFF', paddingBottom: '2px', display: 'flex', alignItems: 'center' }}>
-                zizzywears.com <ArrowUpRight size={14} style={{ marginLeft: '6px' }} />
-              </a>
+              {profileData.website_url ? (
+                <a href={profileData.website_url.startsWith('http') ? profileData.website_url : `https://${profileData.website_url}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: '14px', color: '#FFF', textDecoration: 'none', borderBottom: '1px solid #FFF', paddingBottom: '2px', display: 'flex', alignItems: 'center' }}>
+                  {profileData.website_url.replace(/^https?:\/\//, '')} <ArrowUpRight size={14} style={{ marginLeft: '6px' }} />
+                </a>
+              ) : (
+                <span style={{ fontSize: '12px', color: '#888', fontStyle: 'italic' }}>activation pending</span>
+              )}
             </div>
           </div>
 
-          {/* Stats Grid */}
+          {/* Dynamic Real-Time Stats Grid */}
           <div style={s.statsGrid} className="dash-stats-grid">
             <div style={s.card}>
               <div style={s.cardHeader}>
                 <div style={{ border: '1px solid #333', padding: '8px' }}>
                   <TrendingUp size={14} color="#FFF" />
                 </div>
-                <div style={{ fontSize: '10px', fontWeight: '700', color: '#666', letterSpacing: '0.1em', textTransform: 'uppercase' }}>+12.4% THIS MONTH</div>
+                <div style={{ fontSize: '10px', fontWeight: '700', color: '#666', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                  {metrics.totalSales > 0 ? '+12.4% THIS MONTH' : 'NO DATA YET'}
+                </div>
               </div>
               <div style={s.cardTitle}>Total Sales</div>
-              <div style={s.cardValue}>₦12,450,000</div>
+              <div style={s.cardValue}>{formatMoney(metrics.totalSales)}</div>
 
               <div style={{ marginTop: '32px', width: '100%', height: '1px', backgroundColor: '#1F1F1F', position: 'relative' }}>
-                <div style={{ position: 'absolute', top: 0, left: 0, width: '60%', height: '1px', backgroundColor: '#FFF' }}></div>
+                <div style={{ position: 'absolute', top: 0, left: 0, width: metrics.totalSales > 0 ? '60%' : '0%', height: '1px', backgroundColor: '#FFF', transition: 'width 1s cubic-bezier(0.16, 1, 0.3, 1)' }}></div>
               </div>
             </div>
 
             <div style={s.card}>
               <div style={s.cardHeader}>
                 <Package size={18} color="#888" />
-                <div style={{ fontSize: '10px', fontWeight: '700', color: '#666', letterSpacing: '0.1em', textTransform: 'uppercase' }}>ACTIVE</div>
+                <div style={{ fontSize: '10px', fontWeight: '700', color: '#666', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{metrics.activeStock > 0 ? 'ACTIVE' : 'EMPTY'}</div>
               </div>
               <div style={s.cardTitle}>Stock Portfolio</div>
-              <div style={s.cardValue}>142</div>
-              <div style={s.cardSubtitle}>Across 4 collections</div>
+              <div style={s.cardValue}>{metrics.activeStock}</div>
+              <div style={s.cardSubtitle}>Total Product Listings</div>
             </div>
 
             <div style={s.card}>
               <div style={s.cardHeader}>
                 <BarChart3 size={18} color="#888" />
-                <div style={{ fontSize: '10px', fontWeight: '700', color: '#666', letterSpacing: '0.1em', textTransform: 'uppercase' }}>LIVE NOW</div>
+                <div style={{ fontSize: '10px', fontWeight: '700', color: '#666', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{metrics.totalTraffic > 0 ? 'LIVE NOW' : 'AWAITING TRAFFIC'}</div>
               </div>
               <div style={s.cardTitle}>Your Traffic</div>
-              <div style={s.cardValue}>8.2k</div>
-              <div style={s.cardSubtitle}>Visitors</div>
+              <div style={s.cardValue}>{formatCompact(metrics.totalTraffic)}</div>
+              <div style={s.cardSubtitle}>Unique Store Visitors</div>
             </div>
           </div>
 
-          {/* Bottom Grid */}
+          {/* Bottom Ledger Grid */}
           <div style={s.bottomGrid} className="dash-bottom-grid">
             <div style={{ backgroundColor: '#111', border: '1px solid #1F1F1F' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '32px', borderBottom: '1px solid #1F1F1F' }}>
                 <div style={{ fontFamily: '"Playfair Display", serif', fontSize: '24px', color: '#FFF', fontStyle: 'italic' }}>Recent Orders</div>
-                <div style={{ fontSize: '10px', color: '#FFF', letterSpacing: '0.1em', fontWeight: '700', textTransform: 'uppercase', cursor: 'pointer', borderBottom: '1px solid #FFF' }}>View Full Ledger</div>
+                {metrics.recentOrders.length > 0 && <div style={{ fontSize: '10px', color: '#FFF', letterSpacing: '0.1em', fontWeight: '700', textTransform: 'uppercase', cursor: 'pointer', borderBottom: '1px solid #FFF' }}>View Full Ledger</div>}
               </div>
 
-              <div style={s.listRow} className="dash-list-row">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-                  <div style={{ width: '48px', height: '48px', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <ShoppingBag size={18} color="#666" />
+              {metrics.recentOrders.length > 0 ? (
+                metrics.recentOrders.map((order, index) => (
+                  <div key={order.id} style={s.listRow} className="dash-list-row">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+                      <div style={{ width: '48px', height: '48px', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <ShoppingBag size={18} color="#666" />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '10px', fontWeight: '700', color: '#666', letterSpacing: '0.1em', marginBottom: '8px', textTransform: 'uppercase' }}>{order.order_number}</div>
+                        <div style={{ fontSize: '14px', color: '#FFF' }}>{order.product_name_snapshot}</div>
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: '14px', fontWeight: '600', color: '#FFF', marginBottom: '12px' }}>{formatMoney(order.total_amount)}</div>
+                      <div style={s.statusBadge(order.status === 'processing' ? 'gray' : order.status === 'completed' ? 'green' : 'gray')}>
+                        {order.status === 'processing' ? 'Processing' : order.status === 'completed' ? 'Paid & Ready' : order.status}
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <div style={{ fontSize: '10px', fontWeight: '700', color: '#666', letterSpacing: '0.1em', marginBottom: '8px', textTransform: 'uppercase' }}>ORD-22485</div>
-                    <div style={{ fontSize: '14px', color: '#FFF' }}>Velvet Minimalist Armchair</div>
+                ))
+              ) : (
+                <div style={{ padding: '64px', textAlign: 'center' }}>
+                  <div style={{ display: 'inline-flex', padding: '16px', backgroundColor: '#1A1A1A', borderRadius: '50%', marginBottom: '24px' }}>
+                    <Package size={24} color="#666" />
                   </div>
+                  <div style={{ fontSize: '14px', color: '#FFF', marginBottom: '8px' }}>Your Ledger is Empty</div>
+                  <div style={{ fontSize: '12px', color: '#666' }}>Incoming orders will securely populate here.</div>
                 </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '14px', fontWeight: '600', color: '#FFF', marginBottom: '12px' }}>₦450,000</div>
-                  <div style={s.statusBadge('green')}>Paid & Ready</div>
-                </div>
-              </div>
+              )}
 
-              <div style={s.listRow} className="dash-list-row">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-                  <div style={{ width: '48px', height: '48px', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <ShoppingBag size={18} color="#666" />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '10px', fontWeight: '700', color: '#666', letterSpacing: '0.1em', marginBottom: '8px', textTransform: 'uppercase' }}>ORD-22482</div>
-                    <div style={{ fontSize: '14px', color: '#FFF' }}>Sculptural Glass Vessel</div>
-                  </div>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '14px', fontWeight: '600', color: '#FFF', marginBottom: '12px' }}>₦85,000</div>
-                  <div style={{ ...s.statusBadge('gray') }}>Processing</div>
-                </div>
-              </div>
-
-              <div style={s.listRow} className="dash-list-row">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-                  <div style={{ width: '48px', height: '48px', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <ShoppingBag size={18} color="#666" />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '10px', fontWeight: '700', color: '#666', letterSpacing: '0.1em', marginBottom: '8px', textTransform: 'uppercase' }}>ORD-22480</div>
-                    <div style={{ fontSize: '14px', color: '#FFF' }}>Monolith Concrete Table</div>
-                  </div>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '14px', fontWeight: '600', color: '#FFF', marginBottom: '12px' }}>₦1,200,000</div>
-                  <div style={{ ...s.statusBadge('green') }}>Dispatched</div>
-                </div>
-              </div>
             </div>
-
-
           </div>
 
         </div>

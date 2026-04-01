@@ -1,6 +1,8 @@
-import React from 'react';
-import { Search, Bell, Moon, LayoutGrid, Store, User, Settings, HeadphonesIcon, Globe, Camera, Share2, Mail, ArrowRight, Edit, Heart, Bookmark } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Bell, LayoutGrid, User, Settings, HeadphonesIcon, Globe, Heart, Bookmark, Edit, Mail, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
 
 const FacebookIcon = ({ size = 14, color = "currentColor" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke="none">
@@ -24,10 +26,67 @@ const TwitterIcon = ({ size = 14, color = "currentColor" }) => (
 );
 
 export default function Profile() {
+  const { user } = useAuth();
+  
+  // Base State Loading
+  const [loading, setLoading] = useState(true);
+  
+  // Real-time Data Mapping
+  const [profileData, setProfileData] = useState({
+    brand_name: 'Your Brand',
+    owner_name: 'Brand Owner',
+    email_address: 'email@example.com',
+    phone_number: 'N/A',
+    brand_narrative: 'No narrative provided.',
+    manifesto: 'No manifesto provided.',
+    primary_color: '#0A0A0A',
+    secondary_color: '#111111',
+    accent_color: '#06acf8',
+    logo_url: '',
+    banner_url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1200&q=80',
+    product_1_url: 'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=800&q=80',
+    product_2_url: 'https://images.unsplash.com/photo-1584916201218-f4242ceb4809?w=600&q=80',
+    product_3_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&q=80',
+    product_4_url: 'https://images.unsplash.com/photo-1516280440502-617513511eb4?w=300&q=80',
+    instagram_url: '',
+    twitter_url: '',
+    facebook_url: '',
+    tiktok_url: '',
+    website_url: ''
+  });
+
+  useEffect(() => {
+    async function fetchProfile() {
+      if (!user) return;
+      try {
+        const { data, error } = await supabase
+          .from('brand_profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+          
+        if (data) {
+          // Merge fetched data onto defaults to preserve fallback placeholder URLs if empty
+          setProfileData(prev => ({
+            ...prev,
+            ...Object.fromEntries(Object.entries(data).filter(([_, v]) => v != null && v !== ''))
+          }));
+        }
+      } catch (err) {
+        console.error("Error loading profile data:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchProfile();
+  }, [user]);
+
   const brandColor = '#06acf8ff';
+  const primaryColor = '#0A0A0A';
+  const secondaryColor = '#111';
 
   const s = {
-    page: { backgroundColor: '#0A0A0A', color: '#E5E5E5', height: '100vh', overflow: 'hidden', display: 'flex', fontFamily: '"Inter", sans-serif' },
+    page: { backgroundColor: primaryColor, color: '#E5E5E5', height: '100vh', overflow: 'hidden', display: 'flex', fontFamily: '"Inter", sans-serif' },
     sidebar: { width: '280px', borderRight: '1px solid #1F1F1F', padding: '0', display: 'flex', flexDirection: 'column' },
     logoContainer: { padding: '60px 40px', display: 'flex', flexDirection: 'column' },
     logo: { fontFamily: '"Playfair Display", serif', fontSize: '18px', letterSpacing: '0.05em', color: brandColor, textTransform: 'uppercase' },
@@ -38,7 +97,7 @@ export default function Profile() {
       gap: '16px',
       padding: '16px 40px',
       color: active ? '#FFF' : '#888',
-      backgroundColor: active ? '#111' : 'transparent',
+      backgroundColor: active ? secondaryColor : 'transparent',
       borderLeft: active ? `3px solid ${brandColor}` : '3px solid transparent',
       cursor: 'pointer',
       fontSize: '12px',
@@ -48,33 +107,34 @@ export default function Profile() {
       textTransform: 'uppercase',
       textDecoration: 'none'
     }),
-    userProfile: { padding: '24px 40px', borderTop: '1px solid #1F1F1F', display: 'flex', alignItems: 'center', gap: '16px', backgroundColor: '#111' },
-    userAvatar: { width: '40px', height: '40px', backgroundColor: '#333', overflow: 'hidden', borderRadius: '50%' },
+    userProfile: { padding: '24px 40px', borderTop: '1px solid #1F1F1F', display: 'flex', alignItems: 'center', gap: '16px', backgroundColor: secondaryColor },
+    userAvatar: { width: '40px', height: '40px', backgroundColor: '#333', overflow: 'hidden', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' },
     main: { flex: 1, display: 'flex', flexDirection: 'column' },
     header: { height: '80px', padding: '0 80px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #1F1F1F' },
     headerTitle: { fontFamily: '"Playfair Display", serif', fontSize: '24px', color: '#FFF' },
-    searchBar: { display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#111', padding: '10px 16px', width: '320px', border: '1px solid #1F1F1F', borderRadius: '4px' },
+    searchBar: { display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: secondaryColor, padding: '10px 16px', width: '320px', border: '1px solid #1F1F1F', borderRadius: '4px' },
     searchInput: { background: 'transparent', border: 'none', color: '#FFF', fontSize: '12px', outline: 'none', width: '100%', letterSpacing: '0.05em' },
     headerActions: { display: 'flex', alignItems: 'center', gap: '24px' },
-    shopBtn: { backgroundColor: brandColor, color: '#000', fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', padding: '10px 20px', textTransform: 'uppercase', border: 'none', cursor: 'pointer', borderRadius: '4px' },
+    
     content: { padding: '80px', flex: 1, overflowY: 'auto' },
 
     // Components
-    banner: { position: 'relative', height: '400px', backgroundColor: '#111', border: '1px solid #1F1F1F', display: 'flex', flexDirection: 'column', padding: '64px', overflow: 'hidden', marginBottom: '32px' },
-    bannerBg: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundImage: 'url("https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1200&q=80")', backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.2 },
+    banner: { position: 'relative', height: '400px', backgroundColor: secondaryColor, border: '1px solid #1F1F1F', display: 'flex', flexDirection: 'column', padding: '64px', overflow: 'hidden', marginBottom: '32px' },
+    bannerBg: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundImage: `url("${profileData.banner_url || "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1200&q=80"}")`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.2 },
     bannerContent: { position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: '32px', marginTop: 'auto' },
-    brandBadge: { width: '80px', height: '80px', border: `2px solid ${brandColor}`, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#111' },
+    brandBadge: { width: '80px', height: '80px', border: `2px solid ${brandColor}`, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: secondaryColor, overflow: 'hidden' },
     brandBadgeText: { fontFamily: '"Playfair Display", serif', fontSize: '24px', fontStyle: 'italic', color: brandColor },
+    brandBadgeImg: { width: '100%', height: '100%', objectFit: 'cover' },
 
     sectionTitleBase: { fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '16px' },
 
     gridContainer: { display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) 2fr', gap: '32px', marginBottom: '64px' },
-    infoBox: { backgroundColor: '#111', border: '1px solid #1F1F1F', padding: '32px', marginBottom: '24px' },
+    infoBox: { backgroundColor: secondaryColor, border: '1px solid #1F1F1F', padding: '32px', marginBottom: '24px' },
     infoItem: { marginBottom: '24px' },
     infoLabel: { fontSize: '9px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', textTransform: 'uppercase', marginBottom: '8px' },
     infoValue: { fontSize: '14px', color: '#FFF', fontFamily: '"Playfair Display", serif', fontStyle: 'italic' },
 
-    narrativeBox: { backgroundColor: '#111', border: '1px solid #1F1F1F', padding: '48px', position: 'relative' },
+    narrativeBox: { backgroundColor: secondaryColor, border: '1px solid #1F1F1F', padding: '48px', position: 'relative' },
     narrativeTitle: { fontFamily: '"Playfair Display", serif', fontSize: '32px', fontStyle: 'italic', color: '#FFF', lineHeight: '1.2', marginBottom: '24px', maxWidth: '80%' },
     narrativeText: { color: '#888', fontSize: '14px', lineHeight: '1.6', marginBottom: '48px', maxWidth: '90%' },
 
@@ -88,20 +148,35 @@ export default function Profile() {
     exploreLink: { fontSize: '12px', color: '#FFF', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px', letterSpacing: '0.05em' },
 
     productGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' },
-    productMain: { backgroundColor: '#111', height: '500px', backgroundImage: 'url("https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=800&q=80")', backgroundSize: 'cover', backgroundPosition: 'center' },
+    productMain: { backgroundColor: secondaryColor, height: '500px', backgroundImage: `url("${profileData.product_1_url}")`, backgroundSize: 'cover', backgroundPosition: 'center', borderRadius: '4px' },
     productSubGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: '16px', height: '500px' },
-    productItemCard: { backgroundColor: '#111', backgroundSize: 'cover', backgroundPosition: 'center' },
+    productItemCard: { backgroundColor: secondaryColor, backgroundSize: 'cover', backgroundPosition: 'center', borderRadius: '4px' },
 
-    newsletterBox: { border: `2px solid ${brandColor}`, padding: '64px', textAlign: 'center', backgroundColor: '#0A0A0A', marginBottom: '64px' },
+    newsletterBox: { border: `2px solid ${brandColor}`, padding: '64px', textAlign: 'center', backgroundColor: primaryColor, marginBottom: '64px' },
     newsletterTitle: { fontFamily: '"Playfair Display", serif', fontSize: '32px', fontStyle: 'italic', color: '#FFF', marginBottom: '16px', marginTop: '24px' },
     newsletterDesc: { color: '#888', fontSize: '14px', marginBottom: '40px', maxWidth: '500px', margin: '0 auto 40px' },
     newsletterForm: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '24px', borderBottom: '1px solid #333', maxWidth: '400px', margin: '0 auto', paddingBottom: '16px' },
     newsletterInput: { background: 'transparent', border: 'none', color: '#FFF', fontSize: '12px', outline: 'none', flex: 1, letterSpacing: '0.05em' },
     newsletterBtn: { background: 'transparent', border: 'none', color: brandColor, fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer' },
 
-    footer: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #1F1F1F', paddingTop: '32px' },
+    footer: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #1F1F1F', paddingTop: '32px', paddingBottom: '32px' },
     footerLinks: { display: 'flex', gap: '32px', fontSize: '9px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', textTransform: 'uppercase' },
   };
+
+  const ConnectivityIconWrapper = ({ url, children }) => {
+    if (!url) return null;
+    return (
+      <a href={url.startsWith('http') ? url : `https://${url}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+        <div style={{ width: '40px', height: '40px', borderRadius: '50%', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.color = '#FFF'; e.currentTarget.style.borderColor = '#FFF' }} onMouseLeave={(e) => { e.currentTarget.style.color = '#888'; e.currentTarget.style.borderColor = '#333' }}>
+          {children}
+        </div>
+      </a>
+    );
+  };
+
+  if (loading) {
+    return <div style={{...s.page, alignItems: 'center', justifyContent: 'center'}}>Loading Profile...</div>;
+  }
 
   return (
     <div style={s.page} className="prof-page">
@@ -112,7 +187,7 @@ export default function Profile() {
           .prof-logo-container { padding: 24px !important; flex-direction: row !important; justify-content: space-between; align-items: center; }
           .prof-nav { display: flex; overflow-x: auto; padding-bottom: 8px !important; white-space: nowrap; }
           .prof-nav a, .prof-nav div { border-left: none !important; border-bottom: 3px solid transparent; padding: 12px 24px !important; margin-top: 0 !important; }
-          .prof-nav a[style*="border-left"] { border-bottom: 3px solid #06acf8ff !important; }
+          .prof-nav a[style*="border-left"] { border-bottom: 3px solid ${brandColor} !important; }
           .prof-user-profile { display: none !important; }
           
           .prof-header { height: auto !important; padding: 24px !important; flex-wrap: wrap; gap: 16px; justify-content: space-between; }
@@ -142,6 +217,7 @@ export default function Profile() {
           .prof-footer-links { flex-wrap: wrap; justify-content: center; }
         }
       `}</style>
+      
       {/* Sidebar */}
       <div style={s.sidebar} className="prof-sidebar">
         <div style={s.logoContainer} className="prof-logo-container">
@@ -158,10 +234,14 @@ export default function Profile() {
 
         <div style={s.userProfile} className="prof-user-profile">
           <div style={s.userAvatar}>
-            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop" alt="Alex Zizzy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            {profileData.logo_url ? (
+              <img src={profileData.logo_url} alt={profileData.owner_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <span style={{ color: '#FFF' }}>{profileData.owner_name ? profileData.owner_name.charAt(0).toUpperCase() : 'U'}</span>
+            )}
           </div>
           <div>
-            <div style={{ fontSize: '12px', fontWeight: '700', color: '#FFF', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Alex Zizzy</div>
+            <div style={{ fontSize: '12px', fontWeight: '700', color: '#FFF', letterSpacing: '0.05em', textTransform: 'uppercase' }}>{profileData.owner_name}</div>
             <div style={{ fontSize: '10px', color: '#666', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: '4px' }}>Principal Curator</div>
           </div>
         </div>
@@ -197,11 +277,15 @@ export default function Profile() {
             <div style={s.bannerBg}></div>
             <div style={s.bannerContent} className="prof-banner-content">
               <div style={s.brandBadge}>
-                <span style={s.brandBadgeText}>Zs</span>
+                {profileData.logo_url ? (
+                  <img src={profileData.logo_url} alt="Brand Logo" style={s.brandBadgeImg} />
+                ) : (
+                  <span style={s.brandBadgeText}>{profileData.brand_name.charAt(0).toUpperCase()}s</span>
+                )}
               </div>
               <div>
                 <div style={{ ...s.sectionTitleBase, color: brandColor }}>Brand Identity</div>
-                <h1 style={{ fontFamily: '"Playfair Display", serif', fontStyle: 'italic', fontSize: '48px', color: '#FFF', margin: 0 }}>Zizzystores</h1>
+                <h1 style={{ fontFamily: '"Playfair Display", serif', fontStyle: 'italic', fontSize: '48px', color: '#FFF', margin: 0 }}>{profileData.brand_name}</h1>
               </div>
             </div>
           </div>
@@ -215,68 +299,66 @@ export default function Profile() {
 
                 <div style={s.infoItem}>
                   <div style={s.infoLabel}>Brand Name</div>
-                  <div style={s.infoValue}>Zizzystores</div>
+                  <div style={s.infoValue}>{profileData.brand_name}</div>
                 </div>
 
                 <div style={s.infoItem}>
                   <div style={s.infoLabel}>Brand Owner</div>
-                  <div style={{ ...s.infoValue, color: '#CCC' }}>Alex Zizzy</div>
+                  <div style={{ ...s.infoValue, color: '#CCC' }}>{profileData.owner_name}</div>
                 </div>
 
                 <div style={s.infoItem}>
                   <div style={s.infoLabel}>Email Inquiry</div>
-                  <div style={{ fontSize: '12px', color: brandColor, fontWeight: '600', letterSpacing: '0.05em', textTransform: 'uppercase' }}>info@zizzystores.com</div>
+                  <div style={{ fontSize: '12px', color: brandColor, fontWeight: '600', letterSpacing: '0.05em', textTransform: 'uppercase' }}>{profileData.email_address}</div>
                 </div>
 
                 <div style={{ ...s.infoItem, marginBottom: 0 }}>
                   <div style={s.infoLabel}>Concierge Line</div>
-                  <div style={{ fontSize: '12px', color: '#FFF', fontWeight: '500', letterSpacing: '0.05em' }}>+1 888 ATELIER</div>
+                  <div style={{ fontSize: '12px', color: '#FFF', fontWeight: '500', letterSpacing: '0.05em' }}>{profileData.phone_number}</div>
                 </div>
               </div>
 
               <div style={s.infoBox}>
                 <div style={{ ...s.sectionTitleBase, color: brandColor }}>Quick Connectivity</div>
-                <div style={{ display: 'flex', gap: '16px' }}>
-                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.color = '#FFF'; e.currentTarget.style.borderColor = '#FFF' }} onMouseLeave={(e) => { e.currentTarget.style.color = '#888'; e.currentTarget.style.borderColor = '#333' }}>
+                <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                  <ConnectivityIconWrapper url={profileData.website_url}>
                     <Globe size={16} color="currentColor" />
-                  </div>
-                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.color = '#FFF'; e.currentTarget.style.borderColor = '#FFF' }} onMouseLeave={(e) => { e.currentTarget.style.color = '#888'; e.currentTarget.style.borderColor = '#333' }}>
+                  </ConnectivityIconWrapper>
+                  <ConnectivityIconWrapper url={profileData.instagram_url}>
                     <InstagramIcon size={16} color="currentColor" />
-                  </div>
-                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.color = '#FFF'; e.currentTarget.style.borderColor = '#FFF' }} onMouseLeave={(e) => { e.currentTarget.style.color = '#888'; e.currentTarget.style.borderColor = '#333' }}>
+                  </ConnectivityIconWrapper>
+                  <ConnectivityIconWrapper url={profileData.twitter_url}>
                     <TwitterIcon size={16} color="currentColor" />
-                  </div>
-                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.color = '#FFF'; e.currentTarget.style.borderColor = '#FFF' }} onMouseLeave={(e) => { e.currentTarget.style.color = '#888'; e.currentTarget.style.borderColor = '#333' }}>
+                  </ConnectivityIconWrapper>
+                  <ConnectivityIconWrapper url={profileData.facebook_url}>
                     <FacebookIcon size={16} color="currentColor" />
-                  </div>
-                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.color = '#FFF'; e.currentTarget.style.borderColor = '#FFF' }} onMouseLeave={(e) => { e.currentTarget.style.color = '#888'; e.currentTarget.style.borderColor = '#333' }}>
+                  </ConnectivityIconWrapper>
+                  <ConnectivityIconWrapper url={profileData.tiktok_url}>
                     <TikTokIcon size={16} color="currentColor" />
-                  </div>
+                  </ConnectivityIconWrapper>
+                  
+                  {/* Fallback if no URLs are added */}
+                  {!profileData.website_url && !profileData.instagram_url && !profileData.twitter_url && !profileData.facebook_url && !profileData.tiktok_url && (
+                    <span style={{ fontSize: '10px', color: '#666', fontStyle: 'italic' }}>No social links configured.</span>
+                  )}
                 </div>
               </div>
             </div>
 
             {/* Right Column */}
             <div style={s.narrativeBox} className="prof-narrative-box">
-              <div style={s.narrativeBg}></div>
               <div style={{ position: 'relative', zIndex: 1 }}>
                 <div style={{ ...s.sectionTitleBase, color: brandColor }}>The Brand Narrative</div>
                 <h2 style={s.narrativeTitle} className="prof-narrative-title">Transcending the ordinary through the Digital Atelier experience.</h2>
                 <p style={s.narrativeText} className="prof-narrative-text">
-                  Zizzystores isn't just a marketplace. It's a curated ecosystem where digital craftsmanship meets commercial viability. We believe that every product carries a soul, and every store should be an architectural masterpiece. Our mission is to redefine luxury in the digital age by prioritizing breathing room and editorial excellence over sheer volume.
+                  {profileData.brand_narrative}
                 </p>
 
                 <div style={s.subGrid} className="prof-sub-grid">
                   <div>
                     <div style={s.subTitle}>Our Manifesto</div>
                     <p style={s.subText}>
-                      Designing the future of digital commerce through high-fidelity aesthetics and surgical precision in brand narrative. We are curators first, sellers second.
-                    </p>
-                  </div>
-                  <div>
-                    <div style={s.subTitle}>Architectura Lethos</div>
-                    <p style={s.subText}>
-                      A proprietary aesthetic engine that ensures every touchpoint feels like a high-end physical boutique in the digital realm.
+                      {profileData.manifesto}
                     </p>
                   </div>
                 </div>
@@ -296,18 +378,18 @@ export default function Profile() {
               <div style={s.productMain} className="prof-product-main"></div>
               <div style={s.productSubGrid} className="prof-product-sub-grid">
                 {/* Top Bag */}
-                <div style={{ ...s.productItemCard, gridColumn: '1 / span 2', backgroundImage: 'url("https://images.unsplash.com/photo-1584916201218-f4242ceb4809?w=600&q=80")', borderRadius: '4px' }} className="prof-product-item-card"></div>
+                <div style={{ ...s.productItemCard, gridColumn: '1 / span 2', backgroundImage: `url("${profileData.product_2_url}")` }} className="prof-product-item-card"></div>
                 {/* Bottom Left Face */}
-                <div style={{ ...s.productItemCard, backgroundImage: 'url("https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&q=80")', borderRadius: '4px', filter: 'grayscale(100%)' }} className="prof-product-item-card"></div>
+                <div style={{ ...s.productItemCard, backgroundImage: `url("${profileData.product_3_url}")` }} className="prof-product-item-card"></div>
                 {/* Bottom Right Mixer */}
-                <div style={{ ...s.productItemCard, backgroundImage: 'url("https://images.unsplash.com/photo-1516280440502-617513511eb4?w=300&q=80")', borderRadius: '4px', filter: 'grayscale(100%)' }} className="prof-product-item-card"></div>
+                <div style={{ ...s.productItemCard, backgroundImage: `url("${profileData.product_4_url}")` }} className="prof-product-item-card"></div>
               </div>
             </div>
           </div>
 
           {/* Newsletter / Footer Box */}
           <div style={s.newsletterBox} className="prof-newsletter">
-            <div style={{ display: 'inline-block', backgroundColor: '#111', padding: '16px', borderRadius: '50%', marginBottom: '16px' }}>
+            <div style={{ display: 'inline-block', backgroundColor: secondaryColor, padding: '16px', borderRadius: '50%', marginBottom: '16px' }}>
               <Mail size={24} color={brandColor} />
             </div>
             <h2 style={s.newsletterTitle}>Join the Atelier Inner Circle</h2>
@@ -323,8 +405,8 @@ export default function Profile() {
           {/* Footer Area */}
           <div style={s.footer} className="prof-footer">
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontFamily: '"Playfair Display", serif', fontSize: '14px', fontStyle: 'italic', fontWeight: 'bold', color: brandColor }}>Zizzystores</span>
-              <span style={{ fontSize: '9px', color: '#555', letterSpacing: '0.05em' }}>© 2024 DIGITAL ATELIER</span>
+              <span style={{ fontFamily: '"Playfair Display", serif', fontSize: '14px', fontStyle: 'italic', fontWeight: 'bold', color: brandColor }}>{profileData.brand_name}</span>
+              <span style={{ fontSize: '9px', color: '#555', letterSpacing: '0.05em' }}>© {new Date().getFullYear()} DIGITAL ATELIER</span>
             </div>
             <div style={s.footerLinks} className="prof-footer-links">
               <span style={{ cursor: 'pointer' }}>Privacy Policy</span>

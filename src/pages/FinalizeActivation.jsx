@@ -1,7 +1,87 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Shield, Lock, CreditCard, Sparkles, Globe, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { usePaystackPayment } from 'react-paystack';
+import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabase';
+import { useNavigate } from 'react-router-dom';
 
 export default function FinalizeActivation() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  
+  const [processing, setProcessing] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+
+  // Setup Paystack API configuration globally referencing the user's data
+  const config = {
+    reference: (new Date()).getTime().toString(),
+    email: user?.email || "pending@zizzystores.com",
+    amount: 30000 * 100, // Value is inside Kobo (Naira * 100)
+    publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || '', // You MUST have this in .env
+    metadata: {
+      custom_fields: [
+        {
+          display_name: 'Store ID',
+          variable_name: 'store_id',
+          value: user?.id
+        }
+      ]
+    }
+  };
+
+  const initializePayment = usePaystackPayment(config);
+
+  const onSuccess = async (reference) => {
+    setProcessing(true);
+    setErrorMsg('');
+    try {
+      // 1. Physically unlock the store gateway barrier in the Postgres DB
+      const { error: dbError } = await supabase
+        .from('brand_profiles')
+        .update({ store_active: true, updated_at: new Date() })
+        .eq('id', user.id);
+        
+      if (dbError) throw dbError;
+
+      // 2. Refresh the local Auth Session immediately so ProtectedRoute recognizes payment
+      const { error: authError } = await supabase.auth.updateUser({
+        data: { store_active: true }
+      });
+      
+      if (authError) throw authError;
+
+      // 3. Complete! Navigate to Success Page with transaction details.
+      navigate('/success', { 
+        state: { 
+          reference: reference.reference, 
+          amount: 30000, 
+          email: user?.email,
+          brandName: user?.user_metadata?.brand_name || 'Your Premium Store'
+        } 
+      });
+      
+    } catch (err) {
+      console.error("Critical Post-Payment DB failure:", err);
+      setErrorMsg("Payment processed successfully but the database faltered. Please reach out to support with reference: " + reference.reference);
+      setProcessing(false);
+    }
+  };
+
+  const onClose = () => {
+    // Fired when the user cancels the modal explicitly
+    console.log('Customer abandoned checkout flow');
+    setProcessing(false);
+  };
+
+  const handlePayClick = () => {
+    if (!import.meta.env.VITE_PAYSTACK_PUBLIC_KEY) {
+      alert("System Configuration Error: Please add your VITE_PAYSTACK_PUBLIC_KEY to the .env file to enable processing!");
+      return;
+    }
+    setProcessing(true);
+    initializePayment(onSuccess, onClose);
+  };
+
   const brandColor = '#06acf8';
   const bgColorLeft = '#121212';
   const bgColorRight = '#080808';
@@ -11,25 +91,9 @@ export default function FinalizeActivation() {
 
     // Left Pane
     leftPane: {
-
-      flex: 1,
-      backgroundColor: bgColorLeft,
-      position: 'relative',
-      display: 'flex',
-      flexDirection: 'column',
-      padding: '48px 64px',
-      overflow: 'hidden',
-      borderRight: '1px solid #1F1F1F'
+      flex: 1, backgroundColor: bgColorLeft, position: 'relative', display: 'flex', flexDirection: 'column', padding: '48px 64px', overflow: 'hidden', borderRight: '1px solid #1F1F1F'
     },
-    // Background effect (Diagonal lines simulation)
-    bgEffect: {
-      position: 'absolute',
-      top: 0, left: 0, right: 0, bottom: 0,
-      background: 'linear-gradient(135deg, rgba(255,255,255,0.01) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.01) 50%, rgba(255,255,255,0.01) 75%, transparent 75%, transparent)',
-      backgroundSize: '100px 100px',
-      opacity: 0.5,
-      zIndex: 0
-    },
+    bgEffect: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(135deg, rgba(255,255,255,0.01) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.01) 50%, rgba(255,255,255,0.01) 75%, transparent 75%, transparent)', backgroundSize: '100px 100px', opacity: 0.5, zIndex: 0 },
     logo: { position: 'relative', zIndex: 1, fontFamily: '"Playfair Display", serif', fontSize: '18px', letterSpacing: '0.05em', color: '#FFF', textTransform: 'uppercase', fontWeight: 'bold' },
     leftContent: { marginTop: 'auto', marginBottom: '10vh', position: 'relative', zIndex: 1, maxWidth: '480px' },
     leftTitle: { fontFamily: '"Playfair Display", serif', fontSize: '48px', lineHeight: '1.2', marginBottom: '48px', fontWeight: '400' },
@@ -37,22 +101,10 @@ export default function FinalizeActivation() {
     featureIconWrap: { color: brandColor, marginTop: '4px' },
     featureTitle: { fontSize: '15px', fontWeight: '600', marginBottom: '8px' },
     featureDesc: { fontSize: '13px', color: '#888', lineHeight: '1.5' },
-    secureBadge: {
-      display: 'inline-flex', alignItems: 'center', backgroundColor: '#1A1A1A',
-      padding: '8px 16px', borderRadius: '4px', fontSize: '10px',
-      fontWeight: '600', letterSpacing: '0.05em', color: '#888', marginTop: '24px'
-    },
+    secureBadge: { display: 'inline-flex', alignItems: 'center', backgroundColor: '#1A1A1A', padding: '8px 16px', borderRadius: '4px', fontSize: '10px', fontWeight: '600', letterSpacing: '0.05em', color: '#888', marginTop: '24px' },
 
     // Right Pane
-    rightPane: {
-      flex: 1,
-      backgroundColor: bgColorRight,
-      display: 'flex',
-      flexDirection: 'column',
-      padding: '48px 64px',
-      position: 'relative',
-      overflowY: 'auto'
-    },
+    rightPane: { flex: 1, backgroundColor: bgColorRight, display: 'flex', flexDirection: 'column', padding: '48px 64px', position: 'relative', overflowY: 'auto' },
     supportLink: { alignSelf: 'flex-end', fontSize: '11px', fontWeight: '600', color: '#666', letterSpacing: '0.1em', cursor: 'pointer', textTransform: 'uppercase' },
     formWrapper: { display: 'flex', flexDirection: 'column', margin: 'auto', maxWidth: '480px', width: '100%', padding: '40px 0' },
 
@@ -60,49 +112,19 @@ export default function FinalizeActivation() {
     mainTitle: { fontFamily: '"Playfair Display", serif', fontSize: '44px', fontWeight: '400', marginBottom: '24px', lineHeight: '1.1' },
     mainDesc: { color: '#888', fontSize: '14px', lineHeight: '1.6', marginBottom: '48px' },
 
-    checkoutBox: {
-      backgroundColor: '#111',
-      borderLeft: `2px solid ${brandColor}`,
-      padding: '32px',
-      position: 'relative',
-      marginBottom: '40px',
-      overflow: 'hidden'
-    },
+    checkoutBox: { backgroundColor: '#111', borderLeft: `2px solid ${brandColor}`, padding: '32px', position: 'relative', marginBottom: '40px', overflow: 'hidden' },
     boxOverlayIcon: { position: 'absolute', right: '-20px', top: '-10px', color: 'rgba(255,255,255,0.02)', opacity: 0.5 },
     totalLabel: { fontSize: '10px', fontWeight: '600', color: '#666', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '8px' },
     priceRow: { display: 'flex', alignItems: 'center', gap: '16px' },
     price: { fontFamily: '"Playfair Display", serif', fontSize: '36px', fontWeight: '700' },
-    oneTimeBadge: {
-      backgroundColor: 'rgba(6, 172, 248, 0.1)',
-      color: brandColor,
-      padding: '4px 12px',
-      borderRadius: '2px',
-      fontSize: '10px',
-      fontWeight: '700',
-      letterSpacing: '0.05em'
-    },
+    oneTimeBadge: { backgroundColor: 'rgba(6, 172, 248, 0.1)', color: brandColor, padding: '4px 12px', borderRadius: '2px', fontSize: '10px', fontWeight: '700', letterSpacing: '0.05em' },
 
     expressCheckoutLabel: { fontSize: '10px', fontWeight: '600', color: '#666', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '16px' },
     expressBtnsRow: { display: 'flex', gap: '16px', marginBottom: '32px' },
-    expressBtn: {
-      flex: 1, height: '48px', backgroundColor: '#1C1C1C', display: 'flex', alignItems: 'center',
-      justifyContent: 'center', cursor: 'pointer', transition: 'background 0.2s', border: '1px solid #2A2A2A'
-    },
+    payBtn: { width: '100%', height: '56px', backgroundColor: brandColor, color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', fontSize: '14px', fontWeight: 'bold', border: 'none', borderRadius: '4px', cursor: processing ? 'not-allowed' : 'pointer', opacity: processing ? 0.7 : 1, letterSpacing: '0.05em', marginBottom: '16px' },
+    errorBox: { backgroundColor: '#311', color: '#F85149', padding: '16px', borderRadius: '4px', fontSize: '12px', marginBottom: '24px', border: '1px solid #522' },
 
-    divider: { display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '32px' },
-    divLine: { flex: 1, height: '1px', backgroundColor: '#1F1F1F' },
-    divText: { fontSize: '10px', color: '#555', fontStyle: 'italic', letterSpacing: '0.05em' },
-
-    payBtn: {
-      width: '100%', height: '56px', backgroundColor: brandColor, color: '#000',
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '0 24px', fontSize: '14px', fontWeight: 'bold', border: 'none',
-      borderRadius: '4px', cursor: 'pointer', letterSpacing: '0.05em', marginBottom: '48px'
-    },
-
-    footerIcons: { display: 'flex', gap: '24px', justifyContent: 'center', color: '#555', marginBottom: '16px' },
     footerText: { textAlign: 'center', color: '#555', fontSize: '11px', lineHeight: '1.5' },
-
     pagination: { position: 'absolute', bottom: '48px', right: '64px', display: 'flex', gap: '8px' },
     dot: (active) => ({ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: active ? brandColor : '#333' })
   };
@@ -119,9 +141,10 @@ export default function FinalizeActivation() {
           .fin-main-title { font-size: 32px !important; }
           .fin-price { font-size: 28px !important; }
           .fin-express-row { flex-direction: column !important; }
-          .fin-pagination { display: none !important; } /* Hide pagination dots on mobile */
+          .fin-pagination { display: none !important; }
         }
       `}</style>
+      
       {/* LEFT PANE */}
       <div style={s.leftPane} className="fin-left">
         <div style={s.bgEffect}></div>
@@ -202,9 +225,13 @@ export default function FinalizeActivation() {
               </div>
             </div>
 
-            <button style={{ ...s.payBtn, marginBottom: '16px' }}>
-              Activate My Store (₦30,000 First Year)
-              <ArrowRight size={20} />
+            {errorMsg && (
+              <div style={s.errorBox}>{errorMsg}</div>
+            )}
+
+            <button style={s.payBtn} onClick={handlePayClick} disabled={processing}>
+              {processing ? 'Processing Payment Overlay...' : 'Activate My Store (₦30,000 First Year)'}
+              {!processing && <ArrowRight size={20} />}
             </button>
 
             <div style={{ textAlign: 'center', fontSize: '13px', color: '#AAA', marginBottom: '24px', lineHeight: '1.5' }}>
@@ -219,24 +246,21 @@ export default function FinalizeActivation() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '13px', color: '#CCC' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#222', color: '#888', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 'bold' }}>1</div>
-                  <div>You complete payment</div>
+                  <div>You complete payment via Paystack terminal</div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#222', color: '#888', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 'bold' }}>2</div>
-                  <div>We set up your domain & store</div>
+                  <div>We instantaneously grant you Dashboard Access</div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#222', color: brandColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 'bold' }}>3</div>
-                  <div><strong style={{ color: '#FFF' }}>Your store goes live within 24 hours</strong></div>
+                  <div><strong style={{ color: '#FFF' }}>Your business profile domain goes live!</strong></div>
                 </div>
-              </div>
-              <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #1F1F1F', fontSize: '11px', color: '#888' }}>
-                <span style={{ color: brandColor }}>✦</span> We handle the technical setup so you can focus on your business.
               </div>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '24px' }}>
-              <span style={{ fontSize: '11px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Powered by</span>
+              <span style={{ fontSize: '11px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Secured by</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#FFF', fontWeight: 'bold', fontSize: '14px' }}>
                 <div style={{ backgroundColor: '#0BA4DB', color: '#FFF', width: '16px', height: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '2px', fontSize: '10px', fontWeight: 'bold' }}>P</div>
                 Paystack
@@ -255,12 +279,11 @@ export default function FinalizeActivation() {
         </div>
 
         <div style={s.pagination} className="fin-pagination">
+          <div style={s.dot(false)}></div>
+          <div style={s.dot(false)}></div>
           <div style={s.dot(true)}></div>
-          <div style={s.dot(false)}></div>
-          <div style={s.dot(false)}></div>
         </div>
       </div>
-
     </div>
   );
 }

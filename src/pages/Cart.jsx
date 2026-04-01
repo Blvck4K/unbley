@@ -1,41 +1,57 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Trash2, ArrowLeft, ShieldCheck, Truck, Globe, CreditCard, RotateCcw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
 
 export default function Cart() {
   const navigate = useNavigate();
-  const accentColor = '#0F2C59'; // Deep luxury blue for titles and buttons
-  const bgMain = '#FAFAFA'; // Light grey page bg
-  const dangerColor = '#D83A3A';
-
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 1,
-      name: 'Ethereal Ceramic Vessel',
-      variant: 'Artist Edition • Sandstone',
-      price: 240000,
-      qty: 1,
-      img: 'https://images.unsplash.com/photo-1610701596007-11502861dcfa?w=600&q=80',
-    },
-    {
-      id: 2,
-      name: 'Signature Leather Folio',
-      variant: 'Italian Calfskin • Midnight',
-      price: 85000,
-      qty: 2,
-      img: 'https://images.unsplash.com/photo-1601614838644-8395edb7d3bb?w=600&q=80',
-    },
-    {
-      id: 3,
-      name: 'Mano Chronograph',
-      variant: 'Brushed Steel • Slate Grey',
-      price: 550000,
-      qty: 1,
-      img: 'https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=600&q=80',
+  const { user } = useAuth();
+  const [cartItems, setCartItems] = useState(() => {
+    try {
+      const stored = localStorage.getItem('cart');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
     }
-  ]);
-  
+  });
+
+  const [brand, setBrand] = useState(null);
+  const [recommendedProducts, setRecommendedProducts] = useState([]);
+
+  useEffect(() => {
+    localStorage.setItem('cart', JSON.stringify(cartItems));
+
+    async function fetchData() {
+      if (cartItems.length > 0 && cartItems[0].brand_id) {
+        const id = cartItems[0].brand_id;
+        if (!brand || brand.id !== id) {
+          const { data: bData } = await supabase.from('brand_profiles').select('*').eq('id', id).single();
+          if (bData) setBrand(bData);
+        }
+        
+        const cartIds = cartItems.map(i => i.id);
+        const { data: pData } = await supabase.from('products').select('*').eq('brand_id', id).limit(6);
+        if (pData) {
+            setRecommendedProducts(pData.filter(p => !cartIds.includes(p.id)).slice(0, 3));
+        }
+      } else if (cartItems.length === 0) {
+        setBrand(null);
+        setRecommendedProducts([]);
+      }
+    }
+    fetchData();
+  }, [cartItems]);
+
   const [removedItems, setRemovedItems] = useState([]);
+  
+  const accentColor = brand?.accent_color || '#0F2C59';
+  const bgMain = brand?.primary_color || '#FAFAFA';
+  const secondaryBg = brand?.secondary_color || '#FFFFFF';
+  const textColor = brand ? '#FDFDFD' : '#111';
+  const mutedColor = brand ? '#999' : '#666';
+  const borderColor = brand?.secondary_color ? 'rgba(255,255,255,0.1)' : '#EAEAEA';
+  const dangerColor = '#D83A3A';
 
   const formatPrice = (price) => `₦${price.toLocaleString()}`;
 
@@ -68,95 +84,111 @@ export default function Cart() {
   };
 
   const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.qty), 0);
-  const tax = subtotal * 0.075; // 7.5% estimated tax
-  const total = subtotal + tax;
+  const total = subtotal;
 
   const s = {
-    page: { backgroundColor: bgMain, color: '#111', minHeight: '100vh', fontFamily: '"Inter", sans-serif', overflowX: 'hidden' },
+    page: { backgroundColor: bgMain, color: textColor, minHeight: '100vh', fontFamily: '"Inter", sans-serif', overflowX: 'hidden' },
 
     // Header
     header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: bgMain },
-    logo: { fontFamily: '"Inter", sans-serif', fontSize: '18px', fontWeight: 'bold', letterSpacing: '0.05em' },
+    logo: { fontFamily: '"Inter", sans-serif', fontSize: '18px', fontWeight: 'bold', letterSpacing: '0.05em', color: textColor },
     headerRight: { display: 'flex', alignItems: 'center', gap: '24px' },
-    iconButton: { cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#333', position: 'relative' },
-    cartBadge: { position: 'absolute', top: '-6px', right: '-8px', backgroundColor: accentColor, color: '#FFF', fontSize: '9px', fontWeight: 'bold', width: '14px', height: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%' },
+    iconButton: { cursor: 'pointer', display: 'flex', alignItems: 'center', color: textColor, position: 'relative' },
+    cartBadge: { position: 'absolute', top: '-6px', right: '-8px', backgroundColor: accentColor, color: '#000', fontSize: '9px', fontWeight: 'bold', width: '14px', height: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%' },
 
     // Main Content
     content: { maxWidth: '1400px', margin: '0 auto' },
 
-    pageTitle: { fontFamily: '"Inter", sans-serif', fontSize: '44px', fontWeight: '700', letterSpacing: '-0.02em', margin: '0 0 16px 0', color: '#111' },
-    pageSubtitle: { fontSize: '13px', color: '#666', lineHeight: '1.6', maxWidth: '400px', marginBottom: '48px' },
+    pageTitle: { fontFamily: '"Inter", sans-serif', fontSize: '44px', fontWeight: '700', letterSpacing: '-0.02em', margin: '0 0 16px 0', color: textColor },
+    pageSubtitle: { fontSize: '13px', color: mutedColor, lineHeight: '1.6', maxWidth: '400px', marginBottom: '48px' },
 
     // Two Col Layout
     layout: { display: 'grid', gridTemplateColumns: 'minmax(0, 1.8fr) minmax(0, 1fr)', gap: '64px' },
 
     // Cart Items List
     itemsContainer: { display: 'flex', flexDirection: 'column', gap: '24px' },
-    cartItem: { backgroundColor: '#FFF', padding: '24px', display: 'flex', gap: '32px', borderRadius: '4px', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' },
-    itemImageWrap: { width: '160px', height: '160px', backgroundColor: '#F0F0F0', borderRadius: '4px', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' },
+    cartItem: { backgroundColor: secondaryBg, padding: '24px', display: 'flex', gap: '32px', borderRadius: '4px', border: `1px solid ${borderColor}`, boxShadow: '0 2px 10px rgba(0,0,0,0.02)' },
+    itemImageWrap: { width: '160px', height: '160px', backgroundColor: '#111', borderRadius: '4px', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' },
     itemImage: { width: '100%', height: '100%', objectFit: 'cover' },
 
     itemDetails: { flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' },
     itemNameRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' },
     itemName: { fontSize: '18px', fontWeight: '700', color: accentColor },
-    itemPrice: { fontSize: '15px', fontWeight: '700', color: '#111' },
-    itemVariant: { fontSize: '11px', color: '#888', marginBottom: '24px', textTransform: 'uppercase', letterSpacing: '0.05em' },
+    itemPrice: { fontSize: '15px', fontWeight: '700', color: textColor },
+    itemVariant: { fontSize: '11px', color: mutedColor, marginBottom: '24px', textTransform: 'uppercase', letterSpacing: '0.05em' },
 
     itemActions: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', flexWrap: 'wrap', gap: '16px' },
-    qtyControl: { display: 'flex', alignItems: 'center', backgroundColor: '#F5F5F5', borderRadius: '4px' },
-    qtyBtn: { width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', border: 'none', background: 'transparent', color: '#555', fontSize: '16px' },
-    qtyValue: { fontSize: '13px', fontWeight: '600', width: '24px', textAlign: 'center', color: '#111' },
-    itemTotalCalc: { fontSize: '13px', color: '#555', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '6px' },
+    qtyControl: { display: 'flex', alignItems: 'center', backgroundColor: bgMain, border: `1px solid ${borderColor}`, borderRadius: '4px' },
+    qtyBtn: { width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', border: 'none', background: 'transparent', color: textColor, fontSize: '16px' },
+    qtyValue: { fontSize: '13px', fontWeight: '600', width: '24px', textAlign: 'center', color: textColor },
+    itemTotalCalc: { fontSize: '13px', color: mutedColor, fontWeight: '500', display: 'flex', alignItems: 'center', gap: '6px' },
     removeBtn: { display: 'flex', alignItems: 'center', gap: '6px', color: dangerColor, fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', cursor: 'pointer', background: 'transparent', border: 'none', letterSpacing: '0.05em' },
 
     // Order Summary
-    summaryBox: { backgroundColor: '#F5F5F7', padding: '40px', borderRadius: '4px' },
-    summaryTitle: { fontSize: '18px', fontWeight: '600', color: '#111', marginBottom: '32px' },
-    summaryRow: { display: 'flex', justifyContent: 'space-between', marginBottom: '16px', fontSize: '13px', color: '#555' },
+    summaryBox: { backgroundColor: secondaryBg, padding: '40px', borderRadius: '4px', border: `1px solid ${borderColor}` },
+    summaryTitle: { fontSize: '18px', fontWeight: '600', color: textColor, marginBottom: '32px' },
+    summaryRow: { display: 'flex', justifyContent: 'space-between', marginBottom: '16px', fontSize: '13px', color: mutedColor },
 
-    divider: { height: '1px', backgroundColor: '#EAEAEA', margin: '24px 0' },
+    divider: { height: '1px', backgroundColor: borderColor, margin: '24px 0' },
     totalRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' },
-    totalLabel: { fontSize: '14px', fontWeight: '700', color: '#111' },
+    totalLabel: { fontSize: '14px', fontWeight: '700', color: textColor },
     totalValue: { fontSize: '20px', fontWeight: '700', color: accentColor },
 
-    checkoutBtn: { width: '100%', padding: '16px', backgroundColor: accentColor, color: '#FFF', fontSize: '13px', fontWeight: '700', border: 'none', borderRadius: '4px', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '16px', transition: 'background-color 0.2s', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' },
-    continueLink: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: '#FFF', backgroundColor: '#333', padding: '14px', borderRadius: '4px', fontSize: '11px', textDecoration: 'none', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', transition: 'background-color 0.2s', fontWeight: '600' },
+    checkoutBtn: { width: '100%', padding: '16px', backgroundColor: accentColor, color: '#000', fontSize: '13px', fontWeight: '700', border: 'none', borderRadius: '4px', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '16px', transition: 'background-color 0.2s', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' },
+    continueLink: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: textColor, backgroundColor: 'transparent', border: `1px solid ${borderColor}`, padding: '14px', borderRadius: '4px', fontSize: '11px', textDecoration: 'none', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', transition: 'background-color 0.2s', fontWeight: '600' },
 
     trustBadges: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginTop: '24px' },
-    trustBadge: { backgroundColor: '#FFF', padding: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px', borderRadius: '4px', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' },
-    trustBadgeLabel: { fontSize: '8px', fontWeight: '700', color: '#555', letterSpacing: '0.1em', textTransform: 'uppercase', textAlign: 'center' },
+    trustBadge: { backgroundColor: secondaryBg, padding: '16px', border: `1px solid ${borderColor}`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px', borderRadius: '4px' },
+    trustBadgeLabel: { fontSize: '8px', fontWeight: '700', color: mutedColor, letterSpacing: '0.1em', textTransform: 'uppercase', textAlign: 'center' },
 
-    undoToast: { backgroundColor: '#333', color: '#FFF', padding: '14px 24px', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' },
-    undoBtn: { background: 'transparent', border: 'none', color: '#4ADE80', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' },
+    undoToast: { backgroundColor: accentColor, color: '#000', padding: '14px 24px', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' },
+    undoBtn: { background: 'transparent', border: 'none', color: '#000', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' },
 
     // Recommendations
     recommendations: { marginTop: '80px' },
-    recTitle: { fontSize: '24px', fontWeight: '700', color: '#111', marginBottom: '32px' },
-    recGrid: { display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr)', gap: '24px' },
+    recTitle: { fontSize: '24px', fontWeight: '700', color: textColor, marginBottom: '32px' },
+    recGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '24px' },
 
-    featureCard: { backgroundColor: '#E6E6E8', padding: '40px', borderRadius: '4px', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden', minHeight: '300px' },
+    featureCard: { backgroundColor: secondaryBg, padding: '40px', border: `1px solid ${borderColor}`, borderRadius: '4px', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden', minHeight: '300px', cursor: 'pointer' },
     featureTag: { fontSize: '8px', fontWeight: '700', color: accentColor, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '16px' },
-    featureTitle: { fontSize: '24px', fontWeight: '600', color: '#111', marginBottom: '8px' },
-    featureDesc: { fontSize: '12px', color: '#555', maxWidth: '200px', lineHeight: '1.6' },
-    featureLink: { marginTop: 'auto', fontSize: '11px', fontWeight: '700', color: '#111', textDecoration: 'underline', cursor: 'pointer' },
+    featureTitle: { fontSize: '24px', fontWeight: '600', color: textColor, marginBottom: '8px' },
+    featureDesc: { fontSize: '12px', color: mutedColor, maxWidth: '200px', lineHeight: '1.6' },
+    featureLink: { marginTop: 'auto', fontSize: '11px', fontWeight: '700', color: textColor, textDecoration: 'underline', cursor: 'pointer' },
     featureImageWrap: { position: 'absolute', bottom: '24px', right: '24px', width: '120px', height: '120px', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' },
     featureImg: { width: '100%', height: '100%', objectFit: 'cover' },
 
-    smallCard: { backgroundColor: '#FFF', padding: '24px', borderRadius: '4px', boxShadow: '0 2px 10px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column' },
-    smallImgWrap: { width: '100%', height: '180px', backgroundColor: '#F5F5F5', marginBottom: '16px', overflow: 'hidden' },
-    smallImg: { width: '100%', height: '100%', objectFit: 'cover' },
-    smallTitle: { fontSize: '12px', fontWeight: '600', color: '#111', marginBottom: '4px' },
-    smallPrice: { fontSize: '11px', color: '#666' },
+    smallCard: { backgroundColor: secondaryBg, padding: '24px', border: `1px solid ${borderColor}`, borderRadius: '4px', display: 'flex', flexDirection: 'column', cursor: 'pointer' },
+    smallImgWrap: { width: '100%', height: '180px', backgroundColor: '#111', marginBottom: '16px', overflow: 'hidden', borderRadius: '4px' },
+    smallImg: { width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.3s' },
+    smallTitle: { fontSize: '12px', fontWeight: '600', color: textColor, marginBottom: '4px' },
+    smallPrice: { fontSize: '11px', color: accentColor, fontWeight: 'bold' },
 
     // Footer
-    footer: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '80px', borderTop: '1px solid #EAEAEA', marginTop: '64px' },
+    footer: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '80px', borderTop: `1px solid ${borderColor}`, marginTop: '64px' },
     footerLeft: { display: 'flex', flexDirection: 'column', gap: '8px' },
-    footerLogo: { fontSize: '12px', fontWeight: '700', color: '#111' },
-    copyright: { fontSize: '10px', color: '#888' },
-    footerLinks: { display: 'flex', gap: '24px', fontSize: '10px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.05em' },
-    footerLinkItem: { cursor: 'pointer', textDecoration: 'none' },
-    footerIcons: { display: 'flex', gap: '12px', color: '#333' }
+    footerLogo: { fontSize: '12px', fontWeight: '700', color: textColor },
+    copyright: { fontSize: '10px', color: mutedColor },
+    footerLinks: { display: 'flex', gap: '24px', fontSize: '10px', color: mutedColor, textTransform: 'uppercase', letterSpacing: '0.05em' },
+    footerLinkItem: { cursor: 'pointer', textDecoration: 'none', transition: 'color 0.2s' },
+    footerIcons: { display: 'flex', gap: '12px', color: textColor }
   };
+
+  const isOwner = user && brand && user.id === brand.id;
+
+  if (isOwner) {
+    return (
+      <div style={{...s.page, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backgroundColor: '#0A0A0A', color: '#FFF'}}>
+        <ShieldCheck size={48} color={dangerColor} style={{ marginBottom: '24px' }} />
+        <h2 style={{ fontFamily: '"Playfair Display", serif', fontSize: '28px', marginBottom: '16px' }}>Owner Environment Active</h2>
+        <p style={{ color: '#999', marginBottom: '32px', textAlign: 'center', maxWidth: '400px', lineHeight: '1.6' }}>
+          You cannot construct a cart or checkout your own digital assets. Please switch to a buyer account to test the checkout matrix.
+        </p>
+        <button onClick={() => navigate(-1)} style={{ padding: '12px 32px', border: `1px solid ${accentColor}`, backgroundColor: 'transparent', color: '#FFF', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer' }}>
+          RETURN TO DASHBOARD
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div style={s.page}>
@@ -178,7 +210,14 @@ export default function Cart() {
 
       {/* Header */}
       <div style={{...s.header, padding: '24px 48px'}} className="cart-header">
-        <div style={s.logo}>Digital Atelier</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ ...s.iconButton, fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em' }} onClick={() => navigate(-1)}>
+            <ArrowLeft size={16} />
+          </div>
+          <div style={s.logo}>
+            {brand ? brand.brand_name.toUpperCase() : 'DIGITAL ATELIER'}
+          </div>
+        </div>
         <div style={s.headerRight}>
           <div style={s.iconButton} onClick={() => navigate('/cart')}>
             <ShoppingCart size={18} />
@@ -206,12 +245,12 @@ export default function Cart() {
             )}
 
             {cartItems.length === 0 ? (
-              <div style={{ padding: '80px 0', textAlign: 'center', color: '#555', backgroundColor: '#FFF', borderRadius: '4px' }}>
-                <ShoppingCart size={48} color="#CCC" style={{ marginBottom: '16px' }} />
-                <h3 style={{ fontSize: '18px', color: '#111', marginBottom: '8px' }}>Your Cart is Empty</h3>
+              <div style={{ padding: '80px 0', textAlign: 'center', color: mutedColor, backgroundColor: secondaryBg, borderRadius: '4px', border: `1px solid ${borderColor}` }}>
+                <ShoppingCart size={48} color={mutedColor} style={{ marginBottom: '16px' }} />
+                <h3 style={{ fontSize: '18px', color: textColor, marginBottom: '8px' }}>Your Cart is Empty</h3>
                 <p style={{ fontSize: '14px', marginBottom: '32px' }}>Discover unique items to add to your collection.</p>
                 <div style={{ display: 'flex', justifyContent: 'center' }}>
-                  <div style={{...s.continueLink, width: 'auto', padding: '16px 32px'}} onClick={() => navigate('/shop-brand')}>
+                  <div style={{...s.continueLink, width: 'auto', padding: '16px 32px'}} onClick={() => navigate(-1)}>
                     Explore Collection
                   </div>
                 </div>
@@ -263,15 +302,11 @@ export default function Cart() {
 
               <div style={s.summaryRow}>
                 <span>Subtotal</span>
-                <span style={{ color: '#111', fontWeight: '500' }}>{formatPrice(subtotal)}</span>
-              </div>
-              <div style={s.summaryRow}>
-                <span>Estimated Tax (7.5%)</span>
-                <span style={{ color: '#111', fontWeight: '500' }}>{formatPrice(tax)}</span>
+                <span style={{ color: textColor, fontWeight: '500' }}>{formatPrice(subtotal)}</span>
               </div>
               <div style={s.summaryRow}>
                 <span>Delivery Info</span>
-                <span style={{ fontWeight: '600', color: '#111' }}>Free delivery nationwide</span>
+                <span style={{ fontWeight: '600', color: textColor }}>Free delivery nationwide</span>
               </div>
 
               <div style={s.divider}></div>
@@ -285,7 +320,7 @@ export default function Cart() {
                 <ShieldCheck size={16} /> Checkout Securely
               </button>
 
-              <div style={s.continueLink} onClick={() => navigate('/shop-brand')}>
+              <div style={s.continueLink} onClick={() => brand ? navigate(`/shop-brand/${brand.id}`) : navigate(-1)}>
                 <ArrowLeft size={14} /> Continue Shopping
               </div>
             </div>
@@ -312,31 +347,36 @@ export default function Cart() {
           <h2 style={s.recTitle}>You may also desire</h2>
 
           <div style={s.recGrid} className="rec-grid">
-            <div style={s.featureCard}>
-              <div style={s.featureTag}>Limited Release</div>
-              <div style={s.featureTitle}>Atelier Fragrance No. 04</div>
-              <div style={s.featureDesc}>Notes of cedar, amber, and rain-washed slate.</div>
-              <div style={s.featureLink}>Explore Scent</div>
-              <div style={s.featureImageWrap}>
-                <img src="https://images.unsplash.com/photo-1594034181467-f27eb663ad92?w=400&q=80" alt="Fragrance" style={s.featureImg} />
-              </div>
-            </div>
-
-            <div style={s.smallCard}>
-              <div style={s.smallImgWrap}>
-                <img src="https://images.unsplash.com/photo-1603006905003-be475563bc59?w=400&q=80" alt="Candle" style={s.smallImg} />
-              </div>
-              <div style={s.smallTitle}>Sculpted Wax Candle</div>
-              <div style={s.smallPrice}>{formatPrice(65000)}</div>
-            </div>
-
-            <div style={s.smallCard}>
-              <div style={s.smallImgWrap}>
-                <img src="https://images.unsplash.com/photo-1580828369019-223455b8feab?w=400&q=80" alt="Linen" style={s.smallImg} />
-              </div>
-              <div style={s.smallTitle}>Organic Linen Throw</div>
-              <div style={s.smallPrice}>{formatPrice(120000)}</div>
-            </div>
+            {recommendedProducts.map((prod, idx) => {
+              if (idx === 0) {
+                 return (
+                  <div key={prod.id} style={s.featureCard} onClick={() => navigate(`/product?id=${prod.id}`)} >
+                    <div style={s.featureTag}>Discover</div>
+                    <div style={s.featureTitle}>{prod.title}</div>
+                    <div style={s.featureDesc}>{prod.description || 'A timeless addition to your collection.'}</div>
+                    <div style={s.featureLink}>Explore Asset</div>
+                    <div style={s.featureImageWrap}>
+                      <img src={prod.image_url} alt={prod.title} style={s.featureImg} />
+                    </div>
+                  </div>
+                 )
+              } else {
+                 return (
+                  <div key={prod.id} style={s.smallCard} onClick={() => navigate(`/product?id=${prod.id}`)}>
+                    <div style={s.smallImgWrap}>
+                      {prod.image_url ? (
+                        <img src={prod.image_url} alt={prod.title} style={s.smallImg} />
+                      ) : (
+                        <div style={{ width: '100%', height: '100%', backgroundColor: '#111' }}></div>
+                      )}
+                    </div>
+                    <div style={s.smallTitle}>{prod.title}</div>
+                    <div style={s.smallPrice}>{formatPrice(prod.price)}</div>
+                  </div>
+                 )
+              }
+            })}
+            {recommendedProducts.length === 0 && <div style={{ color: mutedColor }}>No other assets available.</div>}
           </div>
         </div>
       </div>
@@ -344,8 +384,8 @@ export default function Cart() {
       {/* Footer */}
       <div style={{...s.footer, padding: '0 80px'}} className="cart-footer">
         <div style={s.footerLeft}>
-          <div style={s.footerLogo}>Digital Atelier</div>
-          <div style={s.copyright}>© 2024 Digital Atelier. All rights reserved.</div>
+          <div style={s.footerLogo}>{brand ? brand.brand_name : 'Digital Atelier'}</div>
+          <div style={s.copyright}>© {new Date().getFullYear()} {brand ? brand.brand_name : 'Digital Atelier'}. All rights reserved.</div>
         </div>
         <div style={s.footerLinks} className="footer-links">
           <a style={s.footerLinkItem}>Privacy Policy</a>

@@ -1,10 +1,36 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ShoppingBag, User, Search, Heart, Bookmark, LogOut, Headphones } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
 
 export default function Storefront() {
   const brandColor = '#06acf8';
   const bgColor = '#050505';
+
+  const [brands, setBrands] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadBrands() {
+      try {
+        setLoading(true);
+        // Assuming all completely generated brands are valid, we just fetch them.
+        const { data, error } = await supabase
+          .from('brand_profiles')
+          .select('*')
+          .not('brand_name', 'is', null)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        setBrands(data || []);
+      } catch (err) {
+        console.error("Error loading brands:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadBrands();
+  }, []);
 
   const s = {
     page: {
@@ -302,50 +328,7 @@ export default function Storefront() {
     }
   };
 
-  const products = [
-    {
-      category: 'HOROLOGY',
-      title: 'Obsidian',
-      badge: 'O',
-      desc: 'Mastering the architecture of time through monolithic design.',
-      img: 'https://images.unsplash.com/photo-1524592094714-0f0654e20314?auto=format&fit=crop&q=80&w=800'
-    },
-    {
-      category: 'ENGINEERING',
-      title: 'Chronos',
-      badge: 'C',
-      desc: 'Precise mechanical movements for the modern explorer.',
-      img: 'https://images.unsplash.com/photo-1522312346375-d1a52e2b99b3?auto=format&fit=crop&q=80&w=800'
-    },
-    {
-      category: 'FOOTWEAR',
-      title: 'Zizzystores',
-      badge: 'Z',
-      desc: 'Conceptual silhouettes crafted from sustainable high-tech fabrics.',
-      img: 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&q=80&w=800'
-    },
-    {
-      category: 'SCENT',
-      title: 'Essence',
-      badge: 'E',
-      desc: 'Olfactory journeys inspired by concrete jungles and ancient forests.',
-      img: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&q=80&w=800'
-    },
-    {
-      category: 'APPAREL',
-      title: 'Raw Silk',
-      badge: 'R',
-      desc: 'Unstructured tailoring for the intellectual wardrobe.',
-      img: 'https://images.unsplash.com/photo-1584306240900-e79435f299c8?auto=format&fit=crop&q=80&w=800'
-    },
-    {
-      category: 'OBJECTS',
-      title: 'Lumina',
-      badge: 'L',
-      desc: 'Illuminating spaces with sculptural purity and diffused light.',
-      img: 'https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?auto=format&fit=crop&q=80&w=800'
-    }
-  ];
+  // No static products array here anymore
 
   return (
     <div style={s.page}>
@@ -401,29 +384,38 @@ export default function Storefront() {
 
       {/* Product Grid */}
       <div style={s.grid} className="store-grid">
-        {products.map((p, idx) => (
-          <Link key={idx} to="/explore-brand" style={{...s.card, textDecoration: 'none'}} className="product-card">
-            {/* Standard hover trick utilizing inline styles -> we will just use basic scaling for now */}
-            <div style={s.cardImageWrap}>
-              <img src={p.img} alt={p.title} style={s.cardImage} />
-              <div className="card-hover-actions">
-                <div className="icon-btn" title="Follow Brand" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}><Heart size={16} /></div>
-                <div className="icon-btn" title="Save to Collections" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}><Bookmark size={16} /></div>
+        {loading ? (
+          <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '64px', color: '#888' }}>
+            Syncing Brand Matrix...
+          </div>
+        ) : brands.length === 0 ? (
+          <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '64px', color: '#888' }}>
+            No independent ateliers are currently broadcasting. Check back later.
+          </div>
+        ) : (
+          brands.map((brand, idx) => (
+            <Link key={brand.id || idx} to={`/explore-brand/${brand.id}`} style={{...s.card, textDecoration: 'none'}} className="product-card">
+              <div style={s.cardImageWrap}>
+                <img src={brand.banner_url || brand.logo_url || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80'} alt={brand.brand_name} style={s.cardImage} />
+                <div className="card-hover-actions">
+                  <div className="icon-btn" title="Follow Brand" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}><Heart size={16} /></div>
+                  <div className="icon-btn" title="Save to Collections" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}><Bookmark size={16} /></div>
+                </div>
               </div>
-            </div>
 
-            <div style={s.cardContent}>
-              <div style={s.cardLeft}>
-                <div style={s.cardCategory}>{p.category}</div>
-                <div style={s.cardTitle}>{p.title}</div>
-                <div style={s.cardDesc}>{p.desc}</div>
+              <div style={s.cardContent}>
+                <div style={s.cardLeft}>
+                  <div style={{...s.cardCategory, color: brand.accent_color || brandColor}}>{brand.subcategory || 'INDEPENDENT'}</div>
+                  <div style={s.cardTitle}>{brand.brand_name}</div>
+                  <div style={s.cardDesc}>{brand.tagline || brand.manifesto?.substring(0, 60) + '...' || 'Mastering the architecture of modern commerce.'}</div>
+                </div>
+                <div style={s.cardBadge}>{brand.brand_name?.charAt(0)?.toUpperCase() || 'O'}</div>
               </div>
-              <div style={s.cardBadge}>{p.badge}</div>
-            </div>
 
-            <div className="show-more-btn" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Explore {p.category}</div>
-          </Link>
-        ))}
+              <div className="show-more-btn" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Explore {brand.brand_name}</div>
+            </Link>
+          ))
+        )}
       </div>
 
       {/* Newsletter */}

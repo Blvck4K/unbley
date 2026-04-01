@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
-import { Search, Bell, Moon, LayoutGrid, Store, User, Settings, HeadphonesIcon, Camera, Globe, Link as LinkIcon, Plus, ArrowRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { Search, Bell, Moon, LayoutGrid, Store, User, Settings, HeadphonesIcon, Camera, Globe, Link as LinkIcon, Plus, ArrowRight, Lock } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
 
 const FacebookIcon = ({ size = 14, color = "currentColor" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke="none">
@@ -25,12 +27,185 @@ const TwitterIcon = ({ size = 14, color = "currentColor" }) => (
 
 export default function Edit() {
   const brandColor = '#06acf8ff';
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+
+  // Refs for hidden file inputs
+  const logoRef = useRef(null);
+  const bannerRef = useRef(null);
+  const p1Ref = useRef(null);
+  const p2Ref = useRef(null);
+  const p3Ref = useRef(null);
+  const p4Ref = useRef(null);
+
+  const [formData, setFormData] = useState({
+    brand_name: '',
+    owner_name: '',
+    email_address: '',
+    phone_number: '',
+    brand_category: '',
+    delivery_duration: '',
+    brand_narrative: '',
+    manifesto: '',
+    country: '',
+    state_province: '',
+    city: '',
+    postal_code: '',
+    address_line_1: '',
+    address_line_2: '',
+    primary_color: '#0A0A0A',
+    secondary_color: '#1A1A1A',
+    accent_color: '#06acf8',
+    logo_url: '',
+    banner_url: '',
+    product_1_url: '',
+    product_2_url: '',
+    product_3_url: '',
+    product_4_url: '',
+    instagram_url: '',
+    twitter_url: '',
+    facebook_url: '',
+    tiktok_url: '',
+    website_url: '',
+    bank_name: '',
+    account_number: '',
+    account_name: '',
+    paystack_subaccount_code: ''
+  });
 
   const [themeColors, setThemeColors] = useState({
     primary: '#0A0A0A',
     secondary: '#1A1A1A',
     accent: '#06acf8'
   });
+
+  useEffect(() => {
+    async function fetchProfile() {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('brand_profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+          
+        if (data) {
+          setFormData(prev => ({ ...prev, ...data }));
+          setThemeColors({
+            primary: data.primary_color || '#0A0A0A',
+            secondary: data.secondary_color || '#1A1A1A',
+            accent: data.accent_color || '#06acf8'
+          });
+        } else {
+          // Fallback to auth metadata
+          const md = user.user_metadata || {};
+          setFormData(prev => ({
+            ...prev,
+            brand_name: md.full_name || '',
+            owner_name: md.full_name || '',
+            email_address: user.email || '',
+            phone_number: md.phone || '',
+            brand_category: md.category || ''
+          }));
+        }
+      } catch (err) {
+        console.error("Error fetching profile:", err);
+      }
+    }
+    fetchProfile();
+  }, [user]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleColorChange = (colorName, value) => {
+    setThemeColors(prev => ({ ...prev, [colorName]: value }));
+    setFormData(prev => ({ ...prev, [`${colorName}_color`]: value }));
+  };
+
+  // Generalized upload handler for Supabase storage
+  const handleFileUpload = async (e, fieldName) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    
+    setLoading(true);
+    try {
+      if (!user) throw new Error("Not authenticated");
+      
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}-${fieldName}-${Math.random()}.${fileExt}`;
+      const filePath = `${user.id}/${fileName}`;
+      
+      // Upload file directly to 'brand-assets' bucket
+      const { error: uploadError } = await supabase.storage
+        .from('brand-assets')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      // Automatically retrieve public URL after success
+      const { data } = supabase.storage
+        .from('brand-assets')
+        .getPublicUrl(filePath);
+
+      // Inject the newly generated Supabase public URL right into the local form rendering state
+      setFormData(prev => ({ ...prev, [fieldName]: data.publicUrl }));
+    } catch (error) {
+      console.error('Error uploading image:', error.message);
+      alert('Error uploading image: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    try {
+      if (!user) throw new Error("Not authenticated");
+      
+      // Exclude paystack_subaccount_code from the update payload so brand owners 
+      // do not accidentally overwrite the code generated by the admin
+      const { paystack_subaccount_code, ...updatableFormData } = formData;
+      
+      const payload = {
+        ...updatableFormData,
+        id: user.id,
+        profile_completed: true,
+        updated_at: new Date()
+      };
+      
+      const { error: profileError } = await supabase
+        .from('brand_profiles')
+        .upsert(payload, { onConflict: 'id' });
+        
+      if (profileError) throw profileError;
+      
+      const { error: authError } = await supabase.auth.updateUser({
+        data: { profile_completed: true }
+      });
+      
+      if (authError) throw authError;
+
+      alert("Profile updated successfully!");
+      if (formData.profile_completed) {
+        navigate('/dashboard');
+      } else {
+        navigate('/activation');
+      }
+      
+    } catch (err) {
+      console.error(err);
+      alert(err.message || "Failed to update profile");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const s = {
     page: { backgroundColor: '#0A0A0A', color: '#E5E5E5', minHeight: '100vh', display: 'flex', fontFamily: '"Inter", sans-serif' },
@@ -75,17 +250,17 @@ export default function Edit() {
     card: { backgroundColor: '#111', border: '1px solid #1F1F1F', padding: '40px', borderRadius: '8px' },
     cardTitle: { fontFamily: '"Playfair Display", serif', fontSize: '24px', color: '#FFF', marginBottom: '32px' },
 
-    bannerBox: { position: 'relative', height: '300px', backgroundColor: '#1A1A1A', borderRadius: '8px', overflow: 'hidden', marginBottom: '40px', display: 'flex', alignItems: 'flex-end', padding: '24px', backgroundImage: 'linear-gradient(to right bottom, #112, #0A0A0A)' },
+    bannerBox: { position: 'relative', height: '300px', backgroundColor: '#1A1A1A', borderRadius: '8px', overflow: 'hidden', marginBottom: '40px', display: 'flex', alignItems: 'flex-end', padding: '24px', backgroundImage: formData.banner_url ? `url(${formData.banner_url})` : 'linear-gradient(to right bottom, #112, #0A0A0A)', backgroundSize: 'cover', backgroundPosition: 'center' },
     bannerText: { position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '72px', fontWeight: 'bold', color: 'rgba(255,255,255,0.05)', letterSpacing: '0.1em', pointerEvents: 'none' },
     bannerBtn: { backgroundColor: '#000', border: '1px solid #333', color: '#FFF', padding: '10px 20px', fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', cursor: 'pointer', textTransform: 'uppercase' },
-    bannerInfo: { marginLeft: 'auto', fontSize: '10px', color: '#666', letterSpacing: '0.1em', textTransform: 'uppercase' },
+    bannerInfo: { marginLeft: 'auto', fontSize: '10px', color: '#666', letterSpacing: '0.1em', textTransform: 'uppercase', textShadow: '0 1px 4px rgba(0,0,0,0.8)' },
 
     inputGroup: { marginBottom: '32px' },
     label: { display: 'block', fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', textTransform: 'uppercase', marginBottom: '16px' },
     input: { width: '100%', backgroundColor: 'transparent', border: 'none', borderBottom: '1px solid #333', padding: '8px 0', color: '#FFF', fontSize: '16px', outline: 'none', transition: 'border-color 0.2s', '&:focus': { borderBottom: `1px solid ${brandColor}` } },
     textarea: { width: '100%', backgroundColor: '#0A0A0A', border: '1px solid #1F1F1F', padding: '20px', color: '#CCC', fontSize: '14px', outline: 'none', minHeight: '120px', resize: 'vertical', lineHeight: '1.6', borderRadius: '4px' },
 
-    logoPreview: { width: '120px', height: '120px', backgroundColor: brandColor, margin: '0 auto 32px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '16px' },
+    logoPreview: { width: '120px', height: '120px', backgroundColor: brandColor, margin: '0 auto 32px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '16px', overflow: 'hidden' },
     logoInitial: { fontFamily: '"Playfair Display", serif', fontSize: '48px', color: '#000', fontStyle: 'italic' },
     uploadBtn: { width: '100%', backgroundColor: 'transparent', border: '1px solid #333', color: '#888', padding: '16px', fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', cursor: 'pointer', textTransform: 'uppercase', transition: 'all 0.2s', marginTop: '24px' },
 
@@ -101,8 +276,8 @@ export default function Edit() {
     assistanceLink: { color: '#FFF', fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px' },
 
     productGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginTop: '32px' },
-    productSquare: { aspectRatio: '1', backgroundColor: '#111', border: '1px solid #1F1F1F', borderRadius: '8px', overflow: 'hidden', position: 'relative' },
-    productImage: { width: '100%', height: '100%', objectFit: 'cover', opacity: 0.7 },
+    productSquare: { aspectRatio: '1', backgroundColor: '#111', border: '1px solid #1F1F1F', borderRadius: '8px', overflow: 'hidden', position: 'relative', cursor: 'pointer', transition: 'border-color 0.2s', '&:hover': { borderColor: '#666' } },
+    productImage: { width: '100%', height: '100%', objectFit: 'cover', opacity: 1 },
     productEmpty: { aspectRatio: '1', border: '1px dashed #333', borderRadius: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', cursor: 'pointer', transition: 'border-color 0.2s', '&:hover': { borderColor: '#666' } }
   };
 
@@ -135,6 +310,15 @@ export default function Edit() {
           .edit-product-grid { grid-template-columns: 1fr 1fr !important; gap: 16px !important; }
         }
       `}</style>
+
+      {/* Hidden File Inputs mapped to standard refs */}
+      <input type="file" ref={logoRef} style={{ display: 'none' }} accept="image/*" onChange={(e) => handleFileUpload(e, 'logo_url')} />
+      <input type="file" ref={bannerRef} style={{ display: 'none' }} accept="image/*" onChange={(e) => handleFileUpload(e, 'banner_url')} />
+      <input type="file" ref={p1Ref} style={{ display: 'none' }} accept="image/*" onChange={(e) => handleFileUpload(e, 'product_1_url')} />
+      <input type="file" ref={p2Ref} style={{ display: 'none' }} accept="image/*" onChange={(e) => handleFileUpload(e, 'product_2_url')} />
+      <input type="file" ref={p3Ref} style={{ display: 'none' }} accept="image/*" onChange={(e) => handleFileUpload(e, 'product_3_url')} />
+      <input type="file" ref={p4Ref} style={{ display: 'none' }} accept="image/*" onChange={(e) => handleFileUpload(e, 'product_4_url')} />
+      
       {/* Sidebar */}
       <div style={s.sidebar} className="edit-sidebar">
         <div style={s.logoContainer} className="edit-logo-container">
@@ -143,32 +327,48 @@ export default function Edit() {
         </div>
 
         <div style={s.nav} className="edit-nav">
-          <Link to="/dashboard" style={s.navItem(false)}><LayoutGrid size={16} /> Overview</Link>
-          <Link to="/profile" style={s.navItem(false)}><User size={16} /> Profile</Link>
+          {formData.profile_completed ? (
+            <Link to="/dashboard" style={s.navItem(false)}><LayoutGrid size={16} /> Overview</Link>
+          ) : (
+            <div style={{...s.navItem(false), opacity: 0.5, cursor: 'not-allowed'}} title="Complete your profile first"><LayoutGrid size={16} /> Overview <Lock size={12} style={{marginLeft: 'auto'}}/></div>
+          )}
+          
+          {formData.profile_completed ? (
+            <Link to="/profile" style={s.navItem(false)}><User size={16} /> Profile</Link>
+          ) : (
+            <div style={{...s.navItem(false), opacity: 0.5, cursor: 'not-allowed'}} title="Complete your profile first"><User size={16} /> Profile <Lock size={12} style={{marginLeft: 'auto'}}/></div>
+          )}
+          
           <Link to="/edit" style={s.navItem(true)}><Settings size={16} /> Edit</Link>
           <div style={{ ...s.navItem(false), marginTop: '48px' }}><HeadphonesIcon size={16} /> Customer Service</div>
         </div>
 
         <div style={s.userProfile} className="edit-user-profile">
           <div style={s.userAvatar}>
-            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop" alt="Alex Zizzy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            {formData.logo_url ? (
+              <img src={formData.logo_url} alt={formData.owner_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <span style={{ color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>{formData.owner_name ? formData.owner_name.charAt(0) : 'U'}</span>
+            )}
           </div>
           <div>
-            <div style={{ fontSize: '12px', fontWeight: '700', color: '#FFF', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Alex Zizzy</div>
+            <div style={{ fontSize: '12px', fontWeight: '700', color: '#FFF', letterSpacing: '0.05em', textTransform: 'uppercase' }}>{formData.owner_name || 'User'}</div>
             <div style={{ fontSize: '10px', color: '#666', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: '4px' }}>Principal Curator</div>
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div style={s.main}>
+      {/* Main Content Form */}
+      <form style={s.main} onSubmit={handleSubmit}>
         {/* Header Special for Edit Page */}
         <div style={s.editHeader} className="edit-header">
           <div>
             <h1 style={s.headerTitle}>Brand Profile</h1>
             <p style={s.headerSubtitle}>Curate your digital atelier. The narrative you build here defines the prestige of your collections.</p>
           </div>
-          <button style={s.saveBtn} className="edit-save-btn">Save Changes</button>
+          <button type="submit" disabled={loading} style={{ ...s.saveBtn, opacity: loading ? 0.7 : 1 }} className="edit-save-btn">
+            {loading ? 'SAVING...' : 'Save Changes'}
+          </button>
         </div>
 
         {/* Form Content Area */}
@@ -180,7 +380,9 @@ export default function Edit() {
               {/* Banner Upload */}
               <div style={s.bannerBox} className="edit-banner-box">
                 <div style={s.bannerText} className="edit-banner-text">BRAND</div>
-                <button style={s.bannerBtn}>Change Banner</button>
+                <button type="button" style={s.bannerBtn} onClick={() => bannerRef.current?.click()}>
+                  {loading ? 'UPLOADING...' : 'Change Banner'}
+                </button>
                 <div style={s.bannerInfo} className="edit-banner-info">Recommended: 2400x800px</div>
               </div>
 
@@ -191,34 +393,38 @@ export default function Edit() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px 48px', marginBottom: '40px' }} className="edit-input-grid">
                   <div style={s.inputGroup}>
                     <label style={s.label}>Brand Name</label>
-                    <input type="text" defaultValue="Zizzystores" style={s.input} />
+                    <input type="text" name="brand_name" value={formData.brand_name} onChange={handleChange} style={s.input} required />
                   </div>
                   <div style={s.inputGroup}>
                     <label style={s.label}>Owner Name</label>
-                    <input type="text" defaultValue="Alexander Zizzy" style={s.input} />
+                    <input type="text" name="owner_name" value={formData.owner_name} onChange={handleChange} style={s.input} required />
                   </div>
                   <div style={s.inputGroup}>
                     <label style={s.label}>Email Address</label>
-                    <input type="email" defaultValue="studio@zizzystores.com" style={s.input} />
+                    <input type="email" name="email_address" value={formData.email_address} onChange={handleChange} style={s.input} required />
                   </div>
                   <div style={s.inputGroup}>
                     <label style={s.label}>Phone Number</label>
-                    <input type="tel" defaultValue="+1 (555) 012-3456" style={s.input} />
+                    <input type="tel" name="phone_number" value={formData.phone_number} onChange={handleChange} style={s.input} required />
+                  </div>
+                  <div style={s.inputGroup}>
+                    <label style={s.label}>Brand Category</label>
+                    <input type="text" name="brand_category" value={formData.brand_category} onChange={handleChange} style={s.input} required />
                   </div>
                   <div style={s.inputGroup}>
                     <label style={s.label}>Delivery Duration</label>
-                    <input type="tel" defaultValue="2-3 days" style={s.input} />
+                    <input type="text" name="delivery_duration" value={formData.delivery_duration} onChange={handleChange} style={s.input} required />
                   </div>
                 </div>
 
                 <div style={s.inputGroup}>
                   <label style={s.label}>Brand Narrative</label>
-                  <textarea style={s.textarea} defaultValue="Zizzystores was founded on the principle of accessible luxury. We curate objects that tell a story of craftsmanship and enduring design, blending historical techniques with modern silhouettes." />
+                  <textarea name="brand_narrative" value={formData.brand_narrative} onChange={handleChange} style={s.textarea} required />
                 </div>
 
                 <div style={s.inputGroup}>
                   <label style={s.label}>Manifesto</label>
-                  <textarea style={s.textarea} defaultValue='"To build is to breathe; to curate is to live. We reject the ephemeral for the eternal."' />
+                  <textarea name="manifesto" value={formData.manifesto} onChange={handleChange} style={s.textarea} required />
                 </div>
               </div>
 
@@ -229,29 +435,29 @@ export default function Edit() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px 48px', marginBottom: '32px' }} className="edit-input-grid">
                   <div style={{ ...s.inputGroup, marginBottom: 0 }}>
                     <label style={s.label}>Country</label>
-                    <input type="text" defaultValue="Nigeria" style={s.input} />
+                    <input type="text" name="country" value={formData.country} onChange={handleChange} style={s.input} required />
                   </div>
                   <div style={{ ...s.inputGroup, marginBottom: 0 }}>
                     <label style={s.label}>State / Province</label>
-                    <input type="text" defaultValue="Lagos" style={s.input} />
+                    <input type="text" name="state_province" value={formData.state_province} onChange={handleChange} style={s.input} required />
                   </div>
                   <div style={{ ...s.inputGroup, marginBottom: 0 }}>
                     <label style={s.label}>City</label>
-                    <input type="text" defaultValue="Ikeja" style={s.input} />
+                    <input type="text" name="city" value={formData.city} onChange={handleChange} style={s.input} required />
                   </div>
                   <div style={{ ...s.inputGroup, marginBottom: 0 }}>
                     <label style={s.label}>Postal Code</label>
-                    <input type="text" defaultValue="10021" style={s.input} />
+                    <input type="text" name="postal_code" value={formData.postal_code} onChange={handleChange} style={s.input} required />
                   </div>
                 </div>
 
                 <div style={s.inputGroup}>
                   <label style={s.label}>Address Line 1</label>
-                  <input type="text" defaultValue="15 Zizzy Workspace" style={s.input} />
+                  <input type="text" name="address_line_1" value={formData.address_line_1} onChange={handleChange} style={s.input} required />
                 </div>
                 <div style={{ ...s.inputGroup, marginBottom: 0 }}>
                   <label style={s.label}>Address Line 2 (Optional)</label>
-                  <input type="text" placeholder="Suite, unit, etc." style={s.input} />
+                  <input type="text" name="address_line_2" value={formData.address_line_2} onChange={handleChange} style={s.input} />
                 </div>
               </div>
 
@@ -277,7 +483,7 @@ export default function Edit() {
                       <input
                         type="color"
                         value={themeColors.primary}
-                        onChange={(e) => setThemeColors({ ...themeColors, primary: e.target.value })}
+                        onChange={(e) => handleColorChange('primary', e.target.value)}
                         style={{ position: 'absolute', opacity: 0, width: '200%', height: '200%', top: '-50%', left: '-50%', cursor: 'pointer' }}
                       />
                       <div style={{ position: 'absolute', bottom: '8px', right: '8px', backgroundColor: 'rgba(0,0,0,0.6)', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', color: '#FFF', pointerEvents: 'none' }}>{themeColors.primary.toUpperCase()}</div>
@@ -291,7 +497,7 @@ export default function Edit() {
                       <input
                         type="color"
                         value={themeColors.secondary}
-                        onChange={(e) => setThemeColors({ ...themeColors, secondary: e.target.value })}
+                        onChange={(e) => handleColorChange('secondary', e.target.value)}
                         style={{ position: 'absolute', opacity: 0, width: '200%', height: '200%', top: '-50%', left: '-50%', cursor: 'pointer' }}
                       />
                       <div style={{ position: 'absolute', bottom: '8px', right: '8px', backgroundColor: 'rgba(0,0,0,0.6)', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', color: '#FFF', pointerEvents: 'none' }}>{themeColors.secondary.toUpperCase()}</div>
@@ -305,7 +511,7 @@ export default function Edit() {
                       <input
                         type="color"
                         value={themeColors.accent}
-                        onChange={(e) => setThemeColors({ ...themeColors, accent: e.target.value })}
+                        onChange={(e) => handleColorChange('accent', e.target.value)}
                         style={{ position: 'absolute', opacity: 0, width: '200%', height: '200%', top: '-50%', left: '-50%', cursor: 'pointer' }}
                       />
                       <div style={{ position: 'absolute', bottom: '8px', right: '8px', backgroundColor: 'rgba(0,0,0,0.6)', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', color: '#FFF', pointerEvents: 'none' }}>{themeColors.accent.toUpperCase()}</div>
@@ -323,12 +529,18 @@ export default function Edit() {
               <div style={s.card} className="edit-card">
                 <label style={{ ...s.label, marginBottom: '40px' }}>Brand Logo</label>
                 <div style={s.logoPreview}>
-                  <span style={s.logoInitial}>Z</span>
+                  {formData.logo_url ? (
+                    <img src={formData.logo_url} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <span style={s.logoInitial}>{formData.brand_name ? formData.brand_name.charAt(0).toUpperCase() : 'Z'}</span>
+                  )}
                 </div>
                 <p style={{ fontSize: '10px', color: '#888', textAlign: 'center', lineHeight: '1.6', padding: '0 20px' }}>
                   Upload a high-resolution SVG or PNG. 1:1 ratio required.
                 </p>
-                <button style={s.uploadBtn}>Upload New Logo</button>
+                <button type="button" style={s.uploadBtn} onClick={() => logoRef.current?.click()}>
+                  {loading ? 'UPLOADING...' : 'Upload New Logo'}
+                </button>
               </div>
 
               {/* Social Handles Box */}
@@ -339,7 +551,7 @@ export default function Edit() {
                   <div style={s.socialIcon}><InstagramIcon /></div>
                   <div style={s.socialInputContainer}>
                     <div style={s.socialNetworkLabel}>instagram profile url</div>
-                    <input type="text" defaultValue="https://instagram.com/zizzystores" style={s.socialInput} />
+                    <input type="text" name="instagram_url" value={formData.instagram_url} onChange={handleChange} placeholder="https://instagram.com/zizzystores" style={s.socialInput} />
                   </div>
                 </div>
 
@@ -347,7 +559,7 @@ export default function Edit() {
                   <div style={s.socialIcon}><TwitterIcon /></div>
                   <div style={s.socialInputContainer}>
                     <div style={s.socialNetworkLabel}>x (twitter) profile url</div>
-                    <input type="text" defaultValue="https://x.com/zizzystores" style={s.socialInput} />
+                    <input type="text" name="twitter_url" value={formData.twitter_url} onChange={handleChange} placeholder="https://x.com/zizzystores" style={s.socialInput} />
                   </div>
                 </div>
 
@@ -355,7 +567,7 @@ export default function Edit() {
                   <div style={s.socialIcon}><FacebookIcon /></div>
                   <div style={s.socialInputContainer}>
                     <div style={s.socialNetworkLabel}>facebook page url</div>
-                    <input type="text" defaultValue="https://facebook.com/zizzystores" style={s.socialInput} />
+                    <input type="text" name="facebook_url" value={formData.facebook_url} onChange={handleChange} placeholder="https://facebook.com/zizzystores" style={s.socialInput} />
                   </div>
                 </div>
 
@@ -363,7 +575,7 @@ export default function Edit() {
                   <div style={s.socialIcon}><TikTokIcon /></div>
                   <div style={s.socialInputContainer}>
                     <div style={s.socialNetworkLabel}>tiktok profile url</div>
-                    <input type="text" defaultValue="https://tiktok.com/@zizzystores" style={s.socialInput} />
+                    <input type="text" name="tiktok_url" value={formData.tiktok_url} onChange={handleChange} placeholder="https://tiktok.com/@zizzystores" style={s.socialInput} />
                   </div>
                 </div>
 
@@ -371,27 +583,32 @@ export default function Edit() {
                   <div style={s.socialIcon}><LinkIcon size={14} /></div>
                   <div style={s.socialInputContainer}>
                     <div style={s.socialNetworkLabel}>website</div>
-                    <input type="text" defaultValue="www.zizzystores.com" style={s.socialInput} />
+                    <input type="text" name="website_url" value={formData.website_url} onChange={handleChange} placeholder="www.zizzystores.com" style={s.socialInput} />
                   </div>
                 </div>
               </div>
 
               {/* Payment Section */}
               <div style={s.card} className="edit-card">
-                <h2 style={{ ...s.cardTitle, marginBottom: '24px' }}>Payout Details</h2>
-                <div style={{ fontSize: '12px', color: '#888', marginBottom: '32px', lineHeight: '1.6' }}>Select the bank account where your sales revenue will be deposited automatically.</div>
+                <h2 style={{ ...s.cardTitle, marginBottom: '24px' }}>Payout Details & Integration</h2>
+                <div style={{ fontSize: '12px', color: '#888', marginBottom: '32px', lineHeight: '1.6' }}>Provide your bank account details. The platform admin will use these to generate your automated settlement subaccount.</div>
 
                 <div style={s.inputGroup}>
                   <label style={s.label}>Bank Name</label>
-                  <input type="text" defaultValue="Guaranty Trust Bank" style={s.input} />
+                  <input type="text" name="bank_name" value={formData.bank_name} onChange={handleChange} placeholder="Guaranty Trust Bank" style={s.input} />
                 </div>
                 <div style={s.inputGroup}>
                   <label style={s.label}>Account Number</label>
-                  <input type="text" defaultValue="0123456789" style={s.input} />
+                  <input type="text" name="account_number" value={formData.account_number} onChange={handleChange} placeholder="0123456789" style={s.input} />
                 </div>
-                <div style={{ ...s.inputGroup, marginBottom: 0 }}>
+                <div style={s.inputGroup}>
                   <label style={s.label}>Account Name</label>
-                  <input type="text" defaultValue="Zizzy Wears" style={s.input} />
+                  <input type="text" name="account_name" value={formData.account_name} onChange={handleChange} placeholder="Zizzy Wears" style={s.input} />
+                </div>
+
+                <div style={{ ...s.inputGroup, marginBottom: 0 }}>
+                  <label style={s.label}>Paystack Subaccount Code <span style={{color: '#888', textTransform: 'none', marginLeft: '8px'}}>(Generated by Admin)</span></label>
+                  <input type="text" value={formData.paystack_subaccount_code || ''} placeholder="Pending Generation..." style={{ ...s.input, color: '#888', cursor: 'not-allowed', backgroundColor: 'rgba(255,255,255,0.02)', paddingLeft: '16px' }} readOnly />
                 </div>
               </div>
 
@@ -414,30 +631,71 @@ export default function Edit() {
                 <h2 style={{ fontFamily: '"Playfair Display", serif', fontSize: '24px', color: '#FFF', marginBottom: '8px' }}>Product Showcase</h2>
                 <p style={{ fontSize: '12px', color: '#888' }}>Select 4 primary items for your landing gallery.</p>
               </div>
-
             </div>
 
             <div style={s.productGrid} className="edit-product-grid">
-              <div style={s.productSquare}>
-                <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&q=80" alt="Product 1" style={{ ...s.productImage, mixBlendMode: 'luminosity' }} />
+              
+              {/* Product 1 */}
+              <div style={formData.product_1_url ? s.productSquare : s.productEmpty} onClick={() => p1Ref.current?.click()}>
+                {formData.product_1_url ? (
+                  <img src={formData.product_1_url} alt="Product 1" style={s.productImage} />
+                ) : (
+                  <>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Plus size={16} color="#000000" />
+                    </div>
+                    <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#888888', textTransform: 'uppercase' }}>Select Item</div>
+                  </>
+                )}
               </div>
-              <div style={s.productSquare}>
-                <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80" alt="Product 2" style={{ ...s.productImage, mixBlendMode: 'luminosity' }} />
+
+              {/* Product 2 */}
+              <div style={formData.product_2_url ? s.productSquare : s.productEmpty} onClick={() => p2Ref.current?.click()}>
+                {formData.product_2_url ? (
+                  <img src={formData.product_2_url} alt="Product 2" style={s.productImage} />
+                ) : (
+                  <>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Plus size={16} color="#000000" />
+                    </div>
+                    <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#888888', textTransform: 'uppercase' }}>Select Item</div>
+                  </>
+                )}
               </div>
-              <div style={s.productSquare}>
-                <img src="https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=400&q=80" alt="Product 3" style={{ ...s.productImage, mixBlendMode: 'luminosity' }} />
+
+              {/* Product 3 */}
+              <div style={formData.product_3_url ? s.productSquare : s.productEmpty} onClick={() => p3Ref.current?.click()}>
+                {formData.product_3_url ? (
+                  <img src={formData.product_3_url} alt="Product 3" style={s.productImage} />
+                ) : (
+                  <>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Plus size={16} color="#000000" />
+                    </div>
+                    <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#888888', textTransform: 'uppercase' }}>Select Item</div>
+                  </>
+                )}
               </div>
-              <div style={s.productEmpty}>
-                <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Plus size={16} color="#000000" />
-                </div>
-                <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#888888', textTransform: 'uppercase' }}>Select Item</div>
+
+              {/* Product 4 */}
+              <div style={formData.product_4_url ? s.productSquare : s.productEmpty} onClick={() => p4Ref.current?.click()}>
+                {formData.product_4_url ? (
+                  <img src={formData.product_4_url} alt="Product 4" style={s.productImage} />
+                ) : (
+                  <>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Plus size={16} color="#000000" />
+                    </div>
+                    <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#888888', textTransform: 'uppercase' }}>Select Item</div>
+                  </>
+                )}
               </div>
+
             </div>
           </div>
 
         </div>
-      </div>
+      </form>
     </div>
   );
 }

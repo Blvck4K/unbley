@@ -1,12 +1,46 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Lock, ArrowLeft, ArrowRight, ShieldCheck, CreditCard, Banknote, Smartphone, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
+import { usePaystackPayment } from 'react-paystack';
 
 export default function Checkout() {
   const navigate = useNavigate();
-  const accentColor = '#0F2C59'; // Deep luxury blue
-  const bgMain = '#FAFAFA'; // Light grey page bg
-  const inputBg = '#F4F4F5';
+
+  const [cartItems, setCartItems] = useState(() => {
+    try {
+      const stored = localStorage.getItem('cart');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [brand, setBrand] = useState(null);
+
+  useEffect(() => {
+    async function fetchBrand() {
+      if (cartItems.length > 0 && cartItems[0].brand_id) {
+        if (!brand || brand.id !== cartItems[0].brand_id) {
+          const { data } = await supabase.from('brand_profiles').select('*').eq('id', cartItems[0].brand_id).single();
+          if (data) setBrand(data);
+        }
+      }
+    }
+    fetchBrand();
+  }, [cartItems]);
+
+  const accentColor = brand?.accent_color || '#0F2C59';
+  const bgMain = brand?.primary_color || '#FAFAFA';
+  const secondaryBg = brand?.secondary_color || '#FFFFFF';
+  const textColor = brand ? '#FDFDFD' : '#111';
+  const mutedColor = brand ? '#999' : '#666';
+  const borderColor = brand?.secondary_color ? 'rgba(255,255,255,0.1)' : '#EAEAEA';
+  const dangerColor = '#D83A3A';
+  const inputBg = brand ? 'rgba(255,255,255,0.05)' : '#F4F4F5';
+
+  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.qty), 0);
+  const total = subtotal;
 
   const [formData, setFormData] = useState({
     firstName: 'Julianne',
@@ -19,10 +53,30 @@ export default function Checkout() {
   });
 
   const [errors, setErrors] = useState({});
-  const [paymentMethod, setPaymentMethod] = useState('card');
   const [isProcessing, setIsProcessing] = useState(false);
 
   const formatCurrency = (amount) => `₦${amount.toLocaleString()}`;
+
+  const paystackConfig = {
+    reference: (new Date()).getTime().toString(),
+    email: formData.email,
+    amount: total * 100, // Paystack amount is in kobo
+    publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
+    ...(brand?.paystack_subaccount_code ? { subaccount: brand.paystack_subaccount_code } : {}),
+    currency: 'NGN',
+  };
+
+  const initializePayment = usePaystackPayment(paystackConfig);
+
+  const onSuccess = (reference) => {
+    setIsProcessing(false);
+    localStorage.removeItem('cart');
+    navigate('/checkout-success', { state: { reference } });
+  };
+
+  const onClose = () => {
+    setIsProcessing(false);
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -52,23 +106,22 @@ export default function Checkout() {
       return;
     }
 
-    // Process payment simulation
+    if (!brand?.paystack_subaccount_code) {
+      alert("This brand has not configured their payout setup yet. Checkout is temporarily disabled.");
+      return;
+    }
+
     setIsProcessing(true);
-    setTimeout(() => {
-      // In a real flow, this could trigger Paystack popup instead of navigating immediately.
-      // E.g., const paystack = new PaystackPop(); paystack.newTransaction({...});
-      setIsProcessing(false);
-      navigate('/checkout-success'); // Placeholder route
-    }, 2500);
+    initializePayment(onSuccess, onClose);
   };
 
   const s = {
-    page: { backgroundColor: bgMain, color: '#111', minHeight: '100vh', fontFamily: '"Inter", sans-serif', overflowX: 'hidden', display: 'flex', flexDirection: 'column' },
+    page: { backgroundColor: bgMain, color: textColor, minHeight: '100vh', fontFamily: '"Inter", sans-serif', overflowX: 'hidden', display: 'flex', flexDirection: 'column' },
     
     // Header
-    header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '24px 48px', backgroundColor: '#FFF', borderBottom: '1px solid #EAEAEA' },
-    logo: { fontFamily: '"Inter", sans-serif', fontSize: '16px', fontWeight: 'bold', letterSpacing: '0.05em', color: '#10503D' },
-    headerRight: { display: 'flex', alignItems: 'center', gap: '16px', color: '#666', fontSize: '11px', fontWeight: '600', letterSpacing: '0.05em' },
+    header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '24px 48px', backgroundColor: secondaryBg, borderBottom: `1px solid ${borderColor}` },
+    logo: { fontFamily: '"Inter", sans-serif', fontSize: '16px', fontWeight: 'bold', letterSpacing: '0.05em', color: textColor },
+    headerRight: { display: 'flex', alignItems: 'center', gap: '16px', color: mutedColor, fontSize: '11px', fontWeight: '600', letterSpacing: '0.05em' },
 
     // Content Wrap
     contentWrap: { flex: 1, padding: '48px', display: 'flex', flexDirection: 'column', alignItems: 'center' },
@@ -76,78 +129,68 @@ export default function Checkout() {
     // Stepper
     stepper: { display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '64px' },
     step: { display: 'flex', alignItems: 'center', gap: '8px' },
-    stepNumActive: { width: '24px', height: '24px', borderRadius: '50%', backgroundColor: accentColor, color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '700' },
-    stepNumIdle: { width: '24px', height: '24px', borderRadius: '50%', backgroundColor: '#EAEAEA', color: '#888', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '700' },
+    stepNumActive: { width: '24px', height: '24px', borderRadius: '50%', backgroundColor: accentColor, color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '700' },
+    stepNumIdle: { width: '24px', height: '24px', borderRadius: '50%', backgroundColor: secondaryBg, border: `1px solid ${borderColor}`, color: mutedColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '700' },
     stepTextActive: { fontSize: '13px', fontWeight: '700', color: accentColor },
-    stepTextIdle: { fontSize: '13px', fontWeight: '500', color: '#888' },
-    stepLine: { width: '48px', height: '1px', backgroundColor: '#EAEAEA' },
+    stepTextIdle: { fontSize: '13px', fontWeight: '500', color: mutedColor },
+    stepLine: { width: '48px', height: '1px', backgroundColor: borderColor },
 
     // Main Layout
     layout: { display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)', gap: '64px', maxWidth: '1200px', width: '100%' },
 
     // Left Col
     leftCol: { display: 'flex', flexDirection: 'column' },
-    sectionTitle: { fontSize: '28px', fontWeight: '700', color: '#111', marginBottom: '32px' },
-    sectionSubtitle: { fontSize: '14px', color: '#555', marginBottom: '24px', fontWeight: '500' },
+    sectionTitle: { fontSize: '28px', fontWeight: '700', color: textColor, marginBottom: '32px' },
+    sectionSubtitle: { fontSize: '14px', color: mutedColor, marginBottom: '24px', fontWeight: '500' },
 
     formGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '40px' },
     inputGroup: { display: 'flex', flexDirection: 'column', gap: '8px' },
     inputGroupFull: { display: 'flex', flexDirection: 'column', gap: '8px', gridColumn: '1 / -1' },
-    label: { fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#333' },
-    input: { backgroundColor: inputBg, border: '1px solid transparent', padding: '16px', fontSize: '14px', color: '#333', borderRadius: '4px', outline: 'none', transition: 'border-color 0.2s, background-color 0.2s', width: '100%' },
-    errorText: { color: '#D83A3A', fontSize: '11px', marginTop: '4px' },
+    label: { fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase', color: textColor },
+    input: { backgroundColor: inputBg, border: '1px solid transparent', padding: '16px', fontSize: '14px', color: textColor, borderRadius: '4px', outline: 'none', transition: 'border-color 0.2s, background-color 0.2s', width: '100%' },
+    errorText: { color: dangerColor, fontSize: '11px', marginTop: '4px' },
 
-    paymentMethodsWrap: { display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '48px' },
-    paymentOption: { border: '1px solid #EAEAEA', borderRadius: '8px', padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', transition: 'all 0.2s', backgroundColor: '#FFF' },
-    paymentOptionActive: { border: `2px solid ${accentColor}`, backgroundColor: '#F9FAFC' },
-    paymentLeft: { display: 'flex', alignItems: 'center', gap: '16px' },
-    radioCircle: { width: '20px', height: '20px', borderRadius: '50%', border: '2px solid #CCC', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-    radioInner: { width: '10px', height: '10px', borderRadius: '50%', backgroundColor: accentColor },
-    paymentIconWrap: { width: '40px', height: '40px', borderRadius: '4px', backgroundColor: '#F0F0F0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#555' },
-    paymentTitle: { fontSize: '15px', fontWeight: '600', color: '#111' },
-    paymentDesc: { fontSize: '12px', color: '#666', marginTop: '2px' },
-
-    actionsCol: { display: 'flex', flexDirection: 'column', gap: '12px' },
-    continueBtn: { backgroundColor: accentColor, color: '#FFF', border: 'none', padding: '18px 32px', fontSize: '14px', fontWeight: '700', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', boxShadow: '0 4px 12px rgba(15, 44, 89, 0.2)', transition: 'opacity 0.2s', width: '100%' },
-    disclaimerText: { fontSize: '12px', color: '#666', textAlign: 'center' },
-    backBtn: { background: 'none', border: 'none', color: '#666', fontSize: '13px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '16px', padding: '12px' },
+    actionsCol: { display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '32px' },
+    continueBtn: { backgroundColor: accentColor, color: '#000', border: 'none', padding: '18px 32px', fontSize: '14px', fontWeight: '700', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', transition: 'opacity 0.2s', width: '100%' },
+    disclaimerText: { fontSize: '12px', color: mutedColor, textAlign: 'center' },
+    backBtn: { background: 'none', border: 'none', color: mutedColor, fontSize: '13px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '16px', padding: '12px' },
 
     // Right Col
     rightCol: { display: 'flex', flexDirection: 'column', gap: '24px' },
-    summaryBox: { backgroundColor: '#FFF', padding: '32px', borderRadius: '4px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' },
-    summaryTitle: { fontSize: '20px', fontWeight: '600', color: '#111', marginBottom: '32px' },
+    summaryBox: { backgroundColor: secondaryBg, padding: '32px', borderRadius: '4px', border: `1px solid ${borderColor}` },
+    summaryTitle: { fontSize: '20px', fontWeight: '600', color: textColor, marginBottom: '32px' },
     
     summaryItem: { display: 'flex', gap: '16px', marginBottom: '24px' },
-    summaryItemImg: { width: '64px', height: '64px', borderRadius: '4px', backgroundColor: '#F5F5F5', overflow: 'hidden' },
+    summaryItemImg: { width: '64px', height: '64px', borderRadius: '4px', backgroundColor: '#111', overflow: 'hidden' },
     summaryItemDetails: { flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' },
-    summaryItemName: { fontSize: '14px', fontWeight: '600', color: '#111', marginBottom: '4px' },
-    summaryItemVariant: { fontSize: '12px', color: '#666', marginBottom: '8px' },
+    summaryItemName: { fontSize: '14px', fontWeight: '600', color: textColor, marginBottom: '4px' },
+    summaryItemVariant: { fontSize: '12px', color: mutedColor, marginBottom: '8px' },
     summaryItemPriceRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-    summaryItemQty: { fontSize: '12px', color: '#555' },
+    summaryItemQty: { fontSize: '12px', color: mutedColor },
     summaryItemPrice: { fontSize: '14px', fontWeight: '700', color: accentColor },
 
-    summaryRow: { display: 'flex', justifyContent: 'space-between', marginBottom: '16px', fontSize: '13px', color: '#555' },
-    summaryRowValue: { color: '#111', fontWeight: '500' },
-    deliveryImportant: { fontSize: '11px', color: '#10503D', fontWeight: '600', textAlign: 'right', marginTop: '-12px', marginBottom: '16px' },
+    summaryRow: { display: 'flex', justifyContent: 'space-between', marginBottom: '16px', fontSize: '13px', color: mutedColor },
+    summaryRowValue: { color: textColor, fontWeight: '500' },
+    deliveryImportant: { fontSize: '11px', color: accentColor, fontWeight: '600', textAlign: 'right', marginTop: '-12px', marginBottom: '16px' },
 
-    divider: { height: '1px', backgroundColor: '#EAEAEA', margin: '24px 0' },
+    divider: { height: '1px', backgroundColor: borderColor, margin: '24px 0' },
     totalRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' },
-    totalLabel: { fontSize: '16px', fontWeight: '700', color: '#111' },
+    totalLabel: { fontSize: '16px', fontWeight: '700', color: textColor },
     totalValue: { fontSize: '24px', fontWeight: '800', color: accentColor },
 
-    guaranteeBox: { backgroundColor: '#F9F9FB', padding: '16px', borderRadius: '4px', display: 'flex', alignItems: 'flex-start', gap: '12px' },
-    guaranteeText: { fontSize: '9px', fontWeight: '700', color: '#555', letterSpacing: '0.05em', lineHeight: '1.5' },
+    guaranteeBox: { backgroundColor: inputBg, padding: '16px', borderRadius: '4px', border: `1px solid ${borderColor}`, display: 'flex', alignItems: 'flex-start', gap: '12px' },
+    guaranteeText: { fontSize: '9px', fontWeight: '700', color: mutedColor, letterSpacing: '0.05em', lineHeight: '1.5' },
 
-    encryptionBox: { backgroundColor: '#F9F9F9', border: '1px solid #EAEAEA', padding: '16px', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '24px' },
-    encryptionIcons: { display: 'flex', gap: '16px', color: '#666' },
-    encryptionText: { fontSize: '10px', fontWeight: '700', color: '#333', letterSpacing: '0.05em' },
+    encryptionBox: { backgroundColor: secondaryBg, border: `1px solid ${borderColor}`, padding: '16px', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '24px' },
+    encryptionIcons: { display: 'flex', gap: '16px', color: mutedColor },
+    encryptionText: { fontSize: '10px', fontWeight: '700', color: textColor, letterSpacing: '0.05em' },
 
     // Footer
-    footer: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '32px 48px', marginTop: 'auto', backgroundColor: bgMain },
-    footerLogo: { fontSize: '14px', fontWeight: '700', color: '#10503D' },
-    footerLinks: { display: 'flex', gap: '32px', fontSize: '11px', color: '#666' },
+    footer: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '32px 48px', marginTop: 'auto', backgroundColor: bgMain, borderTop: `1px solid ${borderColor}` },
+    footerLogo: { fontSize: '14px', fontWeight: '700', color: textColor },
+    footerLinks: { display: 'flex', gap: '32px', fontSize: '11px', color: mutedColor },
     footerLinkItem: { cursor: 'pointer', textDecoration: 'none' },
-    copyright: { fontSize: '11px', color: '#888' },
+    copyright: { fontSize: '11px', color: mutedColor },
   };
 
   const getInputStyle = (fieldName) => {
@@ -177,7 +220,7 @@ export default function Checkout() {
 
       {/* Header */}
       <div style={s.header} className="checkout-header">
-        <div style={s.logo}>Digital Atelier</div>
+        <div style={s.logo}>{brand ? brand.brand_name.toUpperCase() : 'DIGITAL ATELIER'}</div>
         <div style={s.headerRight}>
           <Lock size={14} />
           SECURE CHECKOUT
@@ -254,55 +297,6 @@ export default function Checkout() {
               </div>
             </div>
 
-            <h2 style={{...s.sectionTitle, fontSize: '24px', marginBottom: '8px'}}>Payment Method</h2>
-            <p style={s.sectionSubtitle}>All transactions are secure and encrypted.</p>
-
-            <div style={s.paymentMethodsWrap}>
-              
-              {/* Option 1: Card */}
-              <div style={{...s.paymentOption, ...(paymentMethod === 'card' ? s.paymentOptionActive : {})}} onClick={() => setPaymentMethod('card')}>
-                <div style={s.paymentLeft}>
-                  <div style={s.radioCircle}>
-                    {paymentMethod === 'card' && <div style={s.radioInner}></div>}
-                  </div>
-                  <div style={s.paymentIconWrap}><CreditCard size={20} /></div>
-                  <div>
-                    <div style={s.paymentTitle}>Debit / Credit Card</div>
-                    <div style={s.paymentDesc}>Pay securely with your card via Paystack</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Option 2: Bank Transfer */}
-              <div style={{...s.paymentOption, ...(paymentMethod === 'transfer' ? s.paymentOptionActive : {})}} onClick={() => setPaymentMethod('transfer')}>
-                <div style={s.paymentLeft}>
-                  <div style={s.radioCircle}>
-                    {paymentMethod === 'transfer' && <div style={s.radioInner}></div>}
-                  </div>
-                  <div style={s.paymentIconWrap}><Banknote size={20} /></div>
-                  <div>
-                    <div style={s.paymentTitle}>Bank Transfer</div>
-                    <div style={s.paymentDesc}>Direct transfer to provided account</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Option 3: USSD */}
-              <div style={{...s.paymentOption, ...(paymentMethod === 'ussd' ? s.paymentOptionActive : {})}} onClick={() => setPaymentMethod('ussd')}>
-                <div style={s.paymentLeft}>
-                  <div style={s.radioCircle}>
-                    {paymentMethod === 'ussd' && <div style={s.radioInner}></div>}
-                  </div>
-                  <div style={s.paymentIconWrap}><Smartphone size={20} /></div>
-                  <div>
-                    <div style={s.paymentTitle}>USSD</div>
-                    <div style={s.paymentDesc}>Pay offline using secure USSD codes</div>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-
             <div style={s.actionsCol} className="actions-col">
               <button style={{...s.continueBtn, opacity: isProcessing ? 0.7 : 1}} onClick={handlePaymentSubmit} disabled={isProcessing}>
                 {isProcessing ? (
@@ -331,59 +325,42 @@ export default function Checkout() {
             <div style={s.summaryBox}>
               <h2 style={s.summaryTitle}>Order Summary</h2>
               
-              <div style={s.summaryItem}>
-                <div style={s.summaryItemImg}>
-                  <img src="https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=200&q=80" alt="Cashmere Knit" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                </div>
-                <div style={s.summaryItemDetails}>
-                  <div style={s.summaryItemName}>Artisan Cashmere Knit</div>
-                  <div style={s.summaryItemVariant}>Oatmeal / Medium</div>
-                  <div style={s.summaryItemPriceRow}>
-                    <div style={s.summaryItemQty}>Qty: 1</div>
-                    <div style={s.summaryItemPrice}>{formatCurrency(420000)}</div>
+              {cartItems.map((item) => (
+                <div key={item.id} style={s.summaryItem}>
+                  <div style={s.summaryItemImg}>
+                    <img src={item.img} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=200&q=80' }} />
+                  </div>
+                  <div style={s.summaryItemDetails}>
+                    <div style={s.summaryItemName}>{item.name}</div>
+                    <div style={s.summaryItemVariant}>{item.variant}</div>
+                    <div style={s.summaryItemPriceRow}>
+                      <div style={s.summaryItemQty}>Qty: {item.qty}</div>
+                      <div style={s.summaryItemPrice}>{formatCurrency(item.price * item.qty)}</div>
+                    </div>
                   </div>
                 </div>
-              </div>
-
-              <div style={s.summaryItem}>
-                <div style={s.summaryItemImg}>
-                  <img src="https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=200&q=80" alt="Leather Runner" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                </div>
-                <div style={s.summaryItemDetails}>
-                  <div style={s.summaryItemName}>Heritage Leather Runner</div>
-                  <div style={s.summaryItemVariant}>Midnight Blue / 42</div>
-                  <div style={s.summaryItemPriceRow}>
-                    <div style={s.summaryItemQty}>Qty: 1</div>
-                    <div style={s.summaryItemPrice}>{formatCurrency(350000)}</div>
-                  </div>
-                </div>
-              </div>
+              ))}
 
               <div style={s.divider}></div>
               
               <div style={s.summaryRow}>
                 <span>Subtotal</span>
-                <span style={s.summaryRowValue}>{formatCurrency(770000)}</span>
+                <span style={s.summaryRowValue}>{formatCurrency(subtotal)}</span>
               </div>
               
               <div style={s.summaryRow}>
                 <span>Shipping</span>
-                <span style={{color: '#111', fontWeight: '600'}}>Complimentary</span>
+                <span style={{color: textColor, fontWeight: '600'}}>Complimentary</span>
               </div>
               <div style={s.deliveryImportant}>
                 Delivery: 2–5 business days
-              </div>
-
-              <div style={s.summaryRow}>
-                <span>Estimated Tax (7.5%)</span>
-                <span style={s.summaryRowValue}>{formatCurrency(62400)}</span>
               </div>
 
               <div style={s.divider}></div>
               
               <div style={s.totalRow}>
                 <span style={s.totalLabel}>Total</span>
-                <span style={s.totalValue}>{formatCurrency(832400)}</span>
+                <span style={s.totalValue}>{formatCurrency(total)}</span>
               </div>
 
               <div style={s.guaranteeBox}>
@@ -407,7 +384,7 @@ export default function Checkout() {
 
       {/* Footer */}
       <div style={s.footer} className="checkout-footer">
-        <div style={s.footerLogo}>Digital Atelier</div>
+        <div style={s.footerLogo}>{brand ? brand.brand_name : 'Digital Atelier'}</div>
         
         <div style={s.footerLinks} className="footer-links">
           <a style={s.footerLinkItem}>Privacy Policy</a>
@@ -416,7 +393,7 @@ export default function Checkout() {
           <a style={s.footerLinkItem}>Sustainability</a>
         </div>
         
-        <div style={s.copyright}>© 2024 Digital Atelier. All rights reserved.</div>
+        <div style={s.copyright}>© {new Date().getFullYear()} {brand ? brand.brand_name : 'Digital Atelier'}. All rights reserved.</div>
       </div>
     </div>
   );
