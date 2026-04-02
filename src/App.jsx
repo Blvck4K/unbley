@@ -24,32 +24,6 @@ function App() {
   const [customBrandId, setCustomBrandId] = useState(null);
   const [isCustomDomain, setIsCustomDomain] = useState(false);
 
-  useEffect(() => {
-    async function checkDomainMapping() {
-      const hostname = window.location.hostname;
-      // Define your platform domains that shouldn't be treated as custom brand domains
-      const platformDomains = ['localhost', 'zizzystores.com', 'zizzystores.vercel.app'];
-      
-      if (!platformDomains.includes(hostname)) {
-        try {
-          const { data, error } = await supabase
-            .from('brand_profiles')
-            .select('id')
-            .eq('custom_domain', hostname)
-            .single();
-            
-          if (data) {
-            setCustomBrandId(data.id);
-            setIsCustomDomain(true);
-          }
-        } catch (err) {
-          console.error("Domain lookup failed:", err);
-        }
-      }
-    }
-    checkDomainMapping();
-  }, []);
-
   return (
     <AuthProvider>
       <BrowserRouter>

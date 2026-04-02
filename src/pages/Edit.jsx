@@ -75,8 +75,7 @@ export default function Edit() {
     bank_name: '',
     account_number: '',
     account_name: '',
-    paystack_subaccount_code: '',
-    custom_domain: ''
+    paystack_subaccount_code: ''
   });
 
   const [themeColors, setThemeColors] = useState({
@@ -658,26 +657,6 @@ export default function Edit() {
                 </div>
               </div>
 
-              {/* Custom Domain Section */}
-              <div style={s.card} className="edit-card">
-                <h2 style={{ ...s.cardTitle, marginBottom: '24px' }}>Connect Your Domain</h2>
-                <div style={{ fontSize: '12px', color: '#888', marginBottom: '32px', lineHeight: '1.6' }}>Link your purchased .store domain here. Ensure your DNS records point to the project IP.</div>
-
-                <div style={s.inputGroup}>
-                  <label style={s.label}>Custom Domain Name</label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid #333' }}>
-                    <Globe size={14} color={brandColor} />
-                    <input 
-                      type="text" 
-                      name="custom_domain" 
-                      value={formData.custom_domain || ''} 
-                      onChange={handleChange} 
-                      placeholder="e.g. yourbrand.store" 
-                      style={{ ...s.input, borderBottom: 'none' }} 
-                    />
-                  </div>
-                </div>
-              </div>
 
               {/* Assistance Box */}
               <div style={s.assistanceBox}>

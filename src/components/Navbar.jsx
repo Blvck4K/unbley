@@ -23,7 +23,7 @@ export default function Navbar() {
         const { data, error } = await supabase
           .from('brand_profiles')
           .select('id')
-          .or(`brand_name.ilike.%${search}%,custom_domain.eq.${search}`)
+          .ilike('brand_name', `%${search}%`)
           .limit(1)
           .single();
 
