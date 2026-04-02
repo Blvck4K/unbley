@@ -44,22 +44,16 @@ export default function Navbar() {
     <nav className="navbar" style={{ height: isMenuOpen && isMobile ? 'auto' : '72px', padding: isMenuOpen && isMobile ? '20px 0' : '0' }}>
       <div className="container flex justify-between items-center" style={{ width: '100%', flexDirection: isMenuOpen && isMobile ? 'column' : 'row', gap: isMenuOpen && isMobile ? '20px' : '0' }}>
         <div className="flex items-center justify-between" style={{ width: isMobile ? '100%' : 'auto', gap: isMobile ? '0' : '32px' }}>
-          <Link to="/" className="font-bold" onClick={() => setIsMenuOpen(false)} style={{ fontSize: '20px', letterSpacing: '-0.03em', color: 'inherit', textDecoration: 'none' }}>
-            ZizzyStores.
+          <Link to="/" className="font-bold flex items-center gap-2" onClick={() => setIsMenuOpen(false)} style={{ fontSize: '20px', letterSpacing: '-0.03em', color: 'inherit', textDecoration: 'none' }}>
+            <img src="https://raw.githubusercontent.com/Blvck4K/Jss-png/main/logogo.png" alt="Logo" style={{ height: '32px', width: '32px', borderRadius: '4px', objectFit: 'cover' }} />
+            <span>ZizzyStores.</span>
           </Link>
 
           {isMobile ? (
             <button onClick={() => setIsMenuOpen(!isMenuOpen)} style={{ background: 'none', color: 'inherit' }}>
               {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
-          ) : (
-            <div className="nav-links">
-              <a href="#marketplace">Marketplace</a>
-              <a href="#solutions">Solutions</a>
-              <a href="#resources">Resources</a>
-              <a href="#sell">Sell</a>
-            </div>
-          )}
+          ) : null}
         </div>
 
         {(isMenuOpen || !isMobile) && (
@@ -86,14 +80,7 @@ export default function Navbar() {
               </Link>
             </div>
 
-            {isMobile && isMenuOpen && (
-              <div className="flex flex-col gap-4 text-center" style={{ width: '100%', marginTop: '20px', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
-                <a href="#marketplace" onClick={() => setIsMenuOpen(false)}>Marketplace</a>
-                <a href="#solutions" onClick={() => setIsMenuOpen(false)}>Solutions</a>
-                <a href="#resources" onClick={() => setIsMenuOpen(false)}>Resources</a>
-                <a href="#sell" onClick={() => setIsMenuOpen(false)}>Sell</a>
-              </div>
-            )}
+
           </div>
         )}
       </div>

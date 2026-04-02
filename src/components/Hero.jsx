@@ -52,25 +52,8 @@ export default function Hero() {
         </div>
 
         <div className="hero-visual" style={{ marginTop: window.innerWidth <= 768 ? '40px' : '0' }}>
-          <div className="dashboard-mockup">
-            <div className="mockup-header">
-              <div className="dot"></div>
-              <div className="dot"></div>
-              <div className="dot"></div>
-              <div style={{ flex: 1, backgroundColor: 'var(--bg-white)', margin: '0 16px', borderRadius: '4px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', color: 'var(--text-muted)' }}>zizzystores.com/admin</div>
-            </div>
-            <div className="mockup-body" style={{ height: 'auto', minHeight: '250px' }}>
-              <div className="grid grid-cols-3 gap-2" style={{ marginBottom: '16px' }}>
-                <div style={{ height: '60px', backgroundColor: 'var(--bg-gray)', borderRadius: 'var(--radius-md)' }}></div>
-                <div style={{ height: '60px', backgroundColor: 'var(--bg-gray)', borderRadius: 'var(--radius-md)' }}></div>
-                <div style={{ height: '60px', backgroundColor: 'var(--bg-gray)', borderRadius: 'var(--radius-md)' }}></div>
-              </div>
-              <div style={{ height: '100px', backgroundColor: 'var(--bg-gray)', borderRadius: 'var(--radius-md)', marginBottom: '12px' }}></div>
-              <div className="flex gap-2" style={{ height: '40px' }}>
-                <div style={{ width: '70%', backgroundColor: 'var(--bg-gray)', borderRadius: 'var(--radius-md)' }}></div>
-                <div style={{ width: '30%', backgroundColor: 'var(--bg-gray)', borderRadius: 'var(--radius-md)' }}></div>
-              </div>
-            </div>
+          <div className="dashboard-mockup" style={{ padding: 0, overflow: 'hidden', border: 'none', background: 'none' }}>
+            <img src="https://raw.githubusercontent.com/Blvck4K/Jss-png/refs/heads/main/replace.png" alt="Dashboard Preview" style={{ width: '100%', height: 'auto', borderRadius: 'var(--radius-lg)', display: 'block' }} />
           </div>
           <div style={{
             backgroundColor: 'var(--bg-white)',
