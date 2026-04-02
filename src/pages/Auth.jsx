@@ -74,14 +74,16 @@ export default function Auth() {
     <div style={s.page}>
       <style>{`
         @media (max-width: 768px) {
-          .auth-main { padding: 32px 24px !important; }
-          .auth-title { font-size: 36px !important; }
-          .auth-type-row { flex-direction: column !important; gap: 16px !important; }
+          .auth-main { padding: 48px 24px !important; }
+          .auth-title { font-size: 32px !important; text-align: center; }
+          .auth-subtitle { text-align: center; margin-bottom: 32px !important; }
+          .auth-type-row { flex-direction: column !important; gap: 12px !important; }
           .auth-form-grid { grid-template-columns: 1fr !important; gap: 0 !important; }
-          .auth-toggle-group { gap: 16px !important; overflow-x: auto; }
-          .auth-google-apple { flex-direction: column !important; }
+          .auth-toggle-group { gap: 16px !important; justify-content: center; }
+          .auth-google-apple { flex-direction: column !important; gap: 12px !important; }
           .auth-sidebar { display: none !important; }
           .auth-quote-box { display: none !important; }
+          .auth-mobile-logo { display: block !important; }
         }
       `}</style>
       {/* Left Sidebar Layout */}
@@ -115,6 +117,13 @@ export default function Auth() {
       {/* Main Content */}
       <div style={s.main} className="auth-main">
         <div style={s.content}>
+          {/* Mobile Logo */}
+          <div className="auth-mobile-logo" style={{ display: 'none', textAlign: 'center', marginBottom: '48px' }}>
+            <Link to="/" style={{ fontFamily: '"Playfair Display", serif', fontSize: '24px', letterSpacing: '0.05em', color: brandColor, textDecoration: 'none', textTransform: 'uppercase' }}>
+              Zizzystores.
+            </Link>
+          </div>
+
           <div style={s.toggleGroup} className="auth-toggle-group">
             <button style={s.toggleButton(authMode === 'signin')} onClick={() => setAuthMode('signin')}>MEMBER ACCESS</button>
             <button style={s.toggleButton(authMode === 'signup')} onClick={() => setAuthMode('signup')}>GAIN ACCESS</button>

@@ -28,10 +28,10 @@ export default function HowItWorks() {
           <p className="text-secondary">Three simple steps to launch your digital storefront.</p>
         </div>
 
-        <div className="grid grid-cols-3 gap-8" style={{ position: 'relative' }}>
+        <div className="grid grid-cols-3 gap-8" style={{ position: 'relative', marginTop: '40px' }}>
 
           {steps.map((step, i) => (
-            <div key={i} style={{ textAlign: 'center', position: 'relative', zIndex: 1 }}>
+            <div key={i} style={{ textAlign: 'center', position: 'relative', zIndex: 1, padding: '24px' }}>
               <div style={{
                 width: '64px',
                 height: '64px',
@@ -41,12 +41,12 @@ export default function HowItWorks() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 margin: '0 auto 24px',
-                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+                boxShadow: '0 10px 25px -3px rgba(0,0,0,0.1)'
               }}>
                 {step.icon}
               </div>
-              <h3 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '12px' }}>{i + 1}. {step.title}</h3>
-              <p style={{ lineHeight: '1.6', color: 'var(--bg-dark)' }}>{step.description}</p>
+              <h3 style={{ fontSize: '20px', fontWeight: '800', marginBottom: '16px' }}>{i + 1}. {step.title}</h3>
+              <p style={{ lineHeight: '1.6', color: 'var(--text-secondary)', fontSize: '14px' }}>{step.description}</p>
             </div>
           ))}
         </div>

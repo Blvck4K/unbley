@@ -14,8 +14,9 @@ const useWindowWidth = () => {
   return width;
 };
 
-export default function ShopBrand() {
-  const { id } = useParams(); // URL parameter targeting the brand ID
+export default function ShopBrand({ customId }) {
+  const { id: urlId, slug } = useParams(); // URL parameter targeting the brand ID or slug
+  const id = customId || urlId;
   const { user } = useAuth();
   const navigate = useNavigate();
   
@@ -47,7 +48,8 @@ export default function ShopBrand() {
     description: '',
     tag: '',
     imageFile: null,
-    imagePreview: null
+    imagePreview: null,
+    additionalImages: []
   });
 
   useEffect(() => {
@@ -72,19 +74,30 @@ export default function ShopBrand() {
 
   useEffect(() => {
     async function fetchStoreData() {
-      if (!id) {
+      if (!id && !slug) {
         setLoading(false);
         setError("Invalid URL Context. The specific brand link is incomplete.");
         return;
       }
       try {
         setLoading(true);
-        // Fetch specific Brand Profile
-        const { data: brandData, error: brandError } = await supabase
-          .from('brand_profiles')
-          .select('*')
-          .eq('id', id)
-          .single();
+        let brandData, brandError;
+
+        if (id) {
+          // Fetch specific Brand Profile by ID
+          ({ data: brandData, error: brandError } = await supabase
+            .from('brand_profiles')
+            .select('*')
+            .eq('id', id)
+            .single());
+        } else if (slug) {
+          // Fetch specific Brand Profile by Slug (assuming a slug/brand_name field)
+          ({ data: brandData, error: brandError } = await supabase
+            .from('brand_profiles')
+            .select('*')
+            .eq('brand_name', slug.replace(/-/g, ' ')) // Simple mapping for demonstration
+            .single());
+        }
 
         if (brandError) throw brandError;
         if (!brandData) throw new Error("Brand not found.");
@@ -95,7 +108,7 @@ export default function ShopBrand() {
         const { data: productsData, error: productsError } = await supabase
           .from('products')
           .select('*')
-          .eq('brand_id', id)
+          .eq('brand_id', brandData.id)
           .order('created_at', { ascending: false });
 
         if (productsError) throw productsError;
@@ -132,7 +145,10 @@ export default function ShopBrand() {
       description: product.description || '',
       tag: product.tag || '',
       imageFile: null,
-      imagePreview: product.image_url
+      imagePreview: product.image_url,
+      additionalImages: product.image_url && product.image_url.includes(',') 
+        ? product.image_url.split(',').slice(1).map(url => ({ file: null, preview: url }))
+        : []
     });
     setIsAddModalOpen(true);
   };
@@ -143,25 +159,38 @@ export default function ShopBrand() {
     
     setUploading(true);
     try {
-      let imageUrl = editingProductId ? newProduct.imagePreview : null;
+      let imageUrls = [];
       
+      // Upload main image
       if (newProduct.imageFile) {
         const fileExt = newProduct.imageFile.name.split('.').pop();
-        const fileName = `${id}-product-${Math.random()}.${fileExt}`;
+        const fileName = `${id}-product-main-${Math.random()}.${fileExt}`;
         const filePath = `${id}/${fileName}`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from('brand-assets')
-          .upload(filePath, newProduct.imageFile);
-
+        const { error: uploadError } = await supabase.storage.from('brand-assets').upload(filePath, newProduct.imageFile);
         if (uploadError) throw uploadError;
-
-        const { data: publicData } = supabase.storage
-          .from('brand-assets')
-          .getPublicUrl(filePath);
-          
-        imageUrl = publicData.publicUrl;
+        const { data: publicData } = supabase.storage.from('brand-assets').getPublicUrl(filePath);
+        imageUrls.push(publicData.publicUrl);
+      } else if (editingProductId && newProduct.imagePreview) {
+        // Keep existing main image if not changed
+        imageUrls.push(newProduct.imagePreview.split(',')[0]);
       }
+
+      // Upload additional images
+      for (const img of newProduct.additionalImages) {
+        if (img.file) {
+          const fileExt = img.file.name.split('.').pop();
+          const fileName = `${id}-product-extra-${Math.random()}.${fileExt}`;
+          const filePath = `${id}/${fileName}`;
+          const { error: uploadError } = await supabase.storage.from('brand-assets').upload(filePath, img.file);
+          if (uploadError) throw uploadError;
+          const { data: publicData } = supabase.storage.from('brand-assets').getPublicUrl(filePath);
+          imageUrls.push(publicData.publicUrl);
+        } else if (img.preview) {
+          imageUrls.push(img.preview);
+        }
+      }
+
+      const finalImageUrl = imageUrls.join(',');
 
       if (editingProductId) {
         const { error: updateError } = await supabase
@@ -171,14 +200,15 @@ export default function ShopBrand() {
             price: parseFloat(newProduct.price) || 0,
             description: newProduct.description,
             tag: newProduct.tag,
-            image_url: imageUrl
+            tag: newProduct.tag,
+            image_url: finalImageUrl
           })
           .eq('id', editingProductId)
           .eq('brand_id', id);
 
         if (updateError) throw updateError;
         
-        setProducts(prev => prev.map(p => p.id === editingProductId ? { ...p, title: newProduct.title, price: newProduct.price, description: newProduct.description, tag: newProduct.tag, image_url: imageUrl } : p));
+        setProducts(prev => prev.map(p => p.id === editingProductId ? { ...p, title: newProduct.title, price: newProduct.price, description: newProduct.description, tag: newProduct.tag, image_url: finalImageUrl } : p));
         alert('Asset Updated Successfully!');
       } else {
         const { data: newProd, error: insertError } = await supabase
@@ -189,7 +219,7 @@ export default function ShopBrand() {
             price: parseFloat(newProduct.price) || 0,
             description: newProduct.description,
             tag: newProduct.tag,
-            image_url: imageUrl,
+            image_url: finalImageUrl,
             status: 'active'
           })
           .select()
@@ -200,7 +230,7 @@ export default function ShopBrand() {
         alert('Asset Deployed Successfully!');
       }
       
-      setNewProduct({ title: '', price: '', description: '', tag: '', imageFile: null, imagePreview: null });
+      setNewProduct({ title: '', price: '', description: '', tag: '', imageFile: null, imagePreview: null, additionalImages: [] });
       setIsAddModalOpen(false);
       setEditingProductId(null);
 
@@ -214,7 +244,13 @@ export default function ShopBrand() {
 
   const handleDeleteProduct = async (productId, e) => {
     e.stopPropagation(); // prevent card click
-    if (!isOwner) return;
+    
+    console.log('Delete attempt:', { productId, userId: user?.id, brandId: id, isOwner });
+    
+    if (!isOwner) {
+      console.error('Delete failed: User is not the owner.');
+      return;
+    }
     
     const confirmDelete = window.confirm("Are you sure you want to permanently delete this product? This act is irreversible.");
     if (!confirmDelete) return;
@@ -224,11 +260,11 @@ export default function ShopBrand() {
         .from('products')
         .delete()
         .eq('id', productId)
-        .eq('brand_id', id); // Double-verify ownership in payload
+        .eq('brand_id', id);
 
       if (error) throw error;
       
-      // Synchronous Update
+      console.log('Product deleted successfully from DB');
       setProducts(prev => prev.filter(p => p.id !== productId));
     } catch (err) {
       console.error('Deletion failed:', err);
@@ -304,7 +340,7 @@ export default function ShopBrand() {
   };
 
   const getGridCols = () => {
-    if (isMobile) return '1fr';
+    if (isMobile) return 'repeat(2, 1fr)';
     if (isTablet) return 'repeat(2, 1fr)';
     return 'repeat(3, 1fr)';
   };
@@ -322,11 +358,11 @@ export default function ShopBrand() {
     iconButton: { cursor: 'pointer', display: 'flex', alignItems: 'center', color: textColor, transition: 'color 0.2s', '&:hover': { color: accentColor } },
 
     // Hero Section
-    hero: { position: 'relative', width: '100%', height: isMobile ? '50vh' : '65vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: secondaryColor, overflow: 'hidden' },
+    hero: { position: 'relative', width: '100%', height: isMobile ? '40vh' : '65vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: secondaryColor, overflow: 'hidden' },
     heroImage: { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6 },
     heroContent: { position: 'relative', zIndex: 1, textAlign: 'center', padding: '0 24px', maxWidth: '800px' },
-    heroTitle: { fontFamily: fontConfig.heading, fontSize: isMobile ? '36px' : '56px', fontWeight: '800', color: '#FFF', marginBottom: '16px', textShadow: '0 4px 20px rgba(0,0,0,0.5)' },
-    heroSubtitle: { fontFamily: fontConfig.body, fontSize: isMobile ? '14px' : '18px', color: '#FFF', fontWeight: '500', textShadow: '0 2px 10px rgba(0,0,0,0.5)', lineHeight: '1.6' },
+    heroTitle: { fontFamily: fontConfig.heading, fontSize: isMobile ? '28px' : '56px', fontWeight: '800', color: '#FFF', marginBottom: '12px', textShadow: '0 4px 20px rgba(0,0,0,0.5)' },
+    heroSubtitle: { fontFamily: fontConfig.body, fontSize: isMobile ? '13px' : '18px', color: '#FFF', fontWeight: '500', textShadow: '0 2px 10px rgba(0,0,0,0.5)', lineHeight: '1.4' },
 
     // Trust Signals
     trustSignals: { display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: isMobile ? '24px' : '64px', padding: '32px 24px', backgroundColor: primaryColor, borderBottom: `1px solid ${borderColor}` },
@@ -397,7 +433,7 @@ export default function ShopBrand() {
         <div style={s.headerRight}>
           <div style={s.searchBox}>
             <Search size={14} color={mutedColor} />
-            <input type="text" placeholder="Search curated goods..." style={s.searchInput} />
+            <input type="text" placeholder={isMobile ? "SEARCH..." : "Search curated goods..."} style={s.searchInput} />
           </div>
           {!isOwner && (
             <div style={{ ...s.iconButton, position: 'relative' }} onClick={() => navigate('/cart')} title="Cart">
@@ -434,7 +470,6 @@ export default function ShopBrand() {
       <div style={s.trustSignals}>
         <div style={s.trustItem}><ShieldCheck size={20} style={s.trustIcon} /><span style={s.trustText}>Secure Checkout</span></div>
         <div style={s.trustItem}><Truck size={20} style={s.trustIcon} /><span style={s.trustText}>Premium Delivery</span></div>
-        <div style={s.trustItem}><Headphones size={20} style={s.trustIcon} /><span style={s.trustText}>Dedicated Support</span></div>
       </div>
 
       {/* Main Content */}
@@ -446,7 +481,7 @@ export default function ShopBrand() {
               <div style={{ fontSize: '14px', fontWeight: 'bold', color: accentColor, marginBottom: '4px' }}>Owner Environment Active</div>
               <div style={{ fontSize: '12px', color: '#CCC' }}>You are viewing your own storefront. You can instantly modify your digital inventory.</div>
             </div>
-            <button onClick={() => { setEditingProductId(null); setNewProduct({ title: '', price: '', description: '', tag: '', imageFile: null, imagePreview: null }); setIsAddModalOpen(true); }} style={{ backgroundColor: accentColor, color: '#000', padding: '12px 24px', border: 'none', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button onClick={() => { setEditingProductId(null); setNewProduct({ title: '', price: '', description: '', tag: '', imageFile: null, imagePreview: null, additionalImages: [] }); setIsAddModalOpen(true); }} style={{ backgroundColor: accentColor, color: '#000', padding: '12px 24px', border: 'none', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Plus size={16} /> Add Product
             </button>
           </div>
@@ -464,7 +499,7 @@ export default function ShopBrand() {
           <div style={s.emptyState}>
             <h3 style={s.emptyTitle}>{isOwner ? "Your Gallery is Empty" : "Gallery Updating"}</h3>
             <p style={s.emptyDesc}>{isOwner ? "Inject your first digital artifact into the ecosystem to begin processing sales." : "The curator is currently updating this digital space."}</p>
-            {isOwner && <button onClick={() => { setEditingProductId(null); setNewProduct({ title: '', price: '', description: '', tag: '', imageFile: null, imagePreview: null }); setIsAddModalOpen(true); }} style={s.buttonGroup.addToCartBtn}>Launch Initial Product</button>}
+            {isOwner && <button onClick={() => { setEditingProductId(null); setNewProduct({ title: '', price: '', description: '', tag: '', imageFile: null, imagePreview: null, additionalImages: [] }); setIsAddModalOpen(true); }} style={s.buttonGroup.addToCartBtn}>Launch Initial Product</button>}
           </div>
         ) : (
           <div style={s.productGrid}>
@@ -478,7 +513,11 @@ export default function ShopBrand() {
               >
                 <div style={s.productImageWrap}>
                   {product.image_url ? (
-                    <img src={product.image_url} alt={product.title} style={{ ...s.image, transform: hoveredProduct === product.id ? 'scale(1.05)' : 'scale(1)' }} />
+                    <img 
+                      src={product.image_url.split(',')[0]} 
+                      alt={product.title} 
+                      style={{ ...s.image, transform: hoveredProduct === product.id ? 'scale(1.05)' : 'scale(1)' }} 
+                    />
                   ) : (
                     <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: borderColor }}><ImageIcon size={48} /></div>
                   )}
@@ -560,19 +599,55 @@ export default function ShopBrand() {
               <div style={{ display: 'flex', gap: '24px', flexDirection: isMobile ? 'column' : 'row', marginBottom: '24px' }}>
                 
                 {/* Image Uploader */}
-                <div 
-                  onClick={() => fileInputRef.current?.click()}
-                  style={{ width: isMobile ? '100%' : '200px', height: '240px', backgroundColor: '#111', border: `1px dashed ${borderColor}`, borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', cursor: 'pointer', flexShrink: 0 }}
-                >
-                  <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept="image/*" onChange={handleImageSelect} />
-                  {newProduct.imagePreview ? (
-                    <img src={newProduct.imagePreview} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }} alt="Preview" />
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', color: mutedColor }}>
-                      <ImageIcon size={32} />
-                      <span style={{ fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.05em' }}>UPLOAD IMAGE</span>
-                    </div>
-                  )}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div 
+                    onClick={() => fileInputRef.current?.click()}
+                    style={{ width: isMobile ? '100%' : '200px', height: '200px', backgroundColor: '#111', border: `1px dashed ${borderColor}`, borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', cursor: 'pointer', flexShrink: 0 }}
+                  >
+                    <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept="image/*" onChange={handleImageSelect} />
+                    {newProduct.imagePreview ? (
+                      <img src={newProduct.imagePreview.split(',')[0]} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }} alt="Preview" />
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', color: mutedColor }}>
+                        <ImageIcon size={32} />
+                        <span style={{ fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.05em' }}>MAIN IMAGE</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Additional Images Mini-grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                    {[0, 1, 2].map(i => (
+                      <div 
+                        key={i}
+                        onClick={() => {
+                          const input = document.createElement('input');
+                          input.type = 'file';
+                          input.accept = 'image/*';
+                          input.onchange = (e) => {
+                            const file = e.target.files[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onload = (loadEv) => {
+                                const newExtras = [...newProduct.additionalImages];
+                                newExtras[i] = { file, preview: loadEv.target.result };
+                                setNewProduct({ ...newProduct, additionalImages: newExtras });
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          };
+                          input.click();
+                        }}
+                        style={{ aspectRatio: '1', backgroundColor: '#0A0A0A', border: `1px dashed ${borderColor}`, borderRadius: '2px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', overflow: 'hidden' }}
+                      >
+                        {newProduct.additionalImages[i]?.preview ? (
+                          <img src={newProduct.additionalImages[i].preview} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          <Plus size={16} color={mutedColor} />
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>

@@ -132,29 +132,29 @@ export default function ExploreBrand() {
     <div style={s.page}>
       <style>{`
         @media (max-width: 768px) {
+          .explore-page { height: auto !important; overflow: visible !important; }
           .explore-header { padding: 16px 20px !important; flex-wrap: wrap; height: auto !important; gap: 16px; justify-content: center !important; }
           .header-right { flex-direction: column; width: 100%; gap: 16px !important; }
-          .search-bar { width: 100% !important; }
-          .shop-btn { width: 100%; text-align: center; }
-          .explore-content { padding: 24px 20px !important; }
-          .hero-banner { padding: 32px 20px !important; height: auto !important; min-height: 300px; }
-          .brand-badge { width: 60px !important; height: 60px !important; }
-          .brand-badge span { font-size: 18px !important; }
-          .hero-title { font-size: 32px !important; }
-          .split-layout { grid-template-columns: 1fr !important; gap: 32px !important; margin-bottom: 32px !important; }
-          .narrative-box { padding: 32px 24px !important; }
-          .narrative-title { font-size: 24px !important; max-width: 100% !important; }
-          .cta-container { padding: 32px 24px !important; }
+          .search-bar { display: none !important; }
+          .shop-btn { width: 100%; text-align: center; order: 2; }
+          .explore-content { padding: 32px 20px !important; overflow-y: visible !important; flex: none !important; height: auto !important; }
+          .hero-banner { padding: 48px 24px !important; height: auto !important; min-height: 280px; }
+          .brand-badge { width: 64px !important; height: 64px !important; }
+          .hero-title { font-size: 32px !important; text-align: center; }
+          .banner-content { flex-direction: column !important; text-align: center; gap: 24px !important; }
+          .split-layout { display: flex !important; flex-direction: column !important; gap: 32px !important; }
+          .narrative-box { padding: 32px 24px !important; text-align: center; }
+          .narrative-title { font-size: 24px !important; max-width: 100% !important; margin-bottom: 24px !important; }
+          .cta-container { padding: 48px 24px !important; align-items: center !important; text-align: center; }
           .cta-title { font-size: 28px !important; }
-          .cta-btn { width: 100%; justify-content: center; font-size: 16px !important; padding: 16px !important; }
+          .cta-btn { width: 100%; justify-content: center; font-size: 16px !important; padding: 18px !important; }
           .triggers-grid { grid-template-columns: 1fr !important; gap: 16px !important; }
-          .products-header { flex-direction: column; align-items: flex-start !important; gap: 16px; }
+          .products-header { flex-direction: column; align-items: center !important; text-align: center; gap: 16px; }
           .product-grid { grid-template-columns: 1fr !important; }
           .product-main { height: 300px !important; }
-          .product-sub-grid { height: auto !important; grid-template-columns: 1fr !important; grid-template-rows: repeat(3, 200px) !important; }
-          .product-item-card { grid-column: auto !important; }
+          .product-sub-grid { height: auto !important; grid-template-columns: 1fr !important; grid-template-rows: repeat(3, 220px) !important; }
           .similar-grid { grid-template-columns: 1fr 1fr !important; gap: 16px !important; }
-          .footer { flex-direction: column; gap: 24px; text-align: center; padding: 24px 0 !important; }
+          .footer { flex-direction: column; gap: 24px; text-align: center; padding: 32px 0 !important; }
           .footer-links { flex-wrap: wrap; justify-content: center; gap: 16px !important; }
         }
       `}</style>

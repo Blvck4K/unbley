@@ -36,10 +36,10 @@ export default function FAQ() {
             <div key={i} className="faq-item" style={{ border: '1px solid var(--border-color)', borderRadius: '8px', overflow: 'hidden' }}>
               <button 
                 onClick={() => setOpenIndex(openIndex === i ? -1 : i)}
-                style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '24px', backgroundColor: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', fontWeight: '600', fontSize: '16px', color: 'var(--bg-dark)' }}
+                style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: window.innerWidth <= 768 ? '16px 20px' : '24px', backgroundColor: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', fontWeight: '800', fontSize: window.innerWidth <= 768 ? '14px' : '16px', color: 'var(--bg-dark)' }}
               >
                 {faq.q}
-                {openIndex === i ? <ChevronUp size={20} className="text-muted" /> : <ChevronDown size={20} className="text-muted" />}
+                {openIndex === i ? <ChevronUp size={18} className="text-muted" /> : <ChevronDown size={18} className="text-muted" />}
               </button>
               {openIndex === i && (
                 <div style={{ padding: '0 24px 24px', color: 'var(--text-secondary)', lineHeight: '1.6' }}>

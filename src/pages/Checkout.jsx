@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Lock, ArrowLeft, ArrowRight, ShieldCheck, CreditCard, Banknote, Smartphone, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { usePaystackPayment } from 'react-paystack';
+import PaystackPop from '@paystack/inline-js';
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -57,21 +57,11 @@ export default function Checkout() {
 
   const formatCurrency = (amount) => `₦${amount.toLocaleString()}`;
 
-  const paystackConfig = {
-    reference: (new Date()).getTime().toString(),
-    email: formData.email,
-    amount: total * 100, // Paystack amount is in kobo
-    publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
-    ...(brand?.paystack_subaccount_code ? { subaccount: brand.paystack_subaccount_code } : {}),
-    currency: 'NGN',
-  };
 
-  const initializePayment = usePaystackPayment(paystackConfig);
-
-  const onSuccess = (reference) => {
+  const onSuccess = (transaction) => {
     setIsProcessing(false);
     localStorage.removeItem('cart');
-    navigate('/checkout-success', { state: { reference } });
+    navigate('/checkout-success', { state: { reference: transaction.reference } });
   };
 
   const onClose = () => {
@@ -112,7 +102,24 @@ export default function Checkout() {
     }
 
     setIsProcessing(true);
-    initializePayment(onSuccess, onClose);
+    
+    try {
+      const paystack = new PaystackPop();
+      paystack.newTransaction({
+        key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
+        email: formData.email,
+        amount: total * 100,
+        currency: 'NGN',
+        ref: (new Date()).getTime().toString(),
+        ...(brand?.paystack_subaccount_code ? { subaccount: brand.paystack_subaccount_code } : {}),
+        onSuccess: (transaction) => onSuccess(transaction),
+        onCancel: () => onClose(),
+      });
+    } catch (error) {
+      console.error("Paystack initialization failed:", error);
+      setIsProcessing(false);
+      alert("Failed to initialize payment gateway. Please try again.");
+    }
   };
 
   const s = {
@@ -208,19 +215,20 @@ export default function Checkout() {
         @media (max-width: 768px) {
           .checkout-header { padding: 16px 24px !important; }
           .checkout-content { padding: 32px 24px !important; }
-          .checkout-layout { grid-template-columns: 1fr !important; gap: 48px !important; }
+          .checkout-layout { display: flex !important; flex-direction: column !important; gap: 40px !important; }
           .form-grid { grid-template-columns: 1fr !important; gap: 20px !important; }
-          .actions-col { position: sticky; bottom: 0; background: #FFF; padding: 16px; margin: 0 -24px -32px -24px; box-shadow: 0 -10px 30px rgba(0,0,0,0.05); z-index: 10; border-top: 1px solid #EAEAEA; }
-          .right-col { order: -1; } /* On mobile, usually show summary first then form */
+          .actions-col { position: sticky; bottom: 0; background: ${secondaryBg}; padding: 24px; margin: 32px -24px -32px -24px; box-shadow: 0 -10px 30px rgba(0,0,0,0.1); z-index: 100; border-top: 1px solid ${borderColor}; }
+          .right-col { order: -1 !important; margin-bottom: 0 !important; }
           .footer-links { display: none !important; }
-          .checkout-footer { padding: 24px !important; flex-direction: column; gap: 16px; align-items: flex-start !important; }
-          .stepper-wrap { display: none !important; } /* Hide stepper on mobile to save space */
+          .checkout-footer { padding: 24px !important; flex-direction: column; gap: 16px; align-items: center !important; text-align: center; }
+          .stepper-wrap { display: none !important; }
+          .section-title { font-size: 24px !important; margin-bottom: 24px !important; text-align: center; }
         }
       `}</style>
 
       {/* Header */}
       <div style={s.header} className="checkout-header">
-        <div style={s.logo}>{brand ? brand.brand_name.toUpperCase() : 'DIGITAL ATELIER'}</div>
+        <div style={s.logo}>{brand?.brand_name ? brand.brand_name.toUpperCase() : 'DIGITAL ATELIER'}</div>
         <div style={s.headerRight}>
           <Lock size={14} />
           SECURE CHECKOUT

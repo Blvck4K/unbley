@@ -66,20 +66,21 @@ export default function Activation() {
       <style>{`
         @media (max-width: 768px) {
           .act-page { flex-direction: column !important; height: auto !important; min-height: 100vh; overflow: visible !important; }
-          .act-sidebar { width: 100% !important; border-right: none !important; border-bottom: 1px solid #1F1F1F; display: none !important; } /* Hidden entirely on mobile since it's inactive anyway */
+          .act-sidebar { display: none !important; }
           
-          .act-top-banner { padding: 16px 24px !important; flex-direction: column; gap: 16px; text-align: center; }
+          .act-top-banner { padding: 24px !important; flex-direction: column !important; gap: 16px !important; text-align: center; }
           .act-top-banner button { width: 100%; }
           
-          .act-header { height: auto !important; padding: 24px !important; flex-wrap: wrap; gap: 16px; justify-content: space-between; }
-          .act-search { width: 100% !important; order: 3; }
+          .act-header { height: auto !important; padding: 24px !important; flex-wrap: wrap; gap: 16px; justify-content: center; }
+          .act-search { display: none !important; }
           
           .act-blurred-content { padding: 24px !important; }
           
-          .act-overlay { padding: 16px !important; align-items: flex-start !important; overflow-y: auto !important; position: fixed !important; }
-          .act-modal { padding: 32px 24px !important; margin-top: 40px; }
-          .act-modal-badge { top: -20px !important; padding: 8px 16px !important; width: 90%; box-sizing: border-box; text-align: center; }
-          .act-modal-title { font-size: 28px !important; }
+          .act-overlay { padding: 16px !important; align-items: flex-start !important; overflow-y: auto !important; position: fixed !important; display: block !important; }
+          .act-modal { padding: 40px 24px !important; margin: 40px auto; max-width: 100%; box-sizing: border-box; }
+          .act-modal-badge { top: -20px !important; padding: 12px 16px !important; width: 85%; box-sizing: border-box; text-align: center; }
+          .act-modal-title { font-size: 24px !important; text-align: center; }
+          .act-modal-desc { text-align: center; }
         }
       `}</style>
       {/* Sidebar - Blurred/Disabled visually via opacity & pointerEvents */}

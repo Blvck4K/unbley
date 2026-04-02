@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Bell, LayoutGrid, User, Settings, HeadphonesIcon, Globe, Heart, Bookmark, Edit, Mail, ArrowRight } from 'lucide-react';
+import { Search, Bell, LayoutGrid, User, Settings, Headphones, Globe, Heart, Bookmark, Edit, Mail, ArrowRight, Menu, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
@@ -30,6 +30,11 @@ export default function Profile() {
   
   // Base State Loading
   const [loading, setLoading] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  
+  const [feedbackMsg, setFeedbackMsg] = useState('');
+  const [userEmail, setUserEmail] = useState('');
   
   // Real-time Data Mapping
   const [profileData, setProfileData] = useState({
@@ -78,7 +83,10 @@ export default function Profile() {
         setLoading(false);
       }
     }
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
     fetchProfile();
+    return () => window.removeEventListener('resize', handleResize);
   }, [user]);
 
   const brandColor = '#06acf8ff';
@@ -86,7 +94,7 @@ export default function Profile() {
   const secondaryColor = '#111';
 
   const s = {
-    page: { backgroundColor: primaryColor, color: '#E5E5E5', height: '100vh', overflow: 'hidden', display: 'flex', fontFamily: '"Inter", sans-serif' },
+    page: { backgroundColor: primaryColor, color: '#E5E5E5', height: isMobile ? 'auto' : '100vh', minHeight: '100vh', overflow: isMobile ? 'visible' : 'hidden', display: 'flex', fontFamily: '"Inter", sans-serif' },
     sidebar: { width: '280px', borderRight: '1px solid #1F1F1F', padding: '0', display: 'flex', flexDirection: 'column' },
     logoContainer: { padding: '60px 40px', display: 'flex', flexDirection: 'column' },
     logo: { fontFamily: '"Playfair Display", serif', fontSize: '18px', letterSpacing: '0.05em', color: brandColor, textTransform: 'uppercase' },
@@ -155,9 +163,10 @@ export default function Profile() {
     newsletterBox: { border: `2px solid ${brandColor}`, padding: '64px', textAlign: 'center', backgroundColor: primaryColor, marginBottom: '64px' },
     newsletterTitle: { fontFamily: '"Playfair Display", serif', fontSize: '32px', fontStyle: 'italic', color: '#FFF', marginBottom: '16px', marginTop: '24px' },
     newsletterDesc: { color: '#888', fontSize: '14px', marginBottom: '40px', maxWidth: '500px', margin: '0 auto 40px' },
-    newsletterForm: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '24px', borderBottom: '1px solid #333', maxWidth: '400px', margin: '0 auto', paddingBottom: '16px' },
-    newsletterInput: { background: 'transparent', border: 'none', color: '#FFF', fontSize: '12px', outline: 'none', flex: 1, letterSpacing: '0.05em' },
-    newsletterBtn: { background: 'transparent', border: 'none', color: brandColor, fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer' },
+    feedbackForm: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px', maxWidth: '600px', margin: '0 auto' },
+    feedbackTextarea: { width: '100%', backgroundColor: secondaryColor, border: '1px solid #333', color: '#FFF', fontSize: '14px', padding: '16px', outline: 'none', borderRadius: '4px', minHeight: '120px', resize: 'vertical', fontFamily: 'inherit' },
+    feedbackInput: { width: '100%', backgroundColor: 'transparent', border: 'none', borderBottom: '1px solid #333', color: '#FFF', fontSize: '12px', outline: 'none', padding: '8px 0', letterSpacing: '0.05em' },
+    feedbackBtn: { backgroundColor: brandColor, color: '#000', padding: '12px 32px', fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', borderRadius: '4px', border: 'none', transition: 'opacity 0.2s' },
 
     footer: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #1F1F1F', paddingTop: '32px', paddingBottom: '32px' },
     footerLinks: { display: 'flex', gap: '32px', fontSize: '9px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', textTransform: 'uppercase' },
@@ -174,6 +183,20 @@ export default function Profile() {
     );
   };
 
+  const handleFeedbackSubmit = (e) => {
+    e.preventDefault();
+    if (!feedbackMsg.trim()) return;
+
+    const subject = encodeURIComponent(`Feedback for ${profileData.brand_name}`);
+    const body = encodeURIComponent(`Experience/Issue:\n${feedbackMsg}\n\nFrom: ${userEmail || 'Anonymous'}`);
+    const mailtoUrl = `mailto:diorbaron2@gmail.com,isaacakpasu06@gmail.com?subject=${subject}&body=${body}`;
+    
+    window.location.href = mailtoUrl;
+    setFeedbackMsg('');
+    setUserEmail('');
+    alert("Email client opened. Please click send to submit your feedback!");
+  };
+
   if (loading) {
     return <div style={{...s.page, alignItems: 'center', justifyContent: 'center'}}>Loading Profile...</div>;
   }
@@ -183,45 +206,59 @@ export default function Profile() {
       <style>{`
         @media (max-width: 768px) {
           .prof-page { flex-direction: column !important; height: auto !important; min-height: 100vh; overflow: visible !important; }
-          .prof-sidebar { width: 100% !important; border-right: none !important; border-bottom: 1px solid #1F1F1F; }
-          .prof-logo-container { padding: 24px !important; flex-direction: row !important; justify-content: space-between; align-items: center; }
-          .prof-nav { display: flex; overflow-x: auto; padding-bottom: 8px !important; white-space: nowrap; }
-          .prof-nav a, .prof-nav div { border-left: none !important; border-bottom: 3px solid transparent; padding: 12px 24px !important; margin-top: 0 !important; }
-          .prof-nav a[style*="border-left"] { border-bottom: 3px solid ${brandColor} !important; }
-          .prof-user-profile { display: none !important; }
+          .prof-sidebar { 
+            position: fixed !important; 
+            top: 0 !important; 
+            left: ${isSidebarOpen ? '0' : '-100%'} !important; 
+            width: 280px !important; 
+            height: 100vh !important; 
+            z-index: 1000 !important; 
+            background-color: #0A0A0A !important;
+            transition: left 0.3s ease !important;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.5) !important;
+          }
+          .prof-overlay {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            background-color: rgba(0,0,0,0.7) !important;
+            z-index: 999 !important;
+            display: ${isSidebarOpen ? 'block' : 'none'} !important;
+          }
+          .prof-logo-container { padding: 24px !important; }
+          .prof-nav { display: flex; flex-direction: column !important; overflow-y: auto !important; }
+          .prof-nav a, .prof-nav div { border-left: 3px solid transparent !important; border-bottom: none !important; padding: 16px 40px !important; font-size: 14px !important; }
+          .prof-user-profile { display: flex !important; }
           
-          .prof-header { height: auto !important; padding: 24px !important; flex-wrap: wrap; gap: 16px; justify-content: space-between; }
-          .prof-search { width: 100% !important; order: 3; }
+          .prof-header { height: auto !important; padding: 20px 24px !important; flex-wrap: wrap; gap: 16px; justify-content: space-between; position: sticky; top: 0; background: #0A0A0A; z-index: 100; border-bottom: 1px solid #1F1F1F; }
+          .prof-search { width: 100% !important; order: 3; margin-top: 8px; }
           
           .prof-content { padding: 24px !important; overflow: visible !important; }
-          .prof-banner { padding: 32px 24px !important; height: auto !important; min-height: 300px; }
+          .prof-banner { padding: 32px 24px !important; height: auto !important; min-height: 250px; }
           .prof-banner-content { flex-direction: column; align-items: flex-start !important; text-align: left; }
           .prof-grid-container { grid-template-columns: 1fr !important; gap: 32px !important; }
-          .prof-narrative-box { padding: 32px 24px !important; }
-          .prof-narrative-title { font-size: 24px !important; max-width: 100% !important; }
-          .prof-narrative-text { max-width: 100% !important; }
-          .prof-sub-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
-          
-          .prof-products-header { flex-direction: column; align-items: flex-start !important; gap: 16px; }
-          .prof-product-grid { grid-template-columns: 1fr !important; }
-          .prof-product-main { height: 300px !important; }
-          .prof-product-sub-grid { height: auto !important; grid-template-columns: 1fr !important; grid-template-rows: repeat(3, 200px) !important; }
-          .prof-product-item-card { grid-column: auto !important; }
-          
           .prof-newsletter { padding: 32px 24px !important; }
-          .prof-newsletter-form { flex-direction: column; padding-bottom: 0 !important; border-bottom: none !important; }
-          .prof-newsletter-input { width: 100%; border-bottom: 1px solid #333; padding-bottom: 16px; margin-bottom: 16px; }
-          .prof-newsletter-btn { width: 100%; }
-          
           .prof-footer { flex-direction: column; gap: 24px; text-align: center; }
           .prof-footer-links { flex-wrap: wrap; justify-content: center; }
         }
       `}</style>
       
+      {/* Mobile Sidebar Overlay */}
+      <div className="prof-overlay" onClick={() => setIsSidebarOpen(false)}></div>
+
       {/* Sidebar */}
       <div style={s.sidebar} className="prof-sidebar">
-        <div style={s.logoContainer} className="prof-logo-container">
-          <div style={s.logo}>Zizzystores.</div>
+        <div style={{ ...s.logoContainer, position: 'relative' }} className="prof-logo-container">
+          <button 
+            onClick={() => setIsSidebarOpen(false)}
+            style={{ position: 'absolute', top: '24px', right: '24px', background: 'none', border: 'none', color: '#666', cursor: 'pointer' }}
+            className="mobile-only"
+          >
+            <X size={24} />
+          </button>
+          <Link to="/" style={{ textDecoration: 'none' }}><div style={s.logo}>Zizzystores.</div></Link>
           <div style={{ fontFamily: 'Inter', fontSize: '9px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', marginTop: '8px', textTransform: 'uppercase' }}>Digital Store</div>
         </div>
 
@@ -229,7 +266,6 @@ export default function Profile() {
           <Link to="/dashboard" style={s.navItem(false)}><LayoutGrid size={16} /> Overview</Link>
           <Link to="/profile" style={s.navItem(true)}><User size={16} /> Profile</Link>
           <Link to="/edit" style={s.navItem(false)}><Edit size={16} /> Edit</Link>
-          <div style={{ ...s.navItem(false), marginTop: '48px' }}><HeadphonesIcon size={16} /> Customer Service</div>
         </div>
 
         <div style={s.userProfile} className="prof-user-profile">
@@ -237,7 +273,7 @@ export default function Profile() {
             {profileData.logo_url ? (
               <img src={profileData.logo_url} alt={profileData.owner_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
-              <span style={{ color: '#FFF' }}>{profileData.owner_name ? profileData.owner_name.charAt(0).toUpperCase() : 'U'}</span>
+              <span style={{ color: '#FFF' }}>{profileData.owner_name?.charAt(0)?.toUpperCase() || 'U'}</span>
             )}
           </div>
           <div>
@@ -251,7 +287,16 @@ export default function Profile() {
       <div style={s.main}>
         {/* Header */}
         <div style={s.header} className="prof-header">
-          <div style={s.headerTitle}>Brand Profile</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <button 
+              onClick={() => setIsSidebarOpen(true)}
+              style={{ background: 'none', border: 'none', color: '#FFF', cursor: 'pointer' }}
+              className="mobile-only"
+            >
+              <Menu size={24} />
+            </button>
+            <div style={s.headerTitle}>Brand Profile</div>
+          </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }} className="prof-search">
             <div style={s.searchBar} className="prof-search">
@@ -280,7 +325,7 @@ export default function Profile() {
                 {profileData.logo_url ? (
                   <img src={profileData.logo_url} alt="Brand Logo" style={s.brandBadgeImg} />
                 ) : (
-                  <span style={s.brandBadgeText}>{profileData.brand_name.charAt(0).toUpperCase()}s</span>
+                  <span style={s.brandBadgeText}>{profileData.brand_name?.charAt(0)?.toUpperCase() || 'Z'}s</span>
                 )}
               </div>
               <div>
@@ -387,19 +432,34 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* Newsletter / Footer Box */}
+          {/* Feedback Section */}
           <div style={s.newsletterBox} className="prof-newsletter">
             <div style={{ display: 'inline-block', backgroundColor: secondaryColor, padding: '16px', borderRadius: '50%', marginBottom: '16px' }}>
               <Mail size={24} color={brandColor} />
             </div>
-            <h2 style={s.newsletterTitle}>Join the Atelier Inner Circle</h2>
+            <h2 style={s.newsletterTitle}>Feedback & Support</h2>
             <p style={s.newsletterDesc}>
-              Receive early access to seasonal collections and insights into the digital curation process.
+              We value your feedback. Let us know what you're enjoying or any issues you've encountered so we can improve our curation.
             </p>
-            <div style={s.newsletterForm} className="prof-newsletter-form">
-              <input type="email" placeholder="Email Address" style={s.newsletterInput} className="prof-newsletter-input" />
-              <button style={s.newsletterBtn} className="prof-newsletter-btn">Subscribe</button>
-            </div>
+            <form style={s.feedbackForm} className="prof-newsletter-form" onSubmit={handleFeedbackSubmit}>
+              <textarea 
+                placeholder="What are you having issues with? Tell us about your experience..." 
+                style={s.feedbackTextarea} 
+                value={feedbackMsg}
+                onChange={(e) => setFeedbackMsg(e.target.value)}
+                required
+              />
+              <div style={{ width: '100%', maxWidth: '400px' }}>
+                <input 
+                  type="email" 
+                  placeholder="Your Email Address (Optional)" 
+                  style={s.feedbackInput} 
+                  value={userEmail}
+                  onChange={(e) => setUserEmail(e.target.value)}
+                />
+              </div>
+              <button type="submit" style={s.feedbackBtn} className="prof-newsletter-btn">Send Feedback</button>
+            </form>
           </div>
 
           {/* Footer Area */}

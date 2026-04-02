@@ -22,6 +22,14 @@ export default function ProductDetail() {
   const isOwner = user?.id === brand?.id;
   const isCustomer = user?.user_metadata?.role === 'customer' || user?.user_metadata?.userType === 'customer';
   const [cartCount, setCartCount] = useState(0);
+  const [activeImg, setActiveImg] = useState(0);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -238,17 +246,25 @@ export default function ProductDetail() {
   };
 
   const handleDeleteProduct = async () => {
-    if (!isOwner) return;
+    console.log('Delete attempt:', { productId: product.id, userId: user?.id, brandId: brand?.id, isOwner });
+
+    if (!isOwner) {
+      console.error('Deletion rejected: User is not authorized.');
+      return;
+    }
+    
     const confirmDelete = window.confirm("Are you sure you want to permanently delete this product? This act is irreversible.");
     if (!confirmDelete) return;
 
     try {
       const { error } = await supabase.from('products').delete().eq('id', product.id).eq('brand_id', brand.id);
       if (error) throw error;
+      
+      console.log('Product deleted successfully from DB');
       alert('Asset neutralized.');
       navigate(`/shop-brand/${brand.id}`);
     } catch (err) {
-      console.error(err);
+      console.error('Deletion failed:', err);
       alert('Deletion failed: ' + err.message);
     }
   };
@@ -300,10 +316,10 @@ export default function ProductDetail() {
 
     // Specific Product Detail Panel
     productDetails: { display: 'flex', flexDirection: 'column', paddingTop: '24px' },
-    tag: { fontSize: '10px', fontWeight: '800', letterSpacing: '0.1em', textTransform: 'uppercase', color: accentColor, marginBottom: '16px' },
-    title: { fontFamily: fontConfig.heading, fontSize: '40px', fontWeight: '700', color: textColor, lineHeight: '1.2', marginBottom: '24px' },
-    price: { fontSize: '24px', fontWeight: '700', color: textColor, marginBottom: '32px' },
-    description: { fontSize: '14px', color: mutedColor, lineHeight: '1.6', marginBottom: '40px', whiteSpace: 'pre-wrap' },
+    tag: { fontSize: '10px', fontWeight: '800', letterSpacing: '0.1em', textTransform: 'uppercase', color: accentColor, marginBottom: '12px' },
+    title: { fontFamily: fontConfig.heading, fontSize: isMobile ? '28px' : '40px', fontWeight: '700', color: textColor, lineHeight: '1.2', marginBottom: '16px' },
+    price: { fontSize: isMobile ? '20px' : '24px', fontWeight: '700', color: textColor, marginBottom: '24px' },
+    description: { fontSize: '14px', color: mutedColor, lineHeight: '1.6', marginBottom: '32px', whiteSpace: 'pre-wrap' },
 
     sectionLabel: { fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase', color: textColor, marginBottom: '16px' },
     
@@ -328,8 +344,12 @@ export default function ProductDetail() {
     recPrice: { fontSize: '12px', color: accentColor, fontWeight: 'bold', padding: '0 16px' }
   };
 
+  const imageUrls = product?.image_url ? product.image_url.split(',') : [];
+
+  if (!product || !brand) return null;
+
   return (
-    <div style={s.page}>
+    <div style={s.page} className="detail-page">
       <style>{`
         @media (max-width: 768px) {
           .detail-header { padding: 16px 24px !important; }
@@ -374,24 +394,52 @@ export default function ProductDetail() {
 
         {/* Hero Section */}
         <div style={s.heroLayout} className="detail-hero">
-          <div style={s.imageGallery}>
-            <div style={s.mainImageWrap} className="detail-main-img">
-              {product.image_url ? (
-                <img src={product.image_url} alt={product.title} style={s.mainImage} />
-              ) : (
-                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: borderColor, fontSize: '12px', letterSpacing: '0.1em' }}>NO ASSET IMAGE PROVIDED</div>
-              )}
-
-              {isOwner && (
-                <div style={{ position: 'absolute', top: '16px', right: '16px', display: 'flex', gap: '8px', zIndex: 20 }}>
-                  <div style={s.editBtn} onClick={handleEditClick} title="Edit Asset Configuration">
-                    <Edit2 size={20} />
-                  </div>
-                  <div style={s.deleteBtn} onClick={handleDeleteProduct} title="Delete Asset">
-                    <Trash2 size={20} />
-                  </div>
+          <div style={s.imageGallery} className="detail-gallery">
+            <div style={{ display: 'flex', flexDirection: isMobile ? 'column-reverse' : 'row', gap: '24px', width: '100%' }}>
+              
+              {/* Thumbnails */}
+              {imageUrls.length > 1 && (
+                <div style={{ display: 'flex', flexDirection: isMobile ? 'row' : 'column', gap: '12px', overflowX: isMobile ? 'auto' : 'visible', paddingBottom: isMobile ? '8px' : '0' }}>
+                  {imageUrls.map((url, index) => (
+                    <div 
+                      key={index} 
+                      onClick={() => setActiveImg(index)}
+                      style={{ 
+                        width: isMobile ? '60px' : '80px', 
+                        height: isMobile ? '60px' : '80px', 
+                        border: `1px solid ${activeImg === index ? accentColor : borderColor}`, 
+                        cursor: 'pointer', 
+                        borderRadius: '4px', 
+                        overflow: 'hidden',
+                        opacity: activeImg === index ? 1 : 0.6,
+                        flexShrink: 0
+                      }}
+                    >
+                      <img src={url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={`Thumb ${index}`} />
+                    </div>
+                  ))}
                 </div>
               )}
+
+              {/* Main Image */}
+              <div style={{ ...s.mainImageWrap, flex: 1 }} className="detail-main-img">
+                {imageUrls.length > 0 ? (
+                  <img src={imageUrls[activeImg] || imageUrls[0]} alt={product.title} style={s.mainImage} />
+                ) : (
+                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: borderColor, fontSize: '12px', letterSpacing: '0.1em' }}>NO ASSET IMAGE PROVIDED</div>
+                )}
+
+                {isOwner && (
+                  <div style={{ position: 'absolute', top: '16px', right: '16px', display: 'flex', gap: '8px', zIndex: 20 }}>
+                    <div style={s.editBtn} onClick={handleEditClick} title="Edit Asset Configuration">
+                      <Edit2 size={20} />
+                    </div>
+                    <div style={s.deleteBtn} onClick={handleDeleteProduct} title="Delete Asset">
+                      <Trash2 size={20} />
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -437,7 +485,7 @@ export default function ProductDetail() {
                 <div key={rel.id} style={s.recCard} onClick={() => navigate(`/product?id=${rel.id}`)}>
                   <div style={s.recImgWrap}>
                     {rel.image_url ? (
-                      <img src={rel.image_url} alt={rel.title} style={s.recImg} />
+                      <img src={rel.image_url.split(',')[0]} alt={rel.title} style={s.recImg} />
                     ) : (
                       <div style={{ width: '100%', height: '100%', backgroundColor: '#111' }}></div>
                     )}

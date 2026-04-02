@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Bell, Moon, LayoutGrid, Store, User, Settings, HeadphonesIcon, TrendingUp, Package, BarChart3, CheckCircle2, ChevronRight, ShoppingBag, ArrowUpRight, Edit } from 'lucide-react';
+import { Search, Bell, Moon, LayoutGrid, Store, User, Settings, Headphones, TrendingUp, Package, BarChart3, CheckCircle2, ChevronRight, ShoppingBag, ArrowUpRight, Edit, Menu, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   
   const [profileData, setProfileData] = useState({
     brand_name: 'Your Brand',
@@ -89,13 +91,16 @@ export default function Dashboard() {
         setLoadingMetrics(false);
       }
     }
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
     fetchDashboardData();
+    return () => window.removeEventListener('resize', handleResize);
   }, [user]);
 
   const brandColor = '#06acf8ff';
   
   const s = {
-    page: { backgroundColor: '#0A0A0A', color: '#E5E5E5', height: '100vh', overflow: 'hidden', display: 'flex', fontFamily: '"Inter", sans-serif' },
+    page: { backgroundColor: '#0A0A0A', color: '#E5E5E5', height: isMobile ? 'auto' : '100vh', minHeight: '100vh', overflow: isMobile ? 'visible' : 'hidden', display: 'flex', fontFamily: '"Inter", sans-serif' },
     sidebar: { width: '280px', borderRight: '1px solid #1F1F1F', padding: '0', display: 'flex', flexDirection: 'column' },
     logoContainer: { padding: '60px 40px', display: 'flex', flexDirection: 'column' },
     logo: { fontFamily: '"Playfair Display", serif', fontSize: '18px', letterSpacing: '0.05em', color: brandColor, textTransform: 'uppercase' },
@@ -139,32 +144,54 @@ export default function Dashboard() {
       <style>{`
         @media (max-width: 768px) {
           .dash-page { flex-direction: column !important; height: auto !important; min-height: 100vh; overflow: visible !important; }
-          .dash-sidebar { width: 100% !important; border-right: none !important; border-bottom: 1px solid #1F1F1F; }
-          .dash-logo-container { padding: 24px !important; flex-direction: row !important; justify-content: space-between; align-items: center; }
-          .dash-nav { display: flex; overflow-x: auto; padding-bottom: 8px !important; white-space: nowrap; }
-          .dash-nav a, .dash-nav div { border-left: none !important; border-bottom: 3px solid transparent; padding: 12px 24px !important; margin-top: 0 !important; }
-          .dash-nav a[style*="border-left"] { border-bottom: 3px solid #06acf8ff !important; }
-          .dash-user-profile { display: none !important; } /* Hide heavy user profile on mobile nav */
+          .dash-sidebar { 
+            position: fixed !important; 
+            top: 0 !important; 
+            left: ${isSidebarOpen ? '0' : '-100%'} !important; 
+            width: 280px !important; 
+            height: 100vh !important; 
+            z-index: 1000 !important; 
+            background-color: #0A0A0A !important;
+            transition: left 0.3s ease !important;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.5) !important;
+          }
+          .dash-overlay {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            background-color: rgba(0,0,0,0.7) !important;
+            z-index: 999 !important;
+            display: ${isSidebarOpen ? 'block' : 'none'} !important;
+          }
+          .dash-logo-container { padding: 24px !important; }
+          .dash-nav { display: flex; flex-direction: column !important; overflow-y: auto !important; }
+          .dash-nav a, .dash-nav div { border-left: 3px solid transparent !important; border-bottom: none !important; padding: 16px 40px !important; font-size: 14px !important; }
+          .dash-user-profile { display: flex !important; } 
           
-          .dash-header { height: auto !important; padding: 24px !important; flex-wrap: wrap; gap: 16px; justify-content: space-between; }
-          .dash-search-bar { width: 100% !important; order: 3; }
+          .dash-header { height: auto !important; padding: 20px 24px !important; flex-wrap: wrap; gap: 16px; justify-content: space-between; position: sticky; top: 0; background: #0A0A0A; z-index: 100; border-bottom: 1px solid #1F1F1F; }
+          .dash-search-bar { width: 100% !important; order: 3; margin-top: 8px; }
           
           .dash-content { padding: 24px !important; overflow: visible !important; }
-          .dash-brand-header { flex-direction: column !important; align-items: flex-start !important; gap: 24px !important; padding-bottom: 24px !important; }
-          .dash-brand-info { flex-direction: column !important; gap: 16px !important; }
-          .dash-live-domain { align-items: flex-start !important; width: 100%; box-sizing: border-box; }
-          
-          .dash-stats-grid { grid-template-columns: 1fr !important; gap: 16px !important; margin-top: 32px !important; }
-          .dash-bottom-grid { grid-template-columns: 1fr !important; margin-top: 32px !important; }
-          .dash-list-row { flex-direction: column !important; align-items: flex-start !important; gap: 16px; padding: 24px !important; }
-          .dash-list-row > div:last-child { text-align: left !important; }
+          .dash-brand-header { flex-direction: column !important; gap: 24px !important; }
+          .dash-stats-grid { grid-template-columns: 1fr !important; gap: 16px !important; }
         }
       `}</style>
-      
+      {/* Mobile Sidebar Overlay */}
+      <div className="dash-overlay" onClick={() => setIsSidebarOpen(false)}></div>
+
       {/* Sidebar */}
       <div style={s.sidebar} className="dash-sidebar">
-        <div style={s.logoContainer} className="dash-logo-container">
-          <div style={s.logo}>Zizzystores.</div>
+        <div style={{ ...s.logoContainer, position: 'relative' }} className="dash-logo-container">
+          <button 
+            onClick={() => setIsSidebarOpen(false)}
+            style={{ position: 'absolute', top: '24px', right: '24px', background: 'none', border: 'none', color: '#666', cursor: 'pointer' }}
+            className="mobile-only"
+          >
+            <X size={24} />
+          </button>
+          <Link to="/" style={{ textDecoration: 'none' }}><div style={s.logo}>Zizzystores.</div></Link>
           <div style={{ fontFamily: 'Inter', fontSize: '9px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', marginTop: '8px', textTransform: 'uppercase' }}>Digital Store</div>
         </div>
 
@@ -172,7 +199,6 @@ export default function Dashboard() {
           <Link to="/dashboard" style={s.navItem(true)}><LayoutGrid size={16} /> Overview</Link>
           <Link to="/profile" style={s.navItem(false)}><User size={16} /> Profile</Link>
           <Link to="/edit" style={s.navItem(false)}><Edit size={16} /> Edit</Link>
-          <div style={{ ...s.navItem(false), marginTop: '48px' }}><HeadphonesIcon size={16} /> Customer Service</div>
         </div>
 
         <div style={s.userProfile} className="dash-user-profile">
@@ -180,7 +206,7 @@ export default function Dashboard() {
             {profileData.logo_url ? (
               <img src={profileData.logo_url} alt={profileData.owner_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
-              <span style={{ color: '#FFF' }}>{profileData.owner_name ? profileData.owner_name.charAt(0).toUpperCase() : 'U'}</span>
+              <span style={{ color: '#FFF' }}>{profileData.owner_name?.charAt(0)?.toUpperCase() || 'U'}</span>
             )}
           </div>
           <div>
@@ -194,7 +220,16 @@ export default function Dashboard() {
       <div style={s.main}>
         {/* Header */}
         <div style={s.header} className="dash-header">
-          <div style={s.headerTitle}>Dashboard</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <button 
+              onClick={() => setIsSidebarOpen(true)}
+              style={{ background: 'none', border: 'none', color: '#FFF', cursor: 'pointer' }}
+              className="mobile-only"
+            >
+              <Menu size={24} />
+            </button>
+            <div style={s.headerTitle}>Dashboard</div>
+          </div>
           <div style={s.searchBar} className="dash-search-bar">
             <Search size={14} color="#666" />
             <input type="text" placeholder="SEARCH ..." style={s.searchInput} />
@@ -219,7 +254,7 @@ export default function Dashboard() {
                 {profileData.logo_url ? (
                   <img src={profileData.logo_url} alt="Brand Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
-                  <span style={{ fontSize: '48px', color: '#FFF', fontFamily: '"Playfair Display", serif', fontStyle: 'italic' }}>{profileData.brand_name.charAt(0).toUpperCase()}</span>
+                  <span style={{ fontSize: '48px', color: '#FFF', fontFamily: '"Playfair Display", serif', fontStyle: 'italic' }}>{profileData.brand_name?.charAt(0)?.toUpperCase() || 'Z'}</span>
                 )}
               </div>
               <div>

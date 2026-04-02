@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Bell, Moon, LayoutGrid, Store, User, Settings, HeadphonesIcon, Camera, Globe, Link as LinkIcon, Plus, ArrowRight, Lock } from 'lucide-react';
+import { Search, Bell, Moon, LayoutGrid, Store, User, Settings, Headphones, Camera, Globe, Link as LinkIcon, Plus, ArrowRight, Lock, Menu, X } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
@@ -30,6 +30,10 @@ export default function Edit() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  
+  const width = window.innerWidth; // helpful for specific calculations if needed
 
   // Refs for hidden file inputs
   const logoRef = useRef(null);
@@ -71,7 +75,8 @@ export default function Edit() {
     bank_name: '',
     account_number: '',
     account_name: '',
-    paystack_subaccount_code: ''
+    paystack_subaccount_code: '',
+    custom_domain: ''
   });
 
   const [themeColors, setThemeColors] = useState({
@@ -114,7 +119,10 @@ export default function Edit() {
         console.error("Error fetching profile:", err);
       }
     }
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
     fetchProfile();
+    return () => window.removeEventListener('resize', handleResize);
   }, [user]);
 
   const handleChange = (e) => {
@@ -208,7 +216,7 @@ export default function Edit() {
   };
 
   const s = {
-    page: { backgroundColor: '#0A0A0A', color: '#E5E5E5', minHeight: '100vh', display: 'flex', fontFamily: '"Inter", sans-serif' },
+    page: { backgroundColor: '#0A0A0A', color: '#E5E5E5', height: isMobile ? 'auto' : '100vh', minHeight: '100vh', display: 'flex', fontFamily: '"Inter", sans-serif', overflow: isMobile ? 'visible' : 'hidden' },
     sidebar: { width: '280px', borderRight: '1px solid #1F1F1F', padding: '0', display: 'flex', flexDirection: 'column', flexShrink: 0 },
     logoContainer: { padding: '60px 40px', display: 'flex', flexDirection: 'column' },
     logo: { fontFamily: '"Playfair Display", serif', fontSize: '18px', letterSpacing: '0.05em', color: brandColor, textTransform: 'uppercase' },
@@ -233,7 +241,7 @@ export default function Edit() {
     userAvatar: { width: '40px', height: '40px', backgroundColor: '#333', overflow: 'hidden', borderRadius: '50%' },
 
     // Main Area
-    main: { flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflowY: 'auto' },
+    main: { flex: 1, display: 'flex', flexDirection: 'column', height: isMobile ? 'auto' : '100vh', overflowY: isMobile ? 'visible' : 'auto' },
 
     // Custom Header for Edit Page
     editHeader: { padding: '60px 80px 40px', borderBottom: '1px solid #1F1F1F', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' },
@@ -286,14 +294,33 @@ export default function Edit() {
       <style>{`
         @media (max-width: 768px) {
           .edit-page { flex-direction: column !important; height: auto !important; min-height: 100vh; overflow: visible !important; }
-          .edit-sidebar { width: 100% !important; border-right: none !important; border-bottom: 1px solid #1F1F1F; }
-          .edit-logo-container { padding: 24px !important; flex-direction: row !important; justify-content: space-between; align-items: center; }
-          .edit-nav { display: flex; overflow-x: auto; padding-bottom: 8px !important; white-space: nowrap; }
-          .edit-nav a, .edit-nav div { border-left: none !important; border-bottom: 3px solid transparent; padding: 12px 24px !important; margin-top: 0 !important; }
-          .edit-nav a[style*="border-left"] { border-bottom: 3px solid #06acf8ff !important; }
-          .edit-user-profile { display: none !important; }
+          .edit-sidebar { 
+            position: fixed !important; 
+            top: 0 !important; 
+            left: ${isSidebarOpen ? '0' : '-100%'} !important; 
+            width: 280px !important; 
+            height: 100vh !important; 
+            z-index: 1000 !important; 
+            background-color: #0A0A0A !important;
+            transition: left 0.3s ease !important;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.5) !important;
+          }
+          .edit-overlay {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            background-color: rgba(0,0,0,0.7) !important;
+            z-index: 999 !important;
+            display: ${isSidebarOpen ? 'block' : 'none'} !important;
+          }
+          .edit-logo-container { padding: 24px !important; }
+          .edit-nav { display: flex; flex-direction: column !important; overflow-y: auto !important; }
+          .edit-nav a, .edit-nav div { border-left: 3px solid transparent !important; border-bottom: none !important; padding: 16px 40px !important; font-size: 14px !important; }
+          .edit-user-profile { display: flex !important; }
           
-          .edit-header { padding: 24px !important; flex-direction: column; gap: 24px; }
+          .edit-header { padding: 20px 24px !important; flex-direction: column; gap: 24px; position: sticky; top: 0; background: #0A0A0A; z-index: 100; border-bottom: 1px solid #1F1F1F; }
           .edit-save-btn { width: 100%; }
           
           .edit-content { padding: 24px !important; }
@@ -319,10 +346,20 @@ export default function Edit() {
       <input type="file" ref={p3Ref} style={{ display: 'none' }} accept="image/*" onChange={(e) => handleFileUpload(e, 'product_3_url')} />
       <input type="file" ref={p4Ref} style={{ display: 'none' }} accept="image/*" onChange={(e) => handleFileUpload(e, 'product_4_url')} />
       
+      {/* Mobile Sidebar Overlay */}
+      <div className="edit-overlay" onClick={() => setIsSidebarOpen(false)}></div>
+
       {/* Sidebar */}
       <div style={s.sidebar} className="edit-sidebar">
-        <div style={s.logoContainer} className="edit-logo-container">
-          <div style={s.logo}>Zizzystores.</div>
+        <div style={{ ...s.logoContainer, position: 'relative' }} className="edit-logo-container">
+          <button 
+            onClick={() => setIsSidebarOpen(false)}
+            style={{ position: 'absolute', top: '24px', right: '24px', background: 'none', border: 'none', color: '#666', cursor: 'pointer' }}
+            className="mobile-only"
+          >
+            <X size={24} />
+          </button>
+          <Link to="/" style={{ textDecoration: 'none' }}><div style={s.logo}>Zizzystores.</div></Link>
           <div style={{ fontFamily: 'Inter', fontSize: '9px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', marginTop: '8px', textTransform: 'uppercase' }}>Digital Store</div>
         </div>
 
@@ -340,7 +377,6 @@ export default function Edit() {
           )}
           
           <Link to="/edit" style={s.navItem(true)}><Settings size={16} /> Edit</Link>
-          <div style={{ ...s.navItem(false), marginTop: '48px' }}><HeadphonesIcon size={16} /> Customer Service</div>
         </div>
 
         <div style={s.userProfile} className="edit-user-profile">
@@ -348,7 +384,7 @@ export default function Edit() {
             {formData.logo_url ? (
               <img src={formData.logo_url} alt={formData.owner_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
-              <span style={{ color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>{formData.owner_name ? formData.owner_name.charAt(0) : 'U'}</span>
+              <span style={{ color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>{formData.owner_name?.charAt(0)?.toUpperCase() || 'U'}</span>
             )}
           </div>
           <div>
@@ -362,9 +398,19 @@ export default function Edit() {
       <form style={s.main} onSubmit={handleSubmit}>
         {/* Header Special for Edit Page */}
         <div style={s.editHeader} className="edit-header">
-          <div>
-            <h1 style={s.headerTitle}>Brand Profile</h1>
-            <p style={s.headerSubtitle}>Curate your digital atelier. The narrative you build here defines the prestige of your collections.</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <button 
+              onClick={() => setIsSidebarOpen(true)}
+              style={{ background: 'none', border: 'none', color: '#FFF', cursor: 'pointer' }}
+              className="mobile-only"
+              type="button"
+            >
+              <Menu size={24} />
+            </button>
+            <div>
+              <h1 style={s.headerTitle}>Brand Profile</h1>
+              <p style={s.headerSubtitle}>Curate your digital atelier. The narrative you build here defines the prestige of your collections.</p>
+            </div>
           </div>
           <button type="submit" disabled={loading} style={{ ...s.saveBtn, opacity: loading ? 0.7 : 1 }} className="edit-save-btn">
             {loading ? 'SAVING...' : 'Save Changes'}
@@ -532,7 +578,7 @@ export default function Edit() {
                   {formData.logo_url ? (
                     <img src={formData.logo_url} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
-                    <span style={s.logoInitial}>{formData.brand_name ? formData.brand_name.charAt(0).toUpperCase() : 'Z'}</span>
+                    <span style={s.logoInitial}>{formData.brand_name?.charAt(0)?.toUpperCase() || 'Z'}</span>
                   )}
                 </div>
                 <p style={{ fontSize: '10px', color: '#888', textAlign: 'center', lineHeight: '1.6', padding: '0 20px' }}>
@@ -609,6 +655,27 @@ export default function Edit() {
                 <div style={{ ...s.inputGroup, marginBottom: 0 }}>
                   <label style={s.label}>Paystack Subaccount Code <span style={{color: '#888', textTransform: 'none', marginLeft: '8px'}}>(Generated by Admin)</span></label>
                   <input type="text" value={formData.paystack_subaccount_code || ''} placeholder="Pending Generation..." style={{ ...s.input, color: '#888', cursor: 'not-allowed', backgroundColor: 'rgba(255,255,255,0.02)', paddingLeft: '16px' }} readOnly />
+                </div>
+              </div>
+
+              {/* Custom Domain Section */}
+              <div style={s.card} className="edit-card">
+                <h2 style={{ ...s.cardTitle, marginBottom: '24px' }}>Connect Your Domain</h2>
+                <div style={{ fontSize: '12px', color: '#888', marginBottom: '32px', lineHeight: '1.6' }}>Link your purchased .store domain here. Ensure your DNS records point to the project IP.</div>
+
+                <div style={s.inputGroup}>
+                  <label style={s.label}>Custom Domain Name</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid #333' }}>
+                    <Globe size={14} color={brandColor} />
+                    <input 
+                      type="text" 
+                      name="custom_domain" 
+                      value={formData.custom_domain || ''} 
+                      onChange={handleChange} 
+                      placeholder="e.g. yourbrand.store" 
+                      style={{ ...s.input, borderBottom: 'none' }} 
+                    />
+                  </div>
                 </div>
               </div>
 

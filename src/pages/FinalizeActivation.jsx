@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Shield, Lock, CreditCard, Sparkles, Globe, ArrowRight, CheckCircle2 } from 'lucide-react';
-import { usePaystackPayment } from 'react-paystack';
+import PaystackPop from '@paystack/inline-js';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { useNavigate } from 'react-router-dom';
@@ -12,33 +12,19 @@ export default function FinalizeActivation() {
   const [processing, setProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Setup Paystack API configuration globally referencing the user's data
-  const config = {
-    reference: (new Date()).getTime().toString(),
-    email: user?.email || "pending@zizzystores.com",
-    amount: 30000 * 100, // Value is inside Kobo (Naira * 100)
-    publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || '', // You MUST have this in .env
-    metadata: {
-      custom_fields: [
-        {
-          display_name: 'Store ID',
-          variable_name: 'store_id',
-          value: user?.id
-        }
-      ]
-    }
-  };
 
-  const initializePayment = usePaystackPayment(config);
-
-  const onSuccess = async (reference) => {
+  const onSuccess = async (transaction) => {
     setProcessing(true);
     setErrorMsg('');
     try {
       // 1. Physically unlock the store gateway barrier in the Postgres DB
       const { error: dbError } = await supabase
         .from('brand_profiles')
-        .update({ store_active: true, updated_at: new Date() })
+        .update({ 
+          store_active: true, 
+          last_transaction_id: transaction.reference,
+          updated_at: new Date() 
+        })
         .eq('id', user.id);
         
       if (dbError) throw dbError;
@@ -53,7 +39,7 @@ export default function FinalizeActivation() {
       // 3. Complete! Navigate to Success Page with transaction details.
       navigate('/success', { 
         state: { 
-          reference: reference.reference, 
+          reference: transaction.reference, 
           amount: 30000, 
           email: user?.email,
           brandName: user?.user_metadata?.brand_name || 'Your Premium Store'
@@ -62,7 +48,7 @@ export default function FinalizeActivation() {
       
     } catch (err) {
       console.error("Critical Post-Payment DB failure:", err);
-      setErrorMsg("Payment processed successfully but the database faltered. Please reach out to support with reference: " + reference.reference);
+      setErrorMsg("Payment processed successfully but the database faltered. Please reach out to support with reference: " + transaction.reference);
       setProcessing(false);
     }
   };
@@ -79,7 +65,32 @@ export default function FinalizeActivation() {
       return;
     }
     setProcessing(true);
-    initializePayment(onSuccess, onClose);
+
+    try {
+      const paystack = new PaystackPop();
+      paystack.newTransaction({
+        key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
+        email: user?.email || "pending@zizzystores.com",
+        amount: 30000 * 100,
+        currency: 'NGN',
+        ref: (new Date()).getTime().toString(),
+        metadata: {
+          custom_fields: [
+            {
+              display_name: 'Store ID',
+              variable_name: 'store_id',
+              value: user?.id
+            }
+          ]
+        },
+        onSuccess: (transaction) => onSuccess(transaction),
+        onCancel: () => onClose(),
+      });
+    } catch (error) {
+      console.error("Paystack initialization failed:", error);
+      setProcessing(false);
+      alert("Failed to initialize payment gateway. Please try again.");
+    }
   };
 
   const brandColor = '#06acf8';
@@ -134,13 +145,16 @@ export default function FinalizeActivation() {
       <style>{`
         @media (max-width: 768px) {
           .fin-page { flex-direction: column !important; height: auto !important; min-height: 100vh; overflow-y: auto !important; }
-          .fin-left { padding: 48px 24px !important; border-right: none !important; border-bottom: 1px solid #1F1F1F; }
-          .fin-logo { left: 24px !important; top: 24px !important; }
-          .fin-left-title { font-size: 36px !important; margin-bottom: 32px !important; }
+          .fin-left { padding: 64px 24px 48px !important; border-right: none !important; border-bottom: 1px solid #1F1F1F; min-height: auto !important; }
+          .fin-logo { left: 24px !important; top: 24px !important; position: static !important; margin-bottom: 32px; }
+          .fin-left-content { margin-top: 0 !important; margin-bottom: 0 !important; }
+          .fin-left-title { font-size: 32px !important; margin-bottom: 32px !important; text-align: center; }
+          .fin-feature-item { text-align: left; }
           .fin-right { padding: 48px 24px !important; overflow-y: visible !important; }
-          .fin-main-title { font-size: 32px !important; }
+          .fin-main-title { font-size: 28px !important; text-align: center; }
+          .fin-main-desc { text-align: center; }
           .fin-price { font-size: 28px !important; }
-          .fin-express-row { flex-direction: column !important; }
+          .fin-express-row { flex-direction: column !important; gap: 12px !important; }
           .fin-pagination { display: none !important; }
         }
       `}</style>

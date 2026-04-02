@@ -347,9 +347,6 @@ export default function Storefront() {
         }} className="store-logo">ZIZZYSTORES.</div>
 
         <div style={s.navIcons}>
-          <div title="Customer Service" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#888', transition: 'color 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.color = '#FFF'} onMouseLeave={(e) => e.currentTarget.style.color = '#888'}>
-            <Headphones size={20} />
-          </div>
           <Link to="/" title="Log Out" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#888', transition: 'color 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.color = '#FFF'} onMouseLeave={(e) => e.currentTarget.style.color = '#888'}>
             <LogOut size={20} />
           </Link>
@@ -368,14 +365,8 @@ export default function Storefront() {
         </p>
       </section>
 
-      {/* Filters & Search */}
-      <div style={s.filterBar} className="store-filter-bar">
-        <div style={s.filterLinks}>
-          <div style={s.filterLink(true)}>ALL</div>
-          <div style={s.filterLink(false)}>FOOTWEAR</div>
-          <div style={s.filterLink(false)}>SCENT</div>
-          <div style={s.filterLink(false)}>APPAREL</div>
-        </div>
+      {/* filters removed per request */}
+      <div style={{...s.filterBar, justifyContent: 'center'}} className="store-filter-bar">
         <div style={s.searchBox}>
           <Search size={14} color="#666" />
           <input type="text" placeholder="SEARCH BRANDS..." style={s.searchInput} />
@@ -448,16 +439,16 @@ export default function Storefront() {
         @media (max-width: 768px) {
           .store-nav { padding: 24px !important; flex-wrap: wrap; gap: 16px; justify-content: space-between; }
           .store-logo { font-size: 20px !important; }
-          .store-hero { padding: 64px 24px 40px 24px !important; }
-          .store-hero-title { font-size: 40px !important; }
-          .store-filter-bar { padding: 0 24px !important; flex-direction: column; gap: 24px; align-items: flex-start !important; }
-          .store-grid { padding: 0 24px !important; grid-template-columns: 1fr !important; gap: 32px !important; margin-bottom: 64px !important; }
-          .store-newsletter { padding: 64px 24px !important; }
-          .store-newsletter-form { flex-direction: column; padding: 0 24px; box-sizing: border-box; }
-          .store-footer { flex-direction: column; padding: 40px 24px !important; gap: 24px; text-align: center; }
-          .store-footer-links { position: static !important; transform: none !important; }
-          .card-hover-actions { opacity: 1 !important; }
-          .show-more-btn { opacity: 1 !important; transform: none !important; }
+          .store-hero { padding: 80px 24px 40px 24px !important; text-align: center; }
+          .store-hero-title { font-size: 36px !important; line-height: 1.2 !important; }
+          .store-filter-bar { padding: 0 24px !important; flex-direction: column; gap: 24px; align-items: center !important; margin-bottom: 32px !important; }
+          .store-grid { padding: 0 20px !important; grid-template-columns: repeat(2, 1fr) !important; gap: 16px !important; margin-bottom: 64px !important; }
+          .store-newsletter { padding: 80px 24px !important; }
+          .store-newsletter-form { flex-direction: column; padding: 0 24px; box-sizing: border-box; width: 100% !important; }
+          .store-footer { flex-direction: column; padding: 48px 24px !important; gap: 32px; text-align: center; align-items: center !important; }
+          .store-footer-links { position: static !important; transform: none !important; flex-wrap: wrap; justify-content: center; gap: 16px !important; }
+          .card-hover-actions { opacity: 1 !important; visibility: visible !important; }
+          .show-more-btn { opacity: 1 !important; transform: none !important; border-color: ${brandColor} !important; color: ${brandColor} !important; visibility: visible !important; }
         }
         .product-card:hover img {
           transform: scale(1.05);

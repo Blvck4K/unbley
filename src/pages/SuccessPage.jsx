@@ -1,18 +1,51 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
 import { Check, ShieldCheck, Download, LayoutDashboard, Globe, Settings } from 'lucide-react';
 
 export default function SuccessPage() {
   const location = useLocation();
   const navigate = useNavigate();
-  
-  // Extract state from Paystack success callback
-  const { reference, amount, email, brandName } = location.state || {
-    reference: 'TXN-' + Math.floor(Math.random() * 100000000).toString(),
-    amount: 30000,
-    email: 'admin@zizzystores.com',
-    brandName: 'Premium Zizzystores Vendor'
-  };
+
+  const { user } = useAuth();
+  const [realState, setRealState] = useState({
+    reference: location.state?.reference || '...',
+    amount: location.state?.amount || 30000,
+    email: location.state?.email || user?.email || 'admin@zizzystores.com',
+    brandName: location.state?.brandName || user?.user_metadata?.brand_name || 'Premium Zizzystores Vendor'
+  });
+
+  useEffect(() => {
+    async function verifyRealtimeData() {
+      if (!user) return;
+      
+      // If no reference in memory, or if we want to confirm the "legit" ID from DB
+      if (!location.state?.reference || realState.reference === '...') {
+        try {
+          const { data, error } = await supabase
+            .from('brand_profiles')
+            .select('last_transaction_id, brand_name, email_address')
+            .eq('id', user.id)
+            .single();
+
+          if (data && data.last_transaction_id) {
+            setRealState(prev => ({
+              ...prev,
+              reference: data.last_transaction_id,
+              brandName: data.brand_name || prev.brandName,
+              email: data.email_address || prev.email
+            }));
+          }
+        } catch (err) {
+          console.error("Failed to recover transaction context:", err);
+        }
+      }
+    }
+    verifyRealtimeData();
+  }, [user, location.state]);
+
+  const { reference, amount, email, brandName } = realState;
 
   const brandColor = '#06acf8';
   const successColor = '#10B981'; // Vibrant green for success
@@ -153,7 +186,7 @@ export default function SuccessPage() {
       backgroundColor: '#222',
       margin: '32px 0'
     },
-    
+
     // Action Cards
     actionsLabel: {
       alignSelf: 'flex-start',
@@ -288,11 +321,14 @@ Your digital atelier is securely activated.
       <style>{`
         @media (max-width: 768px) {
           .success-page-header { padding: 20px 24px !important; }
-          .success-page-container { padding: 40px 24px 0 !important; }
-          .success-steps-grid { grid-template-columns: 1fr !important; }
-          .success-flex-row { flex-direction: column !important; gap: 32px !important; }
-          .success-bottom-actions { flex-direction: column !important; width: 100% !important; }
-          .success-bottom-actions button { width: 100% !important; justify-content: center !important; }
+          .success-page-container { padding: 48px 24px 0 !important; }
+          .success-title { font-size: 28px !important; }
+          .success-subtitle { font-size: 13px !important; margin-bottom: 32px !important; }
+          .success-flex-row { flex-direction: column !important; gap: 24px !important; }
+          .success-info-block { width: 100% !important; text-align: center; }
+          .success-badge { justify-content: center !important; }
+          .success-bottom-actions { flex-direction: column !important; width: 100% !important; gap: 12px !important; }
+          .success-bottom-actions button { width: 100% !important; justify-content: center !important; padding: 18px !important; }
         }
         .btn-hover:hover { opacity: 0.9; }
         .btn-sec-hover:hover { background-color: #222 !important; }
@@ -308,7 +344,7 @@ Your digital atelier is securely activated.
 
       {/* Main Content */}
       <main style={s.container} className="success-page-container">
-        
+
         <div style={s.iconBox}>
           <Check size={32} color={successColor} strokeWidth={3} />
         </div>
@@ -321,7 +357,7 @@ Your digital atelier is securely activated.
         {/* Receipt / Details Card */}
         <div style={s.card}>
           <div style={s.glowLine}></div>
-          
+
           <div style={s.flexRow} className="success-flex-row">
             <div style={{ ...s.infoBlock, flex: '1 1 auto' }}>
               <div style={s.label}>ACTIVATED STORE</div>
@@ -356,30 +392,6 @@ Your digital atelier is securely activated.
           </div>
         </div>
 
-        {/* Next Steps */}
-        <div style={s.actionsLabel}>Next Steps</div>
-        <div style={s.stepsGrid} className="success-steps-grid">
-          
-          <div style={s.stepCard}>
-            <div style={{ ...s.stepIconBox, backgroundColor: 'rgba(16, 185, 129, 0.1)', color: successColor }}><Settings size={16} /></div>
-            <div style={s.stepTitle}>Configure Your Brand</div>
-            <div style={s.stepDesc}>Customize your storefront aesthetic, manage product collections, and fine-tune your business settings.</div>
-            <div style={s.stepLink} onClick={() => navigate('/dashboard')}>
-              GO TO DASHBOARD <span>→</span>
-            </div>
-          </div>
-
-          <div style={s.stepCard}>
-            <div style={s.stepIconBox}><Globe size={16} /></div>
-            <div style={s.stepTitle}>Connect Domain</div>
-            <div style={s.stepDesc}>Link your custom .store domain or map an existing domain name to your newly activated workspace.</div>
-            <div style={s.stepLink} onClick={() => navigate('/profile')}>
-              OPEN SETTINGS <span>→</span>
-            </div>
-          </div>
-
-        </div>
-
         {/* Bottom Actions */}
         <div style={s.bottomActions} className="success-bottom-actions">
           <button style={s.btnPrimary} className="btn-hover" onClick={() => navigate('/dashboard')}>
@@ -393,7 +405,7 @@ Your digital atelier is securely activated.
         </div>
 
         <div style={{ margin: '64px 0', fontSize: '11px', color: '#555', textAlign: 'center' }}>
-          Having trouble? Contact our <span style={{ color: successColor, cursor: 'pointer' }}>concierge support team</span> for priority assistance.
+          Having trouble? Contact our <span style={{ color: successColor, cursor: 'pointer' }}>support team</span> for priority assistance.
         </div>
 
       </main>
