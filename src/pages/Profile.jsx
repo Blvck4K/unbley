@@ -35,6 +35,8 @@ export default function Profile() {
   
   const [feedbackMsg, setFeedbackMsg] = useState('');
   const [userEmail, setUserEmail] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState(null); // 'success' | 'error' | null
   
   // Real-time Data Mapping
   const [profileData, setProfileData] = useState({
@@ -82,6 +84,10 @@ export default function Profile() {
       } finally {
         setLoading(false);
       }
+    }
+
+    if (user?.email) {
+      setUserEmail(user.email);
     }
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', handleResize);
@@ -183,18 +189,64 @@ export default function Profile() {
     );
   };
 
-  const handleFeedbackSubmit = (e) => {
+  const handleFeedbackSubmit = async (e) => {
     e.preventDefault();
     if (!feedbackMsg.trim()) return;
 
-    const subject = encodeURIComponent(`Feedback for ${profileData.brand_name}`);
-    const body = encodeURIComponent(`Experience/Issue:\n${feedbackMsg}\n\nFrom: ${userEmail || 'Anonymous'}`);
-    const mailtoUrl = `mailto:diorbaron2@gmail.com,isaacakpasu06@gmail.com?subject=${subject}&body=${body}`;
-    
-    window.location.href = mailtoUrl;
-    setFeedbackMsg('');
-    setUserEmail('');
-    alert("Email client opened. Please click send to submit your feedback!");
+    setIsSubmitting(true);
+    setSubmitStatus(null);
+
+    const botToken = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
+    const chatId = import.meta.env.VITE_TELEGRAM_CHAT_ID;
+
+    if (!botToken || !chatId) {
+      console.error("Telegram credentials missing in .env");
+      alert("System configuration error. Please contact the administrator.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    const message = `
+🌟 *New Feedback Received* 🌟
+
+*Brand:* ${profileData.brand_name}
+*Customer Email:* ${userEmail || 'Anonymous'}
+
+*Message:*
+${feedbackMsg}
+
+---
+_Sent via Zizzystores Digital Atelier_
+    `;
+
+    try {
+      const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: message,
+          parse_mode: 'Markdown',
+        }),
+      });
+
+      if (response.ok) {
+        setSubmitStatus('success');
+        setFeedbackMsg('');
+        // Don't clear email if it's the user's email
+      } else {
+        throw new Error('Failed to send message');
+      }
+    } catch (err) {
+      console.error("Telegram Error:", err);
+      setSubmitStatus('error');
+    } finally {
+      setIsSubmitting(false);
+      // Reset status after 5 seconds
+      setTimeout(() => setSubmitStatus(null), 5000);
+    }
   };
 
   if (loading) {
@@ -462,7 +514,19 @@ export default function Profile() {
                   onChange={(e) => setUserEmail(e.target.value)}
                 />
               </div>
-              <button type="submit" style={s.feedbackBtn} className="prof-newsletter-btn">Send Feedback</button>
+              <button 
+                type="submit" 
+                disabled={isSubmitting} 
+                style={{ 
+                  ...s.feedbackBtn, 
+                  opacity: isSubmitting ? 0.7 : 1,
+                  backgroundColor: submitStatus === 'success' ? '#10B981' : (submitStatus === 'error' ? '#EF4444' : brandColor),
+                  color: submitStatus ? '#FFF' : '#000'
+                }} 
+                className="prof-newsletter-btn"
+              >
+                {isSubmitting ? 'SENDING...' : (submitStatus === 'success' ? 'SENT SUCCESSFULLY!' : (submitStatus === 'error' ? 'FAILED TO SEND' : 'Send Feedback'))}
+              </button>
             </form>
           </div>
 

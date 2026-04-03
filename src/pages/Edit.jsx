@@ -214,6 +214,58 @@ export default function Edit() {
     }
   };
 
+  const handleAssistanceRequest = async (e) => {
+    e.preventDefault();
+    
+    const botToken = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
+    const chatId = import.meta.env.VITE_TELEGRAM_CHAT_ID;
+
+    if (!botToken || !chatId) {
+      alert("Please contact support at diorbaron2@gmail.com for assistance.");
+      return;
+    }
+
+    const message = `
+🆘 *Help Requested: Speak with a Curator* 🆘
+
+*Brand:* ${formData.brand_name || 'N/A'}
+*Owner:* ${formData.owner_name}
+*Email:* ${formData.email_address}
+*Phone:* ${formData.phone_number}
+
+*Request:* The user has requested to speak with a curator for assistance with their profile.
+
+---
+_Sent via Zizzystores Management Dashboard_
+    `;
+
+    try {
+      setLoading(true);
+      const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: message,
+          parse_mode: 'Markdown',
+        }),
+      });
+
+      if (response.ok) {
+        alert("Your request for assistance has been sent! A curator will contact you shortly.");
+      } else {
+        throw new Error('Failed to send');
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to send request. Please try again later or email us directly.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const s = {
     page: { backgroundColor: '#0A0A0A', color: '#E5E5E5', height: isMobile ? 'auto' : '100vh', minHeight: '100vh', display: 'flex', fontFamily: '"Inter", sans-serif', overflow: isMobile ? 'visible' : 'hidden' },
     sidebar: { width: '280px', borderRight: '1px solid #1F1F1F', padding: '0', display: 'flex', flexDirection: 'column', flexShrink: 0 },
@@ -668,7 +720,13 @@ export default function Edit() {
                 <p style={s.assistanceText}>
                   Our concierge team can help you personalize your brand narrative or assist with high-fidelity asset uploads.
                 </p>
-                <a href="#" style={s.assistanceLink}>Speak with a Curator <ArrowRight size={14} color={brandColor} /></a>
+                <a 
+                  href="#" 
+                  onClick={handleAssistanceRequest}
+                  style={{ ...s.assistanceLink, opacity: loading ? 0.7 : 1, cursor: loading ? 'wait' : 'pointer' }}
+                >
+                  {loading ? 'SENDING...' : 'Speak with a Curator'} <ArrowRight size={14} color={brandColor} />
+                </a>
               </div>
 
             </div>

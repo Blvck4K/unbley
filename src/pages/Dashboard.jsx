@@ -8,7 +8,7 @@ export default function Dashboard() {
   const { user } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  
+
   const [profileData, setProfileData] = useState({
     brand_name: 'Your Brand',
     owner_name: 'Brand Owner',
@@ -38,7 +38,7 @@ export default function Dashboard() {
           .select('*')
           .eq('id', user.id)
           .single();
-          
+
         if (pData) {
           setProfileData(prev => ({
             ...prev,
@@ -49,7 +49,7 @@ export default function Dashboard() {
         // --- 2. Fetch Live System Metrics ---
         // Warning: This silently fails if store_data_schema.sql hasn't been run yet, 
         // falling back to the 0 defaults neatly.
-        
+
         // Sum total sales
         const { data: salesData } = await supabase
           .from('orders')
@@ -98,7 +98,7 @@ export default function Dashboard() {
   }, [user]);
 
   const brandColor = '#06acf8ff';
-  
+
   const s = {
     page: { backgroundColor: '#0A0A0A', color: '#E5E5E5', height: isMobile ? 'auto' : '100vh', minHeight: '100vh', overflow: isMobile ? 'visible' : 'hidden', display: 'flex', fontFamily: '"Inter", sans-serif' },
     sidebar: { width: '280px', borderRight: '1px solid #1F1F1F', padding: '0', display: 'flex', flexDirection: 'column' },
@@ -133,7 +133,7 @@ export default function Dashboard() {
   const formatMoney = (amount) => {
     return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 }).format(amount);
   };
-  
+
   const formatCompact = (num) => {
     if (num < 1000) return num;
     return (num / 1000).toFixed(1) + 'k';
@@ -188,7 +188,7 @@ export default function Dashboard() {
       {/* Sidebar */}
       <div style={s.sidebar} className="dash-sidebar">
         <div style={{ ...s.logoContainer, position: 'relative' }} className="dash-logo-container">
-          <button 
+          <button
             onClick={() => setIsSidebarOpen(false)}
             style={{ position: 'absolute', top: '24px', right: '24px', background: 'none', border: 'none', color: '#666', cursor: 'pointer' }}
             className="mobile-only"
@@ -225,7 +225,7 @@ export default function Dashboard() {
         {/* Header */}
         <div style={s.header} className="dash-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <button 
+            <button
               onClick={() => setIsSidebarOpen(true)}
               style={{ background: 'none', border: 'none', color: '#FFF', cursor: 'pointer' }}
               className="mobile-only"
@@ -277,7 +277,7 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
-            
+
             <div style={{ padding: '24px', border: '1px solid #1F1F1F', backgroundColor: '#111', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }} className="dash-live-domain">
               <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', textTransform: 'uppercase', marginBottom: '8px' }}>Live Domain</div>
               {profileData.website_url ? (
