@@ -19,6 +19,7 @@ import ShopBrand from './pages/ShopBrand';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import ProductDetail from './pages/ProductDetail';
+import ChatWidget from './components/ChatWidget';
 
 function App() {
   const [customBrandId, setCustomBrandId] = useState(null);
@@ -56,6 +57,7 @@ function App() {
           <Route path="/finalize-activation" element={<ProtectedRoute><FinalizeActivation /></ProtectedRoute>} />
           <Route path="/success" element={<ProtectedRoute><SuccessPage /></ProtectedRoute>} />
         </Routes>
+        <ChatWidget />
       </BrowserRouter>
     </AuthProvider>
   );
