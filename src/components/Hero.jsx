@@ -52,7 +52,7 @@ export default function Hero() {
         </div>
 
         <div className="hero-visual" style={{ marginTop: window.innerWidth <= 768 ? '40px' : '0' }}>
-          <div className="dashboard-mockup" style={{ padding: 0, overflow: 'hidden', border: 'none', background: 'none' }}>
+          <div className="dashboard-mockup" style={{ padding: 0, overflow: 'hidden', border: 'none', background: 'none', boxShadow: 'none' }}>
             <img src="https://raw.githubusercontent.com/Blvck4K/Jss-png/refs/heads/main/replace.png" alt="Dashboard Preview" style={{ width: '100%', height: 'auto', borderRadius: 'var(--radius-lg)', display: 'block' }} />
           </div>
           <div style={{

@@ -22,7 +22,7 @@ export default function Home() {
       <FAQ />
       <CTASection />
       <Footer />
-      <div 
+      <div
         style={{
           position: 'fixed',
           bottom: '32px',
