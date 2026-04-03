@@ -334,6 +334,10 @@ export default function Edit() {
           .edit-color-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
           
           .edit-product-grid { grid-template-columns: 1fr 1fr !important; gap: 16px !important; }
+          .mobile-only { display: block !important; }
+        }
+        @media (min-width: 769px) {
+          .mobile-only { display: none !important; }
         }
       `}</style>
 

@@ -242,6 +242,10 @@ export default function Profile() {
           .prof-newsletter { padding: 32px 24px !important; }
           .prof-footer { flex-direction: column; gap: 24px; text-align: center; }
           .prof-footer-links { flex-wrap: wrap; justify-content: center; }
+          .mobile-only { display: block !important; }
+        }
+        @media (min-width: 769px) {
+          .mobile-only { display: none !important; }
         }
       `}</style>
       

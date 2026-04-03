@@ -176,6 +176,10 @@ export default function Dashboard() {
           .dash-content { padding: 24px !important; overflow: visible !important; }
           .dash-brand-header { flex-direction: column !important; gap: 24px !important; }
           .dash-stats-grid { grid-template-columns: 1fr !important; gap: 16px !important; }
+          .mobile-only { display: block !important; }
+        }
+        @media (min-width: 769px) {
+          .mobile-only { display: none !important; }
         }
       `}</style>
       {/* Mobile Sidebar Overlay */}
