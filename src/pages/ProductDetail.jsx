@@ -364,7 +364,7 @@ export default function ProductDetail() {
       <div style={s.header} className="detail-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
           <div style={{ ...s.iconButton, fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em' }} onClick={() => navigate(-1)}>
-            <ArrowLeft size={16} style={{ marginRight: '8px' }} /> Go Back
+            <ArrowLeft size={16} style={{ marginRight: '8px' }} />
           </div>
           <div style={s.logo} onClick={() => navigate(`/shop-brand/${brand.id}`)}>
             {brand.logo_url && <img src={brand.logo_url} style={s.logoImage} alt="Brand Logo" />}
