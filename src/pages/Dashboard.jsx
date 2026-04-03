@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Bell, Moon, LayoutGrid, Store, User, Settings, Headphones, TrendingUp, Package, BarChart3, CheckCircle2, ChevronRight, ShoppingBag, ArrowUpRight, Edit, Menu, X } from 'lucide-react';
+import { Search, Bell, Moon, LayoutGrid, Store, User, Settings, Headphones, TrendingUp, Package, BarChart3, CheckCircle2, ChevronRight, ShoppingBag, ArrowUpRight, Edit, Menu, X, MessageSquare } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import AdminChat from '../components/AdminChat';
 
 export default function Dashboard() {
   const { user } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview' or 'support'
 
   const [profileData, setProfileData] = useState({
     brand_name: 'Your Brand',
@@ -33,11 +35,14 @@ export default function Dashboard() {
       if (!user) return;
       try {
         // --- 1. Fetch Profile Data ---
+        // We select * and then check if is_admin is present to avoid crashing if the column is missing
         const { data: pData, error: pError } = await supabase
           .from('brand_profiles')
-          .select('*')
+          .select('*') 
           .eq('id', user.id)
           .single();
+
+        if (pError) console.warn("Dashboard: Initial profile fetch warning:", pError.message);
 
         if (pData) {
           setProfileData(prev => ({
@@ -200,9 +205,12 @@ export default function Dashboard() {
         </div>
 
         <div style={s.nav} className="dash-nav">
-          <Link to="/dashboard" style={s.navItem(true)}><LayoutGrid size={16} /> Overview</Link>
+          <div onClick={() => setActiveTab('overview')} style={s.navItem(activeTab === 'overview')}><LayoutGrid size={16} /> Overview</div>
           <Link to="/profile" style={s.navItem(false)}><User size={16} /> Profile</Link>
           <Link to="/edit" style={s.navItem(false)}><Edit size={16} /> Edit</Link>
+          {profileData.is_admin && (
+            <div onClick={() => setActiveTab('support')} style={s.navItem(activeTab === 'support')}><MessageSquare size={16} /> Support</div>
+          )}
         </div>
 
         <div style={s.userProfile} className="dash-user-profile">
@@ -232,7 +240,7 @@ export default function Dashboard() {
             >
               <Menu size={24} />
             </button>
-            <div style={s.headerTitle}>Dashboard</div>
+            <div style={s.headerTitle}>{activeTab === 'overview' ? 'Dashboard' : 'Customer Support'}</div>
           </div>
           <div style={s.searchBar} className="dash-search-bar">
             <Search size={14} color="#666" />
@@ -252,124 +260,132 @@ export default function Dashboard() {
         {/* Content Area */}
         <div style={s.content} className="dash-content">
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: '1px solid #1F1F1F', paddingBottom: '40px' }} className="dash-brand-header">
-            <div style={{ display: 'flex', gap: '32px', alignItems: 'center' }} className="dash-brand-info">
-              <div style={{ width: '100px', height: '100px', border: '1px solid #333', backgroundColor: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                {profileData.logo_url ? (
-                  <img src={profileData.logo_url} alt="Brand Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                ) : (
-                  <span style={{ fontSize: '48px', color: '#FFF', fontFamily: '"Playfair Display", serif', fontStyle: 'italic' }}>{profileData.brand_name?.charAt(0)?.toUpperCase() || 'Z'}</span>
-                )}
-              </div>
-              <div>
-                <div style={s.sectionLabel}>
-                  <div style={{ width: '2px', height: '12px', backgroundColor: '#FFF' }}></div>
-                  Brand Profile
-                </div>
-                <h1 style={{ ...s.mainTitle, fontSize: '36px', marginBottom: '16px', lineHeight: '1' }}>{profileData.brand_name}</h1>
-                <div style={{ display: 'flex', gap: '24px', color: '#888', fontSize: '12px', letterSpacing: '0.05em', flexWrap: 'wrap' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ color: '#FFF', fontWeight: '600' }}>Email:</span> {profileData.email_address}
+          {activeTab === 'overview' ? (
+            <>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: '1px solid #1F1F1F', paddingBottom: '40px' }} className="dash-brand-header">
+                <div style={{ display: 'flex', gap: '32px', alignItems: 'center' }} className="dash-brand-info">
+                  <div style={{ width: '100px', height: '100px', border: '1px solid #333', backgroundColor: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                    {profileData.logo_url ? (
+                      <img src={profileData.logo_url} alt="Brand Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <span style={{ fontSize: '48px', color: '#FFF', fontFamily: '"Playfair Display", serif', fontStyle: 'italic' }}>{profileData.brand_name?.charAt(0)?.toUpperCase() || 'Z'}</span>
+                    )}
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ color: '#FFF', fontWeight: '600' }}>Phone:</span> {profileData.phone_number}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div style={{ padding: '24px', border: '1px solid #1F1F1F', backgroundColor: '#111', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }} className="dash-live-domain">
-              <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', textTransform: 'uppercase', marginBottom: '8px' }}>Live Domain</div>
-              {profileData.website_url ? (
-                <a href={profileData.website_url.startsWith('http') ? profileData.website_url : `https://${profileData.website_url}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: '14px', color: '#FFF', textDecoration: 'none', borderBottom: '1px solid #FFF', paddingBottom: '2px', display: 'flex', alignItems: 'center' }}>
-                  {profileData.website_url.replace(/^https?:\/\//, '')} <ArrowUpRight size={14} style={{ marginLeft: '6px' }} />
-                </a>
-              ) : (
-                <span style={{ fontSize: '12px', color: '#888', fontStyle: 'italic' }}>activation pending</span>
-              )}
-            </div>
-          </div>
-
-          {/* Dynamic Real-Time Stats Grid */}
-          <div style={s.statsGrid} className="dash-stats-grid">
-            <div style={s.card}>
-              <div style={s.cardHeader}>
-                <div style={{ border: '1px solid #333', padding: '8px' }}>
-                  <TrendingUp size={14} color="#FFF" />
-                </div>
-                <div style={{ fontSize: '10px', fontWeight: '700', color: '#666', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                  {metrics.totalSales > 0 ? '+12.4% THIS MONTH' : 'NO DATA YET'}
-                </div>
-              </div>
-              <div style={s.cardTitle}>Total Sales</div>
-              <div style={s.cardValue}>{formatMoney(metrics.totalSales)}</div>
-
-              <div style={{ marginTop: '32px', width: '100%', height: '1px', backgroundColor: '#1F1F1F', position: 'relative' }}>
-                <div style={{ position: 'absolute', top: 0, left: 0, width: metrics.totalSales > 0 ? '60%' : '0%', height: '1px', backgroundColor: '#FFF', transition: 'width 1s cubic-bezier(0.16, 1, 0.3, 1)' }}></div>
-              </div>
-            </div>
-
-            <div style={s.card}>
-              <div style={s.cardHeader}>
-                <Package size={18} color="#888" />
-                <div style={{ fontSize: '10px', fontWeight: '700', color: '#666', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{metrics.activeStock > 0 ? 'ACTIVE' : 'EMPTY'}</div>
-              </div>
-              <div style={s.cardTitle}>Stock Portfolio</div>
-              <div style={s.cardValue}>{metrics.activeStock}</div>
-              <div style={s.cardSubtitle}>Total Product Listings</div>
-            </div>
-
-            <div style={s.card}>
-              <div style={s.cardHeader}>
-                <BarChart3 size={18} color="#888" />
-                <div style={{ fontSize: '10px', fontWeight: '700', color: '#666', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{metrics.totalTraffic > 0 ? 'LIVE NOW' : 'AWAITING TRAFFIC'}</div>
-              </div>
-              <div style={s.cardTitle}>Your Traffic</div>
-              <div style={s.cardValue}>{formatCompact(metrics.totalTraffic)}</div>
-              <div style={s.cardSubtitle}>Unique Store Visitors</div>
-            </div>
-          </div>
-
-          {/* Bottom Ledger Grid */}
-          <div style={s.bottomGrid} className="dash-bottom-grid">
-            <div style={{ backgroundColor: '#111', border: '1px solid #1F1F1F' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '32px', borderBottom: '1px solid #1F1F1F' }}>
-                <div style={{ fontFamily: '"Playfair Display", serif', fontSize: '24px', color: '#FFF', fontStyle: 'italic' }}>Recent Orders</div>
-                {metrics.recentOrders.length > 0 && <div style={{ fontSize: '10px', color: '#FFF', letterSpacing: '0.1em', fontWeight: '700', textTransform: 'uppercase', cursor: 'pointer', borderBottom: '1px solid #FFF' }}>View Full Ledger</div>}
-              </div>
-
-              {metrics.recentOrders.length > 0 ? (
-                metrics.recentOrders.map((order, index) => (
-                  <div key={order.id} style={s.listRow} className="dash-list-row">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-                      <div style={{ width: '48px', height: '48px', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <ShoppingBag size={18} color="#666" />
-                      </div>
-                      <div>
-                        <div style={{ fontSize: '10px', fontWeight: '700', color: '#666', letterSpacing: '0.1em', marginBottom: '8px', textTransform: 'uppercase' }}>{order.order_number}</div>
-                        <div style={{ fontSize: '14px', color: '#FFF' }}>{order.product_name_snapshot}</div>
-                      </div>
+                  <div>
+                    <div style={s.sectionLabel}>
+                      <div style={{ width: '2px', height: '12px', backgroundColor: '#FFF' }}></div>
+                      Brand Profile
                     </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: '14px', fontWeight: '600', color: '#FFF', marginBottom: '12px' }}>{formatMoney(order.total_amount)}</div>
-                      <div style={s.statusBadge(order.status === 'processing' ? 'gray' : order.status === 'completed' ? 'green' : 'gray')}>
-                        {order.status === 'processing' ? 'Processing' : order.status === 'completed' ? 'Paid & Ready' : order.status}
+                    <h1 style={{ ...s.mainTitle, fontSize: '36px', marginBottom: '16px', lineHeight: '1' }}>{profileData.brand_name}</h1>
+                    <div style={{ display: 'flex', gap: '24px', color: '#888', fontSize: '12px', letterSpacing: '0.05em', flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ color: '#FFF', fontWeight: '600' }}>Email:</span> {profileData.email_address}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ color: '#FFF', fontWeight: '600' }}>Phone:</span> {profileData.phone_number}
                       </div>
                     </div>
                   </div>
-                ))
-              ) : (
-                <div style={{ padding: '64px', textAlign: 'center' }}>
-                  <div style={{ display: 'inline-flex', padding: '16px', backgroundColor: '#1A1A1A', borderRadius: '50%', marginBottom: '24px' }}>
-                    <Package size={24} color="#666" />
-                  </div>
-                  <div style={{ fontSize: '14px', color: '#FFF', marginBottom: '8px' }}>Your Ledger is Empty</div>
-                  <div style={{ fontSize: '12px', color: '#666' }}>Incoming orders will securely populate here.</div>
                 </div>
-              )}
 
+                <div style={{ padding: '24px', border: '1px solid #1F1F1F', backgroundColor: '#111', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }} className="dash-live-domain">
+                  <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', textTransform: 'uppercase', marginBottom: '8px' }}>Live Domain</div>
+                  {profileData.website_url ? (
+                    <a href={profileData.website_url.startsWith('http') ? profileData.website_url : `https://${profileData.website_url}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: '14px', color: '#FFF', textDecoration: 'none', borderBottom: '1px solid #FFF', paddingBottom: '2px', display: 'flex', alignItems: 'center' }}>
+                      {profileData.website_url.replace(/^https?:\/\//, '')} <ArrowUpRight size={14} style={{ marginLeft: '6px' }} />
+                    </a>
+                  ) : (
+                    <span style={{ fontSize: '12px', color: '#888', fontStyle: 'italic' }}>activation pending</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Dynamic Real-Time Stats Grid */}
+              <div style={s.statsGrid} className="dash-stats-grid">
+                <div style={s.card}>
+                  <div style={s.cardHeader}>
+                    <div style={{ border: '1px solid #333', padding: '8px' }}>
+                      <TrendingUp size={14} color="#FFF" />
+                    </div>
+                    <div style={{ fontSize: '10px', fontWeight: '700', color: '#666', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                      {metrics.totalSales > 0 ? '+12.4% THIS MONTH' : 'NO DATA YET'}
+                    </div>
+                  </div>
+                  <div style={s.cardTitle}>Total Sales</div>
+                  <div style={s.cardValue}>{formatMoney(metrics.totalSales)}</div>
+
+                  <div style={{ marginTop: '32px', width: '100%', height: '1px', backgroundColor: '#1F1F1F', position: 'relative' }}>
+                    <div style={{ position: 'absolute', top: 0, left: 0, width: metrics.totalSales > 0 ? '60%' : '0%', height: '1px', backgroundColor: '#FFF', transition: 'width 1s cubic-bezier(0.16, 1, 0.3, 1)' }}></div>
+                  </div>
+                </div>
+
+                <div style={s.card}>
+                  <div style={s.cardHeader}>
+                    <Package size={18} color="#888" />
+                    <div style={{ fontSize: '10px', fontWeight: '700', color: '#666', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{metrics.activeStock > 0 ? 'ACTIVE' : 'EMPTY'}</div>
+                  </div>
+                  <div style={s.cardTitle}>Stock Portfolio</div>
+                  <div style={s.cardValue}>{metrics.activeStock}</div>
+                  <div style={s.cardSubtitle}>Total Product Listings</div>
+                </div>
+
+                <div style={s.card}>
+                  <div style={s.cardHeader}>
+                    <BarChart3 size={18} color="#888" />
+                    <div style={{ fontSize: '10px', fontWeight: '700', color: '#666', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{metrics.totalTraffic > 0 ? 'LIVE NOW' : 'AWAITING TRAFFIC'}</div>
+                  </div>
+                  <div style={s.cardTitle}>Your Traffic</div>
+                  <div style={s.cardValue}>{formatCompact(metrics.totalTraffic)}</div>
+                  <div style={s.cardSubtitle}>Unique Store Visitors</div>
+                </div>
+              </div>
+
+              {/* Bottom Ledger Grid */}
+              <div style={s.bottomGrid} className="dash-bottom-grid">
+                <div style={{ backgroundColor: '#111', border: '1px solid #1F1F1F' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '32px', borderBottom: '1px solid #1F1F1F' }}>
+                    <div style={{ fontFamily: '"Playfair Display", serif', fontSize: '24px', color: '#FFF', fontStyle: 'italic' }}>Recent Orders</div>
+                    {metrics.recentOrders.length > 0 && <div style={{ fontSize: '10px', color: '#FFF', letterSpacing: '0.1em', fontWeight: '700', textTransform: 'uppercase', cursor: 'pointer', borderBottom: '1px solid #FFF' }}>View Full Ledger</div>}
+                  </div>
+
+                  {metrics.recentOrders.length > 0 ? (
+                    metrics.recentOrders.map((order, index) => (
+                      <div key={order.id} style={s.listRow} className="dash-list-row">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+                          <div style={{ width: '48px', height: '48px', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <ShoppingBag size={18} color="#666" />
+                          </div>
+                          <div>
+                            <div style={{ fontSize: '10px', fontWeight: '700', color: '#666', letterSpacing: '0.1em', marginBottom: '8px', textTransform: 'uppercase' }}>{order.order_number}</div>
+                            <div style={{ fontSize: '14px', color: '#FFF' }}>{order.product_name_snapshot}</div>
+                          </div>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ fontSize: '14px', fontWeight: '600', color: '#FFF', marginBottom: '12px' }}>{formatMoney(order.total_amount)}</div>
+                          <div style={s.statusBadge(order.status === 'processing' ? 'gray' : order.status === 'completed' ? 'green' : 'gray')}>
+                            {order.status === 'processing' ? 'Processing' : order.status === 'completed' ? 'Paid & Ready' : order.status}
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div style={{ padding: '64px', textAlign: 'center' }}>
+                      <div style={{ display: 'inline-flex', padding: '16px', backgroundColor: '#1A1A1A', borderRadius: '50%', marginBottom: '24px' }}>
+                        <Package size={24} color="#666" />
+                      </div>
+                      <div style={{ fontSize: '14px', color: '#FFF', marginBottom: '8px' }}>Your Ledger is Empty</div>
+                      <div style={{ fontSize: '12px', color: '#666' }}>Incoming orders will securely populate here.</div>
+                    </div>
+                  )}
+
+                </div>
+              </div>
+            </>
+          ) : (
+            <div style={{ height: 'calc(100vh - 160px)' }}>
+              <AdminChat />
             </div>
-          </div>
+          )}
 
         </div>
       </div>

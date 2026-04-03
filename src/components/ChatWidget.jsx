@@ -120,7 +120,8 @@ _Reply to this message with 'Reply: <your message>' to send back to the user._
                     body: JSON.stringify({
                         chat_id: chatId,
                         text: tgMsg,
-                        parse_mode: 'Markdown'
+                        parse_mode: 'Markdown',
+                        disable_notification: false
                     })
                 });
             }
