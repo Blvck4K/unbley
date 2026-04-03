@@ -19,7 +19,7 @@ if (!supabaseUrl || !supabaseAnonKey || !isValidUrl(supabaseUrl)) {
   client = {
     auth: {
       getSession: async () => ({ data: { session: null } }),
-      onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
+      onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => { } } } }),
       signUp: async () => ({ error: new Error("Please configure Supabase credentials in .env") }),
       signInWithPassword: async () => ({ error: new Error("Please configure Supabase credentials in .env") }),
       signOut: async () => ({ error: null }),
@@ -27,6 +27,20 @@ if (!supabaseUrl || !supabaseAnonKey || !isValidUrl(supabaseUrl)) {
   };
 } else {
   client = createClient(supabaseUrl, supabaseAnonKey);
+}
+
+export async function signInWithGoogle() {
+  const { data, error } = await client.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      queryParams: {
+        access_type: 'offline',
+        prompt: 'consent',
+      },
+      redirectTo: `${window.location.origin}/dashboard`,
+    },
+  });
+  return { data, error };
 }
 
 export const supabase = client;

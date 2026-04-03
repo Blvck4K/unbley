@@ -70,11 +70,11 @@ export default function Navbar() {
             </div>
 
             <div className="flex items-center gap-4" style={{ width: isMobile ? '100%' : 'auto', justifyContent: isMobile ? 'center' : 'flex-start' }}>
-              <Link to="/auth" onClick={() => setIsMenuOpen(false)} className="font-semibold flex items-center gap-2" style={{ fontSize: '14px', textDecoration: 'none', color: 'inherit' }}>
+              <Link to="/auth?mode=signin" onClick={() => setIsMenuOpen(false)} className="font-semibold flex items-center gap-2" style={{ fontSize: '14px', textDecoration: 'none', color: 'inherit' }}>
                 {isMobile ? <LogIn size={18} /> : null}
                 <span>Sign In</span>
               </Link>
-              <Link to="/auth" onClick={() => setIsMenuOpen(false)} className="btn btn-primary" style={{ textDecoration: 'none', width: isMobile ? '100%' : 'auto' }}>
+              <Link to="/auth?mode=signup" onClick={() => setIsMenuOpen(false)} className="btn btn-primary" style={{ textDecoration: 'none', width: isMobile ? '100%' : 'auto' }}>
                 Get Started
               </Link>
             </div>
