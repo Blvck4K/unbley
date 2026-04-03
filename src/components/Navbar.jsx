@@ -45,7 +45,6 @@ export default function Navbar() {
       <div className="container flex justify-between items-center" style={{ width: '100%', flexDirection: isMenuOpen && isMobile ? 'column' : 'row', gap: isMenuOpen && isMobile ? '20px' : '0' }}>
         <div className="flex items-center justify-between" style={{ width: isMobile ? '100%' : 'auto', gap: isMobile ? '0' : '32px' }}>
           <Link to="/" className="font-bold flex items-center gap-2" onClick={() => setIsMenuOpen(false)} style={{ fontSize: '20px', letterSpacing: '-0.03em', color: 'inherit', textDecoration: 'none' }}>
-            <img src="https://raw.githubusercontent.com/Blvck4K/Jss-png/main/logogo.png" alt="Logo" style={{ height: '32px', width: '32px', borderRadius: '4px', objectFit: 'cover' }} />
             <span>ZizzyStores.</span>
           </Link>
 
