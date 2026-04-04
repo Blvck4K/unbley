@@ -22,7 +22,7 @@ export default function ProtectedRoute({ children }) {
 
   // Rule 2: Store Activation Check (SKIPPED BY ADMINS)
   if (profileCompleted && !storeActive && !isAdmin) {
-    const allowedUnpaidRoutes = ['/activation', '/finalize-activation', '/edit'];
+    const allowedUnpaidRoutes = ['/activation', '/finalize-activation', '/edit', '/success'];
     if (!allowedUnpaidRoutes.includes(location.pathname)) {
       return <Navigate to="/activation" replace />;
     }

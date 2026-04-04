@@ -56,6 +56,7 @@ export default function Checkout() {
 
   const [errors, setErrors] = useState({});
   const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('paystack'); // 'paystack' or 'flutterwave'
 
   const formatCurrency = (amount) => `₦${amount.toLocaleString()}`;
 
@@ -98,13 +99,26 @@ export default function Checkout() {
       return;
     }
 
-    if (!brand?.paystack_subaccount_code) {
-      alert("This brand has not configured their payout setup yet. Checkout is temporarily disabled.");
+    if (paymentMethod === 'paystack' && !brand?.paystack_subaccount_code) {
+      alert("This brand has not configured their local payout setup yet. Please use the international option or contact support.");
+      return;
+    }
+
+    if (paymentMethod === 'flutterwave' && !brand?.flutterwave_subaccount_code) {
+      alert("This brand has not configured their international payout setup yet. Please use the local option or contact support.");
       return;
     }
 
     setIsProcessing(true);
-    
+
+    if (paymentMethod === 'paystack') {
+      handlePaystack();
+    } else {
+      handleFlutterwave();
+    }
+  };
+
+  const handlePaystack = () => {
     try {
       const paystack = new PaystackPop();
       paystack.newTransaction({
@@ -120,7 +134,47 @@ export default function Checkout() {
     } catch (error) {
       console.error("Paystack initialization failed:", error);
       setIsProcessing(false);
-      alert("Failed to initialize payment gateway. Please try again.");
+    }
+  };
+
+  const handleFlutterwave = () => {
+    if (!import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY) {
+      alert("System Configuration Error: Please add your VITE_FLUTTERWAVE_PUBLIC_KEY to the .env file!");
+      setIsProcessing(false);
+      return;
+    }
+
+    try {
+      window.FlutterwaveCheckout({
+        public_key: import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY,
+        tx_ref: (new Date()).getTime().toString(),
+        amount: total,
+        currency: "NGN",
+        payment_options: "card, account, ussd, qr",
+        customer: {
+          email: formData.email,
+          phone_number: formData.phone,
+          name: `${formData.firstName} ${formData.lastName}`,
+        },
+        subaccounts: [
+          {
+            id: brand.flutterwave_subaccount_code,
+          }
+        ],
+        customizations: {
+          title: brand?.brand_name || "Zizzystores Order",
+          description: `Order from ${brand?.brand_name || 'Store'}`,
+          logo: brand?.logo_url || "https://zizzystores.com/logo.png",
+        },
+        callback: (data) => {
+          console.log("Flutterwave Success:", data);
+          onSuccess({ reference: data.transaction_id || data.tx_ref });
+        },
+        onclose: () => onClose(),
+      });
+    } catch (error) {
+      console.error("Flutterwave initialization failed:", error);
+      setIsProcessing(false);
     }
   };
 
@@ -313,6 +367,56 @@ export default function Checkout() {
               </div>
             </div>
 
+            {/* Payment Method Selector */}
+            <div style={{ marginBottom: '48px' }}>
+              <h2 style={{ ...s.sectionSubtitle, marginBottom: '16px', color: textColor }}>Payment Method</h2>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <motion.div 
+                  whileHover={{ scale: 1.02, backgroundColor: brand ? 'rgba(255,255,255,0.08)' : 'rgba(15, 44, 89, 0.08)' }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setPaymentMethod('paystack')}
+                  style={{ 
+                    padding: '20px', 
+                    borderRadius: '8px', 
+                    backgroundColor: paymentMethod === 'paystack' ? (brand ? 'rgba(255,255,255,0.05)' : 'rgba(15, 44, 89, 0.05)') : secondaryBg,
+                    border: `1px solid ${paymentMethod === 'paystack' ? accentColor : borderColor}`,
+                    cursor: 'pointer',
+                    transition: 'border-color 0.3s ease'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    <div style={{ width: '16px', height: '16px', borderRadius: '50%', border: `1px solid ${accentColor}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {paymentMethod === 'paystack' && <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: accentColor }}></div>}
+                    </div>
+                    <span style={{ fontSize: '14px', fontWeight: '700', color: paymentMethod === 'paystack' ? accentColor : textColor }}>Local (Paystack)</span>
+                  </div>
+                  <div style={{ fontSize: '11px', color: mutedColor }}>Best for Nigeria Card, Transfer & USSD</div>
+                </motion.div>
+
+                <motion.div 
+                  whileHover={{ scale: 1.02, backgroundColor: brand ? 'rgba(255,255,255,0.08)' : 'rgba(15, 44, 89, 0.08)' }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setPaymentMethod('flutterwave')}
+                  style={{ 
+                    padding: '20px', 
+                    borderRadius: '8px', 
+                    backgroundColor: paymentMethod === 'flutterwave' ? (brand ? 'rgba(255,255,255,0.05)' : 'rgba(15, 44, 89, 0.05)') : secondaryBg,
+                    border: `1px solid ${paymentMethod === 'flutterwave' ? accentColor : borderColor}`,
+                    cursor: 'pointer',
+                    transition: 'border-color 0.3s ease'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    <div style={{ width: '16px', height: '16px', borderRadius: '50%', border: `1px solid ${accentColor}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {paymentMethod === 'flutterwave' && <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: accentColor }}></div>}
+                    </div>
+                    <span style={{ fontSize: '14px', fontWeight: '700', color: paymentMethod === 'flutterwave' ? accentColor : textColor }}>International (Flutterwave)</span>
+                  </div>
+                  <div style={{ fontSize: '11px', color: mutedColor }}>Best for International Cards & Mobile Money</div>
+                </motion.div>
+              </div>
+            </div>
+
             <div style={s.actionsCol} className="actions-col">
               <motion.button 
                 whileHover={{ scale: 1.02 }}
@@ -397,7 +501,9 @@ export default function Checkout() {
                 <CreditCard size={20} />
                 <Lock size={20} />
               </div>
-              <div style={s.encryptionText}>SECURED BY PAYSTACK & SSL ENCRYPTION</div>
+              <div style={s.encryptionText}>
+                SECURED BY {paymentMethod === 'paystack' ? 'PAYSTACK' : 'FLUTTERWAVE'} & SSL ENCRYPTION
+              </div>
             </div>
           </div>
 

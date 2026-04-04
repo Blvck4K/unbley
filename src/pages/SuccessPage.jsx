@@ -13,9 +13,10 @@ export default function SuccessPage() {
   const { user } = useAuth();
   const [realState, setRealState] = useState({
     reference: location.state?.reference || '...',
-    amount: location.state?.amount || 30000,
+    amount: typeof location.state?.amount === 'number' ? location.state.amount : 30000,
     email: location.state?.email || user?.email || 'admin@zizzystores.com',
-    brandName: location.state?.brandName || user?.user_metadata?.brand_name || 'Premium Zizzystores Vendor'
+    brandName: location.state?.brandName || user?.user_metadata?.brand_name || 'Premium Zizzystores Vendor',
+    method: location.state?.method || 'paystack'
   });
 
   useEffect(() => {
@@ -400,9 +401,11 @@ Your digital atelier is securely activated.
           <div style={s.flexRow} className="success-flex-row">
             <div style={{ ...s.infoBlock, minWidth: '150px' }}>
               <div style={s.label}>AMOUNT PAID</div>
-              <div style={s.valueLarge}>₦{amount.toLocaleString()}</div>
+              <div style={s.valueLarge}>₦{(amount || 0).toLocaleString()}</div>
               <div style={{ ...s.label, marginTop: '12px' }}>PAYMENT METHOD</div>
-              <div style={{ ...s.value, fontSize: '13px', color: '#AAA' }}>Paystack Gateway</div>
+              <div style={{ ...s.value, fontSize: '13px', color: '#AAA', textTransform: 'capitalize' }}>
+                {realState.method === 'flutterwave' ? 'Flutterwave International' : 'Paystack Local'}
+              </div>
             </div>
 
             <div style={{ ...s.infoBlock, backgroundColor: '#0A0A0A', padding: '20px', borderRadius: '6px', border: '1px solid #1A1A1A', flex: '1 1 auto', minWidth: '200px' }}>

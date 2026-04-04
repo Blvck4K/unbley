@@ -77,7 +77,8 @@ export default function Edit() {
     bank_name: '',
     account_number: '',
     account_name: '',
-    paystack_subaccount_code: ''
+    paystack_subaccount_code: '',
+    flutterwave_subaccount_code: ''
   });
 
   const [themeColors, setThemeColors] = useState({
@@ -179,7 +180,7 @@ export default function Edit() {
       if (!user) throw new Error("Not authenticated");
       
       // Exclude read-only admin/subaccount fields from the update payload
-      const { paystack_subaccount_code, is_admin, ...updatableFormData } = formData;
+      const { paystack_subaccount_code, flutterwave_subaccount_code, is_admin, ...updatableFormData } = formData;
       
       const payload = {
         ...updatableFormData,
@@ -596,6 +597,58 @@ _Sent via Zizzystores Management Dashboard_
                       <input type="text" name="address_line_2" value={formData.address_line_2} onChange={handleChange} style={s.input} />
                     </div>
                   </div>
+
+                  {/* Brand Theme / Colors */}
+                  <div style={{ ...s.card, marginTop: '40px' }} className="edit-card">
+                    <h2 style={s.cardTitle}>Brand Theme</h2>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }} className="edit-color-grid">
+                      <div style={s.inputGroup}>
+                        <label style={s.label}>Primary</label>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                          <input type="color" value={themeColors.primary} onChange={(e) => handleColorChange('primary', e.target.value)} style={{ width: '100%', height: '80px', padding: 0, border: '1px solid #333', backgroundColor: 'transparent', cursor: 'pointer', borderRadius: '4px' }} />
+                          <div style={{ fontSize: '12px', color: '#FFF', fontFamily: 'monospace' }}>{themeColors.primary}</div>
+                        </div>
+                      </div>
+                      <div style={s.inputGroup}>
+                        <label style={s.label}>Secondary</label>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                          <input type="color" value={themeColors.secondary} onChange={(e) => handleColorChange('secondary', e.target.value)} style={{ width: '100%', height: '80px', padding: 0, border: '1px solid #333', backgroundColor: 'transparent', cursor: 'pointer', borderRadius: '4px' }} />
+                          <div style={{ fontSize: '12px', color: '#FFF', fontFamily: 'monospace' }}>{themeColors.secondary}</div>
+                        </div>
+                      </div>
+                      <div style={s.inputGroup}>
+                        <label style={s.label}>Accent</label>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                          <input type="color" value={themeColors.accent} onChange={(e) => handleColorChange('accent', e.target.value)} style={{ width: '100%', height: '80px', padding: 0, border: '1px solid #333', backgroundColor: 'transparent', cursor: 'pointer', borderRadius: '4px' }} />
+                          <div style={{ fontSize: '12px', color: '#FFF', fontFamily: 'monospace' }}>{themeColors.accent}</div>
+                        </div>
+                      </div>
+                    </div>
+                    <p style={{ fontSize: '10px', color: '#555', marginTop: '16px' }}>
+                      These colors define your storefront's character. Use them sparingly but with intent.
+                    </p>
+                  </div>
+
+                  {/* Personal Settlement Account */}
+                  <div style={{ ...s.card, marginTop: '40px' }} className="edit-card">
+                    <h2 style={s.cardTitle}>Personal Settlement Account</h2>
+                    <p style={{ fontSize: '12px', color: '#888', marginBottom: '32px' }}>Backup account for manual payouts and internal reference.</p>
+                    
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px 48px' }} className="edit-input-grid">
+                      <div style={s.inputGroup}>
+                        <label style={s.label}>Bank Name</label>
+                        <input type="text" name="bank_name" value={formData.bank_name} onChange={handleChange} style={s.input} />
+                      </div>
+                      <div style={s.inputGroup}>
+                        <label style={s.label}>Account Number</label>
+                        <input type="text" name="account_number" value={formData.account_number} onChange={handleChange} style={s.input} />
+                      </div>
+                    </div>
+                    <div style={{ ...s.inputGroup, marginTop: '32px' }}>
+                      <label style={s.label}>Account Name</label>
+                      <input type="text" name="account_name" value={formData.account_name} onChange={handleChange} style={s.input} />
+                    </div>
+                  </div>
                 </motion.div>
 
                 {/* Right Column: Assets & Social */}
@@ -621,6 +674,41 @@ _Sent via Zizzystores Management Dashboard_
                     <button type="button" style={s.uploadBtn} onClick={() => logoRef.current?.click()}>
                       {loading ? 'UPLOADING...' : 'Upload New Logo'}
                     </button>
+                  </div>
+
+
+                  {/* Payout Configuration (Admin Managed) */}
+                  <div style={s.card} className="edit-card">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '32px' }}>
+                      <Lock size={14} color="#666" />
+                      <label style={{ ...s.label, marginBottom: 0 }}>Payout Configuration</label>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      <div style={s.inputGroup}>
+                        <div style={{ fontSize: '10px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Paystack Subaccount (Local)</div>
+                        <input 
+                          type="text" 
+                          value={formData.paystack_subaccount_code || 'Not Configured'} 
+                          style={{ ...s.input, backgroundColor: '#161616', color: formData.paystack_subaccount_code ? '#FFF' : '#444', cursor: 'not-allowed' }} 
+                          readOnly 
+                        />
+                      </div>
+
+                      <div style={s.inputGroup}>
+                        <div style={{ fontSize: '10px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Flutterwave Subaccount (International)</div>
+                        <input 
+                          type="text" 
+                          value={formData.flutterwave_subaccount_code || 'Not Configured'} 
+                          style={{ ...s.input, backgroundColor: '#161616', color: formData.flutterwave_subaccount_code ? '#FFF' : '#444', cursor: 'not-allowed' }} 
+                          readOnly 
+                        />
+                      </div>
+
+                      <p style={{ fontSize: '10px', color: '#555', marginTop: '8px', lineHeight: '1.4' }}>
+                        These identifiers are managed by the platform administrator to ensure secure revenue routing. Contact support to update your payout destination.
+                      </p>
+                    </div>
                   </div>
 
                   {/* Social Handles Box */}
