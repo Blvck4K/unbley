@@ -9,7 +9,15 @@ const AdminChat = () => {
     const [reply, setReply] = useState('');
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+    const [viewMode, setViewMode] = useState('list'); // 'list' or 'chat'
     const scrollRef = useRef(null);
+
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth < 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     // Initial load: Fetch unique user emails
     useEffect(() => {
@@ -142,10 +150,17 @@ const AdminChat = () => {
     );
 
     return (
-        <div style={{ display: 'flex', height: '100%', backgroundColor: bgColor, border: `1px solid ${borderColor}`, overflow: 'hidden' }}>
+        <div style={{ display: 'flex', height: '100%', backgroundColor: bgColor, border: isMobile ? 'none' : `1px solid ${borderColor}`, overflow: 'hidden', position: 'relative' }}>
             
             {/* Left Sidebar: Active Conversations */}
-            <div style={{ width: '320px', borderRight: `1px solid ${borderColor}`, display: 'flex', flexDirection: 'column' }}>
+            <div style={{ 
+                width: isMobile ? '100%' : '320px', 
+                borderRight: isMobile ? 'none' : `1px solid ${borderColor}`, 
+                display: (isMobile && viewMode === 'chat') ? 'none' : 'flex', 
+                flexDirection: 'column',
+                height: '100%',
+                backgroundColor: bgColor
+            }}>
                 <div style={{ padding: '24px', borderBottom: `1px solid ${borderColor}` }}>
                     <div style={{ fontFamily: '"Playfair Display", serif', fontSize: '20px', fontStyle: 'italic', color: '#FFF', marginBottom: '16px' }}>Concierge Inbox</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#111', padding: '8px 12px', border: `1px solid ${borderColor}` }}>
@@ -167,7 +182,10 @@ const AdminChat = () => {
                         filteredConversations.map((conv) => (
                             <div 
                                 key={conv.user_email}
-                                onClick={() => setSelectedEmail(conv.user_email)}
+                                onClick={() => {
+                                    setSelectedEmail(conv.user_email);
+                                    if (isMobile) setViewMode('chat');
+                                }}
                                 style={{ 
                                     padding: '20px 24px', 
                                     borderBottom: `1px solid ${borderColor}`, 
@@ -194,11 +212,30 @@ const AdminChat = () => {
 
             {/* Right Side: Chat Window */}
             {selectedEmail ? (
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                <div style={{ 
+                    flex: 1, 
+                    display: (isMobile && viewMode === 'list') ? 'none' : 'flex', 
+                    flexDirection: 'column',
+                    position: isMobile ? 'absolute' : 'relative',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    backgroundColor: bgColor,
+                    zIndex: 20
+                }}>
                     {/* Chat Header */}
-                    <div style={{ padding: '24px 32px', borderBottom: `1px solid ${borderColor}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                            <div style={{ width: '40px', height: '40px', backgroundColor: '#222', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ padding: isMobile ? '16px' : '24px 32px', borderBottom: `1px solid ${borderColor}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '12px' : '16px' }}>
+                            {isMobile && (
+                                <button 
+                                    onClick={() => setViewMode('list')}
+                                    style={{ background: 'none', border: 'none', color: '#666', padding: '4px', cursor: 'pointer' }}
+                                >
+                                    <ChevronLeft size={20} />
+                                </button>
+                            )}
+                            <div style={{ width: isMobile ? '32px' : '40px', height: isMobile ? '32px' : '40px', backgroundColor: '#222', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 <User size={20} color={brandColor} />
                             </div>
                             <div>
@@ -208,13 +245,12 @@ const AdminChat = () => {
                                 </div>
                             </div>
                         </div>
-                        <div style={{ color: '#444', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Live Connection</div>
+                        <div style={{ color: '#444', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', display: isMobile ? 'none' : 'block' }}>Live Connection</div>
                     </div>
 
-                    {/* Messages Area */}
-                    <div ref={scrollRef} style={{ flex: 1, padding: '32px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-                            <div style={{ fontSize: '10px', color: '#333', textTransform: 'uppercase', letterSpacing: '0.2em' }}>Beginning of Conversation</div>
+                    <div ref={scrollRef} style={{ flex: 1, padding: isMobile ? '20px' : '32px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        <div style={{ textAlign: 'center', marginBottom: isMobile ? '20px' : '32px' }}>
+                            <div style={{ fontSize: '9px', color: '#333', textTransform: 'uppercase', letterSpacing: '0.2em' }}>Beginning of Conversation</div>
                         </div>
 
                         {messages.map((msg) => (
@@ -222,7 +258,7 @@ const AdminChat = () => {
                                 key={msg.id} 
                                 style={{ 
                                     alignSelf: msg.sender === 'admin' ? 'flex-end' : 'flex-start',
-                                    maxWidth: '60%',
+                                    maxWidth: isMobile ? '85%' : '60%',
                                     display: 'flex',
                                     flexDirection: 'column',
                                     alignItems: msg.sender === 'admin' ? 'flex-end' : 'flex-start'
@@ -249,14 +285,14 @@ const AdminChat = () => {
                     </div>
 
                     {/* Footer Input */}
-                    <form onSubmit={handleSendReply} style={{ padding: '24px 32px', borderTop: `1px solid ${borderColor}` }}>
-                        <div style={{ display: 'flex', gap: '16px', alignItems: 'center', backgroundColor: '#111', border: `1px solid ${borderColor}`, padding: '12px 20px', borderRadius: '4px' }}>
+                    <form onSubmit={handleSendReply} style={{ padding: isMobile ? '16px' : '24px 32px', borderTop: `1px solid ${borderColor}`, backgroundColor: bgColor }}>
+                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', backgroundColor: '#111', border: `1px solid ${borderColor}`, padding: isMobile ? '8px 16px' : '12px 20px', borderRadius: '4px' }}>
                             <input 
                                 type="text" 
-                                placeholder={`Reply to ${selectedEmail.split('@')[0]}...`}
+                                placeholder={isMobile ? "Reply..." : `Reply to ${selectedEmail.split('@')[0]}...`}
                                 value={reply}
                                 onChange={(e) => setReply(e.target.value)}
-                                style={{ flex: 1, background: 'transparent', border: 'none', color: '#FFF', fontSize: '13px', outline: 'none' }} 
+                                style={{ flex: 1, background: 'transparent', border: 'none', color: '#FFF', fontSize: isMobile ? '14px' : '13px', outline: 'none' }} 
                             />
                             <button 
                                 type="submit" 

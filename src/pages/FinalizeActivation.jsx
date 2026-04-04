@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Shield, Lock, CreditCard, Sparkles, Globe, ArrowRight, CheckCircle2 } from 'lucide-react';
 import PaystackPop from '@paystack/inline-js';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 
@@ -145,17 +145,18 @@ export default function FinalizeActivation() {
       <style>{`
         @media (max-width: 768px) {
           .fin-page { flex-direction: column !important; height: auto !important; min-height: 100vh; overflow-y: auto !important; }
-          .fin-left { padding: 64px 24px 48px !important; border-right: none !important; border-bottom: 1px solid #1F1F1F; min-height: auto !important; }
-          .fin-logo { left: 24px !important; top: 24px !important; position: static !important; margin-bottom: 32px; }
+          .fin-left { padding: 80px 24px 48px !important; border-right: none !important; border-bottom: 1px solid #1F1F1F !important; min-height: auto !important; }
+          .fin-logo { left: 24px !important; top: 24px !important; position: absolute !important; margin-bottom: 0; }
           .fin-left-content { margin-top: 0 !important; margin-bottom: 0 !important; }
-          .fin-left-title { font-size: 32px !important; margin-bottom: 32px !important; text-align: center; }
-          .fin-feature-item { text-align: left; }
+          .fin-left-title { font-size: 32px !important; margin-bottom: 32px !important; text-align: left; }
+          .fin-feature-item { text-align: left; gap: 16px !important; }
           .fin-right { padding: 48px 24px !important; overflow-y: visible !important; }
-          .fin-main-title { font-size: 28px !important; text-align: center; }
-          .fin-main-desc { text-align: center; }
-          .fin-price { font-size: 28px !important; }
+          .fin-main-title { font-size: 32px !important; text-align: left; }
+          .fin-main-desc { text-align: left; font-size: 13px !important; }
+          .fin-price { font-size: 32px !important; }
           .fin-express-row { flex-direction: column !important; gap: 12px !important; }
           .fin-pagination { display: none !important; }
+          .fin-pay-btn { padding: 0 16px !important; font-size: 13px !important; }
         }
       `}</style>
       
@@ -243,7 +244,7 @@ export default function FinalizeActivation() {
               <div style={s.errorBox}>{errorMsg}</div>
             )}
 
-            <button style={s.payBtn} onClick={handlePayClick} disabled={processing}>
+            <button style={s.payBtn} onClick={handlePayClick} disabled={processing} className="fin-pay-btn">
               {processing ? 'Processing Payment Overlay...' : 'Activate My Store (₦30,000 First Year)'}
               {!processing && <ArrowRight size={20} />}
             </button>

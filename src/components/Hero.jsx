@@ -1,8 +1,11 @@
 import React from 'react';
-import { ArrowRight, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { ArrowRight, CheckCircle2, ShieldCheck, LayoutGrid } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 
 export default function Hero() {
+  const { user } = useAuth();
+
   return (
     <section className="hero">
       <div className="container hero-content">
@@ -16,13 +19,21 @@ export default function Hero() {
           <p className="hero-subtitle" style={{ margin: window.innerWidth <= 768 ? '0 auto 40px' : '0 0 40px' }}>
             Get a full-stack e-commerce platform and your own domain for just ₦30,000 (First Year). Limited 40% discount applied.
           </p>
-          <div className="flex gap-4" style={{ justifyContent: window.innerWidth <= 768 ? 'center' : 'flex-start' }}>
-            <Link to="/auth" style={{ textDecoration: 'none', width: window.innerWidth <= 768 ? '100%' : 'auto' }}>
-              <button className="btn btn-primary" style={{ padding: '18px 36px', fontSize: '16px', fontWeight: '700', width: '100%', boxShadow: '0 4px 14px 0 var(--bg-gray)' }}>
-                Launch My Store Now <ArrowRight size={18} style={{ marginLeft: '8px' }} />
-              </button>
-            </Link>
-          </div>
+            <div className="flex gap-4" style={{ justifyContent: window.innerWidth <= 768 ? 'center' : 'flex-start' }}>
+              {user ? (
+                <Link to="/dashboard" style={{ textDecoration: 'none', width: window.innerWidth <= 768 ? '100%' : 'auto' }}>
+                  <button className="btn btn-primary" style={{ padding: '18px 36px', fontSize: '16px', fontWeight: '700', width: '100%', boxShadow: '0 4px 14px 0 var(--bg-gray)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+                    <LayoutGrid size={20} /> Go to Dashboard <ArrowRight size={18} />
+                  </button>
+                </Link>
+              ) : (
+                <Link to="/auth" style={{ textDecoration: 'none', width: window.innerWidth <= 768 ? '100%' : 'auto' }}>
+                  <button className="btn btn-primary" style={{ padding: '18px 36px', fontSize: '16px', fontWeight: '700', width: '100%', boxShadow: '0 4px 14px 0 var(--bg-gray)' }}>
+                    Launch My Store Now <ArrowRight size={18} style={{ marginLeft: '8px' }} />
+                  </button>
+                </Link>
+              )}
+            </div>
 
           <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '8px', alignItems: window.innerWidth <= 768 ? 'center' : 'flex-start' }}>
             <div className="flex items-center gap-2" style={{ fontSize: '16px', fontWeight: '800', color: '#E11D48', justifyContent: 'center' }}>

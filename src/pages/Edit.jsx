@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Search, Bell, Moon, LayoutGrid, Store, User, Settings, Headphones, Camera, Globe, Link as LinkIcon, Plus, ArrowRight, Lock, Menu, X } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 
 const FacebookIcon = ({ size = 14, color = "currentColor" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke="none">
@@ -27,7 +27,7 @@ const TwitterIcon = ({ size = 14, color = "currentColor" }) => (
 
 export default function Edit() {
   const brandColor = '#06acf8ff';
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -198,7 +198,17 @@ export default function Edit() {
       
       if (authError) throw authError;
 
+      // Refresh the local auth context status to pick up any admin changes made in Supabase
+      const latestIsAdmin = await refreshUser();
+
       alert("Profile updated successfully!");
+
+      // For admins, bypass activation and go straight to dashboard
+      if (latestIsAdmin) {
+        navigate('/dashboard');
+        return;
+      }
+
       if (formData.profile_completed) {
         navigate('/dashboard');
       } else {
@@ -368,23 +378,28 @@ _Sent via Zizzystores Management Dashboard_
           .edit-logo-container { padding: 24px !important; }
           .edit-nav { display: flex; flex-direction: column !important; overflow-y: auto !important; }
           .edit-nav a, .edit-nav div { border-left: 3px solid transparent !important; border-bottom: none !important; padding: 16px 40px !important; font-size: 14px !important; }
-          .edit-user-profile { display: flex !important; }
+          .edit-user-profile { display: flex !important; margin-top: auto; }
           
-          .edit-header { padding: 20px 24px !important; flex-direction: column; gap: 24px; position: sticky; top: 0; background: #0A0A0A; z-index: 100; border-bottom: 1px solid #1F1F1F; }
-          .edit-save-btn { width: 100%; }
+          .edit-header { padding: 24px !important; flex-direction: column; gap: 20px; position: sticky; top: 0; background: #0A0A0A; z-index: 100; border-bottom: 1px solid #1F1F1F; align-items: flex-start !important; }
+          .edit-header-title-box { order: 2; width: 100%; }
+          .edit-header h1 { font-size: 28px !important; margin-bottom: 8px !important; }
+          .edit-header p { font-size: 12px !important; margin-top: 4px !important; }
+          .edit-save-btn { width: 100%; order: 3; padding: 14px !important; }
+          .edit-menu-btn { order: 1; }
           
-          .edit-content { padding: 24px !important; }
+          .edit-content { padding: 20px !important; gap: 32px !important; }
           .edit-two-col { grid-template-columns: 1fr !important; gap: 32px !important; }
           
-          .edit-banner-box { padding: 24px !important; flex-direction: column; align-items: center; justify-content: center; gap: 16px; height: auto !important; min-height: 200px; }
-          .edit-banner-text { font-size: 48px !important; }
-          .edit-banner-info { margin-left: 0 !important; }
+          .edit-banner-box { padding: 32px 20px !important; flex-direction: column; align-items: center; justify-content: center; gap: 20px; height: auto !important; min-height: 240px; }
+          .edit-banner-text { font-size: 44px !important; opacity: 0.1 !important; transform: translate(-50%, -50%) !important; }
+          .edit-banner-info { margin-left: 0 !important; text-align: center; }
           
-          .edit-card { padding: 24px !important; }
-          .edit-input-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
-          .edit-color-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
+          .edit-card { padding: 24px 20px !important; }
+          .edit-card-title { font-size: 20px !important; margin-bottom: 24px !important; }
+          .edit-input-grid { grid-template-columns: 1fr !important; gap: 24px !important; margin-bottom: 24px !important; }
+          .edit-color-grid { grid-template-columns: 1fr !important; gap: 20px !important; }
           
-          .edit-product-grid { grid-template-columns: 1fr 1fr !important; gap: 16px !important; }
+          .edit-product-grid { grid-template-columns: 1fr 1fr !important; gap: 12px !important; }
           .mobile-only { display: block !important; }
         }
         @media (min-width: 769px) {
@@ -461,7 +476,7 @@ _Sent via Zizzystores Management Dashboard_
             >
               <Menu size={24} />
             </button>
-            <div>
+            <div className="edit-header-title-box">
               <h1 style={s.headerTitle}>Brand Profile</h1>
               <p style={s.headerSubtitle}>Curate your digital atelier. The narrative you build here defines the prestige of your collections.</p>
             </div>

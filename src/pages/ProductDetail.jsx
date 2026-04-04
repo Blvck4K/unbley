@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Star, Plus, Minus, Truck, ShieldCheck, ArrowRight, ArrowLeft, User, Trash2, Edit2, X, Image as ImageIcon } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { useRef } from 'react';
 
 export default function ProductDetail() {
@@ -372,16 +372,14 @@ export default function ProductDetail() {
           </div>
         </div>
         <div style={s.headerRight}>
-          {!isOwner && (
-            <div style={{ ...s.iconButton, position: 'relative' }} onClick={() => navigate('/cart')} title="Cart">
-              <ShoppingCart size={20} />
-              {cartCount > 0 && (
-                <span style={{ position: 'absolute', top: '-8px', right: '-8px', backgroundColor: accentColor, color: '#000', fontSize: '10px', fontWeight: 'bold', width: '16px', height: '16px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {cartCount}
-                </span>
-              )}
-            </div>
-          )}
+          <div style={{ ...s.iconButton, position: 'relative', display: 'flex' }} onClick={() => navigate('/cart')} title="Cart">
+            <ShoppingCart size={isMobile ? 22 : 20} />
+            {cartCount > 0 && (
+              <span style={{ position: 'absolute', top: '-8px', right: '-8px', backgroundColor: accentColor, color: '#000', fontSize: '10px', fontWeight: 'bold', width: '18px', height: '18px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `2px solid ${primaryColor}` }}>
+                {cartCount}
+              </span>
+            )}
+          </div>
           {!isCustomer && (
             <div style={s.iconButton} onClick={() => navigate('/profile')} title="Account">
               <User size={20} />

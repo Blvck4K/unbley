@@ -68,19 +68,25 @@ export default function Activation() {
           .act-page { flex-direction: column !important; height: auto !important; min-height: 100vh; overflow: visible !important; }
           .act-sidebar { display: none !important; }
           
-          .act-top-banner { padding: 24px !important; flex-direction: column !important; gap: 16px !important; text-align: center; }
-          .act-top-banner button { width: 100%; }
+          .act-top-banner { padding: 24px 20px !important; flex-direction: column !important; gap: 16px !important; text-align: center; }
+          .act-top-banner button { width: 100%; padding: 14px !important; }
           
-          .act-header { height: auto !important; padding: 24px !important; flex-wrap: wrap; gap: 16px; justify-content: center; }
+          .act-header { height: auto !important; padding: 24px 20px !important; flex-wrap: wrap; gap: 16px; justify-content: center; }
           .act-search { display: none !important; }
           
-          .act-blurred-content { padding: 24px !important; }
+          .act-blurred-content { padding: 24px 20px !important; }
           
-          .act-overlay { padding: 16px !important; align-items: flex-start !important; overflow-y: auto !important; position: fixed !important; display: block !important; }
-          .act-modal { padding: 40px 24px !important; margin: 40px auto; max-width: 100%; box-sizing: border-box; }
-          .act-modal-badge { top: -20px !important; padding: 12px 16px !important; width: 85%; box-sizing: border-box; text-align: center; }
-          .act-modal-title { font-size: 24px !important; text-align: center; }
-          .act-modal-desc { text-align: center; }
+          .act-overlay { padding: 24px 16px !important; align-items: flex-start !important; overflow-y: auto !important; position: absolute !important; display: block !important; }
+          .act-modal { padding: 48px 24px !important; margin: 40px auto; max-width: 100%; box-sizing: border-box; }
+          .act-modal-badge { top: -20px !important; padding: 12px 16px !important; width: 90%; box-sizing: border-box; text-align: center; font-size: 10px !important; transform: translateX(-50%) !important; left: 50% !important; }
+          .act-modal-title { font-size: 28px !important; text-align: center; }
+          .act-modal-desc { text-align: center; font-size: 13px !important; }
+          
+          .act-price-box { padding: 20px !important; }
+          .act-price-value { font-size: 32px !important; }
+          
+          .act-unlock-item { font-size: 12px !important; }
+          .act-activate-btn { padding: 16px !important; }
         }
       `}</style>
       {/* Sidebar - Blurred/Disabled visually via opacity & pointerEvents */}
@@ -203,28 +209,28 @@ export default function Activation() {
               </div>
 
               <h3 style={s.unlocksTitle}>What You Unlock After Activation:</h3>
-              <ul style={s.unlockList}>
-                <li style={s.unlockItem}>
+              <ul style={s.unlockList} className="act-unlock-list">
+                <li style={s.unlockItem} className="act-unlock-item">
                   <CheckCircle2 size={16} color={brandColor} style={{ flexShrink: 0, marginTop: '2px' }} />
                   <span><strong>Start making sales within 24 hours</strong></span>
                 </li>
-                <li style={s.unlockItem}>
+                <li style={s.unlockItem} className="act-unlock-item">
                   <CheckCircle2 size={16} color={brandColor} style={{ flexShrink: 0, marginTop: '2px' }} />
                   <span>Your store goes <strong>live instantly</strong></span>
                 </li>
-                <li style={s.unlockItem}>
+                <li style={s.unlockItem} className="act-unlock-item">
                   <CheckCircle2 size={16} color={brandColor} style={{ flexShrink: 0, marginTop: '2px' }} />
                   <span>Receive payments directly to your account (Paystack / Flutterwave)</span>
                 </li>
-                <li style={s.unlockItem}>
+                <li style={s.unlockItem} className="act-unlock-item">
                   <CheckCircle2 size={16} color={brandColor} style={{ flexShrink: 0, marginTop: '2px' }} />
                   <span>Custom domain setup and SSL</span>
                 </li>
-                <li style={s.unlockItem}>
+                <li style={s.unlockItem} className="act-unlock-item">
                   <CheckCircle2 size={16} color={brandColor} style={{ flexShrink: 0, marginTop: '2px' }} />
                   <span>Full access to the Admin Dashboard & Analytics</span>
                 </li>
-                <li style={s.unlockItem}>
+                <li style={s.unlockItem} className="act-unlock-item">
                   <CheckCircle2 size={16} color={brandColor} style={{ flexShrink: 0, marginTop: '2px' }} />
                   <span>Complete control of your store's inventory and layout</span>
                 </li>
@@ -232,7 +238,7 @@ export default function Activation() {
 
               <div style={{ fontSize: '11px', color: '#F59E0B', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '12px', textAlign: 'center', letterSpacing: '0.05em' }}>⚡ Limited spots remaining at this price</div>
               <Link to="/finalize-activation" style={{ textDecoration: 'none', display: 'block', width: '100%' }}>
-                <button style={s.activateBtn}>
+                <button style={s.activateBtn} className="act-activate-btn">
                   Launch My Store Now <ArrowUpRight size={16} />
                 </button>
               </Link>

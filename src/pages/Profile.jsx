@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Bell, LayoutGrid, User, Settings, Headphones, Globe, Heart, Bookmark, Edit, Mail, ArrowRight, Menu, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 
 const FacebookIcon = ({ size = 14, color = "currentColor" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke="none">
@@ -282,18 +282,33 @@ _Sent via Zizzystores Digital Atelier_
           .prof-logo-container { padding: 24px !important; }
           .prof-nav { display: flex; flex-direction: column !important; overflow-y: auto !important; }
           .prof-nav a, .prof-nav div { border-left: 3px solid transparent !important; border-bottom: none !important; padding: 16px 40px !important; font-size: 14px !important; }
-          .prof-user-profile { display: flex !important; }
+          .prof-user-profile { display: flex !important; margin-top: auto; }
           
           .prof-header { height: auto !important; padding: 20px 24px !important; flex-wrap: wrap; gap: 16px; justify-content: space-between; position: sticky; top: 0; background: #0A0A0A; z-index: 100; border-bottom: 1px solid #1F1F1F; }
           .prof-search { width: 100% !important; order: 3; margin-top: 8px; }
           
-          .prof-content { padding: 24px !important; overflow: visible !important; }
-          .prof-banner { padding: 32px 24px !important; height: auto !important; min-height: 250px; }
-          .prof-banner-content { flex-direction: column; align-items: flex-start !important; text-align: left; }
-          .prof-grid-container { grid-template-columns: 1fr !important; gap: 32px !important; }
-          .prof-newsletter { padding: 32px 24px !important; }
-          .prof-footer { flex-direction: column; gap: 24px; text-align: center; }
-          .prof-footer-links { flex-wrap: wrap; justify-content: center; }
+          .prof-content { padding: 24px 20px !important; overflow: visible !important; }
+          .prof-banner { padding: 48px 24px !important; height: auto !important; min-height: 280px; margin-bottom: 24px !important; }
+          .prof-banner-content { flex-direction: column; align-items: flex-start !important; text-align: left; gap: 20px !important; }
+          .prof-banner h1 { font-size: 32px !important; }
+          
+          .prof-grid-container { grid-template-columns: 1fr !important; gap: 24px !important; margin-bottom: 40px !important; }
+          .prof-narrative-box { padding: 32px 24px !important; }
+          .prof-narrative-title { font-size: 24px !important; margin-bottom: 20px !important; }
+          .prof-sub-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
+          
+          .prof-products-header { flex-direction: column; align-items: flex-start !important; gap: 12px; margin-bottom: 24px !important; }
+          .prof-products-header h2 { font-size: 28px !important; }
+          .prof-product-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
+          .prof-product-main { height: 350px !important; }
+          .prof-product-sub-grid { height: auto !important; grid-template-rows: repeat(3, 200px) !important; }
+          .prof-product-item-card { grid-column: auto !important; }
+          
+          .prof-newsletter { padding: 48px 24px !important; margin-bottom: 40px !important; }
+          .prof-newsletter h2 { font-size: 24px !important; }
+          
+          .prof-footer { flex-direction: column; gap: 32px; text-align: center; padding-top: 24px !important; }
+          .prof-footer-links { flex-wrap: wrap; justify-content: center; gap: 20px !important; }
           .mobile-only { display: block !important; }
         }
         @media (min-width: 769px) {
@@ -360,12 +375,7 @@ _Sent via Zizzystores Digital Atelier_
               <input type="text" placeholder="Search ..." style={s.searchInput} />
             </div>
             <div style={s.headerActions}>
-              <div title="Like Brand" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#888', transition: 'color 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.color = '#FFF'} onMouseLeave={(e) => e.currentTarget.style.color = '#888'}>
-                <Heart size={18} />
-              </div>
-              <div title="Save Brand" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#888', transition: 'color 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.color = '#FFF'} onMouseLeave={(e) => e.currentTarget.style.color = '#888'}>
-                <Bookmark size={18} />
-              </div>
+              {/* Removed Heart and Bookmark icons */}
             </div>
           </div>
         </div>

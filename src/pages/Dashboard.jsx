@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Bell, Moon, LayoutGrid, Store, User, Settings, Headphones, TrendingUp, Package, BarChart3, CheckCircle2, ChevronRight, ShoppingBag, ArrowUpRight, Edit, Menu, X, MessageSquare } from 'lucide-react';
+import { Search, Bell, Moon, LayoutGrid, Store, User, Settings, Headphones, TrendingUp, Package, BarChart3, CheckCircle2, ChevronRight, ShoppingBag, ArrowUpRight, Edit, Menu, X, MessageSquare, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import AdminChat from '../components/AdminChat';
 
 export default function Dashboard() {
@@ -173,14 +173,25 @@ export default function Dashboard() {
           .dash-logo-container { padding: 24px !important; }
           .dash-nav { display: flex; flex-direction: column !important; overflow-y: auto !important; }
           .dash-nav a, .dash-nav div { border-left: 3px solid transparent !important; border-bottom: none !important; padding: 16px 40px !important; font-size: 14px !important; }
-          .dash-user-profile { display: flex !important; } 
+          .dash-user-profile { display: flex !important; margin-top: auto; } 
           
-          .dash-header { height: auto !important; padding: 20px 24px !important; flex-wrap: wrap; gap: 16px; justify-content: space-between; position: sticky; top: 0; background: #0A0A0A; z-index: 100; border-bottom: 1px solid #1F1F1F; }
+          .dash-header { height: auto !important; padding: 24px 20px !important; flex-wrap: wrap; gap: 16px; justify-content: space-between; position: sticky; top: 0; background: #0A0A0A; z-index: 100; border-bottom: 1px solid #1F1F1F; }
           .dash-search-bar { width: 100% !important; order: 3; margin-top: 8px; }
+          .dash-header-actions { width: 100%; order: 4; justify-content: space-between; padding-top: 12px; border-top: 1px solid #1F1F1F; }
           
-          .dash-content { padding: 24px !important; overflow: visible !important; }
-          .dash-brand-header { flex-direction: column !important; gap: 24px !important; }
-          .dash-stats-grid { grid-template-columns: 1fr !important; gap: 16px !important; }
+          .dash-content { padding: 24px 20px !important; overflow: visible !important; }
+          .dash-brand-header { flex-direction: column !important; align-items: flex-start !important; gap: 24px !important; }
+          .dash-brand-info { flex-direction: column !important; align-items: flex-start !important; gap: 20px !important; }
+          .dash-brand-info h1 { font-size: 28px !important; }
+          .dash-live-domain { width: 100%; align-items: flex-start !important; padding: 20px !important; }
+          
+          .dash-stats-grid { grid-template-columns: 1fr !important; gap: 16px !important; margin-top: 40px !important; }
+          .dash-card { padding: 24px !important; }
+          .dash-card-value { font-size: 28px !important; }
+          
+          .dash-bottom-grid { grid-template-columns: 1fr !important; gap: 24px !important; margin-top: 40px !important; }
+          .dash-list-row { padding: 20px !important; flex-direction: column; align-items: flex-start !important; gap: 16px; }
+          .dash-list-row > div:last-child { text-align: left !important; width: 100%; display: flex; justify-content: space-between; align-items: center; }
           .mobile-only { display: block !important; }
         }
         @media (min-width: 769px) {
@@ -240,18 +251,19 @@ export default function Dashboard() {
             >
               <Menu size={24} />
             </button>
+            <Link to="/" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '36px', height: '36px', borderRadius: '50%', border: '1px solid #1F1F1F', color: '#888', textDecoration: 'none', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.color = '#FFF'; e.currentTarget.style.borderColor = '#333'; }} onMouseLeave={(e) => { e.currentTarget.style.color = '#888'; e.currentTarget.style.borderColor = '#1F1F1F'; }}>
+              <ArrowLeft size={18} />
+            </Link>
             <div style={s.headerTitle}>{activeTab === 'overview' ? 'Dashboard' : 'Customer Support'}</div>
           </div>
           <div style={s.searchBar} className="dash-search-bar">
             <Search size={14} color="#666" />
             <input type="text" placeholder="SEARCH ..." style={s.searchInput} />
           </div>
-          <div style={s.headerActions}>
-            <Bell size={16} color="#888" cursor="pointer" />
-            <Moon size={16} color="#888" cursor="pointer" />
+          <div style={s.headerActions} className="dash-header-actions">
             <Link to={`/shop-brand/${user?.id}`} style={{ textDecoration: 'none' }}>
-              <div style={{ ...s.premiumBadge, backgroundColor: brandColor, color: '#000', padding: '6px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Store size={14} /> MANAGE STORE
+              <div style={{ ...s.premiumBadge, backgroundColor: brandColor, color: '#000', padding: '10px 24px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', fontWeight: '800', border: 'none', borderRadius: '4px', boxShadow: `0 4px 12px ${brandColor}33` }}>
+                <Store size={16} /> MANAGE STORE
               </div>
             </Link>
           </div>

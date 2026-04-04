@@ -1,15 +1,23 @@
 import React from 'react';
-import { Search, ShoppingCart, Menu, X, User as UserIcon, LogIn } from 'lucide-react';
+import { Search, ShoppingCart, Menu, X, User as UserIcon, LogIn, LayoutGrid } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useState, useEffect } from 'react';
+import { useAuth } from '../hooks/useAuth';
 
 export default function Navbar() {
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
 
+  const { user, signOut } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/');
+    setIsMenuOpen(false);
+  };
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -70,13 +78,27 @@ export default function Navbar() {
             </div>
 
             <div className="flex items-center gap-4" style={{ width: isMobile ? '100%' : 'auto', justifyContent: isMobile ? 'center' : 'flex-start' }}>
-              <Link to="/auth?mode=signin" onClick={() => setIsMenuOpen(false)} className="font-semibold flex items-center gap-2" style={{ fontSize: '14px', textDecoration: 'none', color: 'inherit' }}>
-                {isMobile ? <LogIn size={18} /> : null}
-                <span>Sign In</span>
-              </Link>
-              <Link to="/auth?mode=signup" onClick={() => setIsMenuOpen(false)} className="btn btn-primary" style={{ textDecoration: 'none', width: isMobile ? '100%' : 'auto' }}>
-                Get Started
-              </Link>
+              {user ? (
+                <>
+                  <Link to="/dashboard" onClick={() => setIsMenuOpen(false)} className="font-semibold flex items-center gap-2" style={{ fontSize: '14px', textDecoration: 'none', color: 'inherit' }}>
+                    {isMobile ? <LayoutGrid size={18} /> : null}
+                    <span>Dashboard</span>
+                  </Link>
+                  <button onClick={handleLogout} className="btn btn-outline" style={{ fontSize: '14px', padding: '8px 16px', cursor: 'pointer', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', background: 'transparent' }}>
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link to="/auth?mode=signin" onClick={() => setIsMenuOpen(false)} className="font-semibold flex items-center gap-2" style={{ fontSize: '14px', textDecoration: 'none', color: 'inherit' }}>
+                    {isMobile ? <LogIn size={18} /> : null}
+                    <span>Sign In</span>
+                  </Link>
+                  <Link to="/auth?mode=signup" onClick={() => setIsMenuOpen(false)} className="btn btn-primary" style={{ textDecoration: 'none', width: isMobile ? '100%' : 'auto' }}>
+                    Get Started
+                  </Link>
+                </>
+              )}
             </div>
 
 
