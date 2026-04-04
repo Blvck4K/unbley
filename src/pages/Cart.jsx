@@ -3,6 +3,8 @@ import { ShoppingCart, Trash2, ArrowLeft, ShieldCheck, Truck, Globe, CreditCard,
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
+import PageTransition from '../components/PageTransition';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Cart() {
   const navigate = useNavigate();
@@ -198,7 +200,8 @@ export default function Cart() {
   }
 
   return (
-    <div style={s.page}>
+    <PageTransition>
+      <div style={s.page}>
       <style>{`
         @media (max-width: 768px) {
           .cart-header, .cart-footer { padding: 16px 24px !important; }
@@ -241,66 +244,86 @@ export default function Cart() {
 
         <div style={s.layout} className="cart-layout">
           {/* Left Column: Items */}
-          <div style={s.itemsContainer}>
-            {removedItems.length > 0 && (
-              <div style={s.undoToast}>
-                <span>Item removed from cart.</span>
-                <button style={s.undoBtn} onClick={handleUndo}>
-                  <RotateCcw size={14} /> Undo
-                </button>
-              </div>
-            )}
+            <div style={s.itemsContainer}>
+              <AnimatePresence>
+                {removedItems.length > 0 && (
+                  <motion.div 
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    style={s.undoToast}
+                  >
+                    <span>Item removed from cart.</span>
+                    <button style={s.undoBtn} onClick={handleUndo}>
+                      <RotateCcw size={14} /> Undo
+                    </button>
+                  </motion.div>
+                )}
 
-            {cartItems.length === 0 ? (
-              <div style={{ padding: '80px 0', textAlign: 'center', color: mutedColor, backgroundColor: secondaryBg, borderRadius: '4px', border: `1px solid ${borderColor}` }}>
-                <ShoppingCart size={48} color={mutedColor} style={{ marginBottom: '16px' }} />
-                <h3 style={{ fontSize: '18px', color: textColor, marginBottom: '8px' }}>Your Cart is Empty</h3>
-                <p style={{ fontSize: '14px', marginBottom: '32px' }}>Discover unique items to add to your collection.</p>
-                <div style={{ display: 'flex', justifyContent: 'center' }}>
-                  <div style={{...s.continueLink, width: 'auto', padding: '16px 32px'}} onClick={() => navigate(-1)}>
-                    Explore Collection
-                  </div>
-                </div>
-              </div>
-            ) : (
-              cartItems.map(item => (
-                <div key={item.id} style={s.cartItem} className="cart-item">
-                  <div style={s.itemImageWrap} className="cart-item-image-wrap">
-                    <img src={item.img} alt={item.name} style={s.itemImage} onError={handleImageError} />
-                  </div>
-
-                  <div style={s.itemDetails}>
-                    <div style={s.itemNameRow}>
-                      <div style={s.itemName}>{item.name}</div>
-                      <div style={s.itemPrice}>{formatPrice(item.price)}</div>
+                {cartItems.length === 0 ? (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    style={{ padding: '80px 0', textAlign: 'center', color: mutedColor, backgroundColor: secondaryBg, borderRadius: '4px', border: `1px solid ${borderColor}` }}
+                  >
+                    <ShoppingCart size={48} color={mutedColor} style={{ marginBottom: '16px' }} />
+                    <h3 style={{ fontSize: '18px', color: textColor, marginBottom: '8px' }}>Your Cart is Empty</h3>
+                    <p style={{ fontSize: '14px', marginBottom: '32px' }}>Discover unique items to add to your collection.</p>
+                    <div style={{ display: 'flex', justifyContent: 'center' }}>
+                      <div style={{...s.continueLink, width: 'auto', padding: '16px 32px'}} onClick={() => navigate(-1)}>
+                        Explore Collection
+                      </div>
                     </div>
-                    <div style={s.itemVariant}>{item.variant}</div>
-
-                    <div style={s.itemActions} className="cart-item-actions">
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap' }}>
-                        <div style={s.qtyControl}>
-                          <button style={s.qtyBtn} onClick={() => updateQty(item.id, -1)}>-</button>
-                          <div style={s.qtyValue}>{item.qty}</div>
-                          <button style={s.qtyBtn} onClick={() => updateQty(item.id, 1)}>+</button>
-                        </div>
-                        
-                        {item.qty >= 1 && (
-                          <div style={s.itemTotalCalc}>
-                            Total: <span style={{ color: '#111', fontWeight: '700' }}>{formatPrice(item.price * item.qty)}</span>
-                            <span style={{ fontSize: '11px', color: '#888', marginLeft: '4px' }}>({formatPrice(item.price)} &times; {item.qty})</span>
-                          </div>
-                        )}
+                  </motion.div>
+                ) : (
+                  cartItems.map((item, idx) => (
+                    <motion.div 
+                      key={item.id} 
+                      layout
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ delay: idx * 0.05 }}
+                      style={s.cartItem} 
+                      className="cart-item"
+                    >
+                      <div style={s.itemImageWrap} className="cart-item-image-wrap">
+                        <img src={item.img} alt={item.name} style={s.itemImage} onError={handleImageError} />
                       </div>
 
-                      <button style={s.removeBtn} onClick={() => handleRemove(item.id)}>
-                        <Trash2 size={12} /> Remove
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
+                      <div style={s.itemDetails}>
+                        <div style={s.itemNameRow}>
+                          <div style={s.itemName}>{item.name}</div>
+                          <div style={s.itemPrice}>{formatPrice(item.price)}</div>
+                        </div>
+                        <div style={s.itemVariant}>{item.variant}</div>
+
+                        <div style={s.itemActions} className="cart-item-actions">
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap' }}>
+                            <div style={s.qtyControl}>
+                              <button style={s.qtyBtn} onClick={() => updateQty(item.id, -1)}>-</button>
+                              <div style={s.qtyValue}>{item.qty}</div>
+                              <button style={s.qtyBtn} onClick={() => updateQty(item.id, 1)}>+</button>
+                            </div>
+                            
+                            {item.qty >= 1 && (
+                              <div style={s.itemTotalCalc}>
+                                Total: <span style={{ color: textColor, fontWeight: '700' }}>{formatPrice(item.price * item.qty)}</span>
+                                <span style={{ fontSize: '11px', color: mutedColor, marginLeft: '4px' }}>({formatPrice(item.price)} &times; {item.qty})</span>
+                              </div>
+                            )}
+                          </div>
+
+                          <button style={s.removeBtn} onClick={() => handleRemove(item.id)}>
+                            <Trash2 size={12} /> Remove
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))
+                )}
+              </AnimatePresence>
+            </div>
 
           {/* Right Column: Summary */}
           <div className="cart-summary-col">
@@ -407,6 +430,7 @@ export default function Cart() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </PageTransition>
   );
 }

@@ -3,6 +3,8 @@ import { ShoppingCart, Lock, ArrowLeft, ArrowRight, ShieldCheck, CreditCard, Ban
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import PaystackPop from '@paystack/inline-js';
+import PageTransition from '../components/PageTransition';
+import { motion } from 'framer-motion';
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -209,7 +211,8 @@ export default function Checkout() {
   };
 
   return (
-    <div style={s.page}>
+    <PageTransition>
+      <div style={s.page}>
       
       <style>{`
         @media (max-width: 768px) {
@@ -256,7 +259,12 @@ export default function Checkout() {
         <div style={s.layout} className="checkout-layout">
           
           {/* Left Column (Forms) */}
-          <div style={s.leftCol}>
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            style={s.leftCol}
+          >
             <h1 style={s.sectionTitle}>Contact & Shipping</h1>
             
             <div style={s.formGrid} className="form-grid">
@@ -306,7 +314,13 @@ export default function Checkout() {
             </div>
 
             <div style={s.actionsCol} className="actions-col">
-              <button style={{...s.continueBtn, opacity: isProcessing ? 0.7 : 1}} onClick={handlePaymentSubmit} disabled={isProcessing}>
+              <motion.button 
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                style={{...s.continueBtn, opacity: isProcessing ? 0.7 : 1}} 
+                onClick={handlePaymentSubmit} 
+                disabled={isProcessing}
+              >
                 {isProcessing ? (
                   <>Processing...</>
                 ) : (
@@ -315,7 +329,7 @@ export default function Checkout() {
                     Proceed to Secure Payment
                   </>
                 )}
-              </button>
+              </motion.button>
               
               <div style={s.disclaimerText}>
                 You’ll review your order before final payment
@@ -326,7 +340,7 @@ export default function Checkout() {
                 Return to Cart
               </button>
             </div>
-          </div>
+          </motion.div>
 
           {/* Right Column (Summary) */}
           <div style={s.rightCol} className="right-col">
@@ -403,6 +417,7 @@ export default function Checkout() {
         
         <div style={s.copyright}>© {new Date().getFullYear()} {brand ? brand.brand_name : 'Digital Atelier'}. All rights reserved.</div>
       </div>
-    </div>
+      </div>
+    </PageTransition>
   );
 }

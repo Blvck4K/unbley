@@ -149,16 +149,16 @@ _Reply to this message with 'Reply: <your message>' to send back to the user._
         <div style={{ position: 'fixed', bottom: '32px', right: '32px', zIndex: 10000, fontFamily: '"Inter", sans-serif' }}>
             {/* Chat Window */}
             {isOpen && (
-                <div style={{ 
-                    width: '380px', 
-                    maxHeight: '600px', 
-                    height: '80vh', 
-                    backgroundColor: bgColor, 
-                    borderRadius: '24px', 
-                    boxShadow: '0 20px 40px rgba(0,0,0,0.4)', 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    overflow: 'hidden', 
+                <div style={{
+                    width: '380px',
+                    maxHeight: '600px',
+                    height: '80vh',
+                    backgroundColor: bgColor,
+                    borderRadius: '24px',
+                    boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    overflow: 'hidden',
                     border: '1px solid #1F1F1F',
                     marginBottom: '24px',
                     animation: 'slideUp 0.3s ease-out'
@@ -167,12 +167,12 @@ _Reply to this message with 'Reply: <your message>' to send back to the user._
                     <div style={{ padding: '24px', backgroundColor: cardColor, borderBottom: '1px solid #1F1F1F', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                             <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-                                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} alt="Sarah" />
+                                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR13HUAnJxZA_NhkLvR_U0Ce2SuRjAXdfQ7RA&s" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} alt="Sarah" />
                                 <div style={{ position: 'absolute', bottom: '0', right: '0', width: '10px', height: '10px', backgroundColor: '#10B981', borderRadius: '50%', border: '2px solid #111' }} />
                             </div>
                             <div>
-                                <div style={{ fontSize: '14px', fontWeight: '700', color: '#FFF' }}>Concierge Support</div>
-                                <div style={{ fontSize: '10px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Sarah from Support</div>
+                                <div style={{ fontSize: '14px', fontWeight: '700', color: '#FFF' }}>Zizzy Concierge</div>
+                                <div style={{ fontSize: '10px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Isaac from Support</div>
                             </div>
                         </div>
                         <div style={{ display: 'flex', gap: '12px' }}>
@@ -190,13 +190,13 @@ _Reply to this message with 'Reply: <your message>' to send back to the user._
                             <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#FFF', marginBottom: '8px' }}>Start a Conversation</h3>
                             <p style={{ fontSize: '12px', color: '#888', marginBottom: '32px', lineHeight: '1.6' }}>Please provide your email address so we can reach back to you.</p>
                             <form onSubmit={handleIdentify}>
-                                <input 
-                                    type="email" 
-                                    placeholder="Enter your email address" 
+                                <input
+                                    type="email"
+                                    placeholder="Enter your email address"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     required
-                                    style={{ width: '100%', backgroundColor: '#111', border: '1px solid #1F1F1F', borderRadius: '8px', padding: '12px 16px', color: '#FFF', fontSize: '14px', marginBottom: '16px', outline: 'none' }} 
+                                    style={{ width: '100%', backgroundColor: '#111', border: '1px solid #1F1F1F', borderRadius: '8px', padding: '12px 16px', color: '#FFF', fontSize: '14px', marginBottom: '16px', outline: 'none' }}
                                 />
                                 <button type="submit" style={{ width: '100%', backgroundColor: brandColor, color: '#000', border: 'none', borderRadius: '8px', padding: '12px', fontSize: '12px', fontWeight: '700', letterSpacing: '0.05em', cursor: 'pointer' }}>CONTINUE</button>
                             </form>
@@ -220,9 +220,9 @@ _Reply to this message with 'Reply: <your message>' to send back to the user._
                                 )}
 
                                 {chatHistory.map((msg, idx) => (
-                                    <div 
-                                        key={idx} 
-                                        style={{ 
+                                    <div
+                                        key={idx}
+                                        style={{
                                             alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start',
                                             backgroundColor: msg.sender === 'user' ? brandColor : '#111',
                                             color: msg.sender === 'user' ? '#000' : '#CCC',
@@ -242,26 +242,26 @@ _Reply to this message with 'Reply: <your message>' to send back to the user._
                             {/* Input Area */}
                             <form onSubmit={handleSendMessage} style={{ padding: '24px', backgroundColor: cardColor, borderTop: '1px solid #1F1F1F' }}>
                                 <div style={{ backgroundColor: bgColor, border: '1px solid #1F1F1F', borderRadius: '30px', display: 'flex', alignItems: 'center', padding: '8px 12px 8px 20px', gap: '8px' }}>
-                                    <input 
-                                        type="text" 
-                                        placeholder="Type your message..." 
+                                    <input
+                                        type="text"
+                                        placeholder="Type your message..."
                                         value={message}
                                         onChange={(e) => setMessage(e.target.value)}
-                                        style={{ flex: 1, backgroundColor: 'transparent', border: 'none', color: '#FFF', fontSize: '13px', outline: 'none' }} 
+                                        style={{ flex: 1, backgroundColor: 'transparent', border: 'none', color: '#FFF', fontSize: '13px', outline: 'none' }}
                                     />
                                     <button type="button" style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer' }}><Paperclip size={18} /></button>
-                                    <button 
-                                        type="submit" 
+                                    <button
+                                        type="submit"
                                         disabled={loading || !message.trim()}
-                                        style={{ 
-                                            width: '36px', 
-                                            height: '36px', 
-                                            backgroundColor: brandColor, 
-                                            borderRadius: '50%', 
-                                            display: 'flex', 
-                                            alignItems: 'center', 
-                                            justifyContent: 'center', 
-                                            border: 'none', 
+                                        style={{
+                                            width: '36px',
+                                            height: '36px',
+                                            backgroundColor: brandColor,
+                                            borderRadius: '50%',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            border: 'none',
                                             cursor: 'pointer',
                                             opacity: (loading || !message.trim()) ? 0.5 : 1
                                         }}
@@ -279,18 +279,18 @@ _Reply to this message with 'Reply: <your message>' to send back to the user._
             )}
 
             {/* Floating Icon */}
-            <button 
+            <button
                 onClick={toggleOpen}
-                style={{ 
-                    width: '56px', 
-                    height: '56px', 
-                    backgroundColor: brandColor, 
-                    borderRadius: '50%', 
-                    boxShadow: '0 8px 24px rgba(6,172,248,0.4)', 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
-                    border: 'none', 
+                style={{
+                    width: '56px',
+                    height: '56px',
+                    backgroundColor: brandColor,
+                    borderRadius: '50%',
+                    boxShadow: '0 8px 24px rgba(6,172,248,0.4)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: 'none',
                     cursor: 'pointer',
                     position: 'relative',
                     transition: 'transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
@@ -300,19 +300,19 @@ _Reply to this message with 'Reply: <your message>' to send back to the user._
             >
                 {isOpen ? <X color="#000" size={24} /> : <MessageCircle color="#000" size={24} />}
                 {unreadCount > 0 && !isOpen && (
-                    <div style={{ 
-                        position: 'absolute', 
-                        top: '-4px', 
-                        right: '-4px', 
-                        backgroundColor: '#EF4444', 
-                        color: '#FFF', 
-                        fontSize: '10px', 
-                        fontWeight: '700', 
-                        width: '20px', 
-                        height: '20px', 
-                        borderRadius: '50%', 
-                        display: 'flex', 
-                        alignItems: 'center', 
+                    <div style={{
+                        position: 'absolute',
+                        top: '-4px',
+                        right: '-4px',
+                        backgroundColor: '#EF4444',
+                        color: '#FFF',
+                        fontSize: '10px',
+                        fontWeight: '700',
+                        width: '20px',
+                        height: '20px',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
                         justifyContent: 'center',
                         border: '2px solid #0A0A0A'
                     }}>

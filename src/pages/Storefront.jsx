@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { ShoppingBag, User, Search, Heart, Bookmark, LogOut, Headphones } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import PageTransition from '../components/PageTransition';
+import { motion } from 'framer-motion';
 
 export default function Storefront() {
   const brandColor = '#06acf8';
@@ -331,7 +333,8 @@ export default function Storefront() {
   // No static products array here anymore
 
   return (
-    <div style={s.page}>
+    <PageTransition>
+      <div style={s.page}>
       <div style={s.ambientGlow}></div>
 
       {/* Navbar */}
@@ -355,14 +358,25 @@ export default function Storefront() {
 
       {/* Hero */}
       <section style={s.hero} className="store-hero">
-        <h1 style={s.heroTitle} className="store-hero-title">
+        <motion.h1 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          style={s.heroTitle} 
+          className="store-hero-title"
+        >
           Discover the<br />
           <span style={s.heroHighlight}>Digital Ateliers.</span>
-        </h1>
-        <p style={s.heroDesc}>
+        </motion.h1>
+        <motion.p 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+          style={s.heroDesc}
+        >
           Independent designers and master craftspeople.<br />
           For the modern collector who values heritage over trends.
-        </p>
+        </motion.p>
       </section>
 
       {/* filters removed per request */}
@@ -385,26 +399,34 @@ export default function Storefront() {
           </div>
         ) : (
           brands.map((brand, idx) => (
-            <Link key={brand.id || idx} to={`/explore-brand/${brand.id}`} style={{...s.card, textDecoration: 'none'}} className="product-card">
-              <div style={s.cardImageWrap}>
-                <img src={brand.banner_url || brand.logo_url || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80'} alt={brand.brand_name} style={s.cardImage} />
-                <div className="card-hover-actions">
-                  <div className="icon-btn" title="Follow Brand" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}><Heart size={16} /></div>
-                  <div className="icon-btn" title="Save to Collections" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}><Bookmark size={16} /></div>
+            <motion.div 
+              key={brand.id || idx}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: (idx % 3) * 0.1, duration: 0.5 }}
+            >
+              <Link to={`/explore-brand/${brand.id}`} style={{...s.card, textDecoration: 'none'}} className="product-card">
+                <div style={s.cardImageWrap}>
+                  <img src={brand.banner_url || brand.logo_url || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80'} alt={brand.brand_name} style={s.cardImage} />
+                  <div className="card-hover-actions">
+                    <div className="icon-btn" title="Follow Brand" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}><Heart size={16} /></div>
+                    <div className="icon-btn" title="Save to Collections" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}><Bookmark size={16} /></div>
+                  </div>
                 </div>
-              </div>
 
-              <div style={s.cardContent}>
-                <div style={s.cardLeft}>
-                  <div style={{...s.cardCategory, color: brand.accent_color || brandColor}}>{brand.subcategory || 'INDEPENDENT'}</div>
-                  <div style={s.cardTitle}>{brand.brand_name}</div>
-                  <div style={s.cardDesc}>{brand.tagline || brand.manifesto?.substring(0, 60) + '...' || 'Mastering the architecture of modern commerce.'}</div>
+                <div style={s.cardContent}>
+                  <div style={s.cardLeft}>
+                    <div style={{...s.cardCategory, color: brand.accent_color || brandColor}}>{brand.subcategory || 'INDEPENDENT'}</div>
+                    <div style={s.cardTitle}>{brand.brand_name}</div>
+                    <div style={s.cardDesc}>{brand.tagline || brand.manifesto?.substring(0, 60) + '...' || 'Mastering the architecture of modern commerce.'}</div>
+                  </div>
+                  <div style={s.cardBadge}>{brand.brand_name?.charAt(0)?.toUpperCase() || 'O'}</div>
                 </div>
-                <div style={s.cardBadge}>{brand.brand_name?.charAt(0)?.toUpperCase() || 'O'}</div>
-              </div>
 
-              <div className="show-more-btn" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Explore {brand.brand_name}</div>
-            </Link>
+                <div className="show-more-btn" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Explore {brand.brand_name}</div>
+              </Link>
+            </motion.div>
           ))
         )}
       </div>
@@ -511,6 +533,7 @@ export default function Storefront() {
           color: #000 !important;
         }
       `}</style>
-    </div>
+      </div>
+    </PageTransition>
   );
 }

@@ -3,6 +3,8 @@ import { Search, ShoppingCart, User, ChevronDown, ShieldCheck, Truck, Headphones
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
+import PageTransition from '../components/PageTransition';
+import { motion } from 'framer-motion';
 
 const useWindowWidth = () => {
   const [width, setWidth] = useState(window.innerWidth);
@@ -423,7 +425,8 @@ export default function ShopBrand({ customId }) {
   };
 
   return (
-    <div style={s.page}>
+    <PageTransition>
+      <div style={s.page}>
       {/* Header */}
       <div style={s.header}>
         <div style={s.logo} onClick={() => navigate('/')}>
@@ -451,16 +454,36 @@ export default function ShopBrand({ customId }) {
         </div>
       </div>
 
-      {/* Hero Section */}
       <div style={s.hero}>
         {brand.banner_url ? (
-          <img src={brand.banner_url} alt="Hero Banner" style={s.heroImage} />
+          <motion.img 
+            initial={{ scale: 1.1, opacity: 0 }}
+            animate={{ scale: 1, opacity: 0.6 }}
+            transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
+            src={brand.banner_url} 
+            alt="Hero Banner" 
+            style={s.heroImage} 
+          />
         ) : (
           <div style={s.heroImage}></div> // Fallback colored box
         )}
         <div style={s.heroContent}>
-          <h1 style={s.heroTitle}>{brand.brand_name ? `The ${brand.brand_name} Collection` : 'The Permanent Collection'}</h1>
-          <p style={s.heroSubtitle}>{brand.tagline || brand.brand_narrative || 'Curating timeless pieces from global artisans.'}</p>
+          <motion.h1 
+            initial={{ y: 30, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            style={s.heroTitle}
+          >
+            {brand.brand_name ? `The ${brand.brand_name} Collection` : 'The Permanent Collection'}
+          </motion.h1>
+          <motion.p 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            style={s.heroSubtitle}
+          >
+            {brand.tagline || brand.brand_narrative || 'Curating timeless pieces from global artisans.'}
+          </motion.p>
         </div>
       </div>
 
@@ -502,16 +525,20 @@ export default function ShopBrand({ customId }) {
         ) : (
           <div style={s.productGrid}>
              {/* Map Live Products */}
-             {products.map((product) => (
-              <div 
+             {products.map((product, idx) => (
+              <motion.div 
                 key={product.id} 
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.1, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                 style={s.productCard} 
                 onMouseEnter={() => setHoveredProduct(product.id)}
                 onMouseLeave={() => setHoveredProduct(null)}
               >
                 <div style={s.productImageWrap}>
                   {product.image_url ? (
-                    <img 
+                    <motion.img 
                       src={product.image_url.split(',')[0]} 
                       alt={product.title} 
                       style={{ ...s.image, transform: hoveredProduct === product.id ? 'scale(1.05)' : 'scale(1)' }} 
@@ -540,12 +567,26 @@ export default function ShopBrand({ customId }) {
                   
                   <div style={{ ...s.buttonGroup, opacity: (hoveredProduct === product.id || isMobile || isOwner) ? 1 : 0.4, transition: 'opacity 0.2s' }}>
                     {!isOwner && (
-                      <button style={{...s.addToCartBtn, transition: 'all 0.3s'}} onClick={(e) => handleAddToCart(e, product)}>Bag It</button>
+                      <motion.button 
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        style={{...s.addToCartBtn, transition: 'all 0.3s'}} 
+                        onClick={(e) => handleAddToCart(e, product)}
+                      >
+                        Bag It
+                      </motion.button>
                     )}
-                    <button style={s.viewBtn} onClick={(e) => { e.stopPropagation(); navigate(`/product?id=${product.id}`); }}>Details</button>
+                    <motion.button 
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      style={s.viewBtn} 
+                      onClick={(e) => { e.stopPropagation(); navigate(`/product?id=${product.id}`); }}
+                    >
+                      Details
+                    </motion.button>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         )}
@@ -680,6 +721,7 @@ export default function ShopBrand({ customId }) {
         </div>
       )}
 
-    </div>
+      </div>
+    </PageTransition>
   );
 }

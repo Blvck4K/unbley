@@ -3,6 +3,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { Check, ShieldCheck, Download, LayoutDashboard, Globe, Settings } from 'lucide-react';
+import PageTransition from '../components/PageTransition';
+import { motion } from 'framer-motion';
 
 export default function SuccessPage() {
   const location = useLocation();
@@ -317,7 +319,8 @@ Your digital atelier is securely activated.
   };
 
   return (
-    <div style={s.page} className="success-page">
+    <PageTransition>
+      <div style={s.page} className="success-page">
       <style>{`
         @media (max-width: 768px) {
           .success-page-header { padding: 20px 24px !important; }
@@ -345,17 +348,39 @@ Your digital atelier is securely activated.
       {/* Main Content */}
       <main style={s.container} className="success-page-container">
 
-        <div style={s.iconBox}>
+        <motion.div 
+          initial={{ scale: 0, rotate: -180 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.1 }}
+          style={s.iconBox}
+        >
           <Check size={32} color={successColor} strokeWidth={3} />
-        </div>
+        </motion.div>
 
-        <h1 style={s.title}>Payment Successful</h1>
-        <p style={s.subtitle}>
+        <motion.h1 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          style={s.title}
+        >
+          Payment Successful
+        </motion.h1>
+        <motion.p 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          style={s.subtitle}
+        >
           Your store activation is complete. The digital capabilities have been securely unlocked and assigned to your account.
-        </p>
+        </motion.p>
 
         {/* Receipt / Details Card */}
-        <div style={s.card}>
+        <motion.div 
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          style={s.card}
+        >
           <div style={s.glowLine}></div>
 
           <div style={s.flexRow} className="success-flex-row">
@@ -390,7 +415,7 @@ Your digital atelier is securely activated.
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Bottom Actions */}
         <div style={s.bottomActions} className="success-bottom-actions">
@@ -409,6 +434,7 @@ Your digital atelier is securely activated.
         </div>
 
       </main>
-    </div>
+      </div>
+    </PageTransition>
   );
 }

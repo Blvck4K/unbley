@@ -3,6 +3,8 @@ import { Search, Bell, LayoutGrid, User, Settings, Headphones, Globe, Heart, Boo
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
+import PageTransition from '../components/PageTransition';
+import { motion } from 'framer-motion';
 
 const FacebookIcon = ({ size = 14, color = "currentColor" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke="none">
@@ -254,307 +256,326 @@ _Sent via Zizzystores Digital Atelier_
   }
 
   return (
-    <div style={s.page} className="prof-page">
-      <style>{`
-        @media (max-width: 768px) {
-          .prof-page { flex-direction: column !important; height: auto !important; min-height: 100vh; overflow: visible !important; }
-          .prof-sidebar { 
-            position: fixed !important; 
-            top: 0 !important; 
-            left: ${isSidebarOpen ? '0' : '-100%'} !important; 
-            width: 280px !important; 
-            height: 100vh !important; 
-            z-index: 1000 !important; 
-            background-color: #0A0A0A !important;
-            transition: left 0.3s ease !important;
-            box-shadow: 10px 0 30px rgba(0,0,0,0.5) !important;
+    <PageTransition>
+      <div style={s.page} className="prof-page">
+        <style>{`
+          @media (max-width: 768px) {
+            .prof-page { flex-direction: column !important; height: auto !important; min-height: 100vh; overflow: visible !important; }
+            .prof-sidebar { 
+              position: fixed !important; 
+              top: 0 !important; 
+              left: ${isSidebarOpen ? '0' : '-100%'} !important; 
+              width: 280px !important; 
+              height: 100vh !important; 
+              z-index: 1000 !important; 
+              background-color: #0A0A0A !important;
+              transition: left 0.3s ease !important;
+              box-shadow: 10px 0 30px rgba(0,0,0,0.5) !important;
+            }
+            .prof-overlay {
+              position: fixed !important;
+              top: 0 !important;
+              left: 0 !important;
+              right: 0 !important;
+              bottom: 0 !important;
+              background-color: rgba(0,0,0,0.7) !important;
+              z-index: 999 !important;
+              display: ${isSidebarOpen ? 'block' : 'none'} !important;
+            }
+            .prof-logo-container { padding: 24px !important; }
+            .prof-nav { display: flex; flex-direction: column !important; overflow-y: auto !important; }
+            .prof-nav a, .prof-nav div { border-left: 3px solid transparent !important; border-bottom: none !important; padding: 16px 40px !important; font-size: 14px !important; }
+            .prof-user-profile { display: flex !important; margin-top: auto; }
+            
+            .prof-header { height: auto !important; padding: 20px 24px !important; flex-wrap: wrap; gap: 16px; justify-content: space-between; position: sticky; top: 0; background: #0A0A0A; z-index: 100; border-bottom: 1px solid #1F1F1F; }
+            .prof-search { width: 100% !important; order: 3; margin-top: 8px; }
+            
+            .prof-content { padding: 24px 20px !important; overflow: visible !important; }
+            .prof-banner { padding: 48px 24px !important; height: auto !important; min-height: 280px; margin-bottom: 24px !important; }
+            .prof-banner-content { flex-direction: column; align-items: flex-start !important; text-align: left; gap: 20px !important; }
+            .prof-banner h1 { font-size: 32px !important; }
+            
+            .prof-grid-container { grid-template-columns: 1fr !important; gap: 24px !important; margin-bottom: 40px !important; }
+            .prof-narrative-box { padding: 32px 24px !important; }
+            .prof-narrative-title { font-size: 24px !important; margin-bottom: 20px !important; }
+            .prof-sub-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
+            
+            .prof-products-header { flex-direction: column; align-items: flex-start !important; gap: 12px; margin-bottom: 24px !important; }
+            .prof-products-header h2 { font-size: 28px !important; }
+            .prof-product-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
+            .prof-product-main { height: 350px !important; }
+            .prof-product-sub-grid { height: auto !important; grid-template-rows: repeat(3, 200px) !important; }
+            .prof-product-item-card { grid-column: auto !important; }
+            
+            .prof-newsletter { padding: 48px 24px !important; margin-bottom: 40px !important; }
+            .prof-newsletter h2 { font-size: 24px !important; }
+            
+            .prof-footer { flex-direction: column; gap: 32px; text-align: center; padding-top: 24px !important; }
+            .prof-footer-links { flex-wrap: wrap; justify-content: center; gap: 20px !important; }
+            .mobile-only { display: block !important; }
           }
-          .prof-overlay {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-            bottom: 0 !important;
-            background-color: rgba(0,0,0,0.7) !important;
-            z-index: 999 !important;
-            display: ${isSidebarOpen ? 'block' : 'none'} !important;
+          @media (min-width: 769px) {
+            .mobile-only { display: none !important; }
           }
-          .prof-logo-container { padding: 24px !important; }
-          .prof-nav { display: flex; flex-direction: column !important; overflow-y: auto !important; }
-          .prof-nav a, .prof-nav div { border-left: 3px solid transparent !important; border-bottom: none !important; padding: 16px 40px !important; font-size: 14px !important; }
-          .prof-user-profile { display: flex !important; margin-top: auto; }
-          
-          .prof-header { height: auto !important; padding: 20px 24px !important; flex-wrap: wrap; gap: 16px; justify-content: space-between; position: sticky; top: 0; background: #0A0A0A; z-index: 100; border-bottom: 1px solid #1F1F1F; }
-          .prof-search { width: 100% !important; order: 3; margin-top: 8px; }
-          
-          .prof-content { padding: 24px 20px !important; overflow: visible !important; }
-          .prof-banner { padding: 48px 24px !important; height: auto !important; min-height: 280px; margin-bottom: 24px !important; }
-          .prof-banner-content { flex-direction: column; align-items: flex-start !important; text-align: left; gap: 20px !important; }
-          .prof-banner h1 { font-size: 32px !important; }
-          
-          .prof-grid-container { grid-template-columns: 1fr !important; gap: 24px !important; margin-bottom: 40px !important; }
-          .prof-narrative-box { padding: 32px 24px !important; }
-          .prof-narrative-title { font-size: 24px !important; margin-bottom: 20px !important; }
-          .prof-sub-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
-          
-          .prof-products-header { flex-direction: column; align-items: flex-start !important; gap: 12px; margin-bottom: 24px !important; }
-          .prof-products-header h2 { font-size: 28px !important; }
-          .prof-product-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
-          .prof-product-main { height: 350px !important; }
-          .prof-product-sub-grid { height: auto !important; grid-template-rows: repeat(3, 200px) !important; }
-          .prof-product-item-card { grid-column: auto !important; }
-          
-          .prof-newsletter { padding: 48px 24px !important; margin-bottom: 40px !important; }
-          .prof-newsletter h2 { font-size: 24px !important; }
-          
-          .prof-footer { flex-direction: column; gap: 32px; text-align: center; padding-top: 24px !important; }
-          .prof-footer-links { flex-wrap: wrap; justify-content: center; gap: 20px !important; }
-          .mobile-only { display: block !important; }
-        }
-        @media (min-width: 769px) {
-          .mobile-only { display: none !important; }
-        }
-      `}</style>
-      
-      {/* Mobile Sidebar Overlay */}
-      <div className="prof-overlay" onClick={() => setIsSidebarOpen(false)}></div>
+        `}</style>
+        
+        {/* Mobile Sidebar Overlay */}
+        <div className="prof-overlay" onClick={() => setIsSidebarOpen(false)}></div>
 
-      {/* Sidebar */}
-      <div style={s.sidebar} className="prof-sidebar">
-        <div style={{ ...s.logoContainer, position: 'relative' }} className="prof-logo-container">
-          <button 
-            onClick={() => setIsSidebarOpen(false)}
-            style={{ position: 'absolute', top: '24px', right: '24px', background: 'none', border: 'none', color: '#666', cursor: 'pointer' }}
-            className="mobile-only"
-          >
-            <X size={24} />
-          </button>
-          <Link to="/" style={{ textDecoration: 'none' }}><div style={s.logo}>Zizzystores.</div></Link>
-          <div style={{ fontFamily: 'Inter', fontSize: '9px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', marginTop: '8px', textTransform: 'uppercase' }}>Digital Store</div>
-        </div>
-
-        <div style={s.nav} className="prof-nav">
-          <Link to="/dashboard" style={s.navItem(false)}><LayoutGrid size={16} /> Overview</Link>
-          <Link to="/profile" style={s.navItem(true)}><User size={16} /> Profile</Link>
-          <Link to="/edit" style={s.navItem(false)}><Edit size={16} /> Edit</Link>
-        </div>
-
-        <div style={s.userProfile} className="prof-user-profile">
-          <div style={s.userAvatar}>
-            {profileData.logo_url ? (
-              <img src={profileData.logo_url} alt={profileData.owner_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            ) : (
-              <span style={{ color: '#FFF' }}>{profileData.owner_name?.charAt(0)?.toUpperCase() || 'U'}</span>
-            )}
-          </div>
-          <div>
-            <div style={{ fontSize: '12px', fontWeight: '700', color: '#FFF', letterSpacing: '0.05em', textTransform: 'uppercase' }}>{profileData.owner_name}</div>
-            <div style={{ fontSize: '10px', color: '#666', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: '4px' }}>Principal Curator</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div style={s.main}>
-        {/* Header */}
-        <div style={s.header} className="prof-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        {/* Sidebar */}
+        <div style={s.sidebar} className="prof-sidebar">
+          <div style={{ ...s.logoContainer, position: 'relative' }} className="prof-logo-container">
             <button 
-              onClick={() => setIsSidebarOpen(true)}
-              style={{ background: 'none', border: 'none', color: '#FFF', cursor: 'pointer' }}
+              onClick={() => setIsSidebarOpen(false)}
+              style={{ position: 'absolute', top: '24px', right: '24px', background: 'none', border: 'none', color: '#666', cursor: 'pointer' }}
               className="mobile-only"
             >
-              <Menu size={24} />
+              <X size={24} />
             </button>
-            <div style={s.headerTitle}>Brand Profile</div>
+            <Link to="/" style={{ textDecoration: 'none' }}><div style={s.logo}>Zizzystores.</div></Link>
+            <div style={{ fontFamily: 'Inter', fontSize: '9px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', marginTop: '8px', textTransform: 'uppercase' }}>Digital Store</div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }} className="prof-search">
-            <div style={s.searchBar} className="prof-search">
-              <Search size={14} color="#666" />
-              <input type="text" placeholder="Search ..." style={s.searchInput} />
+          <div style={s.nav} className="prof-nav">
+            <Link to="/dashboard" style={s.navItem(false)}><LayoutGrid size={16} /> Overview</Link>
+            <Link to="/profile" style={s.navItem(true)}><User size={16} /> Profile</Link>
+            <Link to="/edit" style={s.navItem(false)}><Edit size={16} /> Edit</Link>
+          </div>
+
+          <div style={s.userProfile} className="prof-user-profile">
+            <div style={s.userAvatar}>
+              {profileData.logo_url ? (
+                <img src={profileData.logo_url} alt={profileData.owner_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                <span style={{ color: '#FFF' }}>{profileData.owner_name?.charAt(0)?.toUpperCase() || 'U'}</span>
+              )}
             </div>
-            <div style={s.headerActions}>
-              {/* Removed Heart and Bookmark icons */}
+            <div>
+              <div style={{ fontSize: '12px', fontWeight: '700', color: '#FFF', letterSpacing: '0.05em', textTransform: 'uppercase' }}>{profileData.owner_name}</div>
+              <div style={{ fontSize: '10px', color: '#666', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: '4px' }}>Principal Curator</div>
             </div>
           </div>
         </div>
 
-        {/* Content Area */}
-        <div style={s.content} className="prof-content">
+        {/* Main Content */}
+        <div style={s.main}>
+          {/* Header */}
+          <div style={s.header} className="prof-header">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <button 
+                onClick={() => setIsSidebarOpen(true)}
+                style={{ background: 'none', border: 'none', color: '#FFF', cursor: 'pointer' }}
+                className="mobile-only"
+              >
+                <Menu size={24} />
+              </button>
+              <div style={s.headerTitle}>Brand Profile</div>
+            </div>
 
-          {/* Hero Banner */}
-          <div style={s.banner} className="prof-banner">
-            <div style={s.bannerBg}></div>
-            <div style={s.bannerContent} className="prof-banner-content">
-              <div style={s.brandBadge}>
-                {profileData.logo_url ? (
-                  <img src={profileData.logo_url} alt="Brand Logo" style={s.brandBadgeImg} />
-                ) : (
-                  <span style={s.brandBadgeText}>{profileData.brand_name?.charAt(0)?.toUpperCase() || 'Z'}s</span>
-                )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }} className="prof-search">
+              <div style={s.searchBar} className="prof-search">
+                <Search size={14} color="#666" />
+                <input type="text" placeholder="Search ..." style={s.searchInput} />
               </div>
-              <div>
-                <div style={{ ...s.sectionTitleBase, color: brandColor }}>Brand Identity</div>
-                <h1 style={{ fontFamily: '"Playfair Display", serif', fontStyle: 'italic', fontSize: '48px', color: '#FFF', margin: 0 }}>{profileData.brand_name}</h1>
-              </div>
+              <div style={s.headerActions}></div>
             </div>
           </div>
 
-          {/* Grid Layout */}
-          <div style={s.gridContainer} className="prof-grid-container">
-            {/* Left Column */}
-            <div>
-              <div style={s.infoBox}>
-                <div style={{ ...s.sectionTitleBase, color: brandColor }}>Detailed Brand Info</div>
-
-                <div style={s.infoItem}>
-                  <div style={s.infoLabel}>Brand Name</div>
-                  <div style={s.infoValue}>{profileData.brand_name}</div>
-                </div>
-
-                <div style={s.infoItem}>
-                  <div style={s.infoLabel}>Brand Owner</div>
-                  <div style={{ ...s.infoValue, color: '#CCC' }}>{profileData.owner_name}</div>
-                </div>
-
-                <div style={s.infoItem}>
-                  <div style={s.infoLabel}>Email Inquiry</div>
-                  <div style={{ fontSize: '12px', color: brandColor, fontWeight: '600', letterSpacing: '0.05em', textTransform: 'uppercase' }}>{profileData.email_address}</div>
-                </div>
-
-                <div style={{ ...s.infoItem, marginBottom: 0 }}>
-                  <div style={s.infoLabel}>Concierge Line</div>
-                  <div style={{ fontSize: '12px', color: '#FFF', fontWeight: '500', letterSpacing: '0.05em' }}>{profileData.phone_number}</div>
-                </div>
-              </div>
-
-              <div style={s.infoBox}>
-                <div style={{ ...s.sectionTitleBase, color: brandColor }}>Quick Connectivity</div>
-                <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-                  <ConnectivityIconWrapper url={profileData.website_url}>
-                    <Globe size={16} color="currentColor" />
-                  </ConnectivityIconWrapper>
-                  <ConnectivityIconWrapper url={profileData.instagram_url}>
-                    <InstagramIcon size={16} color="currentColor" />
-                  </ConnectivityIconWrapper>
-                  <ConnectivityIconWrapper url={profileData.twitter_url}>
-                    <TwitterIcon size={16} color="currentColor" />
-                  </ConnectivityIconWrapper>
-                  <ConnectivityIconWrapper url={profileData.facebook_url}>
-                    <FacebookIcon size={16} color="currentColor" />
-                  </ConnectivityIconWrapper>
-                  <ConnectivityIconWrapper url={profileData.tiktok_url}>
-                    <TikTokIcon size={16} color="currentColor" />
-                  </ConnectivityIconWrapper>
-                  
-                  {/* Fallback if no URLs are added */}
-                  {!profileData.website_url && !profileData.instagram_url && !profileData.twitter_url && !profileData.facebook_url && !profileData.tiktok_url && (
-                    <span style={{ fontSize: '10px', color: '#666', fontStyle: 'italic' }}>No social links configured.</span>
+          {/* Content Area */}
+          <div style={s.content} className="prof-content">
+            {/* Hero Banner */}
+            <motion.div 
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+              style={s.banner} 
+              className="prof-banner"
+            >
+              <div style={s.bannerBg}></div>
+              <div style={s.bannerContent} className="prof-banner-content">
+                <div style={s.brandBadge}>
+                  {profileData.logo_url ? (
+                    <img src={profileData.logo_url} alt="Brand Logo" style={s.brandBadgeImg} />
+                  ) : (
+                    <span style={s.brandBadgeText}>{profileData.brand_name?.charAt(0)?.toUpperCase() || 'Z'}s</span>
                   )}
                 </div>
-              </div>
-            </div>
-
-            {/* Right Column */}
-            <div style={s.narrativeBox} className="prof-narrative-box">
-              <div style={{ position: 'relative', zIndex: 1 }}>
-                <div style={{ ...s.sectionTitleBase, color: brandColor }}>The Brand Narrative</div>
-                <h2 style={s.narrativeTitle} className="prof-narrative-title">Transcending the ordinary through the Digital Atelier experience.</h2>
-                <p style={s.narrativeText} className="prof-narrative-text">
-                  {profileData.brand_narrative}
-                </p>
-
-                <div style={s.subGrid} className="prof-sub-grid">
-                  <div>
-                    <div style={s.subTitle}>Our Manifesto</div>
-                    <p style={s.subText}>
-                      {profileData.manifesto}
-                    </p>
-                  </div>
+                <div>
+                  <div style={{ ...s.sectionTitleBase, color: brandColor }}>Brand Identity</div>
+                  <h1 style={{ fontFamily: '"Playfair Display", serif', fontStyle: 'italic', fontSize: '48px', color: '#FFF', margin: 0 }}>{profileData.brand_name}</h1>
                 </div>
               </div>
-            </div>
-          </div>
+            </motion.div>
 
-          {/* The Selection */}
-          <div style={s.productsSection}>
-            <div style={{ ...s.sectionTitleBase, color: brandColor }}>The Selection</div>
-            <div style={s.productsHeader} className="prof-products-header">
-              <h2 style={s.productsTitle}>List of Items</h2>
-              <a href="/shop-brand" style={s.exploreLink}>Explore Full Inventory <ArrowRight size={14} /></a>
-            </div>
-
-            <div style={s.productGrid} className="prof-product-grid">
-              <div style={s.productMain} className="prof-product-main"></div>
-              <div style={s.productSubGrid} className="prof-product-sub-grid">
-                {/* Top Bag */}
-                <div style={{ ...s.productItemCard, gridColumn: '1 / span 2', backgroundImage: `url("${profileData.product_2_url}")` }} className="prof-product-item-card"></div>
-                {/* Bottom Left Face */}
-                <div style={{ ...s.productItemCard, backgroundImage: `url("${profileData.product_3_url}")` }} className="prof-product-item-card"></div>
-                {/* Bottom Right Mixer */}
-                <div style={{ ...s.productItemCard, backgroundImage: `url("${profileData.product_4_url}")` }} className="prof-product-item-card"></div>
-              </div>
-            </div>
-          </div>
-
-          {/* Feedback Section */}
-          <div style={s.newsletterBox} className="prof-newsletter">
-            <div style={{ display: 'inline-block', backgroundColor: secondaryColor, padding: '16px', borderRadius: '50%', marginBottom: '16px' }}>
-              <Mail size={24} color={brandColor} />
-            </div>
-            <h2 style={s.newsletterTitle}>Feedback & Support</h2>
-            <p style={s.newsletterDesc}>
-              We value your feedback. Let us know what you're enjoying or any issues you've encountered so we can improve our curation.
-            </p>
-            <form style={s.feedbackForm} className="prof-newsletter-form" onSubmit={handleFeedbackSubmit}>
-              <textarea 
-                placeholder="What are you having issues with? Tell us about your experience..." 
-                style={s.feedbackTextarea} 
-                value={feedbackMsg}
-                onChange={(e) => setFeedbackMsg(e.target.value)}
-                required
-              />
-              <div style={{ width: '100%', maxWidth: '400px' }}>
-                <input 
-                  type="email" 
-                  placeholder="Your Email Address (Optional)" 
-                  style={s.feedbackInput} 
-                  value={userEmail}
-                  onChange={(e) => setUserEmail(e.target.value)}
-                />
-              </div>
-              <button 
-                type="submit" 
-                disabled={isSubmitting} 
-                style={{ 
-                  ...s.feedbackBtn, 
-                  opacity: isSubmitting ? 0.7 : 1,
-                  backgroundColor: submitStatus === 'success' ? '#10B981' : (submitStatus === 'error' ? '#EF4444' : brandColor),
-                  color: submitStatus ? '#FFF' : '#000'
-                }} 
-                className="prof-newsletter-btn"
+            {/* Grid Layout */}
+            <div style={s.gridContainer} className="prof-grid-container">
+              {/* Left Column */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
               >
-                {isSubmitting ? 'SENDING...' : (submitStatus === 'success' ? 'SENT SUCCESSFULLY!' : (submitStatus === 'error' ? 'FAILED TO SEND' : 'Send Feedback'))}
-              </button>
-            </form>
-          </div>
+                <div style={s.infoBox}>
+                  <div style={{ ...s.sectionTitleBase, color: brandColor }}>Detailed Brand Info</div>
+                  <div style={s.infoItem}>
+                    <div style={s.infoLabel}>Brand Name</div>
+                    <div style={s.infoValue}>{profileData.brand_name}</div>
+                  </div>
+                  <div style={s.infoItem}>
+                    <div style={s.infoLabel}>Brand Owner</div>
+                    <div style={{ ...s.infoValue, color: '#CCC' }}>{profileData.owner_name}</div>
+                  </div>
+                  <div style={s.infoItem}>
+                    <div style={s.infoLabel}>Email Inquiry</div>
+                    <div style={{ fontSize: '12px', color: brandColor, fontWeight: '600', letterSpacing: '0.05em', textTransform: 'uppercase' }}>{profileData.email_address}</div>
+                  </div>
+                  <div style={{ ...s.infoItem, marginBottom: 0 }}>
+                    <div style={s.infoLabel}>Concierge Line</div>
+                    <div style={{ fontSize: '12px', color: '#FFF', fontWeight: '500', letterSpacing: '0.05em' }}>{profileData.phone_number}</div>
+                  </div>
+                </div>
 
-          {/* Footer Area */}
-          <div style={s.footer} className="prof-footer">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontFamily: '"Playfair Display", serif', fontSize: '14px', fontStyle: 'italic', fontWeight: 'bold', color: brandColor }}>{profileData.brand_name}</span>
-              <span style={{ fontSize: '9px', color: '#555', letterSpacing: '0.05em' }}>© {new Date().getFullYear()} DIGITAL ATELIER</span>
+                <div style={s.infoBox}>
+                  <div style={{ ...s.sectionTitleBase, color: brandColor }}>Quick Connectivity</div>
+                  <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                    <ConnectivityIconWrapper url={profileData.website_url}>
+                      <Globe size={16} color="currentColor" />
+                    </ConnectivityIconWrapper>
+                    <ConnectivityIconWrapper url={profileData.instagram_url}>
+                      <InstagramIcon size={16} color="currentColor" />
+                    </ConnectivityIconWrapper>
+                    <ConnectivityIconWrapper url={profileData.twitter_url}>
+                      <TwitterIcon size={16} color="currentColor" />
+                    </ConnectivityIconWrapper>
+                    <ConnectivityIconWrapper url={profileData.facebook_url}>
+                      <FacebookIcon size={16} color="currentColor" />
+                    </ConnectivityIconWrapper>
+                    <ConnectivityIconWrapper url={profileData.tiktok_url}>
+                      <TikTokIcon size={16} color="currentColor" />
+                    </ConnectivityIconWrapper>
+                    {!profileData.website_url && !profileData.instagram_url && !profileData.twitter_url && !profileData.facebook_url && !profileData.tiktok_url && (
+                      <span style={{ fontSize: '10px', color: '#666', fontStyle: 'italic' }}>No social links configured.</span>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Right Column */}
+              <motion.div 
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+                style={s.narrativeBox} 
+                className="prof-narrative-box"
+              >
+                <div style={{ position: 'relative', zIndex: 1 }}>
+                  <div style={{ ...s.sectionTitleBase, color: brandColor }}>The Brand Narrative</div>
+                  <h2 style={s.narrativeTitle} className="prof-narrative-title">Transcending the ordinary through the Digital Atelier experience.</h2>
+                  <p style={s.narrativeText} className="prof-narrative-text">
+                    {profileData.brand_narrative}
+                  </p>
+                  <div style={s.subGrid} className="prof-sub-grid">
+                    <div>
+                      <div style={s.subTitle}>Our Manifesto</div>
+                      <p style={s.subText}>
+                        {profileData.manifesto}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
             </div>
-            <div style={s.footerLinks} className="prof-footer-links">
-              <span style={{ cursor: 'pointer' }}>Privacy Policy</span>
-              <span style={{ cursor: 'pointer' }}>Terms of Curation</span>
-              <span style={{ cursor: 'pointer' }}>Legal Information</span>
+
+            {/* The Selection Section */}
+            <motion.div 
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              style={s.productsSection}
+            >
+              <div style={{ ...s.sectionTitleBase, color: brandColor }}>The Selection</div>
+              <div style={s.productsHeader} className="prof-products-header">
+                <h2 style={s.productsTitle}>List of Items</h2>
+                <a href="/shop-brand" style={s.exploreLink}>Explore Full Inventory <ArrowRight size={14} /></a>
+              </div>
+              <div style={s.productGrid} className="prof-product-grid">
+                <div style={s.productMain} className="prof-product-main"></div>
+                <div style={s.productSubGrid} className="prof-product-sub-grid">
+                  <div style={{ ...s.productItemCard, gridColumn: '1 / span 2', backgroundImage: `url("${profileData.product_2_url}")` }} className="prof-product-item-card"></div>
+                  <div style={{ ...s.productItemCard, backgroundImage: `url("${profileData.product_3_url}")` }} className="prof-product-item-card"></div>
+                  <div style={{ ...s.productItemCard, backgroundImage: `url("${profileData.product_4_url}")` }} className="prof-product-item-card"></div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Feedback Section */}
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.98 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              style={s.newsletterBox} 
+              className="prof-newsletter"
+            >
+              <div style={{ display: 'inline-block', backgroundColor: secondaryColor, padding: '16px', borderRadius: '50%', marginBottom: '16px' }}>
+                <Mail size={24} color={brandColor} />
+              </div>
+              <h2 style={s.newsletterTitle}>Feedback & Support</h2>
+              <p style={s.newsletterDesc}>
+                We value your feedback. Let us know what you're enjoying or any issues you've encountered so we can improve our curation.
+              </p>
+              <form style={s.feedbackForm} className="prof-newsletter-form" onSubmit={handleFeedbackSubmit}>
+                <textarea 
+                  placeholder="What are you having issues with? Tell us about your experience..." 
+                  style={s.feedbackTextarea} 
+                  value={feedbackMsg}
+                  onChange={(e) => setFeedbackMsg(e.target.value)}
+                  required
+                />
+                <div style={{ width: '100%', maxWidth: '400px' }}>
+                  <input 
+                    type="email" 
+                    placeholder="Your Email Address (Optional)" 
+                    style={s.feedbackInput} 
+                    value={userEmail}
+                    onChange={(e) => setUserEmail(e.target.value)}
+                  />
+                </div>
+                <motion.button 
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  type="submit" 
+                  disabled={isSubmitting} 
+                  style={{ 
+                    ...s.feedbackBtn, 
+                    opacity: isSubmitting ? 0.7 : 1,
+                    backgroundColor: submitStatus === 'success' ? '#10B981' : (submitStatus === 'error' ? '#EF4444' : brandColor),
+                    color: submitStatus ? '#FFF' : '#000'
+                  }} 
+                  className="prof-newsletter-btn"
+                >
+                  {isSubmitting ? 'SENDING...' : (submitStatus === 'success' ? 'SENT SUCCESSFULLY!' : (submitStatus === 'error' ? 'FAILED TO SEND' : 'Send Feedback'))}
+                </motion.button>
+              </form>
+            </motion.div>
+
+            {/* Footer Area */}
+            <div style={s.footer} className="prof-footer">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontFamily: '"Playfair Display", serif', fontSize: '14px', fontStyle: 'italic', fontWeight: 'bold', color: brandColor }}>{profileData.brand_name}</span>
+                <span style={{ fontSize: '9px', color: '#555', letterSpacing: '0.05em' }}>© {new Date().getFullYear()} DIGITAL ATELIER</span>
+              </div>
+              <div style={s.footerLinks} className="prof-footer-links">
+                <span style={{ cursor: 'pointer' }}>Privacy Policy</span>
+                <span style={{ cursor: 'pointer' }}>Terms of Curation</span>
+                <span style={{ cursor: 'pointer' }}>Legal Information</span>
+              </div>
             </div>
           </div>
-
         </div>
       </div>
-    </div>
+    </PageTransition>
   );
+
 }

@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, ShoppingCart, Menu, X, User as UserIcon, LogIn, LayoutGrid } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Navbar() {
   const [search, setSearch] = useState('');
+  const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
 
   const { user, signOut } = useAuth();
@@ -21,8 +22,15 @@ export default function Navbar() {
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener('scroll', handleScroll);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
   const handleSearch = async (e) => {
@@ -49,23 +57,46 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="navbar" style={{ height: isMenuOpen && isMobile ? 'auto' : '72px', padding: isMenuOpen && isMobile ? '20px 0' : '0' }}>
-      <div className="container flex justify-between items-center" style={{ width: '100%', flexDirection: isMenuOpen && isMobile ? 'column' : 'row', gap: isMenuOpen && isMobile ? '20px' : '0' }}>
+    <motion.nav 
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      className="navbar" 
+      style={{ 
+        height: '72px',
+        backgroundColor: scrolled ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 255, 255, 0.95)',
+        boxShadow: scrolled ? '0 10px 30px -10px rgba(0,0,0,0.1)' : 'none',
+        transition: 'all 0.3s ease'
+      }}
+    >
+      <div className="container flex justify-between items-center" style={{ width: '100%', height: '100%' }}>
         <div className="flex items-center justify-between" style={{ width: isMobile ? '100%' : 'auto', gap: isMobile ? '0' : '32px' }}>
           <Link to="/" className="font-bold flex items-center gap-2" onClick={() => setIsMenuOpen(false)} style={{ fontSize: '20px', letterSpacing: '-0.03em', color: 'inherit', textDecoration: 'none' }}>
-            <span>ZizzyStores.</span>
+            <motion.span whileHover={{ scale: 1.05 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>
+              ZizzyStores.
+            </motion.span>
           </Link>
 
-          {isMobile ? (
-            <button onClick={() => setIsMenuOpen(!isMenuOpen)} style={{ background: 'none', color: 'inherit' }}>
-              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          {isMobile && (
+            <button onClick={() => setIsMenuOpen(!isMenuOpen)} style={{ background: 'none', color: 'inherit', cursor: 'pointer', padding: '8px' }}>
+              <AnimatePresence mode="wait">
+                {isMenuOpen ? (
+                  <motion.div key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }}>
+                    <X size={24} />
+                  </motion.div>
+                ) : (
+                  <motion.div key="menu" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }}>
+                    <Menu size={24} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </button>
-          ) : null}
+          )}
         </div>
 
-        {(isMenuOpen || !isMobile) && (
-          <div className="flex items-center gap-4 mobile-nav-content" style={{ flexDirection: isMobile ? 'column' : 'row', width: isMobile ? '100%' : 'auto' }}>
-            <div className="flex items-center gap-2" style={{ background: 'var(--bg-gray)', padding: '8px 16px', borderRadius: 'var(--radius-md)', width: isMobile ? '100%' : 'auto' }}>
+        {/* Desktop Nav */}
+        {!isMobile && (
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2" style={{ background: 'var(--bg-gray)', padding: '8px 16px', borderRadius: 'var(--radius-md)' }}>
               <Search size={16} className="text-muted" />
               <input
                 type="text"
@@ -73,38 +104,102 @@ export default function Navbar() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onKeyDown={handleSearch}
-                style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: '14px', width: isMobile ? '100%' : '150px' }}
+                style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: '14px', width: '180px' }}
               />
             </div>
 
-            <div className="flex items-center gap-4" style={{ width: isMobile ? '100%' : 'auto', justifyContent: isMobile ? 'center' : 'flex-start' }}>
+            <div className="flex items-center gap-4">
               {user ? (
                 <>
-                  <Link to="/dashboard" onClick={() => setIsMenuOpen(false)} className="font-semibold flex items-center gap-2" style={{ fontSize: '14px', textDecoration: 'none', color: 'inherit' }}>
-                    {isMobile ? <LayoutGrid size={18} /> : null}
-                    <span>Dashboard</span>
+                  <Link to="/dashboard" className="font-semibold" style={{ fontSize: '14px', textDecoration: 'none', color: 'inherit' }}>
+                    Dashboard
                   </Link>
-                  <button onClick={handleLogout} className="btn btn-outline" style={{ fontSize: '14px', padding: '8px 16px', cursor: 'pointer', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', background: 'transparent' }}>
+                  <motion.button 
+                    whileHover={{ scale: 1.02 }} 
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleLogout} 
+                    className="btn btn-outline" 
+                    style={{ fontSize: '14px', padding: '8px 16px' }}
+                  >
                     Logout
-                  </button>
+                  </motion.button>
                 </>
               ) : (
                 <>
-                  <Link to="/auth?mode=signin" onClick={() => setIsMenuOpen(false)} className="font-semibold flex items-center gap-2" style={{ fontSize: '14px', textDecoration: 'none', color: 'inherit' }}>
-                    {isMobile ? <LogIn size={18} /> : null}
-                    <span>Sign In</span>
+                  <Link to="/auth?mode=signin" className="font-semibold" style={{ fontSize: '14px', textDecoration: 'none', color: 'inherit' }}>
+                    Sign In
                   </Link>
-                  <Link to="/auth?mode=signup" onClick={() => setIsMenuOpen(false)} className="btn btn-primary" style={{ textDecoration: 'none', width: isMobile ? '100%' : 'auto' }}>
-                    Get Started
-                  </Link>
+                  <motion.div whileHover={{ y: -2 }} whileTap={{ y: 0 }}>
+                    <Link to="/auth?mode=signup" className="btn btn-primary" style={{ textDecoration: 'none' }}>
+                      Get Started
+                    </Link>
+                  </motion.div>
                 </>
               )}
             </div>
-
-
           </div>
         )}
       </div>
-    </nav>
+
+      {/* Mobile Menu */}
+      <AnimatePresence>
+        {isMobile && isMenuOpen && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            style={{ 
+              position: 'absolute', 
+              top: '72px', 
+              left: 0, 
+              right: 0, 
+              backgroundColor: '#FFF', 
+              borderBottom: '1px solid var(--border-color)',
+              overflow: 'hidden',
+              zIndex: 99
+            }}
+          >
+            <div className="container flex flex-col gap-6" style={{ padding: '24px 20px' }}>
+              <div className="flex items-center gap-2" style={{ background: 'var(--bg-gray)', padding: '12px 16px', borderRadius: 'var(--radius-md)' }}>
+                <Search size={18} className="text-muted" />
+                <input
+                  type="text"
+                  placeholder="Search stores..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  onKeyDown={handleSearch}
+                  style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: '16px', width: '100%' }}
+                />
+              </div>
+
+              <div className="flex flex-col gap-4">
+                {user ? (
+                  <>
+                    <Link to="/dashboard" onClick={() => setIsMenuOpen(false)} className="font-semibold flex items-center gap-3" style={{ fontSize: '16px', padding: '12px 0' }}>
+                      <LayoutGrid size={20} />
+                      Dashboard
+                    </Link>
+                    <button onClick={handleLogout} className="btn btn-outline" style={{ width: '100%', padding: '12px' }}>
+                      Logout
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/auth?mode=signin" onClick={() => setIsMenuOpen(false)} className="font-semibold flex items-center gap-3" style={{ fontSize: '16px', padding: '12px 0' }}>
+                      <LogIn size={20} />
+                      Sign In
+                    </Link>
+                    <Link to="/auth?mode=signup" onClick={() => setIsMenuOpen(false)} className="btn btn-primary" style={{ width: '100%', padding: '12px' }}>
+                      Get Started
+                    </Link>
+                  </>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.nav>
   );
 }
+

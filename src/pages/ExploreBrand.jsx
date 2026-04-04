@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Search, Globe, Camera, Share2, Mail, ArrowRight, ArrowLeft, Heart, Bookmark, ExternalLink, Bell, ShieldCheck } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import PageTransition from '../components/PageTransition';
+import { motion } from 'framer-motion';
 
 const FacebookIcon = ({ size = 14, color = "currentColor" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke="none">
@@ -129,7 +131,8 @@ export default function ExploreBrand() {
   };
 
   return (
-    <div style={s.page}>
+    <PageTransition>
+      <div style={s.page}>
       <style>{`
         @media (max-width: 768px) {
           .explore-page { height: auto !important; overflow: visible !important; }
@@ -207,22 +210,54 @@ export default function ExploreBrand() {
         <div style={s.content} className="explore-content">
 
           {/* Top: Brand Identity + Narrative */}
-          <div style={s.banner} className="hero-banner">
-            <div style={s.bannerBg}></div>
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            style={s.banner} 
+            className="hero-banner"
+          >
+            <motion.div 
+              initial={{ scale: 1.1 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 2, ease: [0.16, 1, 0.3, 1] }}
+              style={s.bannerBg}
+            ></motion.div>
             <div style={s.bannerContent}>
-              <div style={s.brandBadge} className="brand-badge">
+              <motion.div 
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.3, duration: 0.6 }}
+                style={s.brandBadge} 
+                className="brand-badge"
+              >
                 {brand.logo_url ? (
                   <img src={brand.logo_url} alt="Brand Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
                   <span style={s.brandBadgeText}>{brand.brand_name?.charAt(0)?.toUpperCase()}s</span>
                 )}
-              </div>
+              </motion.div>
               <div>
-                <div style={{ ...s.sectionTitleBase, color: brandColor }}>Curated by ZizzyStores — premium digital ateliers only.</div>
-                <h1 style={{ fontFamily: '"Playfair Display", serif', fontStyle: 'italic', fontSize: '48px', color: '#FFF', margin: 0 }} className="hero-title">{brand.brand_name}</h1>
+                <motion.div 
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.4, duration: 0.6 }}
+                  style={{ ...s.sectionTitleBase, color: brandColor }}
+                >
+                  Curated by ZizzyStores — premium digital ateliers only.
+                </motion.div>
+                <motion.h1 
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5, duration: 0.6 }}
+                  style={{ fontFamily: '"Playfair Display", serif', fontStyle: 'italic', fontSize: '48px', color: '#FFF', margin: 0 }} 
+                  className="hero-title"
+                >
+                  {brand.brand_name}
+                </motion.h1>
               </div>
             </div>
-          </div>
+          </motion.div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.8fr) minmax(0, 1fr)', gap: '24px', marginBottom: '64px' }} className="split-layout">
             <div style={{ ...s.narrativeBox, marginBottom: 0 }} className="narrative-box">
@@ -400,6 +435,7 @@ export default function ExploreBrand() {
         </div>
       </div>
       )}
-    </div>
+      </div>
+    </PageTransition>
   );
 }

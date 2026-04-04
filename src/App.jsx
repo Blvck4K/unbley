@@ -1,25 +1,68 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import { supabase } from './lib/supabase';
 import { useState, useEffect } from 'react';
 
-import Home from './pages/Home';
-import Auth from './pages/Auth';
-import Dashboard from './pages/Dashboard';
-import Profile from './pages/Profile';
-import Edit from './pages/Edit';
-import Activation from './pages/Activation';
-import Storefront from './pages/Storefront';
-import ExploreBrand from './pages/ExploreBrand';
-import FinalizeActivation from './pages/FinalizeActivation';
-import SuccessPage from './pages/SuccessPage';
-import ShopBrand from './pages/ShopBrand';
-import Cart from './pages/Cart';
-import Checkout from './pages/Checkout';
-import ProductDetail from './pages/ProductDetail';
+// Lazy load pages for better performance
+const Home = lazy(() => import('./pages/Home'));
+const Auth = lazy(() => import('./pages/Auth'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Profile = lazy(() => import('./pages/Profile'));
+const Edit = lazy(() => import('./pages/Edit'));
+const Activation = lazy(() => import('./pages/Activation'));
+const Storefront = lazy(() => import('./pages/Storefront'));
+const ExploreBrand = lazy(() => import('./pages/ExploreBrand'));
+const FinalizeActivation = lazy(() => import('./pages/FinalizeActivation'));
+const SuccessPage = lazy(() => import('./pages/SuccessPage'));
+const ShopBrand = lazy(() => import('./pages/ShopBrand'));
+const Cart = lazy(() => import('./pages/Cart'));
+const Checkout = lazy(() => import('./pages/Checkout'));
+const ProductDetail = lazy(() => import('./pages/ProductDetail'));
+
 import ChatWidget from './components/ChatWidget';
+
+// Loading Component for Suspense
+const PageLoader = () => (
+  <div style={{
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '100vh',
+    width: '100vw',
+    backgroundColor: 'var(--bg-light)',
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    zIndex: 9999
+  }}>
+    <div className="loader-dots">
+      <div className="dot"></div>
+      <div className="dot"></div>
+      <div className="dot"></div>
+    </div>
+    <style>{`
+      .loader-dots {
+        display: flex;
+        gap: 8px;
+      }
+      .dot {
+        width: 12px;
+        height: 12px;
+        background-color: var(--primary);
+        border-radius: 50%;
+        animation: pulse 1.5s infinite ease-in-out;
+      }
+      .dot:nth-child(2) { animation-delay: 0.2s; }
+      .dot:nth-child(3) { animation-delay: 0.4s; }
+      @keyframes pulse {
+        0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
+        40% { transform: scale(1); opacity: 1; }
+      }
+    `}</style>
+  </div>
+);
 
 function App() {
   const [customBrandId, setCustomBrandId] = useState(null);
@@ -28,35 +71,37 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <Routes>
-          {/* Custom Domain Root */}
-          {isCustomDomain && customBrandId && (
-            <Route path="/" element={<ShopBrand customId={customBrandId} />} />
-          )}
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            {/* Custom Domain Root */}
+            {isCustomDomain && customBrandId && (
+              <Route path="/" element={<ShopBrand customId={customBrandId} />} />
+            )}
 
-          {/* Public Routes */}
-          <Route path="/" element={<Home />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/store" element={<Storefront />} />
-          <Route path="/explore-brand" element={<ExploreBrand />} />
-          <Route path="/explore-brand/:id" element={<ExploreBrand />} />
-          <Route path="/shop-brand" element={<ShopBrand />} />
-          <Route path="/shop-brand/:id" element={<ShopBrand />} />
-          {/* Support for friendly slugs if implementing later */}
-          <Route path="/@:slug" element={<ShopBrand />} />
-           
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/checkout" element={<Checkout />} />
-          <Route path="/product" element={<ProductDetail />} />
+            {/* Public Routes */}
+            <Route path="/" element={<Home />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/store" element={<Storefront />} />
+            <Route path="/explore-brand" element={<ExploreBrand />} />
+            <Route path="/explore-brand/:id" element={<ExploreBrand />} />
+            <Route path="/shop-brand" element={<ShopBrand />} />
+            <Route path="/shop-brand/:id" element={<ShopBrand />} />
+            {/* Support for friendly slugs if implementing later */}
+            <Route path="/@:slug" element={<ShopBrand />} />
+            
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/product" element={<ProductDetail />} />
 
-          {/* Protected Routes (require auth and Profile Completion if not /edit) */}
-          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-          <Route path="/edit" element={<ProtectedRoute><Edit /></ProtectedRoute>} />
-          <Route path="/activation" element={<ProtectedRoute><Activation /></ProtectedRoute>} />
-          <Route path="/finalize-activation" element={<ProtectedRoute><FinalizeActivation /></ProtectedRoute>} />
-          <Route path="/success" element={<ProtectedRoute><SuccessPage /></ProtectedRoute>} />
-        </Routes>
+            {/* Protected Routes (require auth and Profile Completion if not /edit) */}
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            <Route path="/edit" element={<ProtectedRoute><Edit /></ProtectedRoute>} />
+            <Route path="/activation" element={<ProtectedRoute><Activation /></ProtectedRoute>} />
+            <Route path="/finalize-activation" element={<ProtectedRoute><FinalizeActivation /></ProtectedRoute>} />
+            <Route path="/success" element={<ProtectedRoute><SuccessPage /></ProtectedRoute>} />
+          </Routes>
+        </Suspense>
         <ChatWidget />
       </BrowserRouter>
     </AuthProvider>
@@ -64,3 +109,4 @@ function App() {
 }
 
 export default App;
+

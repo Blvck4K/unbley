@@ -8,11 +8,12 @@ import Packages from '../components/Packages';
 import FAQ from '../components/FAQ';
 import CTASection from '../components/CTASection';
 import Footer from '../components/Footer';
+import PageTransition from '../components/PageTransition';
 import { MessageCircle } from 'lucide-react';
 
 export default function Home() {
   return (
-    <>
+    <PageTransition>
       <Navbar />
       <Hero />
       <Features />
@@ -45,6 +46,7 @@ export default function Home() {
       >
         <MessageCircle size={32} />
       </div>
-    </>
+    </PageTransition>
   );
 }
+

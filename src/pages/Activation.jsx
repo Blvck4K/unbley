@@ -1,6 +1,8 @@
 import React from 'react';
 import { Search, Bell, Moon, LayoutGrid, Store, User, Settings, HeadphonesIcon, TrendingUp, Package, BarChart3, CheckCircle2, ShoppingBag, ArrowUpRight, Edit, Lock, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import PageTransition from '../components/PageTransition';
+import { motion } from 'framer-motion';
 
 export default function Activation() {
   const brandColor = '#06acf8ff';
@@ -62,7 +64,8 @@ export default function Activation() {
   };
 
   return (
-    <div style={s.page} className="act-page">
+    <PageTransition>
+      <div style={s.page} className="act-page">
       <style>{`
         @media (max-width: 768px) {
           .act-page { flex-direction: column !important; height: auto !important; min-height: 100vh; overflow: visible !important; }
@@ -186,7 +189,13 @@ export default function Activation() {
 
           {/* Foreground Modal Overlay */}
           <div style={s.overlay} className="act-overlay">
-            <div style={s.modal} className="act-modal">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+              style={s.modal} 
+              className="act-modal"
+            >
               <div style={{ position: 'absolute', top: '-40px', left: '50%', transform: 'translateX(-50%)', backgroundColor: '#000', padding: '12px 24px', borderRadius: '24px', fontSize: '11px', color: '#FFF', fontWeight: '600', letterSpacing: '0.05em', border: '1px solid #1F1F1F', display: 'flex', alignItems: 'center', gap: '8px' }} className="act-modal-badge">
                 <Lock size={14} color={brandColor} /> Activate your store to start selling and unlock your dashboard
               </div>
@@ -238,9 +247,14 @@ export default function Activation() {
 
               <div style={{ fontSize: '11px', color: '#F59E0B', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '12px', textAlign: 'center', letterSpacing: '0.05em' }}>⚡ Limited spots remaining at this price</div>
               <Link to="/finalize-activation" style={{ textDecoration: 'none', display: 'block', width: '100%' }}>
-                <button style={s.activateBtn} className="act-activate-btn">
+                <motion.button 
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  style={s.activateBtn} 
+                  className="act-activate-btn"
+                >
                   Launch My Store Now <ArrowUpRight size={16} />
-                </button>
+                </motion.button>
               </Link>
               <div style={{ fontSize: '11px', color: '#888', marginTop: '12px', textAlign: 'center' }}>One-time activation — no hidden fees</div>
 
@@ -255,11 +269,12 @@ export default function Activation() {
               <div style={{ textAlign: 'center', marginTop: '24px', fontSize: '11px', color: brandColor, cursor: 'pointer', textDecoration: 'underline' }}>
                 Already paid? Refresh to unlock dashboard
               </div>
-            </div>
+            </motion.div>
           </div>
         </div>
 
       </div>
-    </div>
+      </div>
+    </PageTransition>
   );
 }

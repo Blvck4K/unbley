@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ShoppingCart, Star, Plus, Minus, Truck, ShieldCheck, ArrowRight, ArrowLeft, User, Trash2, Edit2, X, Image as ImageIcon } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
-import { useRef } from 'react';
+import PageTransition from '../components/PageTransition';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function ProductDetail() {
   const navigate = useNavigate();
@@ -349,7 +350,8 @@ export default function ProductDetail() {
   if (!product || !brand) return null;
 
   return (
-    <div style={s.page} className="detail-page">
+    <PageTransition>
+      <div style={s.page} className="detail-page">
       <style>{`
         @media (max-width: 768px) {
           .detail-header { padding: 16px 24px !important; }
@@ -392,15 +394,23 @@ export default function ProductDetail() {
 
         {/* Hero Section */}
         <div style={s.heroLayout} className="detail-hero">
-          <div style={s.imageGallery} className="detail-gallery">
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            style={s.imageGallery} 
+            className="detail-gallery"
+          >
             <div style={{ display: 'flex', flexDirection: isMobile ? 'column-reverse' : 'row', gap: '24px', width: '100%' }}>
               
               {/* Thumbnails */}
               {imageUrls.length > 1 && (
                 <div style={{ display: 'flex', flexDirection: isMobile ? 'row' : 'column', gap: '12px', overflowX: isMobile ? 'auto' : 'visible', paddingBottom: isMobile ? '8px' : '0' }}>
                   {imageUrls.map((url, index) => (
-                    <div 
+                    <motion.div 
                       key={index} 
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
                       onClick={() => setActiveImg(index)}
                       style={{ 
                         width: isMobile ? '60px' : '80px', 
@@ -414,34 +424,58 @@ export default function ProductDetail() {
                       }}
                     >
                       <img src={url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={`Thumb ${index}`} />
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
               )}
 
               {/* Main Image */}
               <div style={{ ...s.mainImageWrap, flex: 1 }} className="detail-main-img">
-                {imageUrls.length > 0 ? (
-                  <img src={imageUrls[activeImg] || imageUrls[0]} alt={product.title} style={s.mainImage} />
-                ) : (
-                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: borderColor, fontSize: '12px', letterSpacing: '0.1em' }}>NO ASSET IMAGE PROVIDED</div>
-                )}
+                <AnimatePresence mode="wait">
+                  <motion.img 
+                    key={activeImg}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.4 }}
+                    src={imageUrls[activeImg] || imageUrls[0]} 
+                    alt={product.title} 
+                    style={s.mainImage} 
+                  />
+                </AnimatePresence>
 
                 {isOwner && (
                   <div style={{ position: 'absolute', top: '16px', right: '16px', display: 'flex', gap: '8px', zIndex: 20 }}>
-                    <div style={s.editBtn} onClick={handleEditClick} title="Edit Asset Configuration">
+                    <motion.div 
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      style={s.editBtn} 
+                      onClick={handleEditClick} 
+                      title="Edit Asset Configuration"
+                    >
                       <Edit2 size={20} />
-                    </div>
-                    <div style={s.deleteBtn} onClick={handleDeleteProduct} title="Delete Asset">
+                    </motion.div>
+                    <motion.div 
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      style={s.deleteBtn} 
+                      onClick={handleDeleteProduct} 
+                      title="Delete Asset"
+                    >
                       <Trash2 size={20} />
-                    </div>
+                    </motion.div>
                   </div>
                 )}
               </div>
             </div>
-          </div>
+          </motion.div>
 
-          <div style={s.productDetails}>
+          <motion.div 
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            style={s.productDetails}
+          >
             {product.tag && <div style={s.tag}>{product.tag}</div>}
             <h1 style={s.title}>{product.title}</h1>
             <div style={s.price}>₦{parseFloat(product.price).toLocaleString()}</div>
@@ -459,10 +493,24 @@ export default function ProductDetail() {
                     <div style={s.qtyValue}>{qty}</div>
                     <button style={s.qtyBtn} onClick={() => setQty(qty + 1)}><Plus size={14} /></button>
                   </div>
-                  <button style={s.addBtn} onClick={handleAddToCart}>Bag Asset</button>
+                  <motion.button 
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    style={s.addBtn} 
+                    onClick={handleAddToCart}
+                  >
+                    Bag Asset
+                  </motion.button>
                 </div>
 
-                <button style={s.buyBtn} onClick={handleBuyNow}>Acquire Immediately</button>
+                <motion.button 
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  style={s.buyBtn} 
+                  onClick={handleBuyNow}
+                >
+                  Acquire Immediately
+                </motion.button>
 
                 <div style={s.trustRow}>
                   <div style={s.trustItem}><Truck size={14} /> Global Priority Transit</div>
@@ -470,7 +518,7 @@ export default function ProductDetail() {
                 </div>
               </>
             )}
-          </div>
+          </motion.div>
         </div>
 
         {/* Related Assets Map */}
@@ -557,6 +605,7 @@ export default function ProductDetail() {
         </div>
       )}
 
-    </div>
+      </div>
+    </PageTransition>
   );
 }
