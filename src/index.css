@@ -78,6 +78,15 @@ button {
   font-weight: 600;
 }
 
+
+.font-serif {
+  font-family: 'Playfair Display', serif;
+}
+
+.font-normal {
+  font-style: normal !important;
+}
+
 /* Flex & Grid Layouts */
 .flex {
   display: flex;
@@ -205,11 +214,13 @@ button {
 }
 
 .hero-title {
+  font-family: 'Poppins', sans-serif;
   font-size: 56px;
   font-weight: 800;
   line-height: 1.1;
   letter-spacing: -0.02em;
   margin-bottom: 24px;
+  font-style: normal;
 }
 
 .hero-subtitle {
@@ -271,9 +282,11 @@ button {
 }
 
 .section-head h2 {
+  font-family: 'Poppins', sans-serif;
   font-size: 32px;
   font-weight: 700;
   margin-bottom: 16px;
+  font-style: normal;
 }
 
 .feature-card {
@@ -296,6 +309,7 @@ button {
 }
 
 .feature-card h3 {
+  font-family: 'Poppins', sans-serif;
   font-size: 18px;
   font-weight: 600;
   margin-bottom: 12px;
@@ -367,6 +381,7 @@ button {
 }
 
 .cta-title {
+  font-family: 'Poppins', sans-serif;
   font-size: 40px;
   font-weight: 800;
   margin-bottom: 24px;
@@ -512,12 +527,15 @@ button {
   padding-left: max(24px, calc((100vw - 1280px) / 2 + 24px));
   padding-right: 24px;
   scroll-snap-type: x mandatory;
-  -ms-overflow-style: none; /* IE width fix */
-  scrollbar-width: none; /* Firefox width fix */
+  -ms-overflow-style: none;
+  /* IE width fix */
+  scrollbar-width: none;
+  /* Firefox width fix */
 }
 
 .reviews-scroll-container::-webkit-scrollbar {
-  display: none; /* Chrome, Safari and Opera */
+  display: none;
+  /* Chrome, Safari and Opera */
 }
 
 .reviews-track {

@@ -332,7 +332,7 @@ _Sent via Zizzystores Management Dashboard_
     textarea: { width: '100%', backgroundColor: '#0A0A0A', border: '1px solid #1F1F1F', padding: '20px', color: '#CCC', fontSize: '14px', outline: 'none', minHeight: '120px', resize: 'vertical', lineHeight: '1.6', borderRadius: '4px' },
 
     logoPreview: { width: '120px', height: '120px', backgroundColor: brandColor, margin: '0 auto 32px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '16px', overflow: 'hidden' },
-    logoInitial: { fontFamily: '"Playfair Display", serif', fontSize: '48px', color: '#000', fontStyle: 'italic' },
+    logoInitial: { fontFamily: '"Playfair Display", serif', fontSize: '48px', color: '#000' },
     uploadBtn: { width: '100%', backgroundColor: 'transparent', border: '1px solid #333', color: '#888', padding: '16px', fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', cursor: 'pointer', textTransform: 'uppercase', transition: 'all 0.2s', marginTop: '24px' },
 
     socialRow: { display: 'flex', alignItems: 'center', gap: '16px', borderBottom: '1px solid #1F1F1F', paddingBottom: '16px', marginBottom: '24px' },

@@ -107,14 +107,14 @@ export default function Dashboard() {
     userAvatar: { width: '40px', height: '40px', backgroundColor: '#333', overflow: 'hidden', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' },
     main: { flex: 1, display: 'flex', flexDirection: 'column' },
     header: { height: '80px', padding: '0 80px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #1F1F1F' },
-    headerTitle: { fontFamily: '"Playfair Display", serif', fontSize: '24px', color: '#FFF', fontStyle: 'italic' },
+    headerTitle: { fontFamily: '"Playfair Display", serif', fontSize: '24px', color: '#FFF' },
     searchBar: { display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#111', padding: '10px 16px', width: '320px', border: '1px solid #1F1F1F' },
     searchInput: { background: 'transparent', border: 'none', color: '#FFF', fontSize: '12px', outline: 'none', width: '100%', letterSpacing: '0.05em' },
     headerActions: { display: 'flex', alignItems: 'center', gap: '32px' },
     premiumBadge: { color: brandColor, fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', padding: '4px 8px', border: `1px solid ${brandColor}` },
     content: { padding: '80px', flex: 1, overflowY: 'auto' },
     sectionLabel: { fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', marginBottom: '16px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '8px' },
-    mainTitle: { fontFamily: '"Playfair Display", serif', fontStyle: 'italic', fontSize: '48px', fontWeight: '400', color: '#FFFFFF', marginBottom: '16px', letterSpacing: '-0.02em', lineHeight: '1.2' },
+    mainTitle: { fontFamily: '"Playfair Display", serif', fontSize: '48px', fontWeight: '400', color: '#FFFFFF', marginBottom: '16px', letterSpacing: '-0.02em', lineHeight: '1.2' },
     statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '32px', marginTop: '64px' },
     card: { backgroundColor: '#111', padding: '32px', border: '1px solid #1F1F1F', position: 'relative', overflow: 'hidden' },
     cardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' },
@@ -292,7 +292,7 @@ export default function Dashboard() {
                       {profileData.logo_url ? (
                         <img src={profileData.logo_url} alt="Brand Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       ) : (
-                        <span style={{ fontSize: '48px', color: '#FFF', fontFamily: '"Playfair Display", serif', fontStyle: 'italic' }}>{profileData.brand_name?.charAt(0)?.toUpperCase() || 'Z'}</span>
+                        <span style={{ fontSize: '48px', color: '#FFF', fontFamily: '"Playfair Display", serif' }}>{profileData.brand_name?.charAt(0)?.toUpperCase() || 'Z'}</span>
                       )}
                     </div>
                     <div>
@@ -319,7 +319,7 @@ export default function Dashboard() {
                         {profileData.website_url.replace(/^https?:\/\//, '')} <ArrowUpRight size={14} style={{ marginLeft: '6px' }} />
                       </a>
                     ) : (
-                      <span style={{ fontSize: '12px', color: '#888', fontStyle: 'italic' }}>activation pending</span>
+                      <span style={{ fontSize: '12px', color: '#888' }}>activation pending</span>
                     )}
                   </div>
                 </motion.div>
@@ -373,7 +373,7 @@ export default function Dashboard() {
                 <div style={s.bottomGrid} className="dash-bottom-grid">
                   <motion.div variants={itemVariants} style={{ backgroundColor: '#111', border: '1px solid #1F1F1F' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '32px', borderBottom: '1px solid #1F1F1F' }}>
-                      <div style={{ fontFamily: '"Playfair Display", serif', fontSize: '24px', color: '#FFF', fontStyle: 'italic' }}>Recent Orders</div>
+                      <div style={{ fontFamily: '"Playfair Display", serif', fontSize: '24px', color: '#FFF' }}>Recent Orders</div>
                       {metrics.recentOrders.length > 0 && <div style={{ fontSize: '10px', color: '#FFF', letterSpacing: '0.1em', fontWeight: '700', textTransform: 'uppercase', cursor: 'pointer', borderBottom: '1px solid #FFF' }}>View Full Ledger</div>}
                     </div>
 

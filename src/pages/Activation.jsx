@@ -23,7 +23,7 @@ export default function Activation() {
     topBannerBtn: { backgroundColor: brandColor, color: '#000', padding: '10px 20px', fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase', border: 'none', cursor: 'pointer', borderRadius: '4px' },
 
     header: { height: '80px', padding: '0 80px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #1F1F1F' },
-    headerTitle: { fontFamily: '"Playfair Display", serif', fontSize: '24px', color: '#FFF', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '12px' },
+    headerTitle: { fontFamily: '"Playfair Display", serif', fontSize: '24px', color: '#FFF', display: 'flex', alignItems: 'center', gap: '12px' },
     searchBar: { display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#111', padding: '10px 16px', width: '320px', border: '1px solid #1F1F1F' },
     searchInput: { background: 'transparent', border: 'none', color: '#FFF', fontSize: '12px', outline: 'none', width: '100%', letterSpacing: '0.05em' },
     headerActions: { display: 'flex', alignItems: 'center', gap: '32px' },
@@ -37,7 +37,7 @@ export default function Activation() {
     modal: { backgroundColor: '#0A0A0A', border: '1px solid #1F1F1F', width: '100%', maxWidth: '540px', borderRadius: '12px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.8)', padding: '48px', position: 'relative' },
 
     stepLabel: { fontSize: '10px', fontWeight: '700', color: brandColor, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '16px' },
-    modalTitle: { fontFamily: '"Playfair Display", serif', fontSize: '32px', color: '#FFF', fontStyle: 'italic', marginBottom: '12px' },
+    modalTitle: { fontFamily: '"Playfair Display", serif', fontSize: '32px', color: '#FFF', marginBottom: '12px' },
     modalDesc: { color: '#888', fontSize: '14px', lineHeight: '1.6', marginBottom: '40px' },
 
     priceBox: { backgroundColor: '#111', border: '1px solid #1F1F1F', padding: '24px', borderRadius: '8px', marginBottom: '32px', textAlign: 'center' },
@@ -54,7 +54,7 @@ export default function Activation() {
 
     // Abstracted Dashboard styles just for background visuals
     sectionLabel: { fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', marginBottom: '16px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '8px' },
-    mainTitle: { fontFamily: '"Playfair Display", serif', fontStyle: 'italic', fontSize: '48px', fontWeight: '400', color: '#FFFFFF', marginBottom: '16px', letterSpacing: '-0.02em', lineHeight: '1.2' },
+    mainTitle: { fontFamily: '"Playfair Display", serif', fontSize: '48px', fontWeight: '400', color: '#FFFFFF', marginBottom: '16px', letterSpacing: '-0.02em', lineHeight: '1.2' },
     statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '32px', marginTop: '64px' },
     card: { backgroundColor: '#111', padding: '32px', border: '1px solid #1F1F1F' },
     cardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' },

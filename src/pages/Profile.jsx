@@ -139,7 +139,7 @@ export default function Profile() {
     bannerBg: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundImage: `url("${profileData.banner_url || "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1200&q=80"}")`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.2 },
     bannerContent: { position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: '32px', marginTop: 'auto' },
     brandBadge: { width: '80px', height: '80px', border: `2px solid ${brandColor}`, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: secondaryColor, overflow: 'hidden' },
-    brandBadgeText: { fontFamily: '"Playfair Display", serif', fontSize: '24px', fontStyle: 'italic', color: brandColor },
+    brandBadgeText: { fontFamily: '"Playfair Display", serif', fontSize: '24px', color: brandColor },
     brandBadgeImg: { width: '100%', height: '100%', objectFit: 'cover' },
 
     sectionTitleBase: { fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '16px' },
@@ -148,10 +148,10 @@ export default function Profile() {
     infoBox: { backgroundColor: secondaryColor, border: '1px solid #1F1F1F', padding: '32px', marginBottom: '24px' },
     infoItem: { marginBottom: '24px' },
     infoLabel: { fontSize: '9px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', textTransform: 'uppercase', marginBottom: '8px' },
-    infoValue: { fontSize: '14px', color: '#FFF', fontFamily: '"Playfair Display", serif', fontStyle: 'italic' },
+    infoValue: { fontSize: '14px', color: '#FFF', fontFamily: '"Playfair Display", serif' },
 
     narrativeBox: { backgroundColor: secondaryColor, border: '1px solid #1F1F1F', padding: '48px', position: 'relative' },
-    narrativeTitle: { fontFamily: '"Playfair Display", serif', fontSize: '32px', fontStyle: 'italic', color: '#FFF', lineHeight: '1.2', marginBottom: '24px', maxWidth: '80%' },
+    narrativeTitle: { fontFamily: '"Playfair Display", serif', fontSize: '32px', color: '#FFF', lineHeight: '1.2', marginBottom: '24px', maxWidth: '80%' },
     narrativeText: { color: '#888', fontSize: '14px', lineHeight: '1.6', marginBottom: '48px', maxWidth: '90%' },
 
     subGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' },
@@ -160,7 +160,7 @@ export default function Profile() {
 
     productsSection: { marginBottom: '64px' },
     productsHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '32px' },
-    productsTitle: { fontFamily: '"Playfair Display", serif', fontSize: '36px', fontStyle: 'italic', color: '#FFF' },
+    productsTitle: { fontFamily: '"Playfair Display", serif', fontSize: '36px', color: '#FFF' },
     exploreLink: { fontSize: '12px', color: '#FFF', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px', letterSpacing: '0.05em' },
 
     productGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' },
@@ -169,7 +169,7 @@ export default function Profile() {
     productItemCard: { backgroundColor: secondaryColor, backgroundSize: 'cover', backgroundPosition: 'center', borderRadius: '4px' },
 
     newsletterBox: { border: `2px solid ${brandColor}`, padding: '64px', textAlign: 'center', backgroundColor: primaryColor, marginBottom: '64px' },
-    newsletterTitle: { fontFamily: '"Playfair Display", serif', fontSize: '32px', fontStyle: 'italic', color: '#FFF', marginBottom: '16px', marginTop: '24px' },
+    newsletterTitle: { fontFamily: '"Playfair Display", serif', fontSize: '32px', color: '#FFF', marginBottom: '16px', marginTop: '24px' },
     newsletterDesc: { color: '#888', fontSize: '14px', marginBottom: '40px', maxWidth: '500px', margin: '0 auto 40px' },
     feedbackForm: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px', maxWidth: '600px', margin: '0 auto' },
     feedbackTextarea: { width: '100%', backgroundColor: secondaryColor, border: '1px solid #333', color: '#FFF', fontSize: '14px', padding: '16px', outline: 'none', borderRadius: '4px', minHeight: '120px', resize: 'vertical', fontFamily: 'inherit' },
@@ -402,7 +402,7 @@ _Sent via Zizzystores Digital Atelier_
                 </div>
                 <div>
                   <div style={{ ...s.sectionTitleBase, color: brandColor }}>Brand Identity</div>
-                  <h1 style={{ fontFamily: '"Playfair Display", serif', fontStyle: 'italic', fontSize: '48px', color: '#FFF', margin: 0 }}>{profileData.brand_name}</h1>
+                  <h1 style={{ fontFamily: '"Playfair Display", serif', fontSize: '48px', color: '#FFF', margin: 0 }}>{profileData.brand_name}</h1>
                 </div>
               </div>
             </motion.div>
@@ -454,7 +454,7 @@ _Sent via Zizzystores Digital Atelier_
                       <TikTokIcon size={16} color="currentColor" />
                     </ConnectivityIconWrapper>
                     {!profileData.website_url && !profileData.instagram_url && !profileData.twitter_url && !profileData.facebook_url && !profileData.tiktok_url && (
-                      <span style={{ fontSize: '10px', color: '#666', fontStyle: 'italic' }}>No social links configured.</span>
+                      <span style={{ fontSize: '10px', color: '#666' }}>No social links configured.</span>
                     )}
                   </div>
                 </div>
@@ -563,7 +563,7 @@ _Sent via Zizzystores Digital Atelier_
             {/* Footer Area */}
             <div style={s.footer} className="prof-footer">
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontFamily: '"Playfair Display", serif', fontSize: '14px', fontStyle: 'italic', fontWeight: 'bold', color: brandColor }}>{profileData.brand_name}</span>
+                <span style={{ fontFamily: '"Playfair Display", serif', fontSize: '14px', fontWeight: 'bold', color: brandColor }}>{profileData.brand_name}</span>
                 <span style={{ fontSize: '9px', color: '#555', letterSpacing: '0.05em' }}>© {new Date().getFullYear()} DIGITAL ATELIER</span>
               </div>
               <div style={s.footerLinks} className="prof-footer-links">

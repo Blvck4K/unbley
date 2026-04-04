@@ -83,7 +83,7 @@ export default function Auth() {
     sidebar: { width: '280px', borderRight: '1px solid #1F1F1F', padding: '60px 40px', display: 'flex', flexDirection: 'column' },
     main: { flex: 1, padding: '80px', display: 'flex', justifyContent: 'center' },
     content: { maxWidth: '580px', width: '100%' },
-    title: { fontFamily: '"Playfair Display", "Times New Roman", serif', fontStyle: 'italic', fontSize: '48px', fontWeight: '400', color: '#FFFFFF', marginBottom: '16px', letterSpacing: '-0.02em' },
+    title: { fontFamily: '"Playfair Display", "Times New Roman", serif', fontSize: '48px', fontWeight: '400', color: '#FFFFFF', marginBottom: '16px', letterSpacing: '-0.02em' },
     subtitle: { color: '#888888', fontSize: '14px', lineHeight: '1.6', marginBottom: '64px' },
     sectionLabel: { fontSize: '11px', fontWeight: '700', letterSpacing: '0.1em', color: brandColor, marginTop: '48px', marginBottom: '32px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '8px' },
     inputGroup: { marginBottom: '32px' },
@@ -315,7 +315,7 @@ export default function Auth() {
         {/* Right Side Quote Box */}
         <div className="auth-quote-box" style={{ width: '400px', backgroundColor: '#070707', borderLeft: '1px solid #1F1F1F', padding: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ padding: '60px 40px', border: '1px solid #1F1F1F', backgroundColor: '#0C0C0C' }}>
-            <p style={{ fontFamily: '"Playfair Display", serif', fontStyle: 'italic', fontSize: '24px', lineHeight: '1.5', color: '#E5E5E5', marginBottom: '32px' }}>
+            <p style={{ fontFamily: '"Playfair Display", serif', fontSize: '24px', lineHeight: '1.5', color: '#E5E5E5', marginBottom: '32px' }}>
               "Your brand is what people say about you when you're not in the room."
             </p>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '10px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
