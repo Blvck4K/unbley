@@ -12,12 +12,12 @@ export default function Features() {
     {
       icon: <CreditCard size={24} />,
       title: 'Payment integration',
-      description: 'Secure, seamless payment gateways configured to process your sales globally with zero friction. And would be fully managed by you.'
+      description: 'Secure, seamless payment gateways configured to process your sales globally with zero friction.'
     },
     {
       icon: <Globe size={24} />,
-      title: 'Free domain (.store)',
-      description: 'Establish your brand identity online immediately with a complimentary .store domain name included.'
+      title: 'Free domain (.top)',
+      description: 'Establish your brand identity online immediately with a complimentary .top domain name included.'
     },
     {
       icon: <Smartphone size={24} />,
@@ -48,8 +48,8 @@ export default function Features() {
 
   const cardVariants = {
     hidden: { opacity: 0, y: 30 },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       y: 0,
       transition: { duration: 0.6, ease: "easeOut" }
     }
@@ -58,7 +58,7 @@ export default function Features() {
   return (
     <section className="features-section">
       <div className="container">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
@@ -68,8 +68,8 @@ export default function Features() {
           <h2>Value Built Into Every Setup</h2>
           <p className="text-secondary">Architecting a faster way to launch digital retail.</p>
         </motion.div>
-        
-        <motion.div 
+
+        <motion.div
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
@@ -77,8 +77,8 @@ export default function Features() {
           className="grid grid-cols-3 gap-6"
         >
           {features.map((feature, i) => (
-            <motion.div 
-              key={i} 
+            <motion.div
+              key={i}
               variants={cardVariants}
               whileHover={{ y: -8, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.05)" }}
               className="feature-card"

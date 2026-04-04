@@ -22,7 +22,7 @@ export default function CTASection() {
             </div>
           </div>
           <button className="btn" style={{ backgroundColor: 'white', color: 'black', marginTop: '40px', padding: '16px 32px' }}>
-            Start Your Sandbox Let's Go
+            <a href="/auth">Start Your Sandbox Let's Go</a>
           </button>
         </div>
         <div className="cta-visual" style={{
