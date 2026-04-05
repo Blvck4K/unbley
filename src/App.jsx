@@ -20,6 +20,11 @@ const ShopBrand = lazy(() => import('./pages/ShopBrand'));
 const Cart = lazy(() => import('./pages/Cart'));
 const Checkout = lazy(() => import('./pages/Checkout'));
 const ProductDetail = lazy(() => import('./pages/ProductDetail'));
+const SellDigitalGoods = lazy(() => import('./pages/SellDigitalGoods'));
+const CreatorPlatform = lazy(() => import('./pages/CreatorPlatform'));
+const CreateOnlineStore = lazy(() => import('./pages/CreateOnlineStore'));
+const ShopifyAlternative = lazy(() => import('./pages/ShopifyAlternative'));
+const AffordableEcommerce = lazy(() => import('./pages/AffordableEcommerce'));
 
 import ChatWidget from './components/ChatWidget';
 
@@ -92,6 +97,11 @@ function App() {
             <Route path="/cart" element={<Cart />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/product" element={<ProductDetail />} />
+            <Route path="/sell-digital-products" element={<SellDigitalGoods />} />
+            <Route path="/creator-platform" element={<CreatorPlatform />} />
+            <Route path="/create-online-store" element={<CreateOnlineStore />} />
+            <Route path="/shopify-alternative" element={<ShopifyAlternative />} />
+            <Route path="/affordable-ecommerce-platform" element={<AffordableEcommerce />} />
 
             {/* Protected Routes (require auth and Profile Completion if not /edit) */}
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />

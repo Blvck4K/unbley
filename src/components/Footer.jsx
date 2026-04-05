@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 export default function Footer() {
   return (
@@ -12,11 +13,13 @@ export default function Footer() {
             <p style={{ maxWidth: '400px', margin: '16px auto 0' }}>The world's most trusted marketplace for launching high-value digital storefronts.</p>
           </div>
           <div className="footer-col" style={{ textAlign: 'center' }}>
-            <h4>Marketplace</h4>
-            <ul>
-              <li><a href="#">SaaS Platforms</a></li>
-              <li><a href="#">E-commerce</a></li>
-              <li><a href="#">Content Sites</a></li>
+            <h4>Solutions</h4>
+            <ul style={{ listStyle: 'none', padding: 0 }}>
+              <li style={{ marginBottom: '8px' }}><Link to="/sell-digital-products" style={{ textDecoration: 'none', color: 'inherit', fontSize: '14px' }}>Sell Digital Products</Link></li>
+              <li style={{ marginBottom: '8px' }}><Link to="/creator-platform" style={{ textDecoration: 'none', color: 'inherit', fontSize: '14px' }}>Creative Brands</Link></li>
+              <li style={{ marginBottom: '8px' }}><Link to="/create-online-store" style={{ textDecoration: 'none', color: 'inherit', fontSize: '14px' }}>Create Online Store</Link></li>
+              <li style={{ marginBottom: '8px' }}><Link to="/shopify-alternative" style={{ textDecoration: 'none', color: 'inherit', fontSize: '14px' }}>Shopify Alternative</Link></li>
+              <li style={{ marginBottom: '8px' }}><Link to="/affordable-ecommerce-platform" style={{ textDecoration: 'none', color: 'inherit', fontSize: '14px' }}>Affordable Ecommerce</Link></li>
             </ul>
           </div>
           <div className="footer-col" style={{ textAlign: 'center' }}>

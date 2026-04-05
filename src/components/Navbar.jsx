@@ -12,6 +12,7 @@ export default function Navbar() {
 
   const { user, signOut } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSolutionsOpen, setIsSolutionsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   const handleLogout = async () => {
@@ -95,7 +96,80 @@ export default function Navbar() {
 
         {/* Desktop Nav */}
         {!isMobile && (
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-8">
+            <div 
+              style={{ position: 'relative' }}
+              onMouseEnter={() => setIsSolutionsOpen(true)}
+              onMouseLeave={() => setIsSolutionsOpen(false)}
+            >
+              <button 
+                className="flex items-center gap-1 font-semibold" 
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '12px 0' }}
+              >
+                Solutions
+                <motion.span animate={{ rotate: isSolutionsOpen ? 180 : 0 }}>
+                  <svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </motion.span>
+              </button>
+              
+              <AnimatePresence>
+                {isSolutionsOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: '-20px',
+                      width: '260px',
+                      backgroundColor: 'white',
+                      borderRadius: 'var(--radius-lg)',
+                      boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)',
+                      padding: '16px',
+                      border: '1px solid var(--border-color)',
+                      zIndex: 1000
+                    }}
+                  >
+                    <Link to="/sell-digital-products" className="solutions-item">
+                      <div className="font-bold">Digital Products</div>
+                      <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>Ebooks, software, and courses.</p>
+                    </Link>
+                    <Link to="/creator-platform" className="solutions-item">
+                      <div className="font-bold">Creative Brands</div>
+                      <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>Artisans and boutique shops.</p>
+                    </Link>
+                    <div style={{ borderTop: '1px solid var(--border-color)', margin: '8px 0' }}></div>
+                    <Link to="/create-online-store" className="solutions-item">
+                      <div className="font-bold">Create Store</div>
+                      <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>Launch in under 5 minutes.</p>
+                    </Link>
+                    <Link to="/shopify-alternative" className="solutions-item">
+                      <div className="font-bold">Shopify Alternative</div>
+                      <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>Save thousands in yearly fees.</p>
+                    </Link>
+                    <Link to="/affordable-ecommerce-platform" className="solutions-item">
+                      <div className="font-bold">Price & Value</div>
+                      <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>High value for any budget.</p>
+                    </Link>
+                    <style>{`
+                      .solutions-item {
+                        display: block;
+                        padding: 12px;
+                        border-radius: var(--radius-md);
+                        transition: background 0.2s ease;
+                        text-decoration: none;
+                        color: inherit;
+                      }
+                      .solutions-item:hover {
+                        background-color: var(--bg-gray);
+                      }
+                    `}</style>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
             <div className="flex items-center gap-2" style={{ background: 'var(--bg-gray)', padding: '8px 16px', borderRadius: 'var(--radius-md)' }}>
               <Search size={16} className="text-muted" />
               <input
@@ -104,7 +178,7 @@ export default function Navbar() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onKeyDown={handleSearch}
-                style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: '14px', width: '180px' }}
+                style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: '14px', width: '160px' }}
               />
             </div>
 
@@ -160,6 +234,15 @@ export default function Navbar() {
             }}
           >
             <div className="container flex flex-col gap-6" style={{ padding: '24px 20px' }}>
+              <div className="flex flex-col gap-2">
+                <div className="font-bold" style={{ fontSize: '14px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Solutions</div>
+                <Link to="/sell-digital-products" onClick={() => setIsMenuOpen(false)} className="font-semibold" style={{ fontSize: '15px' }}>Sell Digital Products</Link>
+                <Link to="/creator-platform" onClick={() => setIsMenuOpen(false)} className="font-semibold" style={{ fontSize: '15px' }}>Creative Brands</Link>
+                <Link to="/create-online-store" onClick={() => setIsMenuOpen(false)} className="font-semibold" style={{ fontSize: '15px' }}>Create Online Store</Link>
+                <Link to="/shopify-alternative" onClick={() => setIsMenuOpen(false)} className="font-semibold" style={{ fontSize: '15px' }}>Shopify Alternative</Link>
+                <Link to="/affordable-ecommerce-platform" onClick={() => setIsMenuOpen(false)} className="font-semibold" style={{ fontSize: '15px' }}>Affordable Ecommerce</Link>
+              </div>
+
               <div className="flex items-center gap-2" style={{ background: 'var(--bg-gray)', padding: '12px 16px', borderRadius: 'var(--radius-md)' }}>
                 <Search size={18} className="text-muted" />
                 <input

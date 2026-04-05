@@ -24,7 +24,7 @@ export default function HowItWorks() {
     <section className="how-it-works-section" style={{ padding: '80px 0', backgroundColor: 'var(--bg-light)', borderBottom: '1px solid var(--border-color)' }}>
       <div className="container">
         <div style={{ textAlign: 'center', marginBottom: '64px' }}>
-          <h2 style={{ fontSize: '32px', fontWeight: '700', marginBottom: '16px' }}>How It Works</h2>
+          <h2 style={{ fontSize: '32px', fontWeight: '700', marginBottom: '16px' }}>How ZizzyStores Works</h2>
           <p className="text-secondary">Three simple steps to launch your digital storefront.</p>
         </div>
 
