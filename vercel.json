@@ -4,5 +4,12 @@
       "source": "/(.*)",
       "destination": "/index.html"
     }
+  ],
+  "redirects": [
+    {
+      "source": "https://www.zizzystores.com/:path*",
+      "destination": "https://zizzystores.com/:path*",
+      "permanent": true
+    }
   ]
 }
