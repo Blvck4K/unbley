@@ -24,6 +24,7 @@ export default function ProductDetail() {
   const isCustomer = user?.user_metadata?.role === 'customer' || user?.user_metadata?.userType === 'customer';
   const [cartCount, setCartCount] = useState(0);
   const [activeImg, setActiveImg] = useState(0);
+  const [selectedSize, setSelectedSize] = useState('');
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
@@ -132,7 +133,12 @@ export default function ProductDetail() {
         existingCart = []; // Wipe it clear for the new dedicated brand
       }
 
-      const existingItemIndex = existingCart.findIndex(i => i.id === product.id);
+      if (product.sizes && !selectedSize) {
+        alert("Please select a size first.");
+        return;
+      }
+
+      const existingItemIndex = existingCart.findIndex(i => i.id === product.id && i.size === selectedSize);
       
       if (existingItemIndex > -1) {
         existingCart[existingItemIndex].qty += qty;
@@ -140,7 +146,8 @@ export default function ProductDetail() {
         existingCart.push({
           id: product.id,
           name: product.title,
-          variant: product.tag || 'Standard Edition',
+          variant: selectedSize ? `${product.tag || 'Standard Edition'} (${selectedSize})` : (product.tag || 'Standard Edition'),
+          size: selectedSize,
           price: product.price,
           qty: qty,
           img: product.image_url?.split(',')[0] || '',
@@ -173,7 +180,12 @@ export default function ProductDetail() {
         existingCart = [];
       }
 
-      const existingItemIndex = existingCart.findIndex(i => i.id === product.id);
+      if (product.sizes && !selectedSize) {
+        alert("Please select a size first.");
+        return;
+      }
+
+      const existingItemIndex = existingCart.findIndex(i => i.id === product.id && i.size === selectedSize);
       
       if (existingItemIndex > -1) {
         existingCart[existingItemIndex].qty += qty;
@@ -181,7 +193,8 @@ export default function ProductDetail() {
         existingCart.push({
           id: product.id,
           name: product.title,
-          variant: product.tag || 'Standard Edition',
+          variant: selectedSize ? `${product.tag || 'Standard Edition'} (${selectedSize})` : (product.tag || 'Standard Edition'),
+          size: selectedSize,
           price: product.price,
           qty: qty,
           img: product.image_url?.split(',')[0] || '',
@@ -483,6 +496,35 @@ export default function ProductDetail() {
             <p style={s.description}>
               {product.description || "The designer of this asset chose to let the geometry speak for itself. No accompanying narrative was provided."}
             </p>
+
+            {product.sizes && (
+              <div style={{ marginBottom: '32px' }}>
+                <div style={s.sectionLabel}>Select Size</div>
+                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                  {product.sizes.split(',').map(s => s.trim()).filter(Boolean).map((size) => (
+                    <motion.div
+                      key={size}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setSelectedSize(size)}
+                      style={{
+                        padding: '12px 24px',
+                        border: `1px solid ${selectedSize === size ? accentColor : borderColor}`,
+                        backgroundColor: selectedSize === size ? `${accentColor}1A` : 'transparent',
+                        color: selectedSize === size ? accentColor : textColor,
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        borderRadius: '4px',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      {size}
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {!isOwner && (
               <>

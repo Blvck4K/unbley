@@ -296,7 +296,10 @@ export default function Cart() {
                           <div style={s.itemName}>{item.name}</div>
                           <div style={s.itemPrice}>{formatPrice(item.price)}</div>
                         </div>
-                        <div style={s.itemVariant}>{item.variant}</div>
+                        <div style={s.itemVariant}>
+                          {item.variant}
+                          {item.size && <span style={{ marginLeft: '8px', color: accentColor, fontWeight: '700' }}>[SIZE: {item.size}]</span>}
+                        </div>
 
                         <div style={s.itemActions} className="cart-item-actions">
                           <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap' }}>
