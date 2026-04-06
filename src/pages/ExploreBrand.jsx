@@ -132,15 +132,35 @@ export default function ExploreBrand() {
 
   return (
     <PageTransition>
-      <div style={s.page}>
+      <div style={s.page} className="explore-page">
       <style>{`
         @media (max-width: 768px) {
-          .explore-page { height: auto !important; overflow: visible !important; }
-          .explore-header { padding: 16px 20px !important; flex-wrap: wrap; height: auto !important; gap: 16px; justify-content: center !important; }
+          .explore-page { 
+            height: auto !important; 
+            min-height: 100vh !important;
+            overflow: visible !important; 
+            display: block !important;
+          }
+          .explore-header { 
+            padding: 16px 20px !important; 
+            flex-wrap: wrap; 
+            height: auto !important; 
+            gap: 16px; 
+            justify-content: center !important; 
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background-color: #0A0A0A;
+          }
           .header-right { flex-direction: column; width: 100%; gap: 16px !important; }
           .search-bar { display: none !important; }
           .shop-btn { width: 100%; text-align: center; order: 2; }
-          .explore-content { padding: 32px 20px !important; overflow-y: visible !important; flex: none !important; height: auto !important; }
+          .explore-content { 
+            padding: 32px 20px !important; 
+            overflow: visible !important; 
+            flex: none !important; 
+            height: auto !important; 
+          }
           .hero-banner { padding: 48px 24px !important; height: auto !important; min-height: 280px; }
           .brand-badge { width: 64px !important; height: 64px !important; }
           .hero-title { font-size: 32px !important; text-align: center; }
