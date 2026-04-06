@@ -61,10 +61,113 @@ export default function Checkout() {
   const formatCurrency = (amount) => `₦${amount.toLocaleString()}`;
 
 
-  const onSuccess = (transaction) => {
-    setIsProcessing(false);
-    localStorage.removeItem('cart');
-    navigate('/checkout-success', { state: { reference: transaction.reference } });
+  const onSuccess = async (transaction) => {
+    setIsProcessing(true);
+    
+    const brandId = cartItems[0]?.brand_id;
+    if (!brandId) {
+      console.error("No brand_id found in cart items.");
+      localStorage.removeItem('cart');
+      navigate('/checkout-success', { state: { order: null, warning: "System Error: Missing brand context." } });
+      return;
+    }
+
+    const orderData = {
+      brand_id: brandId,
+      order_number: `ORD-${(new Date()).getTime().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`,
+      total_amount: Number(total) || 0,
+      status: 'paid',
+      product_name_snapshot: cartItems.map(item => `${item.qty}x ${item.name}`).join(', '),
+      customer_name: `${formData.firstName} ${formData.lastName}`.replace(/[^a-zA-Z0-9 ]/g, ''),
+      customer_email: formData.email,
+      customer_phone: formData.phone.replace(/[^0-9+]/g, ''),
+      customer_address: `${formData.address}, ${formData.city}, ${formData.zip}`.replace(/[^a-zA-Z0-9, ]/g, ''),
+      customer_city: formData.city.replace(/[^a-zA-Z0-9 ]/g, ''),
+      customer_zip: formData.zip.replace(/[^a-zA-Z0-9 ]/g, ''),
+      items: cartItems,
+      transaction_id: transaction.reference,
+      payment_method: paymentMethod
+    };
+
+    try {
+      // 1. Save to Supabase
+      const { error: dbError } = await supabase.from('orders').insert([orderData]);
+      if (dbError) throw dbError;
+
+      // 2. Send Telegram Notification
+      await sendTelegramNotification(orderData);
+
+      // 3. Clear Cart & Navigate
+      setIsProcessing(false);
+      localStorage.removeItem('cart');
+      navigate('/checkout-success', { state: { order: orderData } });
+    } catch (err) {
+      console.error("Critical Post-Checkout failure:", err);
+      // Even if DB or Telegram fails, we should still clear cart and show success since payment is done
+      localStorage.removeItem('cart');
+      const errorMsg = err.message || "Unknown error";
+      const hint = errorMsg.includes('permission') ? "Database security blocked the save. Check RLS." : "Check network or credentials.";
+      
+      navigate('/checkout-success', { 
+        state: { 
+          order: orderData, 
+          warning: `System Error: ${errorMsg}. (${hint})` 
+        } 
+      });
+    }
+  };
+
+  const sendTelegramNotification = async (order) => {
+    const token = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
+    const chatId = import.meta.env.VITE_TELEGRAM_CHAT_ID;
+    
+    if (!token || !chatId) {
+      console.warn("Telegram notification skipped: Token or Chat ID missing.");
+      return;
+    }
+
+    // Plain text mode with NO special character parsing (most stable)
+    const message = `
+NEW ORDER ALERT
+------------------------
+Order: ${order.order_number}
+Brand: ${brand?.brand_name || 'Store'}
+Amount: NGN ${order.total_amount.toLocaleString()}
+Method: ${order.payment_method.toUpperCase()}
+
+Customer: ${order.customer_name}
+Email: ${order.customer_email}
+Phone: ${order.customer_phone}
+Address: ${order.customer_address}
+
+Items:
+${order.items.map(item => `- ${item.qty}x ${item.name}`).join('\n')}
+
+Transaction ID: ${order.transaction_id}
+------------------------
+View in Dashboard.
+    `.trim();
+
+    try {
+      const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: message
+          // Removed parse_mode entirely to avoid parsing errors
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Telegram API Error:", errorData);
+        throw new Error(`Telegram error: ${errorData.description}`);
+      }
+    } catch (e) {
+      console.error("Telegram notify failed:", e);
+      throw e;
+    }
   };
 
   const onClose = () => {

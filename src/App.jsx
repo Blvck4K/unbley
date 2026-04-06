@@ -16,6 +16,7 @@ const Storefront = lazy(() => import('./pages/Storefront'));
 const ExploreBrand = lazy(() => import('./pages/ExploreBrand'));
 const FinalizeActivation = lazy(() => import('./pages/FinalizeActivation'));
 const SuccessPage = lazy(() => import('./pages/SuccessPage'));
+const CheckoutSuccess = lazy(() => import('./pages/CheckoutSuccess'));
 const ShopBrand = lazy(() => import('./pages/ShopBrand'));
 const Cart = lazy(() => import('./pages/Cart'));
 const Checkout = lazy(() => import('./pages/Checkout'));
@@ -110,6 +111,7 @@ function App() {
             <Route path="/activation" element={<ProtectedRoute><Activation /></ProtectedRoute>} />
             <Route path="/finalize-activation" element={<ProtectedRoute><FinalizeActivation /></ProtectedRoute>} />
             <Route path="/success" element={<ProtectedRoute><SuccessPage /></ProtectedRoute>} />
+            <Route path="/checkout-success" element={<CheckoutSuccess />} />
           </Routes>
         </Suspense>
         <ChatWidget />
