@@ -124,7 +124,7 @@ export default function Activation() {
             Your store is not active yet. Complete your setup to start selling.
           </div>
           <Link to="/finalize-activation" style={{ textDecoration: 'none' }}>
-            <button style={s.topBannerBtn}>Activate My Store (₦30,000)</button>
+            <button style={s.topBannerBtn}>Activate My Store (₦30k / $30)</button>
           </Link>
         </div>
 
@@ -208,13 +208,15 @@ export default function Activation() {
               </p>
 
               <div style={s.priceBox}>
-                <div style={s.priceLabel}>Store Activation</div>
-                <div style={s.priceValue}>₦30,000</div>
+                <div style={s.priceLabel}>Store Activation (First Year)</div>
+                <div style={s.priceValue}>₦30,000 / $30</div>
                 <div>
-                  <span style={s.priceOriginal}>₦50,000</span>
+                  <span style={s.priceOriginal}>₦50,000 / $60</span>
                   <span style={s.priceSavings}>40% OFF – Limited Launch Offer</span>
                 </div>
-                <div style={{ fontSize: '11px', color: '#666', marginTop: '12px' }}>You save ₦20,000 today</div>
+                <div style={{ fontSize: '11px', color: '#666', marginTop: '12px' }}>
+                  Renewal: ₦50,000 / $60 per year
+                </div>
               </div>
 
               <h3 style={s.unlocksTitle}>What You Unlock After Activation:</h3>

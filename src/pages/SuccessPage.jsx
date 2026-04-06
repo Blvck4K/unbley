@@ -16,7 +16,8 @@ export default function SuccessPage() {
     amount: typeof location.state?.amount === 'number' ? location.state.amount : 30000,
     email: location.state?.email || user?.email || 'admin@zizzystores.com',
     brandName: location.state?.brandName || user?.user_metadata?.brand_name || 'Premium Zizzystores Vendor',
-    method: location.state?.method || 'paystack'
+    method: location.state?.method || 'paystack',
+    currency: location.state?.currency || 'NGN'
   });
 
   useEffect(() => {
@@ -289,6 +290,10 @@ export default function SuccessPage() {
   };
 
   const handleDownloadReceipt = () => {
+    const currencySign = realState.currency === 'USD' ? '$' : '₦';
+    const currencyCode = realState.currency === 'USD' ? 'USD' : 'NGN';
+    const formattedAmount = (amount || 0).toLocaleString(undefined, { minimumFractionDigits: realState.currency === 'USD' ? 2 : 0 });
+
     const receiptContent = `
 ========================================
          ZIZZYSTORES RECEIPT
@@ -297,8 +302,8 @@ export default function SuccessPage() {
 STORE NAME:   ${brandName}
 EMAIL:        ${email}
 STATUS:       ACTIVATION SUCCESSFUL
-AMOUNT PAID:  NGN ${amount.toLocaleString()}
-PAYMENT GATEWAY: Paystack
+AMOUNT PAID:  ${currencySign}${formattedAmount} (${currencyCode})
+PAYMENT GATEWAY: ${realState.method === 'flutterwave' ? 'Flutterwave' : 'Paystack'}
 
 TRANSACTION:  ${reference}
 DATE:         ${new Date().toLocaleString()}
@@ -401,7 +406,10 @@ Your digital atelier is securely activated.
           <div style={s.flexRow} className="success-flex-row">
             <div style={{ ...s.infoBlock, minWidth: '150px' }}>
               <div style={s.label}>AMOUNT PAID</div>
-              <div style={s.valueLarge}>₦{(amount || 0).toLocaleString()}</div>
+              <div style={s.valueLarge}>
+                {realState.currency === 'USD' ? '$' : '₦'}
+                {(amount || 0).toLocaleString(undefined, { minimumFractionDigits: realState.currency === 'USD' ? 2 : 0 })}
+              </div>
               <div style={{ ...s.label, marginTop: '12px' }}>PAYMENT METHOD</div>
               <div style={{ ...s.value, fontSize: '13px', color: '#AAA', textTransform: 'capitalize' }}>
                 {realState.method === 'flutterwave' ? 'Flutterwave International' : 'Paystack Local'}

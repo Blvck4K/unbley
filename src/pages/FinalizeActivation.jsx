@@ -52,10 +52,14 @@ export default function FinalizeActivation() {
       if (authError) throw authError;
 
       // 3. Complete! Navigate to Success Page
+      const finalAmount = paymentMethod === 'paystack' ? 30000 : 30;
+      const finalCurrency = paymentMethod === 'paystack' ? 'NGN' : 'USD';
+      
       navigate('/success', { 
         state: { 
           reference: transaction.reference, 
-          amount: 30000, 
+          amount: finalAmount,
+          currency: finalCurrency,
           email: user?.email,
           brandName: user?.user_metadata?.brand_name || 'Your Premium Store',
           method: paymentMethod
@@ -122,8 +126,8 @@ export default function FinalizeActivation() {
       window.FlutterwaveCheckout({
         public_key: import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY,
         tx_ref: (new Date()).getTime().toString(),
-        amount: 30000,
-        currency: "NGN",
+        amount: 30,
+        currency: "USD",
         customer: {
           email: user?.email || "pending@zizzystores.com",
           name: user?.user_metadata?.brand_name || "New Store Owner",
@@ -245,12 +249,21 @@ export default function FinalizeActivation() {
             </div>
 
             <div style={s.checkoutBox}>
-              <div style={{ fontSize: '10px', color: '#666', marginBottom: '8px' }}>TOTAL DUE</div>
+              <div style={{ fontSize: '10px', color: '#666', marginBottom: '8px' }}>TOTAL DUE (FIRST YEAR)</div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
-                <div style={s.price}>₦30,000</div>
-                <div style={{ fontSize: '18px', color: '#666', textDecoration: 'line-through' }}>₦50,000</div>
+                <div style={s.price}>
+                  {paymentMethod === 'paystack' ? '₦30,000' : '$30.00'}
+                </div>
+                <div style={{ fontSize: '18px', color: '#666', textDecoration: 'line-through' }}>
+                  {paymentMethod === 'paystack' ? '₦50,000' : '$60.00'}
+                </div>
               </div>
-              <div style={{ fontSize: '12px', color: brandColor, marginTop: '8px', fontWeight: 'bold' }}>40% Discount Applied</div>
+              <div style={{ fontSize: '12px', color: brandColor, marginTop: '8px', fontWeight: 'bold' }}>
+                40% Discount Applied
+              </div>
+              <div style={{ fontSize: '11px', color: '#555', marginTop: '12px' }}>
+                Renewal Cost: {paymentMethod === 'paystack' ? '₦50,000' : '$60.00'} yearly
+              </div>
             </div>
 
             {errorMsg && <div style={s.errorBox}>{errorMsg}</div>}
