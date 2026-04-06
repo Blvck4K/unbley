@@ -557,7 +557,7 @@ View in Dashboard.
               {cartItems.map((item) => (
                 <div key={item.id} style={s.summaryItem}>
                   <div style={s.summaryItemImg}>
-                    <img src={item.img} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=200&q=80' }} />
+                    <img src={item.img?.split(',')[0]} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=200&q=80' }} />
                   </div>
                   <div style={s.summaryItemDetails}>
                     <div style={s.summaryItemName}>{item.name}</div>

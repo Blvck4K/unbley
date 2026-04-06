@@ -143,7 +143,7 @@ export default function ProductDetail() {
           variant: product.tag || 'Standard Edition',
           price: product.price,
           qty: qty,
-          img: product.image_url,
+          img: product.image_url?.split(',')[0] || '',
           brand_id: brand.id
         });
       }
@@ -184,7 +184,7 @@ export default function ProductDetail() {
           variant: product.tag || 'Standard Edition',
           price: product.price,
           qty: qty,
-          img: product.image_url,
+          img: product.image_url?.split(',')[0] || '',
           brand_id: brand.id
         });
       }

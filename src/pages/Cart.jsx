@@ -288,7 +288,7 @@ export default function Cart() {
                       className="cart-item"
                     >
                       <div style={s.itemImageWrap} className="cart-item-image-wrap">
-                        <img src={item.img} alt={item.name} style={s.itemImage} onError={handleImageError} />
+                        <img src={item.img?.split(',')[0]} alt={item.name} style={s.itemImage} onError={handleImageError} />
                       </div>
 
                       <div style={s.itemDetails}>
@@ -386,7 +386,7 @@ export default function Cart() {
                     <div style={s.featureDesc}>{prod.description || 'A timeless addition to your collection.'}</div>
                     <div style={s.featureLink}>Explore Asset</div>
                     <div style={s.featureImageWrap}>
-                      <img src={prod.image_url} alt={prod.title} style={s.featureImg} />
+                      <img src={prod.image_url?.split(',')[0]} alt={prod.title} style={s.featureImg} />
                     </div>
                   </div>
                  )
@@ -395,7 +395,7 @@ export default function Cart() {
                   <div key={prod.id} style={s.smallCard} onClick={() => navigate(`/product?id=${prod.id}`)}>
                     <div style={s.smallImgWrap}>
                       {prod.image_url ? (
-                        <img src={prod.image_url} alt={prod.title} style={s.smallImg} />
+                        <img src={prod.image_url.split(',')[0]} alt={prod.title} style={s.smallImg} />
                       ) : (
                         <div style={{ width: '100%', height: '100%', backgroundColor: '#111' }}></div>
                       )}

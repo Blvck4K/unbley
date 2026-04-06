@@ -293,7 +293,7 @@ export default function ShopBrand({ customId }) {
           id: product.id,
           name: product.title,
           price: parseFloat(product.price),
-          img: product.image_url,
+          img: product.image_url?.split(',')[0] || '',
           brand_id: product.brand_id,
           qty: 1,
           variant: 'Default' // Safely handles any generic size mapping
