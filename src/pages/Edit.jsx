@@ -98,28 +98,53 @@ export default function Edit() {
           .eq('id', user.id)
           .single();
           
-        if (data) {
-          setFormData(prev => ({ ...prev, ...data }));
-          setThemeColors({
-            primary: data.primary_color || '#0A0A0A',
-            secondary: data.secondary_color || '#1A1A1A',
-            accent: data.accent_color || '#06acf8'
-          });
-        } else {
+        let baseData = data;
+        if (!baseData) {
           // Fallback to auth metadata
           const md = user.user_metadata || {};
-          setFormData(prev => ({
-            ...prev,
+          baseData = {
             brand_name: md.full_name || '',
             owner_name: md.full_name || '',
             email_address: user.email || '',
             phone_number: md.phone || '',
             brand_category: md.category || ''
-          }));
+          };
         }
+
+        // Check for local draft
+        const draftKey = `zizzystores_edit_draft_${user.id}`;
+        const savedDraft = localStorage.getItem(draftKey);
+        
+        if (savedDraft) {
+          try {
+            const draftData = JSON.parse(savedDraft);
+            // Merge draft into base data
+            baseData = { ...baseData, ...draftData };
+            console.log("Draft recovered from session memory.");
+          } catch (e) {
+            console.error("Draft corruption detected:", e);
+          }
+        }
+
+        setFormData(prev => ({ ...prev, ...baseData }));
+        setThemeColors({
+          primary: baseData.primary_color || '#0A0A0A',
+          secondary: baseData.secondary_color || '#1A1A1A',
+          accent: baseData.accent_color || '#06acf8'
+        });
+
       } catch (err) {
         console.error("Error fetching profile:", err);
       }
+    }
+
+    // Auto-save effect
+    const draftKey = `zizzystores_edit_draft_${user?.id}`;
+    if (user && formData.brand_name) {
+      const timeout = setTimeout(() => {
+        localStorage.setItem(draftKey, JSON.stringify(formData));
+      }, 1000); // 1s debounce
+      return () => clearTimeout(timeout);
     }
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', handleResize);
@@ -200,6 +225,9 @@ export default function Edit() {
       });
       
       if (authError) throw authError;
+      
+      // Clear draft on success
+      localStorage.removeItem(`zizzystores_edit_draft_${user.id}`);
 
       // Refresh the local auth context status to pick up any admin changes made in Supabase
       const latestIsAdmin = await refreshUser();
