@@ -25,6 +25,7 @@ export default function ProductDetail() {
   const [cartCount, setCartCount] = useState(0);
   const [activeImg, setActiveImg] = useState(0);
   const [selectedSize, setSelectedSize] = useState('');
+  const [selectedColor, setSelectedColor] = useState('');
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
@@ -42,8 +43,11 @@ export default function ProductDetail() {
     price: '',
     description: '',
     tag: '',
+    sizes: '',
+    colors: '',
     imageFile: null,
-    imagePreview: null
+    imagePreview: null,
+    additionalImages: []
   });
 
   // Scroll to top on load/URL change
@@ -137,17 +141,30 @@ export default function ProductDetail() {
         alert("Please select a size first.");
         return;
       }
+      if (product.colors && !selectedColor) {
+        alert("Please select a color first.");
+        return;
+      }
 
-      const existingItemIndex = existingCart.findIndex(i => i.id === product.id && i.size === selectedSize);
+      const existingItemIndex = existingCart.findIndex(i => 
+        i.id === product.id && 
+        i.size === selectedSize && 
+        i.color === selectedColor
+      );
       
       if (existingItemIndex > -1) {
         existingCart[existingItemIndex].qty += qty;
       } else {
+        let variantString = product.tag || 'Standard Edition';
+        if (selectedSize) variantString += ` - ${selectedSize}`;
+        if (selectedColor) variantString += ` (${selectedColor})`;
+
         existingCart.push({
           id: product.id,
           name: product.title,
-          variant: selectedSize ? `${product.tag || 'Standard Edition'} (${selectedSize})` : (product.tag || 'Standard Edition'),
+          variant: variantString,
           size: selectedSize,
+          color: selectedColor,
           price: product.price,
           qty: qty,
           img: product.image_url?.split(',')[0] || '',
@@ -184,17 +201,30 @@ export default function ProductDetail() {
         alert("Please select a size first.");
         return;
       }
+      if (product.colors && !selectedColor) {
+        alert("Please select a color first.");
+        return;
+      }
 
-      const existingItemIndex = existingCart.findIndex(i => i.id === product.id && i.size === selectedSize);
+      const existingItemIndex = existingCart.findIndex(i => 
+        i.id === product.id && 
+        i.size === selectedSize && 
+        i.color === selectedColor
+      );
       
       if (existingItemIndex > -1) {
         existingCart[existingItemIndex].qty += qty;
       } else {
+        let variantString = product.tag || 'Standard Edition';
+        if (selectedSize) variantString += ` - ${selectedSize}`;
+        if (selectedColor) variantString += ` (${selectedColor})`;
+
         existingCart.push({
           id: product.id,
           name: product.title,
-          variant: selectedSize ? `${product.tag || 'Standard Edition'} (${selectedSize})` : (product.tag || 'Standard Edition'),
+          variant: variantString,
           size: selectedSize,
+          color: selectedColor,
           price: product.price,
           qty: qty,
           img: product.image_url?.split(',')[0] || '',
@@ -216,8 +246,13 @@ export default function ProductDetail() {
       price: product.price,
       description: product.description || '',
       tag: product.tag || '',
+      sizes: product.sizes || '',
+      colors: product.colors || '',
       imageFile: null,
-      imagePreview: product.image_url
+      imagePreview: product.image_url,
+      additionalImages: product.image_url && product.image_url.includes(',') 
+        ? product.image_url.split(',').slice(1).map(url => ({ file: null, preview: url }))
+        : []
     });
     setIsEditModalOpen(true);
   };
@@ -227,23 +262,47 @@ export default function ProductDetail() {
     if (!isOwner) return;
     setUploading(true);
     try {
-      let imageUrl = editForm.imagePreview;
+      let imageUrls = [editForm.imagePreview?.split(',')[0] || ''];
+
+      // 1. Upload Main Image if new
       if (editForm.imageFile) {
         const fileExt = editForm.imageFile.name.split('.').pop();
-        const fileName = `${brand.id}-product-${Math.random()}.${fileExt}`;
+        const fileName = `${brand.id}-main-${Math.random()}.${fileExt}`;
         const filePath = `${brand.id}/${fileName}`;
         const { error: uploadError } = await supabase.storage.from('brand-assets').upload(filePath, editForm.imageFile);
         if (uploadError) throw uploadError;
         const { data: publicData } = supabase.storage.from('brand-assets').getPublicUrl(filePath);
-        imageUrl = publicData.publicUrl;
+        imageUrls[0] = publicData.publicUrl;
       }
+
+      // 2. Upload Additional Images (Extra Logic for Multi-Image Sync)
+      const existingExtras = editForm.additionalImages.map(img => img.preview).filter(p => p && !p.startsWith('data:'));
+      const newExtrasDraft = [...existingExtras];
+
+      for (let i = 0; i < editForm.additionalImages.length; i++) {
+        const extra = editForm.additionalImages[i];
+        if (extra.file) {
+          const fileExt = extra.file.name.split('.').pop();
+          const fileName = `${brand.id}-extra-${i}-${Math.random()}.${fileExt}`;
+          const filePath = `${brand.id}/${fileName}`;
+          const { error: uploadError } = await supabase.storage.from('brand-assets').upload(filePath, extra.file);
+          if (!uploadError) {
+             const { data: publicData } = supabase.storage.from('brand-assets').getPublicUrl(filePath);
+             newExtrasDraft.push(publicData.publicUrl);
+          }
+        }
+      }
+      
+      const finalImageUrl = [imageUrls[0], ...newExtrasDraft].filter(Boolean).join(',');
 
       const { error: updateError } = await supabase.from('products').update({
         title: editForm.title,
         price: parseFloat(editForm.price) || 0,
         description: editForm.description,
         tag: editForm.tag,
-        image_url: imageUrl
+        sizes: editForm.sizes,
+        colors: editForm.colors,
+        image_url: finalImageUrl
       }).eq('id', product.id).eq('brand_id', brand.id);
 
       if (updateError) throw updateError;
@@ -526,6 +585,35 @@ export default function ProductDetail() {
               </div>
             )}
 
+            {product.colors && (
+              <div style={{ marginBottom: '32px' }}>
+                <div style={s.sectionLabel}>Select Colour</div>
+                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                  {product.colors.split(',').map(c => c.trim()).filter(Boolean).map((color) => (
+                    <motion.div
+                      key={color}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setSelectedColor(color)}
+                      style={{
+                        padding: '12px 24px',
+                        border: `1px solid ${selectedColor === color ? accentColor : borderColor}`,
+                        backgroundColor: selectedColor === color ? `${accentColor}1A` : 'transparent',
+                        color: selectedColor === color ? accentColor : textColor,
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        borderRadius: '4px',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      {color}
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {!isOwner && (
               <>
                 <div style={s.sectionLabel}>Quantity Required</div>
@@ -590,8 +678,8 @@ export default function ProductDetail() {
       </div>
 
       {isOwner && isEditModalOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', backdropFilter: 'blur(8px)' }}>
-          <div style={{ backgroundColor: secondaryColor, width: '100%', maxWidth: '600px', borderRadius: '8px', border: `1px solid ${borderColor}`, overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: isMobile ? '16px' : '24px', backdropFilter: 'blur(8px)' }}>
+          <div style={{ backgroundColor: secondaryColor, width: '100%', maxWidth: isMobile ? '100%' : '850px', borderRadius: '8px', border: `1px solid ${borderColor}`, overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: '95vh' }}>
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '24px', borderBottom: `1px solid ${borderColor}` }}>
               <h3 style={{ fontFamily: fontConfig.heading, fontSize: '20px', margin: 0, color: textColor }}>Edit Asset Configuration</h3>
@@ -599,23 +687,61 @@ export default function ProductDetail() {
             </div>
             
             <form onSubmit={handleEditSubmit} style={{ padding: '24px', overflowY: 'auto' }}>
-              <div style={{ display: 'flex', gap: '24px', flexDirection: 'row', marginBottom: '24px', flexWrap: 'wrap' }}>
-                <div 
-                  onClick={() => fileInputRef.current?.click()}
-                  style={{ width: '160px', height: '200px', backgroundColor: '#111', border: `1px dashed ${borderColor}`, borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', cursor: 'pointer', flexShrink: 0 }}
-                >
-                  <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept="image/*" onChange={handleImageSelect} />
-                  {editForm.imagePreview ? (
-                    <img src={editForm.imagePreview} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }} alt="Preview" />
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', color: mutedColor }}>
-                      <ImageIcon size={32} />
-                      <span style={{ fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.05em' }}>UPLOAD IMAGE</span>
-                    </div>
-                  )}
+              <div style={{ display: 'flex', gap: '24px', flexDirection: isMobile ? 'column' : 'row', marginBottom: '24px' }}>
+                
+                {/* Image Section */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div 
+                    onClick={() => fileInputRef.current?.click()}
+                    style={{ width: isMobile ? '100%' : '200px', height: '200px', backgroundColor: '#111', border: `1px dashed ${borderColor}`, borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', cursor: 'pointer', flexShrink: 0 }}
+                  >
+                    <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept="image/*" onChange={handleImageSelect} />
+                    {editForm.imagePreview ? (
+                      <img src={editForm.imagePreview.split(',')[0]} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }} alt="Preview" />
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', color: mutedColor }}>
+                        <ImageIcon size={32} />
+                        <span style={{ fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.05em' }}>MAIN IMAGE</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Extras */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                    {[0, 1, 2].map(i => (
+                      <div 
+                        key={i}
+                        onClick={() => {
+                          const input = document.createElement('input');
+                          input.type = 'file';
+                          input.accept = 'image/*';
+                          input.onchange = (e) => {
+                            const file = e.target.files[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onload = (loadEv) => {
+                                const newExtras = [...editForm.additionalImages];
+                                newExtras[i] = { file, preview: loadEv.target.result };
+                                setEditForm({ ...editForm, additionalImages: newExtras });
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          };
+                          input.click();
+                        }}
+                        style={{ aspectRatio: '1', backgroundColor: '#0A0A0A', border: `1px dashed ${borderColor}`, borderRadius: '2px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', overflow: 'hidden' }}
+                      >
+                        {editForm.additionalImages[i]?.preview ? (
+                          <img src={editForm.additionalImages[i].preview} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          <Plus size={16} color={mutedColor} />
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '16px', minWidth: '200px' }}>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '10px', color: mutedColor, marginBottom: '8px', fontWeight: 'bold', letterSpacing: '0.1em' }}>ASSET TITLE *</label>
                     <input type="text" required value={editForm.title} onChange={e => setEditForm({...editForm, title: e.target.value})} style={{ width: '100%', padding: '12px', backgroundColor: '#111', border: `1px solid ${borderColor}`, borderRadius: '4px', color: '#FFF', fontSize: '14px', outline: 'none' }} />
@@ -624,9 +750,19 @@ export default function ProductDetail() {
                     <label style={{ display: 'block', fontSize: '10px', color: mutedColor, marginBottom: '8px', fontWeight: 'bold', letterSpacing: '0.1em' }}>PRICE (NGN) *</label>
                     <input type="number" required value={editForm.price} onChange={e => setEditForm({...editForm, price: e.target.value})} style={{ width: '100%', padding: '12px', backgroundColor: '#111', border: `1px solid ${borderColor}`, borderRadius: '4px', color: '#FFF', fontSize: '14px', outline: 'none' }} />
                   </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '10px', color: mutedColor, marginBottom: '8px', fontWeight: 'bold', letterSpacing: '0.1em' }}>HIGHLIGHT TAG</label>
+                      <input type="text" value={editForm.tag} onChange={e => setEditForm({...editForm, tag: e.target.value})} style={{ width: '100%', padding: '12px', backgroundColor: '#111', border: `1px solid ${borderColor}`, borderRadius: '4px', color: '#FFF', fontSize: '14px', outline: 'none' }} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '10px', color: mutedColor, marginBottom: '8px', fontWeight: 'bold', letterSpacing: '0.1em' }}>SIZES</label>
+                      <input type="text" value={editForm.sizes} onChange={e => setEditForm({...editForm, sizes: e.target.value})} style={{ width: '100%', padding: '12px', backgroundColor: '#111', border: `1px solid ${borderColor}`, borderRadius: '4px', color: '#FFF', fontSize: '14px', outline: 'none' }} placeholder="S, M, L" />
+                    </div>
+                  </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '10px', color: mutedColor, marginBottom: '8px', fontWeight: 'bold', letterSpacing: '0.1em' }}>HIGHLIGHT TAG</label>
-                    <input type="text" value={editForm.tag} onChange={e => setEditForm({...editForm, tag: e.target.value})} style={{ width: '100%', padding: '12px', backgroundColor: '#111', border: `1px solid ${borderColor}`, borderRadius: '4px', color: '#FFF', fontSize: '14px', outline: 'none' }} />
+                    <label style={{ display: 'block', fontSize: '10px', color: mutedColor, marginBottom: '8px', fontWeight: 'bold', letterSpacing: '0.1em' }}>COLOURS</label>
+                    <input type="text" value={editForm.colors} onChange={e => setEditForm({...editForm, colors: e.target.value})} style={{ width: '100%', padding: '12px', backgroundColor: '#111', border: `1px solid ${borderColor}`, borderRadius: '4px', color: '#FFF', fontSize: '14px', outline: 'none' }} placeholder="Red, Black, Blue" />
                   </div>
                 </div>
               </div>

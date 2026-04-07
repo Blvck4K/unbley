@@ -50,6 +50,7 @@ export default function ShopBrand({ customId }) {
     description: '',
     tag: '',
     sizes: '',
+    colors: '',
     imageFile: null,
     imagePreview: null,
     additionalImages: []
@@ -148,6 +149,7 @@ export default function ShopBrand({ customId }) {
       description: product.description || '',
       tag: product.tag || '',
       sizes: product.sizes || '',
+      colors: product.colors || '',
       imageFile: null,
       imagePreview: product.image_url,
       additionalImages: product.image_url && product.image_url.includes(',') 
@@ -212,7 +214,7 @@ export default function ShopBrand({ customId }) {
 
         if (updateError) throw updateError;
         
-        setProducts(prev => prev.map(p => p.id === editingProductId ? { ...p, title: newProduct.title, price: newProduct.price, description: newProduct.description, tag: newProduct.tag, sizes: newProduct.sizes, image_url: finalImageUrl } : p));
+        setProducts(prev => prev.map(p => p.id === editingProductId ? { ...p, title: newProduct.title, price: newProduct.price, description: newProduct.description, tag: newProduct.tag, sizes: newProduct.sizes, colors: newProduct.colors, image_url: finalImageUrl } : p));
         alert('Asset Updated Successfully!');
       } else {
         const { data: newProd, error: insertError } = await supabase
@@ -224,6 +226,7 @@ export default function ShopBrand({ customId }) {
             description: newProduct.description,
             tag: newProduct.tag,
             sizes: newProduct.sizes,
+            colors: newProduct.colors,
             image_url: finalImageUrl,
             status: 'active'
           })
@@ -235,7 +238,7 @@ export default function ShopBrand({ customId }) {
         alert('Asset Deployed Successfully!');
       }
       
-      setNewProduct({ title: '', price: '', description: '', tag: '', sizes: '', imageFile: null, imagePreview: null, additionalImages: [] });
+      setNewProduct({ title: '', price: '', description: '', tag: '', sizes: '', colors: '', imageFile: null, imagePreview: null, additionalImages: [] });
       setIsAddModalOpen(false);
       setEditingProductId(null);
 
@@ -505,7 +508,7 @@ export default function ShopBrand({ customId }) {
               <div style={{ fontSize: '14px', fontWeight: 'bold', color: accentColor, marginBottom: '4px' }}>Owner Environment Active</div>
               <div style={{ fontSize: '12px', color: '#CCC' }}>You are viewing your own storefront. You can instantly modify your digital inventory.</div>
             </div>
-            <button onClick={() => { setEditingProductId(null); setNewProduct({ title: '', price: '', description: '', tag: '', sizes: '', imageFile: null, imagePreview: null, additionalImages: [] }); setIsAddModalOpen(true); }} style={{ backgroundColor: accentColor, color: '#000', padding: '12px 24px', border: 'none', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button onClick={() => { setEditingProductId(null); setNewProduct({ title: '', price: '', description: '', tag: '', sizes: '', colors: '', imageFile: null, imagePreview: null, additionalImages: [] }); setIsAddModalOpen(true); }} style={{ backgroundColor: accentColor, color: '#000', padding: '12px 24px', border: 'none', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Plus size={16} /> Add Product
             </button>
           </div>
@@ -523,7 +526,7 @@ export default function ShopBrand({ customId }) {
           <div style={s.emptyState}>
             <h3 style={s.emptyTitle}>{isOwner ? "Your Gallery is Empty" : "Gallery Updating"}</h3>
             <p style={s.emptyDesc}>{isOwner ? "Inject your first digital artifact into the ecosystem to begin processing sales." : "The curator is currently updating this digital space."}</p>
-            {isOwner && <button onClick={() => { setEditingProductId(null); setNewProduct({ title: '', price: '', description: '', tag: '', sizes: '', imageFile: null, imagePreview: null, additionalImages: [] }); setIsAddModalOpen(true); }} style={s.buttonGroup.addToCartBtn}>Launch Initial Product</button>}
+            {isOwner && <button onClick={() => { setEditingProductId(null); setNewProduct({ title: '', price: '', description: '', tag: '', sizes: '', colors: '', imageFile: null, imagePreview: null, additionalImages: [] }); setIsAddModalOpen(true); }} style={s.buttonGroup.addToCartBtn}>Launch Initial Product</button>}
           </div>
         ) : (
           <div style={s.productGrid}>
@@ -629,8 +632,8 @@ export default function ShopBrand({ customId }) {
 
       {/* Admin Add Product Modal Layer */}
       {isOwner && isAddModalOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', backdropFilter: 'blur(8px)' }}>
-          <div style={{ backgroundColor: secondaryColor, width: '100%', maxWidth: '600px', borderRadius: '8px', border: `1px solid ${borderColor}`, overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: isMobile ? '16px' : '24px', backdropFilter: 'blur(8px)' }}>
+          <div style={{ backgroundColor: secondaryColor, width: '100%', maxWidth: isMobile ? '100%' : '850px', borderRadius: '8px', border: `1px solid ${borderColor}`, overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: '95vh' }}>
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '24px', borderBottom: `1px solid ${borderColor}` }}>
               <h3 style={{ fontFamily: fontConfig.heading, fontSize: '20px', margin: 0, color: textColor }}>{editingProductId ? 'Edit Asset Configuration' : 'Catalog New Asset'}</h3>
@@ -708,6 +711,10 @@ export default function ShopBrand({ customId }) {
                   <div>
                     <label style={{ display: 'block', fontSize: '10px', color: mutedColor, marginBottom: '8px', fontWeight: 'bold', letterSpacing: '0.1em' }}>AVAILABLE SIZES (E.G. S, M, L, XL)</label>
                     <input type="text" value={newProduct.sizes} onChange={e => setNewProduct({...newProduct, sizes: e.target.value})} style={{ width: '100%', padding: '12px', backgroundColor: '#111', border: `1px solid ${borderColor}`, borderRadius: '4px', color: '#FFF', fontSize: '14px', outline: 'none' }} placeholder="S, M, L, XL" />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '10px', color: mutedColor, marginBottom: '8px', fontWeight: 'bold', letterSpacing: '0.1em' }}>AVAILABLE COLOURS (E.G. RED, BLACK, BLUE)</label>
+                    <input type="text" value={newProduct.colors} onChange={e => setNewProduct({...newProduct, colors: e.target.value})} style={{ width: '100%', padding: '12px', backgroundColor: '#111', border: `1px solid ${borderColor}`, borderRadius: '4px', color: '#FFF', fontSize: '14px', outline: 'none' }} placeholder="Red, Black, Blue" />
                   </div>
                 </div>
               </div>

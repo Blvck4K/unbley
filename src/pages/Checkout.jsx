@@ -77,7 +77,7 @@ export default function Checkout() {
       order_number: `ORD-${(new Date()).getTime().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`,
       total_amount: Number(total) || 0,
       status: 'paid',
-      product_name_snapshot: cartItems.map(item => `${item.qty}x ${item.name}${item.size ? ` (${item.size})` : ''}`).join(', '),
+      product_name_snapshot: cartItems.map(item => `${item.qty}x ${item.name}${item.size ? ` (${item.size})` : ''}${item.color ? ` [${item.color}]` : ''}`).join(', '),
       customer_name: `${formData.firstName} ${formData.lastName}`.replace(/[^a-zA-Z0-9 ]/g, ''),
       customer_email: formData.email,
       customer_phone: formData.phone.replace(/[^0-9+]/g, ''),
@@ -141,7 +141,7 @@ Phone: ${order.customer_phone}
 Address: ${order.customer_address}
 
 Items:
-${order.items.map(item => `- ${item.qty}x ${item.name}${item.size ? ` (${item.size})` : ''}`).join('\n')}
+${order.items.map(item => `- ${item.qty}x ${item.name}${item.size ? ` (${item.size})` : ''}${item.color ? ` [${item.color}]` : ''}`).join('\n')}
 
 Transaction ID: ${order.transaction_id}
 ------------------------
@@ -563,7 +563,11 @@ View in Dashboard.
                     <div style={s.summaryItemName}>{item.name}</div>
                     <div style={s.summaryItemVariant}>
                       {item.variant}
-                      {item.size && <span style={{ marginLeft: '8px', color: accentColor, fontWeight: '700' }}>[SIZE: {item.size}]</span>}
+                      {(item.size || item.color) && (
+                        <span style={{ marginLeft: '8px', color: accentColor, fontWeight: '700' }}>
+                          [{item.size && `SIZE: ${item.size}`}{item.size && item.color && ' | '}{item.color && `COLOUR: ${item.color}`}]
+                        </span>
+                      )}
                     </div>
                     <div style={s.summaryItemPriceRow}>
                       <div style={s.summaryItemQty}>Qty: {item.qty}</div>

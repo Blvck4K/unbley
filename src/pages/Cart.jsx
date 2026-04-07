@@ -298,7 +298,11 @@ export default function Cart() {
                         </div>
                         <div style={s.itemVariant}>
                           {item.variant}
-                          {item.size && <span style={{ marginLeft: '8px', color: accentColor, fontWeight: '700' }}>[SIZE: {item.size}]</span>}
+                          {(item.size || item.color) && (
+                            <span style={{ marginLeft: '8px', color: accentColor, fontWeight: '700' }}>
+                              [{item.size && `SIZE: ${item.size}`}{item.size && item.color && ' | '}{item.color && `COLOUR: ${item.color}`}]
+                            </span>
+                          )}
                         </div>
 
                         <div style={s.itemActions} className="cart-item-actions">
