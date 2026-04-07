@@ -37,7 +37,10 @@ export default function ExploreBrand() {
 
   useEffect(() => {
     async function loadBrand() {
-      if (!id) return;
+      if (!id) {
+        setLoading(false);
+        return;
+      }
       try {
         setLoading(true);
         const { data: bData, error: bErr } = await supabase
@@ -46,7 +49,7 @@ export default function ExploreBrand() {
           .eq('id', id)
           .single();
           
-        if (bErr) throw bErr;
+        if (bErr || !bData) throw bErr || new Error("Brand not found");
         setBrand(bData);
 
         const { data: pData } = await supabase
