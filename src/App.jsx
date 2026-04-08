@@ -2,6 +2,7 @@ import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import ErrorBoundary from './components/ErrorBoundary';
 import { supabase } from './lib/supabase';
 import { useState, useEffect } from 'react';
 
@@ -26,6 +27,10 @@ const CreatorPlatform = lazy(() => import('./pages/CreatorPlatform'));
 const CreateOnlineStore = lazy(() => import('./pages/CreateOnlineStore'));
 const ShopifyAlternative = lazy(() => import('./pages/ShopifyAlternative'));
 const AffordableEcommerce = lazy(() => import('./pages/AffordableEcommerce'));
+const Blog = lazy(() => import('./pages/Blog'));
+const BlogReview = lazy(() => import('./pages/BlogReview'));
+const AdminBlog = lazy(() => import('./pages/AdminBlog'));
+const FillBlog = lazy(() => import('./pages/FillBlog'));
 
 import ChatWidget from './components/ChatWidget';
 
@@ -78,41 +83,48 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Suspense fallback={<PageLoader />}>
-          <Routes>
-            {/* Custom Domain Root */}
-            {isCustomDomain && customBrandId && (
-              <Route path="/" element={<ShopBrand customId={customBrandId} />} />
-            )}
+          <ErrorBoundary>
+            <Routes>
+              {/* Custom Domain Root */}
+              {isCustomDomain && customBrandId && (
+                <Route path="/" element={<ShopBrand customId={customBrandId} />} />
+              )}
 
-            {/* Public Routes */}
-            <Route path="/" element={<Home />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/store" element={<Storefront />} />
-            <Route path="/explore-brand" element={<ExploreBrand />} />
-            <Route path="/explore-brand/:id" element={<ExploreBrand />} />
-            <Route path="/shop-brand" element={<ShopBrand />} />
-            <Route path="/shop-brand/:id" element={<ShopBrand />} />
-            {/* Support for friendly slugs if implementing later */}
-            <Route path="/@:slug" element={<ShopBrand />} />
-            
-            <Route path="/cart" element={<Cart />} />
-            <Route path="/checkout" element={<Checkout />} />
-            <Route path="/product" element={<ProductDetail />} />
-            <Route path="/sell-digital-products" element={<SellDigitalGoods />} />
-            <Route path="/creator-platform" element={<CreatorPlatform />} />
-            <Route path="/create-online-store" element={<CreateOnlineStore />} />
-            <Route path="/shopify-alternative" element={<ShopifyAlternative />} />
-            <Route path="/affordable-ecommerce-platform" element={<AffordableEcommerce />} />
+              {/* Public Routes */}
+              <Route path="/" element={<Home />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/store" element={<Storefront />} />
+              <Route path="/explore-brand" element={<ExploreBrand />} />
+              <Route path="/explore-brand/:id" element={<ExploreBrand />} />
+              <Route path="/shop-brand" element={<ShopBrand />} />
+              <Route path="/shop-brand/:id" element={<ShopBrand />} />
+              {/* Support for friendly slugs if implementing later */}
+              <Route path="/@:slug" element={<ShopBrand />} />
+              
+              <Route path="/cart" element={<Cart />} />
+              <Route path="/blog" element={<Blog />} />
+              <Route path="/blog-review" element={<BlogReview />} />
+              <Route path="/blog-review/:slug" element={<BlogReview />} />
+              <Route path="/admin-blog" element={<AdminBlog />} />
+              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/product" element={<ProductDetail />} />
+              <Route path="/sell-digital-products" element={<SellDigitalGoods />} />
+              <Route path="/creator-platform" element={<CreatorPlatform />} />
+              <Route path="/create-online-store" element={<CreateOnlineStore />} />
+              <Route path="/shopify-alternative" element={<ShopifyAlternative />} />
+              <Route path="/affordable-ecommerce-platform" element={<AffordableEcommerce />} />
 
-            {/* Protected Routes (require auth and Profile Completion if not /edit) */}
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-            <Route path="/edit" element={<ProtectedRoute><Edit /></ProtectedRoute>} />
-            <Route path="/activation" element={<ProtectedRoute><Activation /></ProtectedRoute>} />
-            <Route path="/finalize-activation" element={<ProtectedRoute><FinalizeActivation /></ProtectedRoute>} />
-            <Route path="/success" element={<ProtectedRoute><SuccessPage /></ProtectedRoute>} />
-            <Route path="/checkout-success" element={<CheckoutSuccess />} />
-          </Routes>
+              {/* Protected Routes (require auth and Profile Completion if not /edit) */}
+              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+              <Route path="/edit" element={<ProtectedRoute><Edit /></ProtectedRoute>} />
+              <Route path="/activation" element={<ProtectedRoute><Activation /></ProtectedRoute>} />
+              <Route path="/finalize-activation" element={<ProtectedRoute><FinalizeActivation /></ProtectedRoute>} />
+              <Route path="/success" element={<ProtectedRoute><SuccessPage /></ProtectedRoute>} />
+              <Route path="/checkout-success" element={<CheckoutSuccess />} />
+              <Route path="/fillblog" element={<FillBlog />} />
+            </Routes>
+          </ErrorBoundary>
         </Suspense>
         <ChatWidget />
       </BrowserRouter>
