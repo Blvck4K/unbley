@@ -97,6 +97,7 @@ export default function FillBlog() {
   const [coverImageUrl, setCoverImageUrl] = useState('');
   const [authorName, setAuthorName] = useState('Julian Vane');
   const [publishedAt, setPublishedAt] = useState(new Date().toISOString().split('T')[0]);
+  const [metaKeywords, setMetaKeywords] = useState('');
 
   // UI State
   const [isSearchOptOpen, setIsSearchOptOpen] = useState(false);
@@ -169,6 +170,7 @@ export default function FillBlog() {
           setExcerpt(data.excerpt || '');
           setMetaDescription(data.meta_description || '');
           setMetaTitle(data.meta_title || '');
+          setMetaKeywords(data.meta_keywords || '');
           setCategory(data.category || 'Editorial');
           setTags(data.tags || []);
           setCoverImageUrl(data.cover_image_url || '');
@@ -193,7 +195,9 @@ export default function FillBlog() {
         cover_image_url: coverImageUrl,
         status: isPublishing ? 'published' : 'draft',
         tags, 
-        meta_description: metaDescription || excerpt || '', // Fallback to excerpt
+        meta_title: metaTitle || title, 
+        meta_description: metaDescription || excerpt || '', 
+        meta_keywords: metaKeywords,
         read_time: `${Math.ceil(content.split(' ').length / 200)} MIN READ`,
         created_at: new Date(publishedAt).toISOString(),
         updated_at: new Date().toISOString()
@@ -242,6 +246,20 @@ export default function FillBlog() {
         break;
       default: break;
     }
+  };
+
+  const addTag = (e) => {
+    if (e.key === 'Enter' && newTag.trim()) {
+      e.preventDefault();
+      if (!tags.includes(newTag.trim())) {
+        setTags([...tags, newTag.trim()]);
+      }
+      setNewTag('');
+    }
+  };
+
+  const removeTag = (tagToRemove) => {
+    setTags(tags.filter(t => t !== tagToRemove));
   };
 
   const handleImageUpload = async (e) => {
@@ -427,6 +445,18 @@ export default function FillBlog() {
                         style={{ width: '100%', height: '100px', padding: '12px', border: '1px solid #E5E7EB', borderRadius: '6px', fontSize: '14px', outline: 'none' }} 
                       />
                     </div>
+                    
+                    <div>
+                      <label style={{ fontSize: '11px', fontWeight: 700, color: '#888', display: 'block', marginBottom: '8px' }}>SEO KEYWORDS (META TAGS)</label>
+                      <input 
+                        type="text"
+                        value={metaKeywords} 
+                        onChange={(e) => setMetaKeywords(e.target.value)} 
+                        placeholder="e.g. fashion, nigerian brands, e-commerce tips..."
+                        style={{ width: '100%', padding: '12px', border: '1px solid #E5E7EB', borderRadius: '6px', fontSize: '14px', outline: 'none' }} 
+                      />
+                      <p style={{ fontSize: '10px', color: '#888', marginTop: '6px' }}>Comma separated keywords for search engines.</p>
+                    </div>
                   </div>
                 </div>
               )}
@@ -478,7 +508,26 @@ export default function FillBlog() {
               </select>
             </div>
 
-            <div style={{ backgroundColor: '#F9FAFB', padding: '24px', borderRadius: '8px', border: '1px solid #F3F4F6' }}>
+            <div style={{ backgroundColor: '#F9FAFB', padding: '24px', borderRadius: '8px', border: '1px solid #F3F4F6', marginBottom: '32px' }}>
+              <label style={{ fontSize: '10px', fontWeight: 700, color: '#888', display: 'block', marginBottom: '12px' }}>TAGS (ENTER TO ADD)</label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
+                {tags.map(tag => (
+                  <span key={tag} style={{ backgroundColor: '#EEE', padding: '4px 10px', borderRadius: '4px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    {tag}
+                    <X size={12} onClick={() => removeTag(tag)} style={{ cursor: 'pointer' }} />
+                  </span>
+                ))}
+              </div>
+              <input 
+                value={newTag}
+                onChange={(e) => setNewTag(e.target.value)}
+                onKeyDown={addTag}
+                placeholder="Add a tag..."
+                style={{ width: '100%', padding: '10px', backgroundColor: '#FFF', border: '1px solid #E5E7EB', borderRadius: '4px' }} 
+              />
+            </div>
+
+            <div style={{ backgroundColor: '#F9FAFB', padding: '24px', borderRadius: '8px', border: '1px solid #F3F4F6', marginBottom: '32px' }}>
               <label style={{ fontSize: '10px', fontWeight: 700, color: '#888', display: 'block', marginBottom: '12px' }}>AUTHOR</label>
               <input value={authorName} onChange={(e) => setAuthorName(e.target.value)} style={{ width: '100%', padding: '10px', backgroundColor: '#FFF', border: '1px solid #E5E7EB', borderRadius: '4px', marginBottom: '24px' }} />
 

@@ -180,6 +180,7 @@ export default function Blog() {
       <SEO
         title={post?.meta_title || post?.title || "ZizzyStores Blog"}
         description={post?.meta_description || post?.excerpt || "Read this story on ZizzyStores Blog – Nigerian Ecommerce & Growth."}
+        keywords={post?.meta_keywords || post?.tags?.join(', ')}
         canonical={post ? `https://zizzystores.com/blog/${post.slug}` : `https://zizzystores.com/blog`}
         ogImage={post?.cover_image_url || 'https://zizzystores.com/og-default.jpg'}
         ogType="article"
