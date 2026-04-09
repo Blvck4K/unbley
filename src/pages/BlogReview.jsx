@@ -104,7 +104,7 @@ export default function BlogReview() {
     heroGrid: { display: 'grid', gridTemplateColumns: post?.cover_image_url ? '1.2fr 1fr' : '1fr', gap: '64px', alignItems: 'center' },
     title: { fontFamily: '"Playfair Display", serif', fontSize: 'clamp(32px, 5vw, 64px)', fontWeight: '700', marginBottom: '24px', letterSpacing: '-0.02em', lineHeight: '1.1' },
     byline: { fontSize: '14px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '500' },
-    heroImage: { width: '150%', height: '450px', objectFit: 'cover', borderRadius: '12px', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' },
+    heroImage: { width: '100%', height: 'clamp(250px, 40vw, 450px)', objectFit: 'cover', borderRadius: '12px', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' },
 
     // Article Layout
     container: { display: 'grid', gridTemplateColumns: 'minmax(200px, 300px) 1fr', gap: '80px', maxWidth: '1200px', margin: '0 auto', padding: '0 24px 160px' },
@@ -149,17 +149,16 @@ export default function BlogReview() {
   }
 
   return (
-    <PageTransition>
-      {post && (
-        <SEO 
-          title={post.meta_title || post.title}
-          description={post.meta_description || post.excerpt || "Read this story on ZizzyStores Blog – Nigerian Ecommerce & Growth."}
-          canonical={`https://zizzystores.com/blog/${post.slug || post.id}`}
-          ogImage={post.cover_image_url}
-          ogType="article"
-        />
-      )}
-      <div style={s.page}>
+    <>
+      <SEO 
+        title={post?.meta_title || post?.title || "ZizzyStores Blog"}
+        description={post?.meta_description || post?.excerpt || "Read this story on ZizzyStores Blog – Nigerian Ecommerce & Growth."}
+        canonical={post ? `https://zizzystores.com/blog-review/${post.slug}` : `https://zizzystores.com/blog-review`}
+        ogImage={post?.cover_image_url || 'https://zizzystores.com/og-default.jpg'}
+        ogType="article"
+      />
+      <PageTransition>
+        <div style={s.page}>
         <Navbar />
 
         {/* Editorial Hero */}
@@ -315,7 +314,15 @@ export default function BlogReview() {
         <style>{`
           @media (max-width: 992px) {
             .article-layout { grid-template-columns: 1fr !important; gap: 40px !important; }
-            .article-sidebar { position: static !important; display: flex; gap: 40px; border-bottom: 1px solid var(--border-color); padding-bottom: 40px; }
+            .article-sidebar { 
+              position: static !important; 
+              display: grid; 
+              grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
+              gap: 24px; 
+              border-bottom: 1px solid var(--border-color); 
+              padding-bottom: 40px; 
+              margin-bottom: 40px;
+            }
           }
           
           .rich-content strong {
@@ -395,7 +402,8 @@ export default function BlogReview() {
             text-align: left;
           }
         `}</style>
-      </div>
-    </PageTransition>
+        </div>
+      </PageTransition>
+    </>
   );
 }

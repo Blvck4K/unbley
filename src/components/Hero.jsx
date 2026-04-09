@@ -42,7 +42,6 @@ export default function Hero() {
       <div className="container hero-content">
         <motion.div
           className="hero-text"
-          style={{ textAlign: window.innerWidth <= 768 ? 'center' : 'left' }}
           variants={containerVariants}
           initial="hidden"
           animate="visible"
@@ -57,7 +56,6 @@ export default function Hero() {
           <motion.h1
             variants={itemVariants}
             className="hero-title"
-            style={{ fontSize: window.innerWidth <= 768 ? '36px' : '56px' }}
           >
             Launch Your Brand Online <span style={{ display: 'block', color: 'var(--text-muted)', fontSize: '0.6em', marginTop: '8px' }}>in Less Than 24 Hours.</span>
           </motion.h1>
@@ -65,34 +63,30 @@ export default function Hero() {
           <motion.p
             variants={itemVariants}
             className="hero-subtitle"
-            style={{ margin: window.innerWidth <= 768 ? '0 auto 40px' : '0 0 40px' }}
           >
             Get a high-performance storefront and your own custom domain for just ₦30,000. No technical skills required.
           </motion.p>
 
           <motion.div
             variants={itemVariants}
-            className="flex gap-4"
-            style={{ justifyContent: window.innerWidth <= 768 ? 'center' : 'flex-start' }}
+            className="hero-actions"
           >
             {user ? (
-              <Link to="/dashboard" style={{ textDecoration: 'none', width: window.innerWidth <= 768 ? '100%' : 'auto' }}>
+              <Link to="/dashboard" className="hero-btn-wrapper">
                 <motion.button
                   whileHover={{ scale: 1.02, y: -2 }}
                   whileTap={{ scale: 0.98 }}
-                  className="btn btn-primary"
-                  style={{ padding: '18px 36px', fontSize: '16px', fontWeight: '700', width: '100%', boxShadow: '0 20px 40px -10px rgba(0,0,0,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}
+                  className="btn btn-primary hero-btn"
                 >
                   <LayoutGrid size={20} /> Go to Dashboard <ArrowRight size={18} />
                 </motion.button>
               </Link>
             ) : (
-              <Link to="/auth" style={{ textDecoration: 'none', width: window.innerWidth <= 768 ? '100%' : 'auto' }}>
+              <Link to="/auth" className="hero-btn-wrapper">
                 <motion.button
                   whileHover={{ scale: 1.02, y: -2 }}
                   whileTap={{ scale: 0.98 }}
-                  className="btn btn-primary"
-                  style={{ padding: '18px 36px', fontSize: '16px', fontWeight: '700', width: '100%', boxShadow: '0 20px 40px -10px rgba(0,0,0,0.2)' }}
+                  className="btn btn-primary hero-btn"
                 >
                   Start Your Journey <ArrowRight size={18} style={{ marginLeft: '8px' }} />
                 </motion.button>
@@ -102,12 +96,12 @@ export default function Hero() {
 
           <motion.div
             variants={itemVariants}
-            style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '8px', alignItems: window.innerWidth <= 768 ? 'center' : 'flex-start' }}
+            className="hero-promo"
           >
-            <div className="flex items-center gap-2" style={{ fontSize: '14px', fontWeight: '800', color: '#E11D48' }}>
+            <div className="promo-item urgent">
               <motion.span animate={{ opacity: [1, 0.5, 1] }} transition={{ duration: 2, repeat: Infinity }}>🔥 40% OFF ends soon!</motion.span>
             </div>
-            <div className="flex items-center gap-2" style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
+            <div className="promo-item">
               <CheckCircle2 size={16} color="#10B981" />
               <span><strong>₦30,000</strong> (First Year) — Full Setup Included</span>
             </div>
@@ -115,19 +109,19 @@ export default function Hero() {
 
           <motion.div
             variants={itemVariants}
-            style={{ marginTop: '40px', paddingTop: '32px', borderTop: '1px solid var(--border-color)' }}
+            className="hero-partners"
           >
-            <div style={{ fontSize: '10px', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.15em' }}>
+            <div className="partners-label">
               Trusted Security Partners
             </div>
-            <div className="flex items-center gap-10" style={{ flexWrap: 'wrap', justifyContent: window.innerWidth <= 768 ? 'center' : 'flex-start' }}>
-              <div style={{ display: 'flex', alignItems: 'center', opacity: 1 }}>
-                <img src="https://upload.wikimedia.org/wikipedia/commons/1/1f/Paystack.png" alt="Paystack" style={{ height: '55px', width: 'auto' }} />
+            <div className="partners-list">
+              <div className="partner-logo">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/1/1f/Paystack.png" alt="Paystack" />
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', opacity: 1 }}>
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Flutterwave_Logo.png/1280px-Flutterwave_Logo.png" alt="Flutterwave" style={{ height: '40px', width: 'auto' }} />
+              <div className="partner-logo">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Flutterwave_Logo.png/1280px-Flutterwave_Logo.png" alt="Flutterwave" />
               </div>
-              <div style={{ fontWeight: '800', fontSize: '18px', color: '#000', display: 'flex', alignItems: 'center', gap: '8px', opacity: 0.8 }}>
+              <div className="partner-logo ssl">
                 <ShieldCheck size={22} color="#10B981" />
                 SSL secured
               </div>
@@ -140,7 +134,6 @@ export default function Hero() {
           variants={imageVariants}
           initial="hidden"
           animate="visible"
-          style={{ marginTop: window.innerWidth <= 768 ? '60px' : '0', position: 'relative' }}
         >
           <div className="dashboard-mockup" style={{ padding: 0, overflow: 'hidden', border: 'none', background: 'none', boxShadow: '0 50px 100px -20px rgba(0,0,0,0.15)' }}>
             <img src="https://raw.githubusercontent.com/Blvck4K/Jss-png/refs/heads/main/replace.png" alt="Dashboard Preview" style={{ width: '100%', height: 'auto', borderRadius: 'var(--radius-lg)', display: 'block' }} />
@@ -149,30 +142,14 @@ export default function Hero() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1, duration: 0.6 }}
-            style={{
-              backgroundColor: 'var(--bg-white)',
-              padding: '16px 24px',
-              borderRadius: 'var(--radius-md)',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '12px',
-              marginTop: '-30px',
-              marginLeft: window.innerWidth <= 768 ? 'auto' : '-40px',
-              marginRight: window.innerWidth <= 768 ? 'auto' : '0',
-              position: 'relative',
-              zIndex: 10,
-              border: '1px solid var(--border-color)',
-              transform: window.innerWidth <= 768 ? 'none' : 'none',
-              maxWidth: 'fit-content'
-            }}
+            className="floating-badge"
           >
-            <div style={{ width: '40px', height: '40px', backgroundColor: '#ECFDF5', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="badge-icon">
               <CheckCircle2 size={24} color="#10B981" />
             </div>
             <div>
-              <div className="font-bold" style={{ fontSize: '14px' }}>Free Domain Name</div>
-              <div className="text-muted" style={{ fontSize: '12px' }}>Fully automated setup</div>
+              <div className="badge-title">Free Domain Name</div>
+              <div className="badge-subtitle">Fully automated setup</div>
             </div>
           </motion.div>
 

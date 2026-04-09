@@ -72,13 +72,14 @@ export default function Blog() {
   };
 
   return (
-    <PageTransition>
+    <>
       <SEO 
         title="ZizzyStores Blog – Ecommerce & Growth Tips for Nigerian Brands"
         description="Learn how to build, grow, and scale your brand online in Nigeria with ZizzyStores. Expert insights on e-commerce, branding, and business growth."
         canonical="https://zizzystores.com/blog"
       />
-      <div style={s.page}>
+      <PageTransition>
+        <div style={s.page}>
         <Navbar />
 
         <header style={s.header}>
@@ -207,7 +208,8 @@ export default function Blog() {
             .blog-card:hover .blog-card-img { transform: scale(1.05); }
           }
         `}</style>
-      </div>
-    </PageTransition>
+        </div>
+      </PageTransition>
+    </>
   );
 }

@@ -206,37 +206,175 @@ button {
   background: linear-gradient(to bottom, #FAFAFA, #FFFFFF);
 }
 
-.hero-content {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 64px;
-  align-items: center;
-}
-
-.hero-title {
-  font-family: 'Poppins', sans-serif;
-  font-size: 56px;
-  font-weight: 800;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  margin-bottom: 24px;
-  font-style: normal;
-}
-
-.hero-subtitle {
-  font-size: 18px;
-  color: var(--text-secondary);
-  line-height: 1.6;
+.hero-actions {
+  display: flex;
+  gap: 16px;
   margin-bottom: 40px;
-  max-width: 500px;
+}
+
+.hero-btn-wrapper {
+  text-decoration: none;
+}
+
+.hero-btn {
+  padding: 18px 36px;
+  font-size: 16px;
+  font-weight: 700;
+  box-shadow: 0 20px 40px -10px rgba(0,0,0,0.2);
+  gap: 12px;
+}
+
+.hero-promo {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.promo-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.promo-item.urgent {
+  font-weight: 800;
+  color: #E11D48;
+}
+
+.hero-partners {
+  margin-top: 48px;
+  padding-top: 32px;
+  border-top: 1px solid var(--border-color);
+}
+
+.partners-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+
+.partners-list {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  flex-wrap: wrap;
+}
+
+.partner-logo img {
+  height: 48px;
+  width: auto;
+  opacity: 0.9;
+}
+
+.partner-logo.ssl {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+  font-size: 18px;
+  color: var(--text-primary);
+  opacity: 0.8;
+}
+
+.hero-visual {
+  position: relative;
 }
 
 .dashboard-mockup {
   background-color: var(--bg-white);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-xl);
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 50px 100px -20px rgba(0,0,0,0.15);
   overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+.floating-badge {
+  position: absolute;
+  bottom: 40px;
+  left: -40px;
+  background-color: var(--bg-white);
+  padding: 16px 24px;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 10;
+  border: 1px solid var(--border-color);
+  max-width: fit-content;
+}
+
+.badge-icon {
+  width: 40px;
+  height: 40px;
+  background-color: #ECFDF5;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.badge-title {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.badge-subtitle {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* Mobile Adjustments for Hero */
+@media (max-width: 768px) {
+  .hero-text {
+    text-align: center;
+  }
+
+  .hero-title {
+    font-size: 36px;
+  }
+
+  .hero-subtitle {
+    margin: 0 auto 40px;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .hero-btn-wrapper, .hero-btn {
+    width: 100%;
+  }
+
+  .hero-promo {
+    align-items: center;
+  }
+
+  .partners-list {
+    justify-content: center;
+    gap: 24px;
+  }
+
+  .hero-visual {
+    margin-top: 60px;
+  }
+
+  .floating-badge {
+    position: relative;
+    bottom: auto;
+    left: auto;
+    margin: -30px auto 0;
+  }
 }
 
 .mockup-header {
@@ -283,7 +421,7 @@ button {
 
 .section-head h2 {
   font-family: 'Poppins', sans-serif;
-  font-size: 32px;
+  font-size: clamp(24px, 6vw, 32px);
   font-weight: 700;
   margin-bottom: 16px;
   font-style: normal;
@@ -517,6 +655,18 @@ button {
 
   .navbar .nav-links {
     display: none;
+  }
+
+  .features-section {
+    padding: 60px 0;
+  }
+
+  .feature-card {
+    padding: 24px;
+  }
+
+  .section-head {
+    margin-bottom: 40px;
   }
 }
 

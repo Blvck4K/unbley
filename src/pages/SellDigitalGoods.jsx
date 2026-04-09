@@ -1,10 +1,10 @@
 import React from 'react';
-import { Helmet } from 'react-helmet-async';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import CTASection from '../components/CTASection';
 import PageTransition from '../components/PageTransition';
 import { Download, ShieldCheck, Zap, Globe, BarChart3, CreditCard } from 'lucide-react';
+import SEO from '../components/SEO';
 
 export default function SellDigitalGoods() {
   const benefits = [
@@ -41,119 +41,122 @@ export default function SellDigitalGoods() {
   ];
 
   return (
-    <PageTransition>
-      <Helmet>
-        <title>Sell Digital Products Online | Best Platform for Digital Downloads | ZizzyStores</title>
-        <meta name="description" content="Launch your digital storefront in minutes. Sell ebooks, software, templates, and courses with secure payments and instant delivery. Join ZizzyStores today." />
-        <meta name="keywords" content="sell digital products, sell ebooks online, digital downloads platform, ecommerce for digital creators, sell software online" />
-      </Helmet>
+    <>
+      <SEO 
+        title="Sell Digital Products Online | Best Platform for Digital Downloads"
+        description="Launch your digital storefront in minutes. Sell ebooks, software, templates, and courses with secure payments and instant delivery. Join ZizzyStores today."
+        keywords="sell digital products, sell ebooks online, digital downloads platform, ecommerce for digital creators, sell software online"
+        canonical="https://zizzystores.com/sell-digital-goods"
+      />
       
-      <Navbar />
-      
-      <main style={{ paddingTop: '100px' }}>
-        <section style={{ padding: '80px 0', backgroundColor: 'var(--bg-light)' }}>
-          <div className="container">
-            <div style={{ textAlign: 'center', maxWidth: '800px', margin: '0 auto', marginBottom: '64px' }}>
-              <h1 style={{ fontSize: '48px', fontWeight: '800', marginBottom: '24px', lineHeight: '1.1' }}>
-                The Ultimate Platform to <span style={{ color: 'var(--primary)' }}>Sell Digital Products</span> Online
-              </h1>
-              <p style={{ fontSize: '18px', color: 'var(--text-secondary)', marginBottom: '32px' }}>
-                Whether you're selling professional software, creative templates, or educational ebooks, ZizzyStores provides the tools you need to launch, manage, and scale your digital empire.
-              </p>
-              <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
-                <a href="/auth?mode=signup" className="btn btn-primary" style={{ padding: '12px 32px' }}>Start Selling Now</a>
-                <a href="#benefits" className="btn btn-outline" style={{ padding: '12px 32px' }}>Explore Features</a>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section id="benefits" style={{ padding: '100px 0' }}>
-          <div className="container">
-            <div style={{ textAlign: 'center', marginBottom: '64px' }}>
-              <h2 style={{ fontSize: '32px', fontWeight: '700', marginBottom: '16px' }}>Built for Digital Success</h2>
-              <p style={{ color: 'var(--text-secondary)' }}>Everything you need to turn your digital assets into a thriving business.</p>
-            </div>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '32px' }}>
-              {benefits.map((benefit, index) => (
-                <div key={index} style={{ 
-                  padding: '32px', 
-                  borderRadius: 'var(--radius-lg)', 
-                  border: '1px solid var(--border-color)',
-                  backgroundColor: 'white',
-                  transition: 'transform 0.3s ease, box-shadow 0.3s ease'
-                }}
-                className="hover-card"
-                >
-                  <div style={{ 
-                    width: '48px', 
-                    height: '48px', 
-                    borderRadius: '12px', 
-                    backgroundColor: 'rgba(8, 156, 255, 0.1)', 
-                    color: 'var(--primary)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: '24px'
-                  }}>
-                    {benefit.icon}
-                  </div>
-                  <h3 style={{ fontSize: '20px', fontWeight: '600', marginBottom: '12px' }}>{benefit.title}</h3>
-                  <p style={{ color: 'var(--text-secondary)', lineHeight: '1.6' }}>{benefit.description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section style={{ padding: '100px 0', backgroundColor: 'var(--bg-dark)', color: 'white' }}>
-          <div className="container">
-            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '64px' }}>
-              <div style={{ flex: '1', minWidth: '300px' }}>
-                <h2 style={{ fontSize: '36px', fontWeight: '700', marginBottom: '24px' }}>What Can You Sell on ZizzyStores?</h2>
-                <p style={{ fontSize: '18px', opacity: 0.8, marginBottom: '32px' }}>
-                  Our platform is versatile enough to handle any digital file type. Creators around the world use us to sell:
-                </p>
-                <ul style={{ listStyle: 'none', padding: 0, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--primary)' }}></div>
-                    Ebooks & PDFs
-                  </li>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--primary)' }}></div>
-                    Software & Scripts
-                  </li>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--primary)' }}></div>
-                    Design Assets
-                  </li>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--primary)' }}></div>
-                    Online Courses
-                  </li>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--primary)' }}></div>
-                    Stock Photography
-                  </li>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--primary)' }}></div>
-                    Audio & Music
-                  </li>
-                </ul>
-              </div>
-              <div style={{ flex: '1', minWidth: '300px', backgroundColor: 'rgba(255,255,255,0.05)', padding: '40px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.1)' }}>
-                <h3 style={{ fontSize: '24px', marginBottom: '16px' }}>"ZizzyStores has completely automated my ebook sales. I've sold to customers in over 30 countries without lifting a finger."</h3>
-                <p style={{ fontWeight: '600', color: 'var(--primary)' }}>— Marcus Chen, Digital Author</p>
-              </div>
-            </div>
-          </div>
-        </section>
+      <PageTransition>
+        <Navbar />
         
-        <CTASection />
-      </main>
-      
-      <Footer />
-    </PageTransition>
+        <main style={{ paddingTop: '100px' }}>
+          <section style={{ padding: '80px 0', backgroundColor: 'var(--bg-light)' }}>
+            <div className="container">
+              <div style={{ textAlign: 'center', maxWidth: '800px', margin: '0 auto', marginBottom: '64px' }}>
+                <h1 style={{ fontSize: '48px', fontWeight: '800', marginBottom: '24px', lineHeight: '1.1' }}>
+                  The Ultimate Platform to <span style={{ color: 'var(--primary)' }}>Sell Digital Products</span> Online
+                </h1>
+                <p style={{ fontSize: '18px', color: 'var(--text-secondary)', marginBottom: '32px' }}>
+                  Whether you're selling professional software, creative templates, or educational ebooks, ZizzyStores provides the tools you need to launch, manage, and scale your digital empire.
+                </p>
+                <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
+                  <a href="/auth?mode=signup" className="btn btn-primary" style={{ padding: '12px 32px' }}>Start Selling Now</a>
+                  <a href="#benefits" className="btn btn-outline" style={{ padding: '12px 32px' }}>Explore Features</a>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section id="benefits" style={{ padding: '100px 0' }}>
+            <div className="container">
+              <div style={{ textAlign: 'center', marginBottom: '64px' }}>
+                <h2 style={{ fontSize: '32px', fontWeight: '700', marginBottom: '16px' }}>Built for Digital Success</h2>
+                <p style={{ color: 'var(--text-secondary)' }}>Everything you need to turn your digital assets into a thriving business.</p>
+              </div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '32px' }}>
+                {benefits.map((benefit, index) => (
+                  <div key={index} style={{ 
+                    padding: '32px', 
+                    borderRadius: 'var(--radius-lg)', 
+                    border: '1px solid var(--border-color)',
+                    backgroundColor: 'white',
+                    transition: 'transform 0.3s ease, box-shadow 0.3s ease'
+                  }}
+                  className="hover-card"
+                  >
+                    <div style={{ 
+                      width: '48px', 
+                      height: '48px', 
+                      borderRadius: '12px', 
+                      backgroundColor: 'rgba(8, 156, 255, 0.1)', 
+                      color: 'var(--primary)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: '24px'
+                    }}>
+                      {benefit.icon}
+                    </div>
+                    <h3 style={{ fontSize: '20px', fontWeight: '600', marginBottom: '12px' }}>{benefit.title}</h3>
+                    <p style={{ color: 'var(--text-secondary)', lineHeight: '1.6' }}>{benefit.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <section style={{ padding: '100px 0', backgroundColor: 'var(--bg-dark)', color: 'white' }}>
+            <div className="container">
+              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '64px' }}>
+                <div style={{ flex: '1', minWidth: '300px' }}>
+                  <h2 style={{ fontSize: '36px', fontWeight: '700', marginBottom: '24px' }}>What Can You Sell on ZizzyStores?</h2>
+                  <p style={{ fontSize: '18px', opacity: 0.8, marginBottom: '32px' }}>
+                    Our platform is versatile enough to handle any digital file type. Creators around the world use us to sell:
+                  </p>
+                  <ul style={{ listStyle: 'none', padding: 0, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <li style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--primary)' }}></div>
+                      Ebooks & PDFs
+                    </li>
+                    <li style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--primary)' }}></div>
+                      Software & Scripts
+                    </li>
+                    <li style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--primary)' }}></div>
+                      Design Assets
+                    </li>
+                    <li style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--primary)' }}></div>
+                      Online Courses
+                    </li>
+                    <li style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--primary)' }}></div>
+                      Stock Photography
+                    </li>
+                    <li style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--primary)' }}></div>
+                      Audio & Music
+                    </li>
+                  </ul>
+                </div>
+                <div style={{ flex: '1', minWidth: '300px', backgroundColor: 'rgba(255,255,255,0.05)', padding: '40px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                  <h3 style={{ fontSize: '24px', marginBottom: '16px' }}>"ZizzyStores has completely automated my ebook sales. I've sold to customers in over 30 countries without lifting a finger."</h3>
+                  <p style={{ fontWeight: '600', color: 'var(--primary)' }}>— Marcus Chen, Digital Author</p>
+                </div>
+              </div>
+            </div>
+          </section>
+          
+          <CTASection />
+        </main>
+        
+        <Footer />
+      </PageTransition>
+    </>
   );
 }
