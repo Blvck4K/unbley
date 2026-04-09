@@ -3,10 +3,9 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import ErrorBoundary from './components/ErrorBoundary';
-import { supabase } from './lib/supabase';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
-// Lazy load pages for better performance
+// Lazy load pages
 const Home = lazy(() => import('./pages/Home'));
 const Auth = lazy(() => import('./pages/Auth'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -34,63 +33,21 @@ const FillBlog = lazy(() => import('./pages/FillBlog'));
 
 import ChatWidget from './components/ChatWidget';
 
-// Loading Component for Suspense
+// Loading Component
 const PageLoader = () => (
-  <div style={{
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: '100vh',
-    width: '100vw',
-    backgroundColor: 'var(--bg-light)',
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    zIndex: 9999
-  }}>
-    <div className="loader-dots">
-      <div className="dot"></div>
-      <div className="dot"></div>
-      <div className="dot"></div>
-    </div>
-    <style>{`
-      .loader-dots {
-        display: flex;
-        gap: 8px;
-      }
-      .dot {
-        width: 12px;
-        height: 12px;
-        background-color: var(--primary);
-        border-radius: 50%;
-        animation: pulse 1.5s infinite ease-in-out;
-      }
-      .dot:nth-child(2) { animation-delay: 0.2s; }
-      .dot:nth-child(3) { animation-delay: 0.4s; }
-      @keyframes pulse {
-        0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
-        40% { transform: scale(1); opacity: 1; }
-      }
-    `}</style>
+  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', width: '100vw', backgroundColor: 'var(--bg-light)', position: 'fixed', top: 0, left: 0, zIndex: 9999 }}>
+    <div className="loader-dots"><div className="dot"></div><div className="dot"></div><div className="dot"></div></div>
+    <style>{`.loader-dots { display: flex; gap: 8px; } .dot { width: 12px; height: 12px; background-color: var(--primary); border-radius: 50%; animation: pulse 1.5s infinite ease-in-out; } .dot:nth-child(2) { animation-delay: 0.2s; } .dot:nth-child(3) { animation-delay: 0.4s; } @keyframes pulse { 0%, 80%, 100% { transform: scale(0); opacity: 0.3; } 40% { transform: scale(1); opacity: 1; } }`}</style>
   </div>
 );
 
 function App() {
-  const [customBrandId, setCustomBrandId] = useState(null);
-  const [isCustomDomain, setIsCustomDomain] = useState(false);
-
   return (
     <AuthProvider>
       <BrowserRouter>
         <Suspense fallback={<PageLoader />}>
           <ErrorBoundary>
             <Routes>
-              {/* Custom Domain Root */}
-              {isCustomDomain && customBrandId && (
-                <Route path="/" element={<ShopBrand customId={customBrandId} />} />
-              )}
-
-              {/* Public Routes */}
               <Route path="/" element={<Home />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/store" element={<Storefront />} />
@@ -98,9 +55,7 @@ function App() {
               <Route path="/explore-brand/:id" element={<ExploreBrand />} />
               <Route path="/shop-brand" element={<ShopBrand />} />
               <Route path="/shop-brand/:id" element={<ShopBrand />} />
-              {/* Support for friendly slugs if implementing later */}
               <Route path="/@:slug" element={<ShopBrand />} />
-              
               <Route path="/cart" element={<Cart />} />
               <Route path="/all-blogs" element={<AllBlog />} />
               <Route path="/blog/:slug" element={<Blog />} />
@@ -112,8 +67,6 @@ function App() {
               <Route path="/create-online-store" element={<CreateOnlineStore />} />
               <Route path="/shopify-alternative" element={<ShopifyAlternative />} />
               <Route path="/affordable-ecommerce-platform" element={<AffordableEcommerce />} />
-
-              {/* Protected Routes (require auth and Profile Completion if not /edit) */}
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
               <Route path="/edit" element={<ProtectedRoute><Edit /></ProtectedRoute>} />
@@ -132,4 +85,3 @@ function App() {
 }
 
 export default App;
-

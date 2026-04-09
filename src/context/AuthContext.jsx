@@ -82,7 +82,9 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {(typeof window === 'undefined' || !loading) ? children : (
+        <div style={{ height: '100vh', width: '100vw', backgroundColor: 'var(--bg-light)' }} />
+      )}
     </AuthContext.Provider>
   );
 };

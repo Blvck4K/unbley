@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+  <url>
+    <loc>https://zizzystores.com/</loc>
+  </url>
+
+  <url>
+    <loc>https://zizzystores.com/auth?mode=signin</loc>
+  </url>
+
+  <url>
+    <loc>https://zizzystores.com/auth?mode=signup</loc>
+  </url>
+
+  <url>
+    <loc>https://zizzystores.com/dashboard</loc>
+  </url>
+
+  <url>
+    <loc>https://zizzystores.com/activation</loc>
+  </url>
+
+  <url>
+    <loc>https://zizzystores.com/edit</loc>
+  </url>
+
+  <url>
+    <loc>https://zizzystores.com/store</loc>
+  </url>
+
+  <url>
+    <loc>https://zizzystores.com/explore-brand</loc>
+  </url>
+
+  <url>
+    <loc>https://zizzystores.com/finalize-activation</loc>
+  </url>
+
+  <url>
+    <loc>https://zizzystores.com/success</loc>
+  </url>
+
+  <url>
+    <loc>https://zizzystores.com/sell-digital-products</loc>
+  </url>
+
+  <url>
+    <loc>https://zizzystores.com/creator-platform</loc>
+  </url>
+
+  <url>
+    <loc>https://zizzystores.com/create-online-store</loc>
+  </url>
+
+  <url>
+    <loc>https://zizzystores.com/affordable-ecommerce-platform</loc>
+  </url>
+
+</urlset>

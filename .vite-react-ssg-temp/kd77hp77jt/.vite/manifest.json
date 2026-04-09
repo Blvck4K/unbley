@@ -1,0 +1,352 @@
+{
+  "_CTASection-BhNGPTfR.js": {
+    "file": "assets/CTASection-BhNGPTfR.js",
+    "name": "CTASection"
+  },
+  "_Footer-BwtjuRQ-.js": {
+    "file": "assets/Footer-BwtjuRQ-.js",
+    "name": "Footer",
+    "imports": [
+      "_useAuth-Ci0LZBhu.js",
+      "_supabase-CTgwDjry.js"
+    ]
+  },
+  "_HowItWorks-BbQ2qeRb.js": {
+    "file": "assets/HowItWorks-BbQ2qeRb.js",
+    "name": "HowItWorks"
+  },
+  "_PageTransition-CqG4EOCz.js": {
+    "file": "assets/PageTransition-CqG4EOCz.js",
+    "name": "PageTransition"
+  },
+  "_SEO-D3I2-QVn.js": {
+    "file": "assets/SEO-D3I2-QVn.js",
+    "name": "SEO"
+  },
+  "_supabase-CTgwDjry.js": {
+    "file": "assets/supabase-CTgwDjry.js",
+    "name": "supabase"
+  },
+  "_useAuth-Ci0LZBhu.js": {
+    "file": "assets/useAuth-Ci0LZBhu.js",
+    "name": "useAuth",
+    "imports": [
+      "_supabase-CTgwDjry.js"
+    ]
+  },
+  "_useBlog-DXkr4e9q.js": {
+    "file": "assets/useBlog-DXkr4e9q.js",
+    "name": "useBlog",
+    "imports": [
+      "_supabase-CTgwDjry.js"
+    ]
+  },
+  "src/main.jsx": {
+    "file": "main.mjs",
+    "name": "main",
+    "src": "src/main.jsx",
+    "isEntry": true,
+    "imports": [
+      "_useAuth-Ci0LZBhu.js",
+      "_supabase-CTgwDjry.js"
+    ],
+    "dynamicImports": [
+      "src/pages/Home.jsx",
+      "src/pages/Auth.jsx",
+      "src/pages/Dashboard.jsx",
+      "src/pages/Profile.jsx",
+      "src/pages/Edit.jsx",
+      "src/pages/Activation.jsx",
+      "src/pages/Storefront.jsx",
+      "src/pages/ExploreBrand.jsx",
+      "src/pages/FinalizeActivation.jsx",
+      "src/pages/SuccessPage.jsx",
+      "src/pages/CheckoutSuccess.jsx",
+      "src/pages/ShopBrand.jsx",
+      "src/pages/Cart.jsx",
+      "src/pages/Checkout.jsx",
+      "src/pages/ProductDetail.jsx",
+      "src/pages/SellDigitalGoods.jsx",
+      "src/pages/CreatorPlatform.jsx",
+      "src/pages/CreateOnlineStore.jsx",
+      "src/pages/ShopifyAlternative.jsx",
+      "src/pages/AffordableEcommerce.jsx",
+      "src/pages/AllBlog.jsx",
+      "src/pages/Blog.jsx",
+      "src/pages/AdminBlog.jsx",
+      "src/pages/FillBlog.jsx"
+    ]
+  },
+  "src/pages/Activation.jsx": {
+    "file": "assets/Activation-D55rWUir.js",
+    "name": "Activation",
+    "src": "src/pages/Activation.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_PageTransition-CqG4EOCz.js"
+    ]
+  },
+  "src/pages/AdminBlog.jsx": {
+    "file": "assets/AdminBlog-JOvNdv0X.js",
+    "name": "AdminBlog",
+    "src": "src/pages/AdminBlog.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_Footer-BwtjuRQ-.js",
+      "_PageTransition-CqG4EOCz.js",
+      "_useAuth-Ci0LZBhu.js",
+      "_useBlog-DXkr4e9q.js",
+      "_supabase-CTgwDjry.js"
+    ]
+  },
+  "src/pages/AffordableEcommerce.jsx": {
+    "file": "assets/AffordableEcommerce-Uv-l7iPw.js",
+    "name": "AffordableEcommerce",
+    "src": "src/pages/AffordableEcommerce.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_CTASection-BhNGPTfR.js",
+      "_Footer-BwtjuRQ-.js",
+      "_PageTransition-CqG4EOCz.js",
+      "_SEO-D3I2-QVn.js"
+    ]
+  },
+  "src/pages/AllBlog.jsx": {
+    "file": "assets/AllBlog-BsCyrUef.js",
+    "name": "AllBlog",
+    "src": "src/pages/AllBlog.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_Footer-BwtjuRQ-.js",
+      "_PageTransition-CqG4EOCz.js",
+      "_SEO-D3I2-QVn.js",
+      "_useAuth-Ci0LZBhu.js",
+      "_useBlog-DXkr4e9q.js"
+    ]
+  },
+  "src/pages/Auth.jsx": {
+    "file": "assets/Auth-BgbQZNFs.js",
+    "name": "Auth",
+    "src": "src/pages/Auth.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_PageTransition-CqG4EOCz.js",
+      "_supabase-CTgwDjry.js"
+    ]
+  },
+  "src/pages/Blog.jsx": {
+    "file": "assets/Blog-cU2kn_KI.js",
+    "name": "Blog",
+    "src": "src/pages/Blog.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_Footer-BwtjuRQ-.js",
+      "_PageTransition-CqG4EOCz.js",
+      "_SEO-D3I2-QVn.js",
+      "_supabase-CTgwDjry.js"
+    ]
+  },
+  "src/pages/Cart.jsx": {
+    "file": "assets/Cart-D31UX7Fe.js",
+    "name": "Cart",
+    "src": "src/pages/Cart.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_PageTransition-CqG4EOCz.js",
+      "_useAuth-Ci0LZBhu.js",
+      "_supabase-CTgwDjry.js"
+    ]
+  },
+  "src/pages/Checkout.jsx": {
+    "file": "assets/Checkout-D2lIKob5.js",
+    "name": "Checkout",
+    "src": "src/pages/Checkout.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_PageTransition-CqG4EOCz.js",
+      "_supabase-CTgwDjry.js"
+    ]
+  },
+  "src/pages/CheckoutSuccess.jsx": {
+    "file": "assets/CheckoutSuccess-D9zVOI2V.js",
+    "name": "CheckoutSuccess",
+    "src": "src/pages/CheckoutSuccess.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_PageTransition-CqG4EOCz.js"
+    ]
+  },
+  "src/pages/CreateOnlineStore.jsx": {
+    "file": "assets/CreateOnlineStore-BDOBwTxJ.js",
+    "name": "CreateOnlineStore",
+    "src": "src/pages/CreateOnlineStore.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_CTASection-BhNGPTfR.js",
+      "_Footer-BwtjuRQ-.js",
+      "_PageTransition-CqG4EOCz.js",
+      "_SEO-D3I2-QVn.js"
+    ]
+  },
+  "src/pages/CreatorPlatform.jsx": {
+    "file": "assets/CreatorPlatform-BOLnHrIX.js",
+    "name": "CreatorPlatform",
+    "src": "src/pages/CreatorPlatform.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_CTASection-BhNGPTfR.js",
+      "_Footer-BwtjuRQ-.js",
+      "_HowItWorks-BbQ2qeRb.js",
+      "_PageTransition-CqG4EOCz.js",
+      "_SEO-D3I2-QVn.js"
+    ]
+  },
+  "src/pages/Dashboard.jsx": {
+    "file": "assets/Dashboard-BHcfr3tt.js",
+    "name": "Dashboard",
+    "src": "src/pages/Dashboard.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_PageTransition-CqG4EOCz.js",
+      "_useAuth-Ci0LZBhu.js",
+      "_supabase-CTgwDjry.js"
+    ]
+  },
+  "src/pages/Edit.jsx": {
+    "file": "assets/Edit-ynZMZ6pV.js",
+    "name": "Edit",
+    "src": "src/pages/Edit.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_PageTransition-CqG4EOCz.js",
+      "_useAuth-Ci0LZBhu.js",
+      "_supabase-CTgwDjry.js"
+    ]
+  },
+  "src/pages/ExploreBrand.jsx": {
+    "file": "assets/ExploreBrand-DsMQezPD.js",
+    "name": "ExploreBrand",
+    "src": "src/pages/ExploreBrand.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_PageTransition-CqG4EOCz.js",
+      "_supabase-CTgwDjry.js"
+    ]
+  },
+  "src/pages/FillBlog.jsx": {
+    "file": "assets/FillBlog-BbgX2czc.js",
+    "name": "FillBlog",
+    "src": "src/pages/FillBlog.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_Footer-BwtjuRQ-.js",
+      "_PageTransition-CqG4EOCz.js",
+      "_useAuth-Ci0LZBhu.js",
+      "_supabase-CTgwDjry.js"
+    ]
+  },
+  "src/pages/FinalizeActivation.jsx": {
+    "file": "assets/FinalizeActivation-DyW57LqY.js",
+    "name": "FinalizeActivation",
+    "src": "src/pages/FinalizeActivation.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_PageTransition-CqG4EOCz.js",
+      "_useAuth-Ci0LZBhu.js",
+      "_supabase-CTgwDjry.js"
+    ]
+  },
+  "src/pages/Home.jsx": {
+    "file": "assets/Home-CvSI8nde.js",
+    "name": "Home",
+    "src": "src/pages/Home.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_CTASection-BhNGPTfR.js",
+      "_Footer-BwtjuRQ-.js",
+      "_HowItWorks-BbQ2qeRb.js",
+      "_PageTransition-CqG4EOCz.js",
+      "_SEO-D3I2-QVn.js",
+      "_useAuth-Ci0LZBhu.js",
+      "_supabase-CTgwDjry.js"
+    ]
+  },
+  "src/pages/ProductDetail.jsx": {
+    "file": "assets/ProductDetail-CR0EsIln.js",
+    "name": "ProductDetail",
+    "src": "src/pages/ProductDetail.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_PageTransition-CqG4EOCz.js",
+      "_useAuth-Ci0LZBhu.js",
+      "_supabase-CTgwDjry.js"
+    ]
+  },
+  "src/pages/Profile.jsx": {
+    "file": "assets/Profile-CSu7jGIg.js",
+    "name": "Profile",
+    "src": "src/pages/Profile.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_PageTransition-CqG4EOCz.js",
+      "_useAuth-Ci0LZBhu.js",
+      "_supabase-CTgwDjry.js"
+    ]
+  },
+  "src/pages/SellDigitalGoods.jsx": {
+    "file": "assets/SellDigitalGoods-CLndCuJ0.js",
+    "name": "SellDigitalGoods",
+    "src": "src/pages/SellDigitalGoods.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_CTASection-BhNGPTfR.js",
+      "_Footer-BwtjuRQ-.js",
+      "_PageTransition-CqG4EOCz.js",
+      "_SEO-D3I2-QVn.js"
+    ]
+  },
+  "src/pages/ShopBrand.jsx": {
+    "file": "assets/ShopBrand-B266xBF2.js",
+    "name": "ShopBrand",
+    "src": "src/pages/ShopBrand.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_PageTransition-CqG4EOCz.js",
+      "_useAuth-Ci0LZBhu.js",
+      "_supabase-CTgwDjry.js"
+    ]
+  },
+  "src/pages/ShopifyAlternative.jsx": {
+    "file": "assets/ShopifyAlternative-CYWwtMvd.js",
+    "name": "ShopifyAlternative",
+    "src": "src/pages/ShopifyAlternative.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_CTASection-BhNGPTfR.js",
+      "_Footer-BwtjuRQ-.js",
+      "_PageTransition-CqG4EOCz.js",
+      "_SEO-D3I2-QVn.js"
+    ]
+  },
+  "src/pages/Storefront.jsx": {
+    "file": "assets/Storefront-BohrQRK4.js",
+    "name": "Storefront",
+    "src": "src/pages/Storefront.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_PageTransition-CqG4EOCz.js",
+      "_supabase-CTgwDjry.js"
+    ]
+  },
+  "src/pages/SuccessPage.jsx": {
+    "file": "assets/SuccessPage-ZU_N-Xr9.js",
+    "name": "SuccessPage",
+    "src": "src/pages/SuccessPage.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_PageTransition-CqG4EOCz.js",
+      "_useAuth-Ci0LZBhu.js",
+      "_supabase-CTgwDjry.js"
+    ]
+  }
+}

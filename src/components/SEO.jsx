@@ -4,18 +4,18 @@ import React from 'react';
  * Reusable SEO component for managing document head metadata using native React 19 hoisting.
  * React 19 automatically hoists <title>, <meta>, and <link> tags to the <head>.
  */
-const SEO = ({ 
-  title, 
-  description = "Start your professional online store with ZizzyStores. The easiest way to sell products in Nigeria and beyond.", 
-  canonical, 
-  ogImage, 
+const SEO = ({
+  title,
+  description = "Start your professional online store with ZizzyStores. The easiest way to sell products in Nigeria and beyond.",
+  canonical,
+  ogImage,
   ogType = 'website',
   twitterHandle = '@zizzystores',
   keywords
 }) => {
   const siteName = 'ZizzyStores';
   const fullTitle = title ? `${title} | ${siteName}` : siteName;
-  
+
   // Clean meta description (remove HTML, collapse whitespace, truncate to 160)
   const cleanDescription = React.useMemo(() => {
     if (!description) return "";
@@ -27,12 +27,13 @@ const SEO = ({
   }, [description]);
 
   // Default fallback image if none provided
-  const defaultImage = 'https://zizzystores.com/og-default.jpg'; 
+  const defaultImage = 'https://zizzystores.com/og-default.jpg';
   const finalImage = ogImage || defaultImage;
 
   // Use canonical if provided, otherwise fallback to current origin
   const siteUrl = 'https://zizzystores.com';
-  const finalUrl = canonical || (typeof window !== 'undefined' ? window.location.href : siteUrl);
+  // During SSG/SSR, window is not available, so we use the siteUrl as base
+  const finalUrl = canonical || siteUrl;
 
   return (
     <>
