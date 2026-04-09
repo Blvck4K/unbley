@@ -53,13 +53,13 @@ export default function AdminBlog() {
 
     // Header
     topNav: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '40px 0 80px', borderBottom: '1px solid #E5E1D8', marginBottom: '60px' },
-    navLinks: { display: 'flex', gap: '32px' },
+    navLinks: { display: 'flex', gap: '32px', overflowX: 'auto', paddingBottom: '12px' },
     navLink: (active) => ({ fontSize: '13px', fontWeight: '600', color: active ? '#1A1A1A' : '#888', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: active ? '2px solid #1A1A1A' : 'none', paddingBottom: '4px' }),
 
-    headerArea: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '60px' },
+    headerArea: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '60px', flexWrap: 'wrap', gap: '24px' },
     breadcrumb: { fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.15em', color: '#888', marginBottom: '12px', display: 'block' },
-    title: { fontFamily: '"Playfair Display", serif', fontSize: '56px', fontWeight: '700', letterSpacing: '-0.02em', margin: 0 },
-    createBtn: { display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#052A24', color: '#FFF', padding: '14px 24px', borderRadius: '4px', fontSize: '14px', fontWeight: '600', border: 'none', cursor: 'pointer' },
+    title: { fontFamily: '"Playfair Display", serif', fontSize: 'clamp(32px, 8vw, 56px)', fontWeight: '700', letterSpacing: '-0.02em', margin: 0 },
+    createBtn: { display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#052A24', color: '#FFF', padding: '14px 24px', borderRadius: '4px', fontSize: '14px', fontWeight: '600', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' },
 
     // Analytics Row
     statsRow: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px', marginBottom: '80px' },
@@ -120,7 +120,7 @@ export default function AdminBlog() {
             </motion.button>
           </header>
 
-          <div style={s.statsRow}>
+          <div style={s.statsRow} className="admin-stats-row">
             <div style={s.statCard}>
               <span style={s.statLabel}>Total Essays</span>
               <span style={s.statValue}>{loading ? '...' : stats.total}</span>
@@ -129,7 +129,7 @@ export default function AdminBlog() {
               <span style={s.statLabel}>Drafts</span>
               <span style={s.statValue}>{loading ? '...' : stats.drafts}</span>
             </div>
-            <div style={s.readershipCard}>
+            <div style={s.readershipCard} className="admin-readership-card">
               <span style={s.statLabel}>Monthly Readership</span>
               <div className="flex items-baseline gap-2" style={{ marginBottom: '8px' }}>
                 <span style={{ ...s.statValue, fontSize: '48px' }}>42.8k</span>
@@ -149,44 +149,48 @@ export default function AdminBlog() {
               </span>
             </div>
 
-            <div style={s.tableHeader}>
+            <div style={s.tableHeader} className="admin-table-header">
               <div>Manuscript Title</div>
               <div>Status</div>
-              <div>Author</div>
-              <div>Date</div>
+              <div className="admin-hide-mobile">Author</div>
+              <div className="admin-hide-mobile">Date</div>
               <div>Actions</div>
             </div>
 
             {posts.map(post => (
-              <motion.div
-                key={post.id}
-                whileHover={{ backgroundColor: '#FCFBFA' }}
-                style={s.tableRow}
-              >
-                <div>
-                  <div style={s.manuscriptTitle}>{post.title}</div>
-                  <div style={s.manuscriptMeta}>{post.category || 'Editorial'} • {post.read_time}</div>
-                </div>
-                <div>
-                  <span style={s.statusChip(post.status === 'published')}>{post.status}</span>
-                </div>
-                <div style={{ fontSize: '14px', color: '#444' }}>{post.author_name || 'Anonymous'}</div>
-                <div style={{ fontSize: '14px', color: '#888' }}>{new Date(post.created_at).toLocaleDateString()}</div>
-                <div className="flex gap-4">
-                  <Edit
-                    size={16}
-                    color="#888"
-                    className="cursor-pointer hover:text-black"
-                    onClick={() => handleEdit(post.id)}
-                  />
-                  <Trash2
-                    size={16}
-                    color="#888"
-                    className="cursor-pointer hover:text-red-500"
-                    onClick={() => handleDelete(post.id)}
-                  />
-                </div>
-              </motion.div>
+                <motion.div
+                  key={post.id}
+                  whileHover={{ backgroundColor: '#FCFBFA' }}
+                  style={s.tableRow}
+                  className="admin-table-row"
+                >
+                  <div className="admin-title-col">
+                    <div style={s.manuscriptTitle}>{post.title}</div>
+                    <div style={s.manuscriptMeta}>{post.category || 'Editorial'} • {post.read_time}</div>
+                    <div className="admin-show-mobile" style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>
+                      {post.author_name || 'Anonymous'} • {new Date(post.created_at).toLocaleDateString()}
+                    </div>
+                  </div>
+                  <div className="admin-status-col">
+                    <span style={s.statusChip(post.status === 'published')}>{post.status}</span>
+                  </div>
+                  <div className="admin-hide-mobile" style={{ fontSize: '14px', color: '#444' }}>{post.author_name || 'Anonymous'}</div>
+                  <div className="admin-hide-mobile" style={{ fontSize: '14px', color: '#888' }}>{new Date(post.created_at).toLocaleDateString()}</div>
+                  <div className="flex gap-4 admin-actions-col">
+                    <Edit
+                      size={16}
+                      color="#888"
+                      className="cursor-pointer hover:text-black"
+                      onClick={() => handleEdit(post.id)}
+                    />
+                    <Trash2
+                      size={16}
+                      color="#888"
+                      className="cursor-pointer hover:text-red-500"
+                      onClick={() => handleDelete(post.id)}
+                    />
+                  </div>
+                </motion.div>
             ))}
             {posts.length === 0 && !loading && (
               <div style={{ padding: '80px', textAlign: 'center', color: '#888' }}>
@@ -211,10 +215,15 @@ export default function AdminBlog() {
           .cursor-pointer { cursor: pointer; }
           
           @media (max-width: 992px) {
-            .stats-row { grid-template-columns: 1fr !important; }
-            .table-header, .table-row { grid-template-columns: 1fr 1fr 100px !important; }
-            .manuscript-author, .manuscript-date { display: none; }
+            .admin-stats-row { grid-template-columns: 1fr !important; }
+            .admin-table-header { grid-template-columns: 1fr 80px 80px !important; }
+            .admin-table-row { grid-template-columns: 1fr 80px 80px !important; padding: 16px !important; }
+            .admin-hide-mobile { display: none !important; }
+            .admin-show-mobile { display: block !important; }
+            .admin-title-col { overflow: hidden; }
           }
+          
+          .admin-show-mobile { display: none; }
         `}</style>
       </div>
     </PageTransition>

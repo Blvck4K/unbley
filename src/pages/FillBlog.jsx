@@ -268,7 +268,7 @@ export default function FillBlog() {
       <div style={{ backgroundColor: '#FAFAFA', minHeight: '100vh', fontFamily: "'Inter', sans-serif", color: '#1a1a1a' }}>
         <Navbar />
 
-        <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '120px 20px', display: 'grid', gridTemplateColumns: '1fr 340px', gap: '64px' }}>
+        <main className="editor-main-layout" style={{ maxWidth: '1200px', margin: '0 auto', padding: '120px 20px', display: 'grid', gridTemplateColumns: '1fr 340px', gap: '64px' }}>
           <div className="content-area">
             <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: '48px', marginBottom: '40px' }}>
               {editId ? 'Edit Post' : 'Create New Post'}
@@ -281,7 +281,8 @@ export default function FillBlog() {
                 placeholder="Enter a descriptive headline..."
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                style={{ width: '100%', border: 'none', background: 'transparent', fontSize: '48px', fontFamily: "'Playfair Display', serif", outline: 'none' }}
+                style={{ width: '100%', border: 'none', background: 'transparent', fontSize: 'clamp(32px, 5vw, 48px)', fontFamily: "'Playfair Display', serif", outline: 'none' }}
+                className="editor-title-input"
               />
             </div>
 
@@ -349,7 +350,7 @@ export default function FillBlog() {
                 <ToolbarButton onClick={() => applyFormatting('link')} active={editor?.isActive('link')} title="Insert Link"><LinkIcon size={16} /></ToolbarButton>
               </div>
 
-              <div style={{ minHeight: '600px', padding: '40px', backgroundColor: '#FFF', borderRadius: '8px', border: '1px solid #F3F4F6', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }} className="tiptap-editor">
+              <div style={{ minHeight: '600px', padding: '40px', backgroundColor: '#FFF', borderRadius: '8px', border: '1px solid #F3F4F6', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }} className="tiptap-editor-container">
                 <EditorContent editor={editor} />
               </div>
             </div>
@@ -433,7 +434,7 @@ export default function FillBlog() {
             </div>
           </div>
 
-          <aside>
+          <aside className="content-area-aside">
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '40px' }}>
               <button onClick={() => handleSave(false)} disabled={isSaving} style={{ padding: '12px', fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer' }}>SAVE DRAFT</button>
               <button onClick={() => handleSave(true)} disabled={isSaving} style={{ padding: '12px', fontWeight: 700, backgroundColor: '#111', color: '#FFF', borderRadius: '4px', cursor: 'pointer' }}>PUBLISH POST</button>
@@ -490,15 +491,26 @@ export default function FillBlog() {
 
         <Footer />
         <style>{`
-          .tiptap-editor .ProseMirror { outline: none; min-height: 500px; }
-          .tiptap-editor p { margin-bottom: 1.5em; }
-          .tiptap-editor h1 { font-family: 'Playfair Display', serif; font-size: 2.5em; margin-bottom: 0.5em; }
-          .tiptap-editor h2 { font-family: 'Playfair Display', serif; font-size: 2em; margin-bottom: 0.5em; }
-          .tiptap-editor ul { list-style-type: disc; padding-left: 1.5rem; }
-          .tiptap-editor ol { list-style-type: decimal; padding-left: 1.5rem; }
-          .tiptap-editor table { border-collapse: collapse; width: 100%; margin: 2rem 0; }
-          .tiptap-editor table td, .tiptap-editor table th { border: 1px solid #E5E7EB; padding: 12px; }
+          .tiptap-editor-container .ProseMirror { outline: none; min-height: 500px; }
+          .tiptap-editor-container p { margin-bottom: 1.5em; }
+          .tiptap-editor-container h1 { font-family: 'Playfair Display', serif; font-size: 2.5em; margin-bottom: 0.5em; }
+          .tiptap-editor-container h2 { font-family: 'Playfair Display', serif; font-size: 2em; margin-bottom: 0.5em; }
+          .tiptap-editor-container ul { list-style-type: disc; padding-left: 1.5rem; }
+          .tiptap-editor-container ol { list-style-type: decimal; padding-left: 1.5rem; }
+          .tiptap-editor-container table { border-collapse: collapse; width: 100%; margin: 2rem 0; }
+          .tiptap-editor-container table td, .tiptap-editor-container table th { border: 1px solid #E5E7EB; padding: 12px; }
           .editor-toolbar-btn:hover { background-color: #F3F4F6 !important; }
+          
+          @media (max-width: 992px) {
+            .editor-main-layout { 
+              grid-template-columns: 1fr !important; 
+              gap: 40px !important; 
+              padding-top: 80px !important;
+            }
+            .content-area-aside { order: -1; }
+            .tiptap-editor-container { padding: 20px !important; }
+            .editor-title-input { font-size: 32px !important; }
+          }
         `}</style>
       </div>
     </PageTransition>

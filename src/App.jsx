@@ -27,8 +27,8 @@ const CreatorPlatform = lazy(() => import('./pages/CreatorPlatform'));
 const CreateOnlineStore = lazy(() => import('./pages/CreateOnlineStore'));
 const ShopifyAlternative = lazy(() => import('./pages/ShopifyAlternative'));
 const AffordableEcommerce = lazy(() => import('./pages/AffordableEcommerce'));
+const AllBlog = lazy(() => import('./pages/AllBlog'));
 const Blog = lazy(() => import('./pages/Blog'));
-const BlogReview = lazy(() => import('./pages/BlogReview'));
 const AdminBlog = lazy(() => import('./pages/AdminBlog'));
 const FillBlog = lazy(() => import('./pages/FillBlog'));
 
@@ -102,9 +102,8 @@ function App() {
               <Route path="/@:slug" element={<ShopBrand />} />
               
               <Route path="/cart" element={<Cart />} />
-              <Route path="/blog" element={<Blog />} />
-              <Route path="/blog-review" element={<BlogReview />} />
-              <Route path="/blog-review/:slug" element={<BlogReview />} />
+              <Route path="/all-blogs" element={<AllBlog />} />
+              <Route path="/blog/:slug" element={<Blog />} />
               <Route path="/admin-blog" element={<AdminBlog />} />
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/product" element={<ProductDetail />} />

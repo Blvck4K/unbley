@@ -171,7 +171,7 @@ export default function Navbar() {
             </div>
 
             <Link 
-              to="/blog" 
+              to="/all-blogs" 
               className="font-semibold transition-colors duration-200 hover:text-primary" 
               style={{ fontSize: '14px', textDecoration: 'none', color: 'inherit', padding: '12px 0' }}
             >
@@ -249,7 +249,7 @@ export default function Navbar() {
                 <Link to="/create-online-store" onClick={() => setIsMenuOpen(false)} className="font-semibold" style={{ fontSize: '15px' }}>Create Online Store</Link>
                 <Link to="/shopify-alternative" onClick={() => setIsMenuOpen(false)} className="font-semibold" style={{ fontSize: '15px' }}>Shopify Alternative</Link>
                 <Link to="/affordable-ecommerce-platform" onClick={() => setIsMenuOpen(false)} className="font-semibold" style={{ fontSize: '15px' }}>Affordable Ecommerce</Link>
-                <Link to="/blog" onClick={() => setIsMenuOpen(false)} className="font-semibold" style={{ fontSize: '15px', color: 'var(--primary)' }}>Blog</Link>
+                <Link to="/all-blogs" onClick={() => setIsMenuOpen(false)} className="font-semibold" style={{ fontSize: '15px', color: 'var(--primary)' }}>Blog</Link>
               </div>
 
               <div className="flex items-center gap-2" style={{ background: 'var(--bg-gray)', padding: '12px 16px', borderRadius: 'var(--radius-md)' }}>
