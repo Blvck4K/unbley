@@ -86,6 +86,8 @@ function injectMeta(folderPath, template, data) {
     { regex: /<meta name="twitter:title" content=".*?"\s*\/?>/, replacement: `<meta name="twitter:title" content="${fullTitle}" />` },
     { regex: /<meta name="twitter:description" content=".*?"\s*\/?>/, replacement: `<meta name="twitter:description" content="${cleanDesc}" />` },
     { regex: /<meta name="twitter:image" content=".*?"\s*\/?>/, replacement: `<meta name="twitter:image" content="${data.image}" />` },
+    { regex: /<meta property="og:type" content=".*?"\s*\/?>/, replacement: `<meta property="og:type" content="article" />` },
+    { regex: /<meta property="fb:app_id" content=".*?"\s*\/?>/, replacement: `<meta property="fb:app_id" content="${process.env.VITE_FB_APP_ID}" />` },
     { regex: /<link rel="canonical" href=".*?"\s*\/?>/, replacement: `<link rel="canonical" href="${data.url}" />` }
   ];
 

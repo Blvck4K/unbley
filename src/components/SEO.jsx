@@ -50,6 +50,7 @@ const SEO = ({
       <meta property="og:image" content={finalImage} />
       <meta property="og:url" content={finalUrl} />
       <meta property="og:site_name" content={siteName} />
+      <meta property="fb:app_id" content={import.meta.env.VITE_FB_APP_ID} />
 
       {/* Twitter */}
       <meta name="twitter:card" content="summary_large_image" />
