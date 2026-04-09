@@ -50,8 +50,9 @@ const SEO = ({
       <meta property="og:image" content={finalImage} />
       <meta property="og:image:secure_url" content={finalImage} />
       <meta property="og:image:type" content="image/png" />
-      <meta property="og:image:width" content="1200" />
-      <meta property="og:image:height" content="630" />
+      <meta property="og:image:width" content="1678" />
+      <meta property="og:image:height" content="937" />
+      <meta property="og:image:alt" content={fullTitle} />
       <meta property="og:url" content={finalUrl} />
       <meta property="og:site_name" content={siteName} />
       <meta property="fb:app_id" content={import.meta.env.VITE_FB_APP_ID} />
