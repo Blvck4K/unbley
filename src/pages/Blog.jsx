@@ -131,7 +131,7 @@ export default function Blog() {
     heroGrid: { display: 'grid', gridTemplateColumns: post?.cover_image_url ? '1.2fr 1fr' : '1fr', gap: '64px', alignItems: 'center' },
     title: { fontFamily: '"Playfair Display", serif', fontSize: 'clamp(32px, 5vw, 64px)', fontWeight: '700', marginBottom: '24px', letterSpacing: '-0.02em', lineHeight: '1.1' },
     byline: { fontSize: '14px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '500' },
-    heroImage: { width: '150%', height: 'clamp(250px, 40vw, 450px)', objectFit: 'cover', borderRadius: '12px', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' },
+    heroImage: { width: '100%', height: 'clamp(250px, 40vw, 450px)', objectFit: 'cover', borderRadius: '12px', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' },
 
     // Article Layout
     container: { display: 'grid', gridTemplateColumns: '280px 1fr', gap: '120px', maxWidth: '1300px', margin: '0 auto', padding: '0 40px 200px', width: '100%', boxSizing: 'border-box' },
@@ -298,7 +298,7 @@ export default function Blog() {
               style={s.article}
             >
               {/* Metadata Overview for Reviewers */}
-              <div style={{ padding: '32px', backgroundColor: '#F3F4F6', borderRadius: '12px', border: '1px solid #E5E7EB', marginBottom: '60px' }}>
+              <div className="reviewer-box" style={{ padding: '32px', backgroundColor: '#F3F4F6', borderRadius: '12px', border: '1px solid #E5E7EB', marginBottom: '60px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '32px' }}>
                   <div style={{ borderBottom: '1px solid #E5E7EB', paddingBottom: '16px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '8px' }}>
@@ -317,7 +317,7 @@ export default function Blog() {
                       </button>
                     </div>
                     <code style={{ fontSize: '14px', color: '#111', fontWeight: 500, wordBreak: 'break-all', backgroundColor: '#FFF', padding: '8px 12px', borderRadius: '6px', border: '1px solid #E5E7EB', display: 'block' }}>
-                      {window.location.protocol}//{window.location.host}/blog/{post.slug}
+                      {post.slug ? `${window.location.protocol}//${window.location.host}/blog/${post.slug}` : 'Generating...'}
                     </code>
                   </div>
 
@@ -339,6 +339,7 @@ export default function Blog() {
               {/* CTA Section */}
               <motion.div
                 style={s.cta}
+                className="blog-cta"
                 whileInView={{ y: 0, opacity: 1 }}
                 initial={{ y: 40, opacity: 0 }}
                 viewport={{ once: true }}
@@ -346,7 +347,7 @@ export default function Blog() {
                 <div style={s.ctaText}>
                   <h3 style={s.ctaTitle}>Ready to deploy?</h3>
                   <p style={{ color: 'var(--text-secondary)', marginBottom: '32px' }}>Claim Your Space Online. Get a free domain and own a full E-commerce website for your Brand <strong>Click the Get Started Button Below To Begin</strong></p>
-                  <div className="flex gap-4">
+                  <div className="flex gap-4 cta-buttons">
                     <button className="btn btn-primary">Get Started</button>
                     <button className="btn btn-outline">Contact Us</button>
                   </div>
@@ -365,13 +366,21 @@ export default function Blog() {
             .article-layout { grid-template-columns: 1fr !important; gap: 40px !important; padding: 0 20px 80px !important; }
             .article-sidebar { 
               position: static !important; 
-              display: grid; 
-              grid-template-columns: 1fr; 
-              gap: 24px; 
+              display: flex !important;
+              flex-direction: row !important;
+              flex-wrap: wrap !important;
+              gap: 32px !important; 
               border-bottom: 1px solid rgba(0,0,0,0.05); 
-              padding-bottom: 40px; 
-              margin-bottom: 60px;
+              padding-bottom: 32px !important; 
+              margin-bottom: 40px !important;
             }
+            .article-sidebar > div { margin-bottom: 0 !important; }
+            .reviewer-box { padding: 20px !important; margin-bottom: 40px !important; }
+            .blog-cta { padding: 40px 24px !important; flex-direction: column !important; gap: 32px !important; }
+            .cta-dots { display: none !important; }
+            .cta-buttons { flex-direction: column !important; width: 100% !important; }
+            .cta-buttons button { width: 100% !important; }
+            
             .blog-hero-grid {
               display: flex !important;
               flex-direction: column !important;
@@ -459,11 +468,27 @@ export default function Blog() {
 
           .rich-content table {
             border-collapse: collapse;
-            table-layout: fixed;
+            table-layout: auto;
             width: 100%;
             margin: 4rem 0;
             background-color: #FFF;
             border: 1px solid #EEE;
+          }
+
+          @media (max-width: 768px) {
+            .rich-content table {
+              display: block;
+              overflow-x: auto;
+              white-space: nowrap;
+            }
+            .rich-content blockquote {
+              padding-left: 20px !important;
+              font-size: 24px !important;
+              margin: 40px 0 !important;
+            }
+            .rich-content h1 { font-size: 32px; }
+            .rich-content h2 { font-size: 28px; }
+            .rich-content h3 { font-size: 24px; }
           }
 
           .rich-content td, .rich-content th {
