@@ -17,6 +17,9 @@ export default function AllBlog() {
   const { isAdmin } = useAuth();
   const { posts, loading } = useBlog({ status: 'published' });
 
+  // Identified latest post (already sorted by latest in useBlog)
+  const latestPost = posts.length > 0 ? posts[0] : null;
+
   // Filter posts by category and publication date
   const now = new Date();
   const filteredPosts = posts.filter(p => {
@@ -83,60 +86,124 @@ export default function AllBlog() {
         <Navbar />
 
         <header style={s.header} className="blog-header">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div>
-              <motion.span
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                style={s.topLabel}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '40px' }}>
+              <div 
+                style={{ cursor: latestPost ? 'pointer' : 'default', flex: '1 1 600px' }} 
+                onClick={() => latestPost && navigate(`/blog/${latestPost.slug || latestPost.id}`)}
               >
-                Curated Repository
-              </motion.span>
-              <motion.h1
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                style={s.title}
-                className="blog-title"
-              >
-                The Complete<br />Archive
-              </motion.h1>
+                <motion.span
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  style={s.topLabel}
+                >
+                  {latestPost ? 'Latest Insight' : 'Curated Repository'}
+                </motion.span>
+                <motion.h1
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  style={s.title}
+                  className="blog-title"
+                >
+                  {latestPost ? latestPost.title : (
+                    <>The Complete<br />Archive</>
+                  )}
+                </motion.h1>
+                
+                <motion.p
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  style={{
+                    ...s.subtitle,
+                    marginBottom: '10px'
+                  }}
+                >
+                  {latestPost ? latestPost.excerpt : "A chronological odyssey through our most profound inquiries. From classical philosophy to modern cultural shifts, explored with meticulous depth."}
+                </motion.p>
+
+                {latestPost && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3 }}
+                    style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '16px', 
+                      marginBottom: '20px',
+                      fontSize: '12px',
+                      fontWeight: '700',
+                      color: '#888',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em'
+                    }}
+                  >
+                    <span style={{ color: '#089cff' }}>{latestPost.category}</span>
+                    <span>•</span>
+                    <span>{latestPost.read_time}</span>
+                    <span>•</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#1A1A1A' }}>
+                      Read Entry <ArrowRight size={14} />
+                    </span>
+                  </motion.div>
+                )}
+              </div>
+
+              {latestPost && latestPost.cover_image_url && (
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.2 }}
+                  style={{ 
+                    flex: '1 1 400px', 
+                    height: '400px', 
+                    borderRadius: '8px', 
+                    overflow: 'hidden',
+                    boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => navigate(`/blog/${latestPost.slug || latestPost.id}`)}
+                >
+                  <img 
+                    src={latestPost.cover_image_url} 
+                    alt={latestPost.title} 
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                  />
+                </motion.div>
+              )}
+
+              {isAdmin && (
+                <motion.button
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => navigate('/admin-blog')}
+                  style={{
+                    backgroundColor: '#1A1A1A',
+                    color: '#FFF',
+                    padding: '12px 24px',
+                    borderRadius: '4px',
+                    fontSize: '11px',
+                    fontWeight: '700',
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    border: 'none',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    marginLeft: 'auto',
+                    alignSelf: 'flex-start'
+                  }}
+                >
+                  Admin Dashboard <ArrowRight size={14} />
+                </motion.button>
+              )}
             </div>
-            {isAdmin && (
-              <motion.button
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => navigate('/admin-blog')}
-                style={{
-                  backgroundColor: '#1A1A1A',
-                  color: '#FFF',
-                  padding: '12px 24px',
-                  borderRadius: '4px',
-                  fontSize: '11px',
-                  fontWeight: '700',
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
-                  border: 'none',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
-              >
-                Admin Dashboard <ArrowRight size={14} />
-              </motion.button>
-            )}
           </div>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            style={s.subtitle}
-          >
-            A chronological odyssey through our most profound inquiries. From classical philosophy to modern cultural shifts, explored with meticulous depth.
-          </motion.p>
 
           <div style={s.filterContainer} className="blog-filters">
             {categories.map((cat) => (
