@@ -193,7 +193,6 @@ export default function FillBlog() {
         cover_image_url: coverImageUrl,
         status: isPublishing ? 'published' : 'draft',
         tags, 
-        meta_title: metaTitle || title, // Fallback if still blank
         meta_description: metaDescription || excerpt || '', // Fallback to excerpt
         read_time: `${Math.ceil(content.split(' ').length / 200)} MIN READ`,
         created_at: new Date(publishedAt).toISOString(),
