@@ -157,9 +157,9 @@ export default function AllBlog() {
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.2 }}
                     style={{
-                      flex: '1 1 400px',
-                      height: '400px',
-                      borderRadius: '8px',
+                      flex: '1 1 510px',
+                      height: '300px',
+                      borderRadius: '15px',
                       overflow: 'hidden',
                       boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
                       cursor: 'pointer'

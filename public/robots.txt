@@ -1,0 +1,25 @@
+User-agent: *
+Allow: /
+Allow: /all-blogs
+Allow: /store
+Allow: /explore-brand
+Allow: /shop-brand
+Allow: /sell-digital-products
+Allow: /creator-platform
+Allow: /create-online-store
+Allow: /shopify-alternative
+Allow: /affordable-ecommerce-platform
+
+# Exclude private/admin areas from indexing
+Disallow: /admin-blog
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /edit
+Disallow: /activation
+Disallow: /finalize-activation
+Disallow: /success
+Disallow: /fillblog
+Disallow: /checkout
+Disallow: /checkout-success
+
+Sitemap: https://zizzystores.com/sitemap.xml
