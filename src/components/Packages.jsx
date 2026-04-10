@@ -39,7 +39,7 @@ export default function Packages() {
             <h2 style={{ fontSize: '32px', fontWeight: '800', marginBottom: '12px' }}>Brands Of the Month</h2>
             <p className="text-secondary" style={{ fontSize: '14px' }}>Premium Stores enjoying active growth via ZizzyStores.</p>
           </div>
-          <a href="#all" className="font-bold flex items-center gap-2" style={{ fontSize: '14px', color: 'var(--text-muted)' }}>
+          <a href="store" className="font-bold flex items-center gap-2" style={{ fontSize: '14px', color: 'var(--text-muted)' }}>
             View All Brands <ArrowRight size={16} />
           </a>
         </div>
@@ -71,8 +71,8 @@ export default function Packages() {
                   <div className="text-muted" style={{ fontSize: '12px' }}>Active Setup</div>
                 </div>
 
-                <button 
-                  className="btn btn-outline" 
+                <button
+                  className="btn btn-outline"
                   style={{ width: '100%', marginTop: '24px' }}
                   onClick={(e) => {
                     e.stopPropagation();
