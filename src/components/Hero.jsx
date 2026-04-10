@@ -7,6 +7,10 @@ import { motion } from 'framer-motion';
 export default function Hero() {
   const { user } = useAuth();
 
+  // Premium Customization: Partner Logo Size Control
+  const partnerLogoHeight = "50px"; // Change this value to resize all partner logos
+
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -48,23 +52,23 @@ export default function Hero() {
         >
           <motion.div
             variants={itemVariants}
-            style={{ display: 'inline-block', padding: '6px 16px', backgroundColor: '#F3F4F6', borderRadius: '20px', fontSize: '12px', fontWeight: '700', marginBottom: '24px', letterSpacing: '0.05em', color: 'var(--primary)' }}
+            className="hero-badge"
           >
-            PREMIUM E-COMMERCE PLATFORM
+            <ShieldCheck size={14} /> PREMIUM E-COMMERCE PLATFORM
           </motion.div>
 
           <motion.h1
             variants={itemVariants}
             className="hero-title"
           >
-            Launch Your Brand Online <span style={{ display: 'block', color: 'var(--text-muted)', fontSize: '0.6em', marginTop: '8px' }}>in Less Than 24 Hours.</span>
+            Launch Your Brand Online <span>in Less Than 24 Hours.</span>
           </motion.h1>
 
           <motion.p
             variants={itemVariants}
             className="hero-subtitle"
           >
-            Get a high-performance storefront and your own custom domain for just ₦30,000. No technical skills required.
+            Get a high-performance storefront and your own custom domain for just <strong style={{ color: 'var(--text-primary)' }}>₦30,000</strong>. No technical skills required.
           </motion.p>
 
           <motion.div
@@ -72,7 +76,7 @@ export default function Hero() {
             className="hero-actions"
           >
             {user ? (
-              <Link to="/dashboard" className="hero-btn-wrapper">
+              <Link to="/dashboard">
                 <motion.button
                   whileHover={{ scale: 1.02, y: -2 }}
                   whileTap={{ scale: 0.98 }}
@@ -82,13 +86,13 @@ export default function Hero() {
                 </motion.button>
               </Link>
             ) : (
-              <Link to="/auth" className="hero-btn-wrapper">
+              <Link to="/auth">
                 <motion.button
                   whileHover={{ scale: 1.02, y: -2 }}
                   whileTap={{ scale: 0.98 }}
                   className="btn btn-primary hero-btn"
                 >
-                  Start Your Journey <ArrowRight size={18} style={{ marginLeft: '8px' }} />
+                  Start Your Journey <ArrowRight size={18} />
                 </motion.button>
               </Link>
             )}
@@ -99,11 +103,11 @@ export default function Hero() {
             className="hero-promo"
           >
             <div className="promo-item urgent">
-              <motion.span animate={{ opacity: [1, 0.5, 1] }} transition={{ duration: 2, repeat: Infinity }}>🔥 40% OFF ends soon!</motion.span>
+              <motion.span animate={{ opacity: [1, 0.6, 1] }} transition={{ duration: 2, repeat: Infinity }}>🔥 40% OFF ends soon!</motion.span>
             </div>
             <div className="promo-item">
-              <CheckCircle2 size={16} color="#10B981" />
-              <span><strong>₦30,000</strong> (First Year) — Full Setup Included</span>
+              <CheckCircle2 size={18} color="#10B981" />
+              <span><strong>₦30,000</strong>/year — Full Setup Included</span>
             </div>
           </motion.div>
 
@@ -114,7 +118,7 @@ export default function Hero() {
             <div className="partners-label">
               Trusted Security Partners
             </div>
-            <div className="partners-list">
+            <div className="partners-list" style={{ '--logo-height': partnerLogoHeight }}>
               <div className="partner-logo">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/1/1f/Paystack.png" alt="Paystack" />
               </div>
@@ -122,8 +126,8 @@ export default function Hero() {
                 <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Flutterwave_Logo.png/1280px-Flutterwave_Logo.png" alt="Flutterwave" />
               </div>
               <div className="partner-logo ssl">
-                <ShieldCheck size={22} color="#10B981" />
-                SSL secured
+                <ShieldCheck size={20} color="#10B981" />
+                SSL Secured
               </div>
             </div>
           </motion.div>
@@ -135,17 +139,22 @@ export default function Hero() {
           initial="hidden"
           animate="visible"
         >
-          <div className="dashboard-mockup" style={{ padding: 0, overflow: 'hidden', border: 'none', background: 'none', boxShadow: '0 50px 100px -20px rgba(0,0,0,0.15)' }}>
-            <img src="https://raw.githubusercontent.com/Blvck4K/Jss-png/refs/heads/main/replace.png" alt="Dashboard Preview" style={{ width: '100%', height: 'auto', borderRadius: 'var(--radius-lg)', display: 'block' }} />
+          <div className="dashboard-mockup">
+            <img
+              src="https://raw.githubusercontent.com/Blvck4K/Jss-png/refs/heads/main/replace.png"
+              alt="Dashboard Preview"
+              style={{ width: '90%', height: 'auto', display: 'block' }}
+            />
           </div>
+
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1, duration: 0.6 }}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 1.2, duration: 0.8 }}
             className="floating-badge"
           >
             <div className="badge-icon">
-              <CheckCircle2 size={24} color="#10B981" />
+              <CheckCircle2 size={24} />
             </div>
             <div>
               <div className="badge-title">Free Domain Name</div>
@@ -155,14 +164,9 @@ export default function Hero() {
 
           {/* Decorative elements */}
           <motion.div
-            animate={{ y: [0, -10, 0] }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            style={{ position: 'absolute', top: '-20px', right: '-20px', width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#09A5DB22', zIndex: -1 }}
-          />
-          <motion.div
-            animate={{ y: [0, 15, 0] }}
-            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-            style={{ position: 'absolute', bottom: '40px', left: '-30px', width: '60px', height: '60px', borderRadius: '50%', backgroundColor: '#10B98111', zIndex: -1 }}
+            animate={{ y: [0, -20, 0], opacity: [0.1, 0.2, 0.1] }}
+            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+            style={{ position: 'absolute', top: '-10%', right: '-5%', width: '300px', height: '300px', borderRadius: '50%', background: 'radial-gradient(circle, var(--accent-soft) 0%, transparent 70%)', zIndex: -1 }}
           />
         </motion.div>
       </div>
