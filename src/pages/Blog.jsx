@@ -458,9 +458,16 @@ export default function Blog() {
           .rich-content h2 { font-size: 38px; }
           .rich-content h3 { font-size: 28px; }
 
-          .rich-content ul, .rich-content ol {
+          .rich-content ul {
+            list-style-type: disc !important;
             margin-bottom: 2em;
-            padding-left: 20px;
+            padding-left: 32px;
+          }
+
+          .rich-content ol {
+            list-style-type: decimal !important;
+            margin-bottom: 2em;
+            padding-left: 32px;
           }
 
           .rich-content li {

@@ -66,7 +66,7 @@ export default function AdminBlog() {
     statCard: { backgroundColor: '#FFF', border: '1px solid #E5E1D8', padding: '40px', borderRadius: '4px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' },
     statLabel: { fontSize: '12px', color: '#888', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '16px' },
     statValue: { fontSize: '48px', fontWeight: '400', fontFamily: '"Playfair Display", serif' },
-    readershipCard: { gridColumn: 'span 1', backgroundColor: '#052A24', color: '#F9F7F2', padding: '40px', borderRadius: '4px', position: 'relative', overflow: 'hidden' },
+    readershipCard: { gridColumn: 'span 1', backgroundColor: '#083968ff', color: '#F9F7F2', padding: '40px', borderRadius: '4px', position: 'relative', overflow: 'hidden' },
     graphOverlay: { position: 'absolute', bottom: '20px', right: '20px', opacity: 0.2 },
 
     // Table Section
@@ -75,7 +75,7 @@ export default function AdminBlog() {
     tableRow: { display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 100px', padding: '24px', backgroundColor: '#FFF', borderRadius: '4px', borderBottom: '1px solid #F1EFE9', alignItems: 'center', cursor: 'default' },
     manuscriptTitle: { fontSize: '15px', fontWeight: '700', color: '#1A1A1A', marginBottom: '4px' },
     manuscriptMeta: { fontSize: '12px', color: '#888' },
-    statusChip: (published) => ({ padding: '4px 12px', borderRadius: '20px', fontSize: '10px', fontWeight: '700', backgroundColor: published ? '#E1F2EE' : '#F1EFE9', color: published ? '#0B4A40' : '#888', textTransform: 'uppercase' }),
+    statusChip: (published) => ({ padding: '4px 12px', borderRadius: '20px', fontSize: '10px', fontWeight: '700', backgroundColor: published ? '#E1F2EE' : '#F1EFE9', color: published ? '#0051ffff' : '#888', textTransform: 'uppercase' }),
 
     // Editor Card
     editorCard: { backgroundColor: '#FFF', border: '1px solid #E5E1D8', borderRadius: '8px', padding: '0', overflow: 'hidden', marginTop: '120px', boxShadow: '0 40px 100px -20px rgba(0,0,0,0.05)' },
@@ -158,39 +158,39 @@ export default function AdminBlog() {
             </div>
 
             {posts.map(post => (
-                <motion.div
-                  key={post.id}
-                  whileHover={{ backgroundColor: '#FCFBFA' }}
-                  style={s.tableRow}
-                  className="admin-table-row"
-                >
-                  <div className="admin-title-col">
-                    <div style={s.manuscriptTitle}>{post.title}</div>
-                    <div style={s.manuscriptMeta}>{post.category || 'Editorial'} • {post.read_time}</div>
-                    <div className="admin-show-mobile" style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>
-                      {post.author_name || 'Anonymous'} • {new Date(post.created_at).toLocaleDateString()}
-                    </div>
+              <motion.div
+                key={post.id}
+                whileHover={{ backgroundColor: '#FCFBFA' }}
+                style={s.tableRow}
+                className="admin-table-row"
+              >
+                <div className="admin-title-col">
+                  <div style={s.manuscriptTitle}>{post.title}</div>
+                  <div style={s.manuscriptMeta}>{post.category || 'Editorial'} • {post.read_time}</div>
+                  <div className="admin-show-mobile" style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>
+                    {post.author_name || 'Anonymous'} • {new Date(post.created_at).toLocaleDateString()}
                   </div>
-                  <div className="admin-status-col">
-                    <span style={s.statusChip(post.status === 'published')}>{post.status}</span>
-                  </div>
-                  <div className="admin-hide-mobile" style={{ fontSize: '14px', color: '#444' }}>{post.author_name || 'Anonymous'}</div>
-                  <div className="admin-hide-mobile" style={{ fontSize: '14px', color: '#888' }}>{new Date(post.created_at).toLocaleDateString()}</div>
-                  <div className="flex gap-4 admin-actions-col">
-                    <Edit
-                      size={16}
-                      color="#888"
-                      className="cursor-pointer hover:text-black"
-                      onClick={() => handleEdit(post.id)}
-                    />
-                    <Trash2
-                      size={16}
-                      color="#888"
-                      className="cursor-pointer hover:text-red-500"
-                      onClick={() => handleDelete(post.id)}
-                    />
-                  </div>
-                </motion.div>
+                </div>
+                <div className="admin-status-col">
+                  <span style={s.statusChip(post.status === 'published')}>{post.status}</span>
+                </div>
+                <div className="admin-hide-mobile" style={{ fontSize: '14px', color: '#444' }}>{post.author_name || 'Anonymous'}</div>
+                <div className="admin-hide-mobile" style={{ fontSize: '14px', color: '#888' }}>{new Date(post.created_at).toLocaleDateString()}</div>
+                <div className="flex gap-4 admin-actions-col">
+                  <Edit
+                    size={16}
+                    color="#888"
+                    className="cursor-pointer hover:text-black"
+                    onClick={() => handleEdit(post.id)}
+                  />
+                  <Trash2
+                    size={16}
+                    color="#888"
+                    className="cursor-pointer hover:text-red-500"
+                    onClick={() => handleDelete(post.id)}
+                  />
+                </div>
+              </motion.div>
             ))}
             {posts.length === 0 && !loading && (
               <div style={{ padding: '80px', textAlign: 'center', color: '#888' }}>
