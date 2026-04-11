@@ -32,6 +32,7 @@ const AdminBlog = lazy(() => import('./pages/AdminBlog'));
 const FillBlog = lazy(() => import('./pages/FillBlog'));
 
 import ChatWidget from './components/ChatWidget';
+import FloatingWhatsApp from './components/FloatingWhatsApp';
 
 // Loading Component
 const PageLoader = () => (
@@ -79,6 +80,7 @@ function App() {
           </ErrorBoundary>
         </Suspense>
         <ChatWidget />
+        <FloatingWhatsApp />
       </BrowserRouter>
     </AuthProvider>
   );
