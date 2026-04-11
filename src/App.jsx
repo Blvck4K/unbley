@@ -30,6 +30,7 @@ const AllBlog = lazy(() => import('./pages/AllBlog'));
 const Blog = lazy(() => import('./pages/Blog'));
 const AdminBlog = lazy(() => import('./pages/AdminBlog'));
 const FillBlog = lazy(() => import('./pages/FillBlog'));
+const About = lazy(() => import('./pages/About'));
 
 import ChatWidget from './components/ChatWidget';
 import FloatingWhatsApp from './components/FloatingWhatsApp';
@@ -50,6 +51,7 @@ function App() {
           <ErrorBoundary>
             <Routes>
               <Route path="/" element={<Home />} />
+              <Route path="/about" element={<About />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/store" element={<Storefront />} />
               <Route path="/explore-brand" element={<ExploreBrand />} />

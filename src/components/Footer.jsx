@@ -25,7 +25,7 @@ export default function Footer() {
           <div className="footer-col" style={{ textAlign: 'center' }}>
             <h4>Company</h4>
             <ul>
-              <li><a href="#">About Us</a></li>
+              <li><Link to="/about">About Us</Link></li>
               <li><a href="#">Success Stories</a></li>
               <li><a href="#">Support</a></li>
               <li><a href="https://wa.link/bg2bpg" target="_blank" rel="noopener noreferrer">Contact Us (WhatsApp)</a></li>
