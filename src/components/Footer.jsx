@@ -85,6 +85,20 @@ export default function Footer() {
           letter-spacing: 0.05em;
           color: #ffffff;
         }
+        @media (max-width: 768px) {
+          .footer-grid {
+            grid-template-columns: 1fr !important;
+            gap: 48px !important;
+          }
+          .footer-content-wrapper {
+            padding: 0 24px;
+            overflow: hidden;
+          }
+          .footer-bottom {
+            flex-direction: column !important;
+            gap: 16px !important;
+          }
+        }
       `}</style>
 
       <div className="container footer-content-wrapper">
