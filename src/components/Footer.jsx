@@ -90,8 +90,9 @@ export default function Footer() {
       <div className="container footer-content-wrapper">
         <div className="footer-grid">
           <div className="footer-brand" style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <div className="footer-brand-title">
-              ZizzyStores.
+            <div className="footer-brand-title" style={{ display: 'flex', alignItems: 'center', gap: '0px', justifyContent: 'center' }}>
+              <img src="https://raw.githubusercontent.com/Blvck4K/Jss-png/main/Untitled%20design.png" alt="ZizzyStores Logo" style={{ width: '80px', height: '80px', objectFit: 'contain', marginRight: '-16px' }} />
+              <span>ZizzyStores.</span>
             </div>
             <p style={{ maxWidth: '320px', margin: '16px auto 0', lineHeight: '1.6', fontSize: '15px' }}>
               Build your brand’s online store, own your domain, and sell professionally.
