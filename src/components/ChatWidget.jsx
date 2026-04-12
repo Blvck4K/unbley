@@ -14,6 +14,13 @@ const ChatWidget = () => {
     const [unreadCount, setUnreadCount] = useState(0);
     const scrollRef = useRef(null);
 
+    // Expose open function via custom event
+    useEffect(() => {
+        const handleOpenChat = () => setIsOpen(true);
+        window.addEventListener('openChatWidget', handleOpenChat);
+        return () => window.removeEventListener('openChatWidget', handleOpenChat);
+    }, []);
+
     // Initial load and Realtime setup
     useEffect(() => {
         // Auto-identify if user is logged in

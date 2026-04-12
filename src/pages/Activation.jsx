@@ -10,7 +10,7 @@ export default function Activation() {
     page: { backgroundColor: '#0A0A0A', color: '#E5E5E5', height: '100vh', overflow: 'hidden', display: 'flex', fontFamily: '"Inter", sans-serif' },
     sidebar: { width: '280px', borderRight: '1px solid #1F1F1F', padding: '0', display: 'flex', flexDirection: 'column', opacity: 0.5, pointerEvents: 'none' },
     logoContainer: { padding: '60px 40px', display: 'flex', flexDirection: 'column' },
-    logo: { fontFamily: '"Playfair Display", serif', fontSize: '18px', letterSpacing: '0.05em', color: brandColor, textTransform: 'uppercase' },
+    logo: { fontFamily: '"Playfair Display", serif', fontSize: '20px', letterSpacing: '-0.03em', fontWeight: 'bold', color: brandColor, textTransform: 'none' },
     nav: { padding: '0', flex: 1 },
     navItem: (active) => ({ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px 40px', color: active ? '#FFF' : '#888', backgroundColor: active ? '#111' : 'transparent', borderLeft: active ? `3px solid ${brandColor}` : '3px solid transparent', cursor: 'pointer', fontSize: '12px', fontWeight: active ? '600' : '400', letterSpacing: '0.05em', transition: 'all 0.2s', textTransform: 'uppercase', textDecoration: 'none' }),
     userProfile: { padding: '24px 40px', borderTop: '1px solid #1F1F1F', display: 'flex', alignItems: 'center', gap: '16px', backgroundColor: '#111' },
@@ -95,7 +95,7 @@ export default function Activation() {
       {/* Sidebar - Blurred/Disabled visually via opacity & pointerEvents */}
       <div style={s.sidebar} className="act-sidebar">
         <div style={s.logoContainer}>
-          <div style={s.logo}>Zizzystores.</div>
+          <div style={s.logo}>ZizzyStores.</div>
           <div style={{ fontFamily: 'Inter', fontSize: '9px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', marginTop: '8px', textTransform: 'uppercase' }}>Digital Store</div>
         </div>
         <div style={s.nav}>

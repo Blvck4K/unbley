@@ -1,50 +1,148 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { FaWhatsapp, FaInstagram, FaTwitter, FaFacebook, FaYoutube, FaPinterest } from "react-icons/fa";
 
 export default function Footer() {
   return (
-    <footer className="footer" style={{ padding: '60px 0 30px' }}>
-      <div className="container">
+    <footer className="footer" style={{ padding: '80px 0 30px', backgroundColor: '#000000', color: '#ffffff', borderTop: 'none' }}>
+      <style>{`
+        .footer-brand p {
+            color: #a3a3a3 !important;
+        }
+        .footer-col h4 {
+            color: #ffffff !important;
+        }
+        .footer a {
+            color: #a3a3a3 !important;
+        }
+        .footer-content-wrapper {
+            position: relative;
+            z-index: 10;
+        }
+        .footer-link {
+          color: #a3a3a3 !important;
+          text-decoration: none;
+          transition: color 0.2s ease !important;
+          font-size: 15px !important;
+          display: inline-block;
+        }
+        .footer-link:hover {
+          color: var(--accent) !important; /* light blue */
+        }
+        .footer-social {
+          color: #a3a3a3 !important;
+          transition: color 0.2s ease, transform 0.2s ease !important;
+          display: inline-flex;
+        }
+        .footer-social:hover {
+          color: var(--accent) !important;
+          transform: translateY(-2px);
+        }
+        .footer-brand-title {
+          font-size: 32px;
+          letter-spacing: -0.03em;
+          color: #ffffff;
+          font-family: 'Playfair Display', serif;
+          font-weight: 700;
+        }
+        .footer-cta {
+          display: inline-flex;
+          align-items: center;
+          margin-top: 24px;
+          padding: 14px 28px;
+          background-color: var(--accent);
+          color: #ffffff !important;
+          border-radius: 8px;
+          font-size: 15px !important;
+          font-weight: 600;
+          text-decoration: none;
+          transition: background-color 0.2s ease, transform 0.2s ease !important;
+        }
+        .footer-cta:hover {
+          background-color: #0052cc;
+          transform: translateY(-2px);
+        }
+        .footer-bottom-divider {
+          border-top: 1px solid #1a1a1a !important;
+        }
+        .footer-bottom-text {
+          color: #737373 !important;
+        }
+        .footer-bottom-link {
+          color: #737373 !important;
+          text-decoration: none;
+          font-size: 13px !important;
+          transition: color 0.2s ease !important;
+        }
+        .footer-bottom-link:hover {
+          color: var(--accent) !important;
+        }
+        .footer-heading {
+          font-size: 14px !important;
+          font-weight: 600 !important;
+          margin-bottom: 20px !important;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          color: #ffffff;
+        }
+      `}</style>
+
+      <div className="container footer-content-wrapper">
         <div className="footer-grid">
           <div className="footer-brand" style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <div className="font-bold" style={{ fontSize: '24px', letterSpacing: '-0.03em' }}>
+            <div className="footer-brand-title">
               ZizzyStores.
             </div>
-            <p style={{ maxWidth: '400px', margin: '16px auto 0' }}>The world's most trusted marketplace for launching high-value digital storefronts.</p>
+            <p style={{ maxWidth: '320px', margin: '16px auto 0', lineHeight: '1.6', fontSize: '15px' }}>
+              Build your brand’s online store, own your domain, and sell professionally.
+            </p>
+            <Link to="/create-online-store" className="footer-cta">Get Your Store Today</Link>
           </div>
+
           <div className="footer-col" style={{ textAlign: 'center' }}>
-            <h4>Solutions</h4>
+            <h4 className="footer-heading">Solutions</h4>
             <ul style={{ listStyle: 'none', padding: 0 }}>
-              <li style={{ marginBottom: '8px' }}><Link to="/sell-digital-products" style={{ textDecoration: 'none', color: 'inherit', fontSize: '14px' }}>Sell Digital Products</Link></li>
-              <li style={{ marginBottom: '8px' }}><Link to="/creator-platform" style={{ textDecoration: 'none', color: 'inherit', fontSize: '14px' }}>Creative Brands</Link></li>
-              <li style={{ marginBottom: '8px' }}><Link to="/create-online-store" style={{ textDecoration: 'none', color: 'inherit', fontSize: '14px' }}>Create Online Store</Link></li>
-              <li style={{ marginBottom: '8px' }}><Link to="/shopify-alternative" style={{ textDecoration: 'none', color: 'inherit', fontSize: '14px' }}>Shopify Alternative</Link></li>
-              <li style={{ marginBottom: '8px' }}><Link to="/affordable-ecommerce-platform" style={{ textDecoration: 'none', color: 'inherit', fontSize: '14px' }}>Affordable Ecommerce</Link></li>
+              <li style={{ marginBottom: '12px' }}><Link to="/create-online-store" className="footer-link">Create Online Store</Link></li>
+              <li style={{ marginBottom: '12px' }}><Link to="/#domains" className="footer-link">Custom Domain Setup</Link></li>
+              <li style={{ marginBottom: '12px' }}><Link to="/creator-platform" className="footer-link">Ecommerce for Brands</Link></li>
+              <li style={{ marginBottom: '12px' }}><Link to="/#payments" className="footer-link">Payment Integration</Link></li>
+              <li style={{ marginBottom: '12px' }}><Link to="/dashboard" className="footer-link">Store Management</Link></li>
             </ul>
           </div>
+
           <div className="footer-col" style={{ textAlign: 'center' }}>
-            <h4>Company</h4>
-            <ul>
-              <li><Link to="/about">About Us</Link></li>
-              <li><a href="#">Success Stories</a></li>
-              <li><a href="#">Support</a></li>
-              <li><a href="https://wa.link/bg2bpg" target="_blank" rel="noopener noreferrer">Contact Us (WhatsApp)</a></li>
+            <h4 className="footer-heading">Company</h4>
+            <ul style={{ listStyle: 'none', padding: 0 }}>
+              <li style={{ marginBottom: '12px' }}><Link to="/about" className="footer-link">About Us</Link></li>
+              <li style={{ marginBottom: '12px' }}><a href="#" className="footer-link">Success Stories</a></li>
+              <li style={{ marginBottom: '12px' }}><a href="#" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new Event('openChatWidget')); }} className="footer-link">Customer Service</a></li>
+              <li style={{ marginBottom: '12px' }}><Link to="/contact" className="footer-link">Contact Us</Link></li>
             </ul>
           </div>
+
           <div className="footer-col" style={{ textAlign: 'center' }}>
-            <h4>Social</h4>
-            <div className="flex gap-6 justify-center" style={{ marginTop: '16px' }}>
-              <a href="#" className="text-secondary"><svg fill="currentColor" width="20" height="20" viewBox="0 0 24 24"><path d="M24 4.557a9.83 9.83 0 01-2.828.775 4.932 4.932 0 002.165-2.724 9.864 9.864 0 01-3.127 1.195 4.916 4.916 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 001.523 6.574 4.903 4.903 0 01-2.229-.616c-.054 2.281 1.581 4.415 3.949 4.89a4.935 4.935 0 01-2.224.084 4.928 4.928 0 004.6 3.419A9.9 9.9 0 010 19.54a13.94 13.94 0 007.548 2.212c9.057 0 14.01-7.502 14.01-14.01 0-.213-.005-.425-.014-.636A10.025 10.025 0 0024 4.557z" /></svg></a>
-              <a href="#" className="text-secondary"><svg fill="currentColor" width="20" height="20" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" /></svg></a>
+            <h4 className="footer-heading">Socials</h4>
+            <div className="flex justify-center" style={{ marginTop: '16px' }}>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, }}>
+                <li className="flex" style={{ gap: '18px' }}>
+                  <a href="https://wa.link/bg2bpg" className="footer-social"><FaWhatsapp size={22} /></a>
+                  <a href="#" className="footer-social"><FaInstagram size={22} /></a>
+                  <a href="#" className="footer-social"><FaTwitter size={22} /></a>
+                  <a href="#" className="footer-social"><FaFacebook size={22} /></a>
+                  <a href="#" className="footer-social"><FaYoutube size={22} /></a>
+                  <a href="#" className="footer-social"><FaPinterest size={22} /></a>
+                </li>
+              </ul>
             </div>
           </div>
         </div>
-        <div className="footer-bottom" style={{ flexDirection: 'column', gap: '16px', textAlign: 'center' }}>
-          <div>© {new Date().getFullYear()} ZIZZYSTORES. ALL RIGHTS RESERVED.</div>
-          <div className="flex gap-6" style={{ fontSize: '12px' }}>
-            <a href="#">Privacy</a>
-            <a href="#">Terms</a>
-            <a href="#">Cookies</a>
+
+        <div className="footer-bottom footer-bottom-divider" style={{ flexDirection: 'column', gap: '8px', textAlign: 'center', paddingTop: '24px', marginTop: '16px' }}>
+          <div className="footer-bottom-text" style={{ fontSize: '12px' }}>© {new Date().getFullYear()} ZIZZYSTORES. ALL RIGHTS RESERVED.</div>
+          <div className="flex gap-6 justify-center">
+            <a href="#" className="footer-bottom-link">Privacy</a>
+            <a href="#" className="footer-bottom-link">Terms</a>
+            <a href="#" className="footer-bottom-link">Cookies</a>
           </div>
         </div>
       </div>

@@ -38,7 +38,7 @@ export default function Dashboard() {
       try {
         const { data: pData, error: pError } = await supabase
           .from('brand_profiles')
-          .select('*') 
+          .select('*')
           .eq('id', user.id)
           .single();
 
@@ -100,7 +100,7 @@ export default function Dashboard() {
     page: { backgroundColor: '#0A0A0A', color: '#E5E5E5', height: isMobile ? 'auto' : '100vh', minHeight: '100vh', overflow: isMobile ? 'visible' : 'hidden', display: 'flex', fontFamily: '"Inter", sans-serif' },
     sidebar: { width: '280px', borderRight: '1px solid #1F1F1F', padding: '0', display: 'flex', flexDirection: 'column' },
     logoContainer: { padding: '60px 40px', display: 'flex', flexDirection: 'column' },
-    logo: { fontFamily: '"Playfair Display", serif', fontSize: '18px', letterSpacing: '0.05em', color: brandColor, textTransform: 'uppercase' },
+    logo: { fontFamily: '"Playfair Display", serif', fontSize: '20px', letterSpacing: '-0.03em', fontWeight: 'bold', color: brandColor, textTransform: 'none' },
     nav: { padding: '0', flex: 1 },
     navItem: (active) => ({ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px 40px', color: active ? '#FFF' : '#888', backgroundColor: active ? '#111' : 'transparent', borderLeft: active ? `3px solid ${brandColor}` : '3px solid transparent', cursor: 'pointer', fontSize: '12px', fontWeight: active ? '600' : '400', letterSpacing: '0.05em', transition: 'all 0.2s', textTransform: 'uppercase', textDecoration: 'none' }),
     userProfile: { padding: '24px 40px', borderTop: '1px solid #1F1F1F', display: 'flex', alignItems: 'center', gap: '16px', backgroundColor: '#111' },
@@ -148,8 +148,8 @@ export default function Dashboard() {
 
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       y: 0,
       transition: { duration: 0.5, ease: "easeOut" }
     }
@@ -223,7 +223,7 @@ export default function Dashboard() {
             >
               <X size={24} />
             </button>
-            <Link to="/" style={{ textDecoration: 'none' }}><div style={s.logo}>Zizzystores.</div></Link>
+            <Link to="/" style={{ textDecoration: 'none' }}><div style={s.logo}>ZizzyStores.</div></Link>
             <div style={{ fontFamily: 'Inter', fontSize: '9px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', marginTop: '8px', textTransform: 'uppercase' }}>Digital Store</div>
           </div>
 
@@ -339,7 +339,7 @@ export default function Dashboard() {
                     <div style={s.cardValue}>{formatMoney(metrics.totalSales)}</div>
 
                     <div style={{ marginTop: '32px', width: '100%', height: '1px', backgroundColor: '#1F1F1F', position: 'relative' }}>
-                      <motion.div 
+                      <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: metrics.totalSales > 0 ? '60%' : '0%' }}
                         transition={{ duration: 1.5, ease: "circOut", delay: 0.5 }}

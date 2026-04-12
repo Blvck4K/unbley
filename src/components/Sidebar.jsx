@@ -36,10 +36,11 @@ export default function Sidebar({ profileData, isSidebarOpen, setIsSidebarOpen }
     },
     logo: { 
       fontFamily: '"Playfair Display", serif', 
-      fontSize: isCollapsed ? '14px' : '18px', 
-      letterSpacing: '0.05em', 
+      fontSize: isCollapsed ? '16px' : '20px', 
+      letterSpacing: '-0.03em', 
+      fontWeight: 'bold',
       color: brandColor, 
-      textTransform: 'uppercase' 
+      textTransform: 'none' 
     },
     nav: { padding: '0', flex: 1, overflowX: 'hidden' },
     navItem: (active) => ({ 
@@ -139,7 +140,7 @@ export default function Sidebar({ profileData, isSidebarOpen, setIsSidebarOpen }
           </button>
           
           <Link to="/" style={{ textDecoration: 'none' }}>
-            <div style={s.logo}>{isCollapsed ? 'Z.' : 'Zizzystores.'}</div>
+            <div style={s.logo}>{isCollapsed ? 'Z.' : 'ZizzyStores.'}</div>
           </Link>
           {!isCollapsed && (
             <div style={{ fontFamily: 'Inter', fontSize: '9px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', marginTop: '8px', textTransform: 'uppercase' }}>

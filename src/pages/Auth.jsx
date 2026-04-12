@@ -113,8 +113,8 @@ export default function Auth() {
         `}</style>
         {/* Left Sidebar Layout */}
         <div style={s.sidebar} className="auth-sidebar text-left">
-          <div style={{ fontFamily: '"Playfair Display", serif', fontSize: '18px', letterSpacing: '0.05em', color: brandColor, marginBottom: '80px', textTransform: 'uppercase' }}>
-            Zizzystores.
+          <div style={{ fontFamily: '"Playfair Display", serif', fontSize: '24px', letterSpacing: '-0.03em', fontWeight: 'bold', color: brandColor, marginBottom: '80px', textTransform: 'none' }}>
+            ZizzyStores.
           </div>
 
           <div style={{ flex: 1 }}>
@@ -149,8 +149,8 @@ export default function Auth() {
           >
             {/* Mobile Logo */}
             <div className="auth-mobile-logo" style={{ display: 'none', textAlign: 'center', marginBottom: '48px' }}>
-              <Link to="/" style={{ fontFamily: '"Playfair Display", serif', fontSize: '24px', letterSpacing: '0.05em', color: brandColor, textDecoration: 'none', textTransform: 'uppercase' }}>
-                Zizzystores.
+              <Link to="/" style={{ fontFamily: '"Playfair Display", serif', fontSize: '24px', letterSpacing: '-0.03em', fontWeight: 'bold', color: brandColor, textDecoration: 'none', textTransform: 'none' }}>
+                ZizzyStores.
               </Link>
             </div>
 

@@ -71,7 +71,7 @@ export default function Navbar() {
     >
       <div className="container flex justify-between items-center" style={{ width: '100%', height: '100%' }}>
         <div className="flex items-center justify-between" style={{ width: isMobile ? '100%' : 'auto', gap: isMobile ? '0' : '32px' }}>
-          <Link to="/" className="font-bold flex items-center gap-2" onClick={() => setIsMenuOpen(false)} style={{ fontSize: '20px', letterSpacing: '-0.03em', color: 'inherit', textDecoration: 'none' }}>
+          <Link to="/" className="font-bold flex items-center gap-2" onClick={() => setIsMenuOpen(false)} style={{ fontSize: '24px', fontFamily: '"Playfair Display", serif', letterSpacing: '-0.03em', color: 'inherit', textDecoration: 'none' }}>
             <motion.span whileHover={{ scale: 1.05 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>
               ZizzyStores.
             </motion.span>

@@ -105,7 +105,7 @@ export default function Profile() {
     page: { backgroundColor: primaryColor, color: '#E5E5E5', height: isMobile ? 'auto' : '100vh', minHeight: '100vh', overflow: isMobile ? 'visible' : 'hidden', display: 'flex', fontFamily: '"Inter", sans-serif' },
     sidebar: { width: '280px', borderRight: '1px solid #1F1F1F', padding: '0', display: 'flex', flexDirection: 'column' },
     logoContainer: { padding: '60px 40px', display: 'flex', flexDirection: 'column' },
-    logo: { fontFamily: '"Playfair Display", serif', fontSize: '18px', letterSpacing: '0.05em', color: brandColor, textTransform: 'uppercase' },
+    logo: { fontFamily: '"Playfair Display", serif', fontSize: '20px', letterSpacing: '-0.03em', fontWeight: 'bold', color: brandColor, textTransform: 'none' },
     nav: { padding: '0', flex: 1 },
     navItem: (active) => ({
       display: 'flex',
@@ -332,7 +332,7 @@ _Sent via Zizzystores Digital Atelier_
             >
               <X size={24} />
             </button>
-            <Link to="/" style={{ textDecoration: 'none' }}><div style={s.logo}>Zizzystores.</div></Link>
+            <Link to="/" style={{ textDecoration: 'none' }}><div style={s.logo}>ZizzyStores.</div></Link>
             <div style={{ fontFamily: 'Inter', fontSize: '9px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', marginTop: '8px', textTransform: 'uppercase' }}>Digital Store</div>
           </div>
 

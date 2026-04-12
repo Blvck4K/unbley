@@ -153,7 +153,7 @@ export default function FinalizeActivation() {
     page: { display: 'flex', height: '100vh', width: '100%', fontFamily: '"Inter", sans-serif', color: '#FFF', overflow: 'hidden', backgroundColor: '#080808' },
     leftPane: { flex: 1, backgroundColor: '#121212', position: 'relative', display: 'flex', flexDirection: 'column', padding: '48px 64px', overflow: 'hidden', borderRight: '1px solid #1F1F1F' },
     rightPane: { flex: 1, backgroundColor: '#080808', display: 'flex', flexDirection: 'column', padding: '48px 64px', position: 'relative', overflowY: 'auto' },
-    logo: { fontFamily: '"Playfair Display", serif', fontSize: '18px', letterSpacing: '0.05em', color: '#FFF', textTransform: 'uppercase', fontWeight: 'bold' },
+    logo: { fontFamily: '"Playfair Display", serif', fontSize: '20px', letterSpacing: '-0.03em', color: '#FFF', textTransform: 'none', fontWeight: 'bold' },
     mainTitle: { fontFamily: '"Playfair Display", serif', fontSize: '44px', fontWeight: '400', marginBottom: '24px', lineHeight: '1.1' },
     checkoutBox: { backgroundColor: '#111', borderLeft: `2px solid ${brandColor}`, padding: '32px', position: 'relative', marginBottom: '40px' },
     price: { fontFamily: '"Playfair Display", serif', fontSize: '36px', fontWeight: '700' },
@@ -189,7 +189,7 @@ export default function FinalizeActivation() {
         
         {/* LEFT PANE */}
         <div style={s.leftPane} className="fin-left">
-          <div style={s.logo}>Zizzystores.</div>
+          <div style={s.logo}>ZizzyStores.</div>
           <div style={{ marginTop: 'auto', marginBottom: '10vh' }}>
             <h1 style={{ fontFamily: '"Playfair Display", serif', fontSize: '48px', lineHeight: '1.2', marginBottom: '48px' }}>
               Crafting <span style={{ fontStyle: 'italic' }}>distinction</span> in the digital marketplace.
