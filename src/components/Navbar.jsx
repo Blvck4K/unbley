@@ -73,7 +73,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between" style={{ width: isMobile ? '100%' : 'auto', gap: isMobile ? '0' : '32px' }}>
           <Link to="/" className="font-bold flex items-center gap-0" onClick={() => setIsMenuOpen(false)} style={{ fontSize: '32px', fontFamily: '"Playfair Display", serif', letterSpacing: '-0.03em', color: 'inherit', textDecoration: 'none' }}>
             <motion.div whileHover={{ scale: 1.05 }} transition={{ type: "spring", stiffness: 400, damping: 10 }} className="flex items-center" style={{ gap: '0px' }}>
-              <img src="https://raw.githubusercontent.com/Blvck4K/Jss-png/main/Untitled%20design.png" alt="ZizzyStores Logo" style={{ width: '40px', height: '40px', objectFit: 'contain', marginRight: '-12px' }} />
+              <img src="https://raw.githubusercontent.com/Blvck4K/Jss-png/main/Untitled%20design.png" alt="ZizzyStores Logo" style={{ width: '40px', height: '40px', objectFit: 'contain', marginRight: '-8px' }} />
               <span>ZizzyStores.</span>
             </motion.div>
           </Link>
