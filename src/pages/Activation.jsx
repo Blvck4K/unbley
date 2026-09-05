@@ -15,11 +15,9 @@ import {
   HeadphonesIcon, 
   TrendingUp, 
   Package, 
-  BarChart3,
-  ExternalLink,
-  Sparkles
+  BarChart3
 } from 'lucide-react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import PageTransition from '../components/PageTransition';
 import { useAuth } from '../hooks/useAuth';
@@ -28,6 +26,8 @@ import { useAuth } from '../hooks/useAuth';
 // 🛠️ ACTIVATION CONFIGURATION - TWEAK AND WRITE WHAT YOU WANT HERE
 // =========================================================================================
 // Feel free to change any text, prices, discounts, bullet points, or conditions below.
+// All colors are mapped to Unbley's brand theme:
+//   Primary: #6A3E1F | Hover: #522F16 | Accent: #8D5B36 | Surface: #F7F2EC | Border: #EAE3D9
 // =========================================================================================
 
 export const ACTIVATION_CONFIG = {
@@ -35,11 +35,11 @@ export const ACTIVATION_CONFIG = {
   // 1. DISPLAY CONDITIONS & BEHAVIOR
   // ---------------------------------------------------------------------------------------
   conditions: {
-    showAsPopup: true,          // true = displays as centered landscape pop-up over dashboard
-    allowDismiss: true,         // true = shows 'X' button and allows peeking at dashboard
+    showAsPopup: true,            // true = displays as centered landscape pop-up over dashboard
+    allowDismiss: true,           // true = shows 'X' button and allows peeking at dashboard
     defaultInterval: 'quarterly', // Default active tab: 'quarterly' | 'biannually' | 'yearly'
-    showTrialButton: true,      // Show 'Start free trial (No card required)' button
-    autoOpenOnLoad: true,       // Pop-up opens immediately on page load
+    showTrialButton: true,        // Show 'Start free trial (No card required)' button
+    autoOpenOnLoad: true,         // Pop-up opens immediately on page load
   },
 
   // ---------------------------------------------------------------------------------------
@@ -111,10 +111,13 @@ export const ACTIVATION_CONFIG = {
       ],
       buttonText: 'Select Plan',
       theme: {
-        cardBg: '#F2F9F5',
-        cardBorder: '#D1FAE5',
-        buttonBg: '#00875A',
-        buttonHoverBg: '#00704A'
+        cardBg: '#F7F2EC',
+        cardBorder: '#DFCFC2',
+        buttonBg: '#6A3E1F',
+        buttonHoverBg: '#522F16',
+        badgeBg: '#6A3E1F',
+        badgeText: '#FFFFFF',
+        checkColor: '#6A3E1F'
       }
     },
 
@@ -165,16 +168,19 @@ export const ACTIVATION_CONFIG = {
       buttonText: 'Select Plan',
       theme: {
         cardBg: '#FFFFFF',
-        cardBorder: '#E2E8F0',
-        buttonBg: '#00875A',
-        buttonHoverBg: '#00704A'
+        cardBorder: '#EAE3D9',
+        buttonBg: '#6A3E1F',
+        buttonHoverBg: '#522F16',
+        badgeBg: '#8D5B36',
+        badgeText: '#FFFFFF',
+        checkColor: '#6A3E1F'
       }
     }
   ]
 };
 
 export default function Activation() {
-  const { user, signOut } = useAuth();
+  const { signOut } = useAuth();
   const navigate = useNavigate();
 
   // State condition to toggle pop-up visibility and active interval
@@ -213,7 +219,7 @@ export default function Activation() {
           .act-wrapper {
             position: relative;
             min-height: 100vh;
-            background-color: #F8FAFC;
+            background-color: var(--bg-light, #FBF9F5);
             font-family: var(--font-primary, 'Inter', sans-serif);
             overflow-x: hidden;
           }
@@ -231,7 +237,7 @@ export default function Activation() {
           .act-bg-sidebar {
             width: 260px;
             background: #FFFFFF;
-            border-right: 1px solid #E2E8F0;
+            border-right: 1px solid var(--border-color, #EAE3D9);
             padding: 32px 24px;
             display: flex;
             flex-direction: column;
@@ -243,14 +249,14 @@ export default function Activation() {
             padding: 40px 60px;
           }
 
-          /* Pop-up Overlay */
+          /* Pop-up Overlay (Warm branded dim with subtle blur) */
           .act-popup-overlay {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(15, 23, 42, 0.68);
+            background: rgba(38, 23, 16, 0.6);
             backdrop-filter: blur(5px);
             -webkit-backdrop-filter: blur(5px);
             display: flex;
@@ -267,7 +273,8 @@ export default function Activation() {
             width: 100%;
             max-width: 1040px;
             border-radius: 20px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--border-color, #EAE3D9);
+            box-shadow: 0 25px 60px -15px rgba(34, 21, 16, 0.22);
             padding: 36px 40px;
             position: relative;
             max-height: 94vh;
@@ -282,18 +289,18 @@ export default function Activation() {
             gap: 20px;
             margin-bottom: 24px;
             padding-bottom: 16px;
-            border-bottom: 1px solid #F1F5F9;
+            border-bottom: 1px solid var(--border-color, #EAE3D9);
           }
 
           .act-social-proof {
             font-size: 13.5px;
-            color: #334155;
+            color: var(--text-secondary, #6B584C);
             line-height: 1.5;
             font-weight: 500;
           }
 
           .act-brand-link {
-            color: #047857;
+            color: var(--primary, #6A3E1F);
             font-weight: 700;
             text-decoration: underline;
             margin: 0 3px;
@@ -312,9 +319,9 @@ export default function Activation() {
             gap: 6px;
             padding: 7px 16px;
             border-radius: 9999px;
-            border: 1px solid #E2E8F0;
-            background: #FFFFFF;
-            color: #1E293B;
+            border: 1px solid #DFCFC2;
+            background: var(--bg-surface, #F7F2EC);
+            color: var(--text-primary, #221510);
             font-size: 12px;
             font-weight: 600;
             cursor: pointer;
@@ -323,14 +330,14 @@ export default function Activation() {
           }
 
           .act-pill-action:hover {
-            background: #F8FAFC;
-            border-color: #CBD5E1;
-            color: #0F172A;
+            background: #EAE3D9;
+            border-color: #C9BFB5;
+            color: var(--primary, #6A3E1F);
           }
 
           .act-close-btn {
-            background: #F1F5F9;
-            border: none;
+            background: var(--bg-surface, #F7F2EC);
+            border: 1px solid #DFCFC2;
             width: 32px;
             height: 32px;
             border-radius: 50%;
@@ -338,13 +345,13 @@ export default function Activation() {
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            color: #64748B;
+            color: var(--text-secondary, #6B584C);
             transition: all 0.2s;
           }
 
           .act-close-btn:hover {
-            background: #E2E8F0;
-            color: #0F172A;
+            background: #EAE3D9;
+            color: var(--text-primary, #221510);
           }
 
           /* Intervals & Free Trial Row */
@@ -359,7 +366,8 @@ export default function Activation() {
 
           .act-interval-tabs {
             display: inline-flex;
-            background: #F1F5F9;
+            background: var(--bg-surface, #F7F2EC);
+            border: 1px solid var(--border-color, #EAE3D9);
             padding: 4px;
             border-radius: 9999px;
             gap: 4px;
@@ -377,25 +385,25 @@ export default function Activation() {
           }
 
           .act-tab-btn.active {
-            background: #0F172A;
+            background: var(--primary, #6A3E1F);
             color: #FFFFFF;
-            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15);
+            box-shadow: 0 2px 8px rgba(106, 62, 31, 0.25);
           }
 
           .act-tab-btn.inactive {
             background: transparent;
-            color: #475569;
+            color: var(--text-secondary, #6B584C);
           }
 
           .act-tab-btn.inactive:hover {
-            color: #0F172A;
+            color: var(--text-primary, #221510);
           }
 
           .act-trial-pill {
             display: inline-flex;
             align-items: center;
-            border: 1.5px solid #00875A;
-            color: #00875A;
+            border: 1.5px solid var(--primary, #6A3E1F);
+            color: var(--primary, #6A3E1F);
             background: #FFFFFF;
             padding: 8px 18px;
             border-radius: 9999px;
@@ -406,13 +414,13 @@ export default function Activation() {
           }
 
           .act-trial-pill:hover {
-            background: #F0FDF4;
+            background: var(--bg-surface, #F7F2EC);
           }
 
           /* Landscape Grid of Cards */
           .act-cards-grid {
             display: grid;
-            grid-templateColumns: repeat(2, 1fr);
+            grid-template-columns: repeat(2, 1fr);
             gap: 24px;
             align-items: stretch;
           }
@@ -434,7 +442,6 @@ export default function Activation() {
             position: absolute;
             top: -11px;
             right: 24px;
-            background: #00875A;
             color: #FFFFFF;
             font-size: 10px;
             font-weight: 800;
@@ -442,19 +449,20 @@ export default function Activation() {
             padding: 4px 12px;
             border-radius: 9999px;
             text-transform: uppercase;
+            box-shadow: 0 2px 6px rgba(106, 62, 31, 0.2);
           }
 
           .act-card-title {
             font-size: 24px;
             font-weight: 800;
-            color: #0F172A;
+            color: var(--text-primary, #221510);
             margin-bottom: 6px;
             letter-spacing: -0.02em;
           }
 
           .act-card-sub {
             font-size: 13px;
-            color: #64748B;
+            color: var(--text-secondary, #6B584C);
             margin-bottom: 24px;
             line-height: 1.4;
           }
@@ -465,7 +473,7 @@ export default function Activation() {
 
           .act-price-original {
             font-size: 14px;
-            color: #94A3B8;
+            color: var(--text-muted, #8D5B36);
             text-decoration: line-through;
             font-weight: 600;
             margin-bottom: 4px;
@@ -480,14 +488,15 @@ export default function Activation() {
           .act-price-number {
             font-size: 34px;
             font-weight: 800;
-            color: #0F172A;
+            color: var(--text-primary, #221510);
             letter-spacing: -0.03em;
             line-height: 1.1;
           }
 
           .act-discount-tag {
-            background: #E11D48;
-            color: #FFFFFF;
+            background: rgba(141, 91, 54, 0.12);
+            color: var(--accent, #8D5B36);
+            border: 1px solid #DFCFC2;
             font-size: 11px;
             font-weight: 700;
             padding: 3px 9px;
@@ -499,14 +508,14 @@ export default function Activation() {
 
           .act-price-detail {
             font-size: 11.5px;
-            color: #64748B;
+            color: var(--text-secondary, #6B584C);
             margin-top: 6px;
             font-weight: 500;
           }
 
           .act-card-divider {
             height: 1px;
-            background: rgba(100, 116, 139, 0.15);
+            background: var(--border-color, #EAE3D9);
             margin: 18px 0 24px 0;
           }
 
@@ -525,12 +534,12 @@ export default function Activation() {
             align-items: flex-start;
             gap: 12px;
             font-size: 13px;
-            color: #1E293B;
+            color: var(--text-primary, #221510);
             line-height: 1.4;
           }
 
           .act-check-icon {
-            color: #00875A;
+            color: var(--primary, #6A3E1F);
             flex-shrink: 0;
             margin-top: 2px;
           }
@@ -553,7 +562,7 @@ export default function Activation() {
           }
 
           .act-select-btn:hover {
-            filter: brightness(0.93);
+            filter: brightness(0.92);
             transform: scale(1.01);
           }
 
@@ -563,24 +572,24 @@ export default function Activation() {
             bottom: 24px;
             left: 50%;
             transform: translateX(-50%);
-            background: #0F172A;
-            color: #FFFFFF;
+            background: var(--bg-dark, #261710);
+            color: var(--text-light, #FDFBF7);
             padding: 14px 28px;
             border-radius: 9999px;
             font-size: 13px;
             font-weight: 700;
-            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.35);
+            box-shadow: 0 10px 25px -5px rgba(38, 23, 16, 0.35);
             display: flex;
             align-items: center;
             gap: 10px;
             cursor: pointer;
             z-index: 999;
-            border: 1px solid #334155;
+            border: 1px solid var(--border-dark, #4A3326);
             transition: all 0.2s ease;
           }
 
           .act-floating-trigger:hover {
-            background: #1E293B;
+            background: #3A2317;
             transform: translateX(-50%) translateY(-2px);
           }
 
@@ -639,18 +648,18 @@ export default function Activation() {
         {/* 1. Background Mockup of Dashboard (Gives context that store is locked) */}
         <div className="act-bg-dashboard">
           <div className="act-bg-sidebar">
-            <div style={{ fontWeight: '800', fontSize: '20px', color: '#0F172A' }}>Unbley.</div>
+            <div style={{ fontWeight: '800', fontSize: '20px', color: 'var(--primary, #6A3E1F)' }}>Unbley.</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '20px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: '#64748B' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: 'var(--text-secondary, #6B584C)' }}>
                 <LayoutGrid size={16} /> Overview <Lock size={12} style={{ marginLeft: 'auto' }} />
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: '#64748B' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: 'var(--text-secondary, #6B584C)' }}>
                 <User size={16} /> Profile <Lock size={12} style={{ marginLeft: 'auto' }} />
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: '#64748B' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: 'var(--text-secondary, #6B584C)' }}>
                 <Edit size={16} /> Edit Store <Lock size={12} style={{ marginLeft: 'auto' }} />
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: '#64748B' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: 'var(--text-secondary, #6B584C)' }}>
                 <HeadphonesIcon size={16} /> Customer Service
               </div>
             </div>
@@ -658,28 +667,28 @@ export default function Activation() {
 
           <div className="act-bg-main">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-              <h2 style={{ fontSize: '24px', fontWeight: '800', color: '#0F172A' }}>Dashboard</h2>
-              <div style={{ display: 'flex', gap: '16px', color: '#94A3B8' }}>
+              <h2 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--text-primary, #221510)' }}>Dashboard</h2>
+              <div style={{ display: 'flex', gap: '16px', color: 'var(--text-secondary, #6B584C)' }}>
                 <Search size={18} />
                 <Bell size={18} />
                 <Moon size={18} />
               </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
-              <div style={{ background: '#FFF', padding: '24px', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
-                <TrendingUp size={20} color="#00875A" />
-                <div style={{ fontSize: '12px', color: '#64748B', marginTop: '12px' }}>Total Sales</div>
-                <div style={{ fontSize: '28px', fontWeight: '800', color: '#0F172A' }}>₦0</div>
+              <div style={{ background: '#FFF', padding: '24px', borderRadius: '12px', border: '1px solid var(--border-color, #EAE3D9)' }}>
+                <TrendingUp size={20} color="var(--primary, #6A3E1F)" />
+                <div style={{ fontSize: '12px', color: 'var(--text-secondary, #6B584C)', marginTop: '12px' }}>Total Sales</div>
+                <div style={{ fontSize: '28px', fontWeight: '800', color: 'var(--text-primary, #221510)' }}>₦0</div>
               </div>
-              <div style={{ background: '#FFF', padding: '24px', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
-                <Package size={20} color="#64748B" />
-                <div style={{ fontSize: '12px', color: '#64748B', marginTop: '12px' }}>Stock Portfolio</div>
-                <div style={{ fontSize: '28px', fontWeight: '800', color: '#0F172A' }}>0</div>
+              <div style={{ background: '#FFF', padding: '24px', borderRadius: '12px', border: '1px solid var(--border-color, #EAE3D9)' }}>
+                <Package size={20} color="var(--text-secondary, #6B584C)" />
+                <div style={{ fontSize: '12px', color: 'var(--text-secondary, #6B584C)', marginTop: '12px' }}>Stock Portfolio</div>
+                <div style={{ fontSize: '28px', fontWeight: '800', color: 'var(--text-primary, #221510)' }}>0</div>
               </div>
-              <div style={{ background: '#FFF', padding: '24px', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
-                <BarChart3 size={20} color="#64748B" />
-                <div style={{ fontSize: '12px', color: '#64748B', marginTop: '12px' }}>Your Traffic</div>
-                <div style={{ fontSize: '28px', fontWeight: '800', color: '#0F172A' }}>0</div>
+              <div style={{ background: '#FFF', padding: '24px', borderRadius: '12px', border: '1px solid var(--border-color, #EAE3D9)' }}>
+                <BarChart3 size={20} color="var(--text-secondary, #6B584C)" />
+                <div style={{ fontSize: '12px', color: 'var(--text-secondary, #6B584C)', marginTop: '12px' }}>Your Traffic</div>
+                <div style={{ fontSize: '28px', fontWeight: '800', color: 'var(--text-primary, #221510)' }}>0</div>
               </div>
             </div>
           </div>
@@ -724,7 +733,7 @@ export default function Activation() {
                       rel="noopener noreferrer" 
                       className="act-pill-action"
                     >
-                      <HelpCircle size={14} color="#00875A" />
+                      <HelpCircle size={14} color="var(--primary, #6A3E1F)" />
                       {ACTIVATION_CONFIG.socialProof.needHelpText}
                     </a>
 
@@ -779,12 +788,18 @@ export default function Activation() {
                         className="act-card"
                         style={{
                           backgroundColor: plan.theme?.cardBg || '#FFFFFF',
-                          border: `1.5px solid ${plan.theme?.cardBorder || '#E2E8F0'}`
+                          border: `1.5px solid ${plan.theme?.cardBorder || '#EAE3D9'}`
                         }}
                       >
                         {/* Recommended Badge */}
                         {plan.isRecommended && plan.recommendedBadge && (
-                          <div className="act-card-recommended-badge">
+                          <div 
+                            className="act-card-recommended-badge"
+                            style={{
+                              backgroundColor: plan.theme?.badgeBg || 'var(--primary, #6A3E1F)',
+                              color: plan.theme?.badgeText || '#FFFFFF'
+                            }}
+                          >
                             {plan.recommendedBadge}
                           </div>
                         )}
@@ -824,7 +839,12 @@ export default function Activation() {
                         <ul className="act-feature-list">
                           {plan.features.map((feat, idx) => (
                             <li key={idx} className="act-feature-item">
-                              <Check size={16} strokeWidth={2.6} className="act-check-icon" />
+                              <Check 
+                                size={16} 
+                                strokeWidth={2.6} 
+                                className="act-check-icon"
+                                style={{ color: plan.theme?.checkColor || 'var(--primary, #6A3E1F)' }}
+                              />
                               <span>{feat}</span>
                             </li>
                           ))}
@@ -835,7 +855,7 @@ export default function Activation() {
                           onClick={() => handleSelectPlan(plan)}
                           className="act-select-btn"
                           style={{
-                            backgroundColor: plan.theme?.buttonBg || '#00875A'
+                            backgroundColor: plan.theme?.buttonBg || 'var(--primary, #6A3E1F)'
                           }}
                         >
                           {plan.buttonText}
@@ -857,7 +877,7 @@ export default function Activation() {
             className="act-floating-trigger"
             onClick={() => setIsOpen(true)}
           >
-            <Lock size={15} color="#FBBF24" />
+            <Lock size={15} color="#E8DCCF" />
             <span>Store Inactive — Click to View Activation Plans</span>
             <ArrowUpRight size={15} />
           </motion.div>
