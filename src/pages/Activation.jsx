@@ -1,281 +1,867 @@
-import React from 'react';
-import { Search, Bell, Moon, LayoutGrid, Store, User, Settings, HeadphonesIcon, TrendingUp, Package, BarChart3, CheckCircle2, ShoppingBag, ArrowUpRight, Edit, Lock, Zap } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { 
+  Check, 
+  HelpCircle, 
+  LogOut, 
+  X, 
+  Lock, 
+  ArrowUpRight, 
+  Search, 
+  Bell, 
+  Moon, 
+  LayoutGrid, 
+  User, 
+  Edit, 
+  HeadphonesIcon, 
+  TrendingUp, 
+  Package, 
+  BarChart3,
+  ExternalLink,
+  Sparkles
+} from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import PageTransition from '../components/PageTransition';
-import { motion } from 'framer-motion';
+import { useAuth } from '../hooks/useAuth';
+
+// =========================================================================================
+// 🛠️ ACTIVATION CONFIGURATION - TWEAK AND WRITE WHAT YOU WANT HERE
+// =========================================================================================
+// Feel free to change any text, prices, discounts, bullet points, or conditions below.
+// =========================================================================================
+
+export const ACTIVATION_CONFIG = {
+  // ---------------------------------------------------------------------------------------
+  // 1. DISPLAY CONDITIONS & BEHAVIOR
+  // ---------------------------------------------------------------------------------------
+  conditions: {
+    showAsPopup: true,          // true = displays as centered landscape pop-up over dashboard
+    allowDismiss: true,         // true = shows 'X' button and allows peeking at dashboard
+    defaultInterval: 'quarterly', // Default active tab: 'quarterly' | 'biannually' | 'yearly'
+    showTrialButton: true,      // Show 'Start free trial (No card required)' button
+    autoOpenOnLoad: true,       // Pop-up opens immediately on page load
+  },
+
+  // ---------------------------------------------------------------------------------------
+  // 2. TOP BANNER / SOCIAL PROOF
+  // ---------------------------------------------------------------------------------------
+  socialProof: {
+    prefixText: "Join other businesses like",
+    brands: [
+      { name: "Sheroes", link: "#" },
+      { name: "Beauty Shop Africa", link: "#" },
+      { name: "Dyelab", link: "#" }
+    ],
+    suffixText: "on Unbley and skyrocket your growth at 30% off !",
+    helpButtonText: "Need Help?",
+    helpActionUrl: "https://wa.me/2349000000000?text=Hello%20Unbley%2C%20I%20need%20help%20activating%20my%20store",
+    logoutButtonText: "Log Out",
+    trialButtonText: "Start free trial (No card required)",
+  },
+
+  // ---------------------------------------------------------------------------------------
+  // 3. BILLING CYCLE TABS
+  // ---------------------------------------------------------------------------------------
+  intervals: [
+    { id: 'quarterly', label: 'Quarterly' },
+    { id: 'biannually', label: 'Biannually' },
+    { id: 'yearly', label: 'Yearly' }
+  ],
+
+  // ---------------------------------------------------------------------------------------
+  // 4. LANDSCAPE PRICING CARDS (Edit, add, or customize plans here)
+  // ---------------------------------------------------------------------------------------
+  plans: [
+    {
+      id: 'starter',
+      name: 'Unbley Starter',
+      subtitle: 'For new businesses still figuring things out',
+      isRecommended: true,
+      recommendedBadge: 'RECOMMENDED',
+      // Pricing per billing interval
+      pricing: {
+        quarterly: {
+          displayPrice: '₦15,000',
+          numericPrice: 15000,
+          usdPrice: 15,
+          billingDetail: 'Billed Every Quarter (3 Months)',
+        },
+        biannually: {
+          displayPrice: '₦28,000',
+          numericPrice: 28000,
+          usdPrice: 28,
+          billingDetail: 'Billed Every 6 Months',
+        },
+        yearly: {
+          displayPrice: '₦50,000',
+          numericPrice: 50000,
+          usdPrice: 50,
+          billingDetail: 'Billed Annually (12 Months)',
+        }
+      },
+      // Checklist items
+      features: [
+        'Add & Manage products',
+        'Business Website + customisation',
+        'Send invoices/receipts',
+        'Create discounts & coupons',
+        'Record sales & expenses',
+        'Integrations: Shipbubble & Fez',
+        'Send bulk SMS & email campaigns'
+      ],
+      buttonText: 'Select Plan',
+      theme: {
+        cardBg: '#F2F9F5',
+        cardBorder: '#D1FAE5',
+        buttonBg: '#00875A',
+        buttonHoverBg: '#00704A'
+      }
+    },
+
+    {
+      id: 'pro',
+      name: 'Unbley Pro',
+      subtitle: 'For solopreneurs with a small customer base',
+      isRecommended: false,
+      recommendedBadge: null,
+      // Pricing per billing interval
+      pricing: {
+        quarterly: {
+          originalPrice: '₦30,000',
+          displayPrice: '₦21,000',
+          numericPrice: 21000,
+          usdPrice: 25,
+          discountBadge: '30% off',
+          billingDetail: 'Billed Every Quarter (3 Months). Save ₦9,000',
+        },
+        biannually: {
+          originalPrice: '₦60,000',
+          displayPrice: '₦39,000',
+          numericPrice: 39000,
+          usdPrice: 45,
+          discountBadge: '35% off',
+          billingDetail: 'Billed Every 6 Months. Save ₦21,000',
+        },
+        yearly: {
+          originalPrice: '₦120,000',
+          displayPrice: '₦75,000',
+          numericPrice: 75000,
+          usdPrice: 85,
+          discountBadge: '37% off',
+          billingDetail: 'Billed Annually (12 Months). Save ₦45,000',
+        }
+      },
+      // Checklist items
+      features: [
+        'Everything in Starter',
+        'Free .com.ng domain on a one-year plan',
+        'Create MoQ & MaxOQ for products',
+        'Add up to 3 staff accounts',
+        'Customise invoices & receipts',
+        'Automatically show delivery fee from different logistic providers on your website',
+        'Simple business analytics',
+        'Integrations: Facebook Pixel & Google Analytics'
+      ],
+      buttonText: 'Select Plan',
+      theme: {
+        cardBg: '#FFFFFF',
+        cardBorder: '#E2E8F0',
+        buttonBg: '#00875A',
+        buttonHoverBg: '#00704A'
+      }
+    }
+  ]
+};
 
 export default function Activation() {
-  const brandColor = '#6A3E1F';
-  const s = {
-    page: { backgroundColor: '#FBF9F5', color: '#221510', height: '100vh', overflow: 'hidden', display: 'flex', fontFamily: '"Inter", sans-serif' },
-    sidebar: { width: '280px', borderRight: '1px solid #EAE3D9', backgroundColor: '#FFFFFF', padding: '0', display: 'flex', flexDirection: 'column', opacity: 0.6, pointerEvents: 'none' },
-    logoContainer: { padding: '60px 40px', display: 'flex', flexDirection: 'column' },
-    logo: { fontFamily: 'var(--font-heading)', fontSize: '20px', letterSpacing: '-0.02em', fontWeight: '800', color: brandColor, textTransform: 'none' },
-    nav: { padding: '0', flex: 1 },
-    navItem: (active) => ({ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px 40px', color: active ? '#221510' : '#6B584C', backgroundColor: active ? '#F7F2EC' : 'transparent', borderLeft: active ? `3px solid ${brandColor}` : '3px solid transparent', cursor: 'pointer', fontSize: '12px', fontWeight: active ? '600' : '400', letterSpacing: '0.05em', transition: 'all 0.2s', textTransform: 'uppercase', textDecoration: 'none' }),
-    userProfile: { padding: '24px 40px', borderTop: '1px solid #EAE3D9', display: 'flex', alignItems: 'center', gap: '16px', backgroundColor: '#FFFFFF' },
-    userAvatar: { width: '40px', height: '40px', backgroundColor: '#EAE3D9', overflow: 'hidden', borderRadius: '50%' },
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
-    main: { flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' },
+  // State condition to toggle pop-up visibility and active interval
+  const [isOpen, setIsOpen] = useState(ACTIVATION_CONFIG.conditions.autoOpenOnLoad);
+  const [activeInterval, setActiveInterval] = useState(ACTIVATION_CONFIG.conditions.defaultInterval);
 
-    topBanner: { backgroundColor: '#F7F2EC', borderBottom: '1px solid #EAE3D9', padding: '16px 80px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 20 },
-    topBannerText: { color: '#221510', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '500' },
-    topBannerBtn: { backgroundColor: brandColor, color: '#FFFFFF', padding: '10px 20px', fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase', border: 'none', cursor: 'pointer', borderRadius: '4px' },
+  // Handle plan selection -> forwards plan details to finalize activation
+  const handleSelectPlan = (plan) => {
+    const currentPriceInfo = plan.pricing[activeInterval] || plan.pricing.quarterly;
+    navigate('/finalize-activation', {
+      state: {
+        planId: plan.id,
+        planName: plan.name,
+        interval: activeInterval,
+        amount: currentPriceInfo.numericPrice,
+        usdAmount: currentPriceInfo.usdPrice,
+        period: currentPriceInfo.billingDetail,
+        displayPrice: currentPriceInfo.displayPrice
+      }
+    });
+  };
 
-    header: { height: '80px', padding: '0 80px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #EAE3D9', backgroundColor: '#FFFFFF' },
-    headerTitle: { fontFamily: 'var(--font-heading)', fontSize: '22px', fontWeight: '800', letterSpacing: '-0.02em', color: '#221510', display: 'flex', alignItems: 'center', gap: '12px' },
-    searchBar: { display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#F7F2EC', padding: '10px 16px', width: '320px', border: '1px solid #DFCFC2', borderRadius: '4px' },
-    searchInput: { background: 'transparent', border: 'none', color: '#221510', fontSize: '12px', outline: 'none', width: '100%', letterSpacing: '0.05em' },
-    headerActions: { display: 'flex', alignItems: 'center', gap: '32px' },
-    premiumBadge: { color: brandColor, fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', padding: '4px 8px', border: `1px solid ${brandColor}`, borderRadius: '4px' },
-
-    contentWrap: { flex: 1, position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column' },
-    blurredBg: { display: 'flex', flexDirection: 'column', filter: 'blur(3px)', opacity: 0.6, pointerEvents: 'none', height: '100%' },
-    blurredContent: { padding: '80px', flex: 1, overflowY: 'hidden' },
-
-    overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(34, 21, 16, 0.45)', zIndex: 10, overflowY: 'auto', padding: '40px' },
-    modal: { backgroundColor: '#FFFFFF', border: '1px solid #EAE3D9', width: '100%', maxWidth: '540px', borderRadius: '12px', boxShadow: '0 25px 50px -12px rgba(34,21,16,0.15)', padding: '48px', position: 'relative' },
-
-    stepLabel: { fontSize: '10px', fontWeight: '700', color: brandColor, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '16px' },
-    modalTitle: { fontFamily: 'var(--font-heading)', fontSize: '30px', fontWeight: '800', letterSpacing: '-0.02em', color: '#221510', marginBottom: '12px' },
-    modalDesc: { color: '#6B584C', fontSize: '14px', lineHeight: '1.6', marginBottom: '40px' },
-
-    priceBox: { backgroundColor: '#F7F2EC', border: '1px solid #DFCFC2', padding: '24px', borderRadius: '8px', marginBottom: '32px', textAlign: 'center' },
-    priceLabel: { fontSize: '10px', fontWeight: '700', color: '#6B584C', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '8px' },
-    priceValue: { fontFamily: 'var(--font-heading)', fontSize: '36px', fontWeight: '800', letterSpacing: '-0.02em', color: '#221510', marginBottom: '4px' },
-    priceOriginal: { fontSize: '14px', color: '#8D5B36', textDecoration: 'line-through', marginRight: '8px' },
-    priceSavings: { fontSize: '12px', color: '#10B981', fontWeight: '600' },
-
-    unlocksTitle: { fontSize: '11px', fontWeight: '700', color: '#221510', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '20px' },
-    unlockList: { listStyle: 'none', padding: 0, margin: '0 0 40px 0', display: 'flex', flexDirection: 'column', gap: '16px' },
-    unlockItem: { display: 'flex', alignItems: 'flex-start', gap: '12px', fontSize: '13px', color: '#6B584C', lineHeight: '1.4' },
-
-    activateBtn: { width: '100%', backgroundColor: brandColor, color: '#FFFFFF', padding: '18px', fontSize: '13px', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase', border: 'none', cursor: 'pointer', borderRadius: '6px', transition: 'background-color 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' },
-
-    // Abstracted Dashboard styles just for background visuals
-    sectionLabel: { fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#6B584C', marginBottom: '16px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '8px' },
-    mainTitle: { fontFamily: 'var(--font-heading)', fontSize: '42px', fontWeight: '800', color: '#221510', marginBottom: '16px', letterSpacing: '-0.02em', lineHeight: '1.2' },
-    statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '32px', marginTop: '64px' },
-    card: { backgroundColor: '#FFFFFF', padding: '32px', border: '1px solid #EAE3D9', borderRadius: '8px' },
-    cardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' },
-    cardTitle: { fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#6B584C', textTransform: 'uppercase' },
-    cardValue: { fontFamily: 'var(--font-heading)', fontSize: '36px', fontWeight: '800', letterSpacing: '-0.02em', color: '#221510' },
-    cardSubtitle: { fontSize: '11px', color: '#6B584C', marginTop: '12px' }
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      navigate('/auth');
+    } catch (err) {
+      console.error('Logout failed:', err);
+    }
   };
 
   return (
     <PageTransition>
-      <div style={s.page} className="act-page">
-      <style>{`
-        @media (max-width: 768px) {
-          .act-page { flex-direction: column !important; height: auto !important; min-height: 100vh; overflow: visible !important; }
-          .act-sidebar { display: none !important; }
-          
-          .act-top-banner { padding: 24px 20px !important; flex-direction: column !important; gap: 16px !important; text-align: center; }
-          .act-top-banner button { width: 100%; padding: 14px !important; }
-          
-          .act-header { height: auto !important; padding: 24px 20px !important; flex-wrap: wrap; gap: 16px; justify-content: center; }
-          .act-search { display: none !important; }
-          
-          .act-blurred-content { padding: 24px 20px !important; }
-          
-          .act-overlay { padding: 24px 16px !important; align-items: flex-start !important; overflow-y: auto !important; position: absolute !important; display: block !important; }
-          .act-modal { padding: 48px 24px !important; margin: 40px auto; max-width: 100%; box-sizing: border-box; }
-          .act-modal-badge { top: -20px !important; padding: 12px 16px !important; width: 90%; box-sizing: border-box; text-align: center; font-size: 10px !important; transform: translateX(-50%) !important; left: 50% !important; }
-          .act-modal-title { font-size: 28px !important; text-align: center; }
-          .act-modal-desc { text-align: center; font-size: 13px !important; }
-          
-          .act-price-box { padding: 20px !important; }
-          .act-price-value { font-size: 32px !important; }
-          
-          .act-unlock-item { font-size: 12px !important; }
-          .act-activate-btn { padding: 16px !important; }
-        }
-      `}</style>
-      {/* Sidebar - Blurred/Disabled visually via opacity & pointerEvents */}
-      <div style={s.sidebar} className="act-sidebar">
-        <div style={s.logoContainer}>
-          <div style={s.logo}>Unbley.</div>
-          <div style={{ fontFamily: 'Inter', fontSize: '9px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', marginTop: '8px', textTransform: 'uppercase' }}>Digital Store</div>
-        </div>
-        <div style={s.nav}>
-          <div style={s.navItem(true)} title="Activate your store to unlock this feature"><LayoutGrid size={16} /> Overview <Lock size={12} style={{ marginLeft: 'auto' }} /></div>
-          <div style={s.navItem(false)} title="Activate your store to unlock this feature"><User size={16} /> Profile <Lock size={12} style={{ marginLeft: 'auto' }} /></div>
-          <div style={s.navItem(false)} title="Activate your store to unlock this feature"><Edit size={16} /> Edit <Lock size={12} style={{ marginLeft: 'auto' }} /></div>
-          <div style={{ ...s.navItem(false), marginTop: '48px' }}><HeadphonesIcon size={16} /> Customer Service</div>
-        </div>
-        <div style={s.userProfile}>
-          <div style={s.userAvatar}>
-            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop" alt="Julian Vane" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          </div>
-          <div>
-            <div style={{ fontSize: '12px', fontWeight: '700', color: '#FFF', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Julian Vane</div>
-            <div style={{ fontSize: '10px', color: '#666', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: '4px' }}>Brand Director</div>
-          </div>
-        </div>
-      </div>
+      <div className="act-wrapper">
+        <style>{`
+          .act-wrapper {
+            position: relative;
+            min-height: 100vh;
+            background-color: #F8FAFC;
+            font-family: var(--font-primary, 'Inter', sans-serif);
+            overflow-x: hidden;
+          }
 
-      {/* Main Container */}
-      <div style={s.main}>
-        {/* Top Lock Banner */}
-        <div style={s.topBanner} className="act-top-banner">
-          <div style={s.topBannerText}>
-            <Lock size={16} color={brandColor} />
-            Your store is not active yet. Complete your setup to start selling.
-          </div>
-          <Link to="/finalize-activation" style={{ textDecoration: 'none' }}>
-            <button style={s.topBannerBtn}>Activate My Store (₦30k / $30)</button>
-          </Link>
-        </div>
+          /* Blurred Dashboard Background */
+          .act-bg-dashboard {
+            filter: blur(4px);
+            opacity: 0.55;
+            pointer-events: none;
+            user-select: none;
+            display: flex;
+            min-height: 100vh;
+          }
 
-        {/* Content Wrapper for Blur + Modal */}
-        <div style={s.contentWrap}>
-          {/* Blurred Background Dashboard */}
-          <div style={s.blurredBg}>
-            {/* Header */}
-            <div style={s.header} className="act-header">
-              <div style={s.headerTitle}>Dashboard <Lock size={16} color="#666" /></div>
-              <div style={s.searchBar} className="act-search">
-                <Search size={14} color="#666" />
-                <input type="text" placeholder="SEARCH ..." style={s.searchInput} disabled />
+          .act-bg-sidebar {
+            width: 260px;
+            background: #FFFFFF;
+            border-right: 1px solid #E2E8F0;
+            padding: 32px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+          }
+
+          .act-bg-main {
+            flex: 1;
+            padding: 40px 60px;
+          }
+
+          /* Pop-up Overlay */
+          .act-popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.68);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 16px;
+            z-index: 1000;
+            overflow-y: auto;
+          }
+
+          /* Landscape Pop-up Box */
+          .act-popup-card {
+            background: #FFFFFF;
+            width: 100%;
+            max-width: 1040px;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            padding: 36px 40px;
+            position: relative;
+            max-height: 94vh;
+            overflow-y: auto;
+          }
+
+          /* Top Header Banner */
+          .act-header-banner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #F1F5F9;
+          }
+
+          .act-social-proof {
+            font-size: 13.5px;
+            color: #334155;
+            line-height: 1.5;
+            font-weight: 500;
+          }
+
+          .act-brand-link {
+            color: #047857;
+            font-weight: 700;
+            text-decoration: underline;
+            margin: 0 3px;
+          }
+
+          .act-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+          }
+
+          .act-pill-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 16px;
+            border-radius: 9999px;
+            border: 1px solid #E2E8F0;
+            background: #FFFFFF;
+            color: #1E293B;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+          }
+
+          .act-pill-action:hover {
+            background: #F8FAFC;
+            border-color: #CBD5E1;
+            color: #0F172A;
+          }
+
+          .act-close-btn {
+            background: #F1F5F9;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #64748B;
+            transition: all 0.2s;
+          }
+
+          .act-close-btn:hover {
+            background: #E2E8F0;
+            color: #0F172A;
+          }
+
+          /* Intervals & Free Trial Row */
+          .act-controls-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+          }
+
+          .act-interval-tabs {
+            display: inline-flex;
+            background: #F1F5F9;
+            padding: 4px;
+            border-radius: 9999px;
+            gap: 4px;
+          }
+
+          .act-tab-btn {
+            border: none;
+            outline: none;
+            padding: 8px 22px;
+            border-radius: 9999px;
+            font-size: 12.5px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+          }
+
+          .act-tab-btn.active {
+            background: #0F172A;
+            color: #FFFFFF;
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15);
+          }
+
+          .act-tab-btn.inactive {
+            background: transparent;
+            color: #475569;
+          }
+
+          .act-tab-btn.inactive:hover {
+            color: #0F172A;
+          }
+
+          .act-trial-pill {
+            display: inline-flex;
+            align-items: center;
+            border: 1.5px solid #00875A;
+            color: #00875A;
+            background: #FFFFFF;
+            padding: 8px 18px;
+            border-radius: 9999px;
+            font-size: 12.5px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+          }
+
+          .act-trial-pill:hover {
+            background: #F0FDF4;
+          }
+
+          /* Landscape Grid of Cards */
+          .act-cards-grid {
+            display: grid;
+            grid-templateColumns: repeat(2, 1fr);
+            gap: 24px;
+            align-items: stretch;
+          }
+
+          .act-card {
+            border-radius: 18px;
+            padding: 34px 30px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            transition: transform 0.2s, box-shadow 0.2s;
+          }
+
+          .act-card:hover {
+            transform: translateY(-2px);
+          }
+
+          .act-card-recommended-badge {
+            position: absolute;
+            top: -11px;
+            right: 24px;
+            background: #00875A;
+            color: #FFFFFF;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            text-transform: uppercase;
+          }
+
+          .act-card-title {
+            font-size: 24px;
+            font-weight: 800;
+            color: #0F172A;
+            margin-bottom: 6px;
+            letter-spacing: -0.02em;
+          }
+
+          .act-card-sub {
+            font-size: 13px;
+            color: #64748B;
+            margin-bottom: 24px;
+            line-height: 1.4;
+          }
+
+          .act-price-wrap {
+            margin-bottom: 20px;
+          }
+
+          .act-price-original {
+            font-size: 14px;
+            color: #94A3B8;
+            text-decoration: line-through;
+            font-weight: 600;
+            margin-bottom: 4px;
+          }
+
+          .act-price-main-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+          }
+
+          .act-price-number {
+            font-size: 34px;
+            font-weight: 800;
+            color: #0F172A;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+          }
+
+          .act-discount-tag {
+            background: #E11D48;
+            color: #FFFFFF;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 9px;
+            border-radius: 9999px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+          }
+
+          .act-price-detail {
+            font-size: 11.5px;
+            color: #64748B;
+            margin-top: 6px;
+            font-weight: 500;
+          }
+
+          .act-card-divider {
+            height: 1px;
+            background: rgba(100, 116, 139, 0.15);
+            margin: 18px 0 24px 0;
+          }
+
+          .act-feature-list {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 32px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            flex-grow: 1;
+          }
+
+          .act-feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            font-size: 13px;
+            color: #1E293B;
+            line-height: 1.4;
+          }
+
+          .act-check-icon {
+            color: #00875A;
+            flex-shrink: 0;
+            margin-top: 2px;
+          }
+
+          .act-select-btn {
+            width: 100%;
+            border: none;
+            color: #FFFFFF;
+            font-size: 14px;
+            font-weight: 700;
+            padding: 14px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: auto;
+          }
+
+          .act-select-btn:hover {
+            filter: brightness(0.93);
+            transform: scale(1.01);
+          }
+
+          /* Floating Re-Open Button when closed */
+          .act-floating-trigger {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #0F172A;
+            color: #FFFFFF;
+            padding: 14px 28px;
+            border-radius: 9999px;
+            font-size: 13px;
+            font-weight: 700;
+            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.35);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            z-index: 999;
+            border: 1px solid #334155;
+            transition: all 0.2s ease;
+          }
+
+          .act-floating-trigger:hover {
+            background: #1E293B;
+            transform: translateX(-50%) translateY(-2px);
+          }
+
+          /* Responsive Breakpoint for Small Screens */
+          @media (max-width: 860px) {
+            .act-popup-card {
+              padding: 24px 18px;
+              max-height: 96vh;
+            }
+
+            .act-header-banner {
+              flex-direction: column;
+              align-items: flex-start;
+              gap: 14px;
+            }
+
+            .act-header-actions {
+              width: 100%;
+              justify-content: space-between;
+            }
+
+            .act-controls-row {
+              flex-direction: column;
+              align-items: stretch;
+              gap: 12px;
+            }
+
+            .act-interval-tabs {
+              width: 100%;
+              justify-content: center;
+            }
+
+            .act-tab-btn {
+              flex: 1;
+              text-align: center;
+              padding: 8px 12px;
+              font-size: 11.5px;
+            }
+
+            .act-trial-pill {
+              justify-content: center;
+              width: 100%;
+            }
+
+            .act-cards-grid {
+              grid-template-columns: 1fr !important;
+              gap: 20px;
+            }
+
+            .act-card {
+              padding: 26px 20px;
+            }
+          }
+        `}</style>
+
+        {/* 1. Background Mockup of Dashboard (Gives context that store is locked) */}
+        <div className="act-bg-dashboard">
+          <div className="act-bg-sidebar">
+            <div style={{ fontWeight: '800', fontSize: '20px', color: '#0F172A' }}>Unbley.</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: '#64748B' }}>
+                <LayoutGrid size={16} /> Overview <Lock size={12} style={{ marginLeft: 'auto' }} />
               </div>
-              <div style={s.headerActions}>
-                <Bell size={16} color="#888" />
-                <Moon size={16} color="#888" />
-                <div style={s.premiumBadge}>LOCKED</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: '#64748B' }}>
+                <User size={16} /> Profile <Lock size={12} style={{ marginLeft: 'auto' }} />
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: '#64748B' }}>
+                <Edit size={16} /> Edit Store <Lock size={12} style={{ marginLeft: 'auto' }} />
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: '#64748B' }}>
+                <HeadphonesIcon size={16} /> Customer Service
               </div>
             </div>
+          </div>
 
-            <div style={s.blurredContent} className="act-blurred-content">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: '1px solid #1F1F1F', paddingBottom: '40px' }}>
-                <div style={{ display: 'flex', gap: '32px', alignItems: 'center' }}>
-                  <div style={{ width: '100px', height: '100px', border: '1px solid #333', backgroundColor: '#111' }}></div>
-                <div>
-                  <div style={s.sectionLabel}>Brand Profile</div>
-                  <h1 style={{ ...s.mainTitle, fontSize: '36px', marginBottom: '16px' }}>Unbley W3ars</h1>
-                  <div style={{ display: 'flex', gap: '24px', color: '#888', fontSize: '12px' }}>
-                    <div><span style={{ color: '#FFF' }}>Email:</span> contact@unbleywears.com</div>
+          <div className="act-bg-main">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+              <h2 style={{ fontSize: '24px', fontWeight: '800', color: '#0F172A' }}>Dashboard</h2>
+              <div style={{ display: 'flex', gap: '16px', color: '#94A3B8' }}>
+                <Search size={18} />
+                <Bell size={18} />
+                <Moon size={18} />
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
+              <div style={{ background: '#FFF', padding: '24px', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
+                <TrendingUp size={20} color="#00875A" />
+                <div style={{ fontSize: '12px', color: '#64748B', marginTop: '12px' }}>Total Sales</div>
+                <div style={{ fontSize: '28px', fontWeight: '800', color: '#0F172A' }}>₦0</div>
+              </div>
+              <div style={{ background: '#FFF', padding: '24px', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
+                <Package size={20} color="#64748B" />
+                <div style={{ fontSize: '12px', color: '#64748B', marginTop: '12px' }}>Stock Portfolio</div>
+                <div style={{ fontSize: '28px', fontWeight: '800', color: '#0F172A' }}>0</div>
+              </div>
+              <div style={{ background: '#FFF', padding: '24px', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
+                <BarChart3 size={20} color="#64748B" />
+                <div style={{ fontSize: '12px', color: '#64748B', marginTop: '12px' }}>Your Traffic</div>
+                <div style={{ fontSize: '28px', fontWeight: '800', color: '#0F172A' }}>0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 2. Landscape Pop-up Modal (Condition: isOpen && showAsPopup) */}
+        <AnimatePresence>
+          {isOpen && ACTIVATION_CONFIG.conditions.showAsPopup && (
+            <motion.div 
+              className="act-popup-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+            >
+              <motion.div 
+                className="act-popup-card"
+                initial={{ opacity: 0, scale: 0.95, y: 15 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 15 }}
+                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              >
+                {/* Top Header Banner */}
+                <div className="act-header-banner">
+                  <div className="act-social-proof">
+                    {ACTIVATION_CONFIG.socialProof.prefixText}
+                    {ACTIVATION_CONFIG.socialProof.brands.map((brand, idx) => (
+                      <span key={brand.name}>
+                        <a href={brand.link} className="act-brand-link" onClick={(e) => e.preventDefault()}>
+                          {brand.name}
+                        </a>
+                        {idx < ACTIVATION_CONFIG.socialProof.brands.length - 1 ? ', ' : ' '}
+                      </span>
+                    ))}
+                    {ACTIVATION_CONFIG.socialProof.suffixText}
+                  </div>
+
+                  <div className="act-header-actions">
+                    <a 
+                      href={ACTIVATION_CONFIG.socialProof.helpActionUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="act-pill-action"
+                    >
+                      <HelpCircle size={14} color="#00875A" />
+                      {ACTIVATION_CONFIG.socialProof.needHelpText}
+                    </a>
+
+                    <button onClick={handleLogout} className="act-pill-action">
+                      <LogOut size={14} />
+                      {ACTIVATION_CONFIG.socialProof.logoutButtonText}
+                    </button>
+
+                    {ACTIVATION_CONFIG.conditions.allowDismiss && (
+                      <button 
+                        onClick={() => setIsOpen(false)} 
+                        className="act-close-btn"
+                        title="Close pop-up"
+                      >
+                        <X size={16} />
+                      </button>
+                    )}
                   </div>
                 </div>
-              </div>
-            </div>
 
-            <div style={s.statsGrid}>
-              <div style={s.card}>
-                <div style={s.cardHeader}>
-                  <TrendingUp size={14} color="#FFF" />
-                  <div style={s.cardTitle}>+0.0% THIS MONTH</div>
+                {/* Interval Tabs & Free Trial Row */}
+                <div className="act-controls-row">
+                  <div className="act-interval-tabs">
+                    {ACTIVATION_CONFIG.intervals.map((tab) => (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveInterval(tab.id)}
+                        className={`act-tab-btn ${activeInterval === tab.id ? 'active' : 'inactive'}`}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {ACTIVATION_CONFIG.conditions.showTrialButton && (
+                    <button 
+                      onClick={() => handleSelectPlan(ACTIVATION_CONFIG.plans[0])}
+                      className="act-trial-pill"
+                    >
+                      {ACTIVATION_CONFIG.socialProof.trialButtonText}
+                    </button>
+                  )}
                 </div>
-                <div style={s.cardTitle}>Total Sales</div>
-                <div style={s.cardValue}>₦0</div>
-              </div>
-              <div style={s.card}>
-                <div style={s.cardHeader}>
-                  <Package size={18} color="#888" />
+
+                {/* Landscape 2-Column Cards Grid */}
+                <div className="act-cards-grid">
+                  {ACTIVATION_CONFIG.plans.map((plan) => {
+                    const pricing = plan.pricing[activeInterval] || plan.pricing.quarterly;
+                    return (
+                      <div 
+                        key={plan.id} 
+                        className="act-card"
+                        style={{
+                          backgroundColor: plan.theme?.cardBg || '#FFFFFF',
+                          border: `1.5px solid ${plan.theme?.cardBorder || '#E2E8F0'}`
+                        }}
+                      >
+                        {/* Recommended Badge */}
+                        {plan.isRecommended && plan.recommendedBadge && (
+                          <div className="act-card-recommended-badge">
+                            {plan.recommendedBadge}
+                          </div>
+                        )}
+
+                        {/* Title & Subtitle */}
+                        <div className="act-card-title">{plan.name}</div>
+                        <div className="act-card-sub">{plan.subtitle}</div>
+
+                        {/* Pricing Block */}
+                        <div className="act-price-wrap">
+                          {pricing.originalPrice && (
+                            <div className="act-price-original">
+                              {pricing.originalPrice}
+                            </div>
+                          )}
+
+                          <div className="act-price-main-row">
+                            <div className="act-price-number">
+                              {pricing.displayPrice}
+                            </div>
+                            {pricing.discountBadge && (
+                              <div className="act-discount-tag">
+                                <span>🏷️</span> {pricing.discountBadge}
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="act-price-detail">
+                            {pricing.billingDetail}
+                          </div>
+                        </div>
+
+                        {/* Divider */}
+                        <div className="act-card-divider" />
+
+                        {/* Feature Checklist */}
+                        <ul className="act-feature-list">
+                          {plan.features.map((feat, idx) => (
+                            <li key={idx} className="act-feature-item">
+                              <Check size={16} strokeWidth={2.6} className="act-check-icon" />
+                              <span>{feat}</span>
+                            </li>
+                          ))}
+                        </ul>
+
+                        {/* Select Plan Button */}
+                        <button
+                          onClick={() => handleSelectPlan(plan)}
+                          className="act-select-btn"
+                          style={{
+                            backgroundColor: plan.theme?.buttonBg || '#00875A'
+                          }}
+                        >
+                          {plan.buttonText}
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
-                <div style={s.cardTitle}>Stock Portfolio</div>
-                <div style={s.cardValue}>0</div>
-              </div>
-              <div style={s.card}>
-                <div style={s.cardHeader}>
-                  <BarChart3 size={18} color="#888" />
-                </div>
-                <div style={s.cardTitle}>Your Traffic</div>
-                <div style={s.cardValue}>0</div>
-              </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Foreground Modal Overlay */}
-          <div style={s.overlay} className="act-overlay">
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-              style={s.modal} 
-              className="act-modal"
-            >
-              <div style={{ position: 'absolute', top: '-40px', left: '50%', transform: 'translateX(-50%)', backgroundColor: '#261710', padding: '12px 24px', borderRadius: '24px', fontSize: '11px', color: '#FDFBF7', fontWeight: '600', letterSpacing: '0.05em', border: '1px solid #DFCFC2', display: 'flex', alignItems: 'center', gap: '8px' }} className="act-modal-badge">
-                <Lock size={14} color="#8D5B36" /> Activate your store to start selling and unlock your dashboard
-              </div>
-
-              <div style={s.stepLabel}>Step 2 of 2: Activate Your Store</div>
-              <h2 style={s.modalTitle} className="act-modal-title">Activate Your Store</h2>
-              <div style={{ fontSize: '15px', color: brandColor, fontWeight: '600', marginBottom: '16px', letterSpacing: '-0.01em' }}>You’re one step away from launching your business.</div>
-              <p style={s.modalDesc}>
-                Your store is ready. Complete activation to go live, accept payments, and start selling.
-              </p>
-
-              <div style={s.priceBox}>
-                <div style={s.priceLabel}>Store Activation (First Year)</div>
-                <div style={s.priceValue}>₦30,000 / $30</div>
-                <div>
-                  <span style={s.priceOriginal}>₦50,000 / $60</span>
-                  <span style={s.priceSavings}>40% OFF – Limited Launch Offer</span>
-                </div>
-                <div style={{ fontSize: '11px', color: '#6B584C', marginTop: '12px' }}>
-                  Renewal: ₦50,000 / $60 per year
-                </div>
-              </div>
-
-              <h3 style={s.unlocksTitle}>What You Unlock After Activation:</h3>
-              <ul style={s.unlockList} className="act-unlock-list">
-                <li style={s.unlockItem} className="act-unlock-item">
-                  <CheckCircle2 size={16} color={brandColor} style={{ flexShrink: 0, marginTop: '2px' }} />
-                  <span><strong>Start making sales within 24 hours</strong></span>
-                </li>
-                <li style={s.unlockItem} className="act-unlock-item">
-                  <CheckCircle2 size={16} color={brandColor} style={{ flexShrink: 0, marginTop: '2px' }} />
-                  <span>Your store goes <strong>live instantly</strong></span>
-                </li>
-                <li style={s.unlockItem} className="act-unlock-item">
-                  <CheckCircle2 size={16} color={brandColor} style={{ flexShrink: 0, marginTop: '2px' }} />
-                  <span>Receive payments directly to your account (Paystack / Flutterwave)</span>
-                </li>
-                <li style={s.unlockItem} className="act-unlock-item">
-                  <CheckCircle2 size={16} color={brandColor} style={{ flexShrink: 0, marginTop: '2px' }} />
-                  <span>Custom domain setup and SSL</span>
-                </li>
-                <li style={s.unlockItem} className="act-unlock-item">
-                  <CheckCircle2 size={16} color={brandColor} style={{ flexShrink: 0, marginTop: '2px' }} />
-                  <span>Full access to the Admin Dashboard & Analytics</span>
-                </li>
-                <li style={s.unlockItem} className="act-unlock-item">
-                  <CheckCircle2 size={16} color={brandColor} style={{ flexShrink: 0, marginTop: '2px' }} />
-                  <span>Complete control of your store's inventory and layout</span>
-                </li>
-              </ul>
-
-              <div style={{ fontSize: '11px', color: '#B45309', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '12px', textAlign: 'center', letterSpacing: '0.05em' }}>⚡ Limited spots remaining at this price</div>
-              <Link to="/finalize-activation" style={{ textDecoration: 'none', display: 'block', width: '100%' }}>
-                <motion.button 
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  style={s.activateBtn} 
-                  className="act-activate-btn"
-                >
-                  Launch My Store Now <ArrowUpRight size={16} />
-                </motion.button>
-              </Link>
-              <div style={{ fontSize: '11px', color: '#6B584C', marginTop: '12px', textAlign: 'center' }}>One-time activation — no hidden fees</div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', marginTop: '24px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#6B584C' }}><Lock size={12} /> Secure payment via Paystack</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#6B584C' }}><Zap size={12} color="#B45309" /> Instant activation after payment</div>
-              </div>
-
-              <div style={{ textAlign: 'center', marginTop: '32px', fontSize: '12px', color: '#6B584C', borderTop: '1px solid #EAE3D9', paddingTop: '24px' }}>
-                Join <span style={{ color: '#221510', fontWeight: 'bold' }}>100+ brands</span> already selling on Unbley
-              </div>
-              <div style={{ textAlign: 'center', marginTop: '24px', fontSize: '11px', color: brandColor, cursor: 'pointer', textDecoration: 'underline' }}>
-                Already paid? Refresh to unlock dashboard
-              </div>
+              </motion.div>
             </motion.div>
-          </div>
-        </div>
+          )}
+        </AnimatePresence>
 
-      </div>
+        {/* 3. Floating Re-open Trigger (Displays if the user closes the modal) */}
+        {!isOpen && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="act-floating-trigger"
+            onClick={() => setIsOpen(true)}
+          >
+            <Lock size={15} color="#FBBF24" />
+            <span>Store Inactive — Click to View Activation Plans</span>
+            <ArrowUpRight size={15} />
+          </motion.div>
+        )}
       </div>
     </PageTransition>
   );

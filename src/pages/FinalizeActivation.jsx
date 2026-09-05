@@ -3,14 +3,20 @@ import { Shield, Lock, CreditCard, Sparkles, Globe, ArrowRight, CheckCircle2 } f
 import PaystackPop from '@paystack/inline-js';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import PageTransition from '../components/PageTransition';
 
 export default function FinalizeActivation() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   
+  const selectedPlanName = location.state?.planName || 'Store Activation';
+  const selectedPeriod = location.state?.period || 'Selected Period';
+  const selectedAmount = location.state?.amount || 30000;
+  const selectedUsdAmount = location.state?.usdAmount || 30;
+
   const [processing, setProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('paystack'); // 'paystack' or 'flutterwave'
@@ -52,7 +58,7 @@ export default function FinalizeActivation() {
       if (authError) throw authError;
 
       // 3. Complete! Navigate to Success Page
-      const finalAmount = paymentMethod === 'paystack' ? 30000 : 30;
+      const finalAmount = paymentMethod === 'paystack' ? selectedAmount : selectedUsdAmount;
       const finalCurrency = paymentMethod === 'paystack' ? 'NGN' : 'USD';
       
       navigate('/success', { 
@@ -98,7 +104,7 @@ export default function FinalizeActivation() {
       paystack.newTransaction({
         key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
         email: user?.email || "pending@unbley.com",
-        amount: 30000 * 100,
+        amount: selectedAmount * 100,
         currency: 'NGN',
         ref: (new Date()).getTime().toString(),
         onSuccess: (transaction) => onSuccess(transaction),
@@ -126,15 +132,15 @@ export default function FinalizeActivation() {
       window.FlutterwaveCheckout({
         public_key: import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY,
         tx_ref: (new Date()).getTime().toString(),
-        amount: 30,
+        amount: selectedUsdAmount,
         currency: "USD",
         customer: {
           email: user?.email || "pending@unbley.com",
           name: user?.user_metadata?.brand_name || "New Store Owner",
         },
         customizations: {
-          title: "Unbley Activation",
-          description: "Premium Storefront Activation",
+          title: `Unbley Activation - ${selectedPlanName}`,
+          description: selectedPeriod,
         },
         callback: (data) => {
           onSuccess({ reference: data.transaction_id || data.tx_ref });
@@ -249,20 +255,16 @@ export default function FinalizeActivation() {
             </div>
 
             <div style={s.checkoutBox}>
-              <div style={{ fontSize: '10px', color: '#6B584C', marginBottom: '8px', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.05em' }}>TOTAL DUE (FIRST YEAR)</div>
+              <div style={{ fontSize: '10px', color: '#6B584C', marginBottom: '8px', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.05em' }}>
+                SELECTED PLAN: <span style={{ color: brandColor }}>{selectedPlanName}</span>
+              </div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
                 <div style={s.price}>
-                  {paymentMethod === 'paystack' ? '₦30,000' : '$30.00'}
-                </div>
-                <div style={{ fontSize: '18px', color: '#8D5B36', textDecoration: 'line-through' }}>
-                  {paymentMethod === 'paystack' ? '₦50,000' : '$60.00'}
+                  {paymentMethod === 'paystack' ? `₦${selectedAmount.toLocaleString()}` : `$${selectedUsdAmount}.00`}
                 </div>
               </div>
-              <div style={{ fontSize: '12px', color: brandColor, marginTop: '8px', fontWeight: 'bold' }}>
-                40% Discount Applied
-              </div>
-              <div style={{ fontSize: '11px', color: '#6B584C', marginTop: '12px' }}>
-                Renewal Cost: {paymentMethod === 'paystack' ? '₦50,000' : '$60.00'} yearly
+              <div style={{ fontSize: '11px', color: '#6B584C', marginTop: '8px' }}>
+                Billing Cycle: {selectedPeriod}
               </div>
             </div>
 
