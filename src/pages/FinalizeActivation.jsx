@@ -30,12 +30,15 @@ export default function FinalizeActivation() {
       // 1. Physically unlock the store gateway barrier in the Postgres DB
       let updateResult = await supabase
         .from('brand_profiles')
-        .update({ 
+        .upsert({ 
+          id: user?.id,
+          email_address: user?.email || '',
+          brand_name: user?.user_metadata?.brand_name || user?.user_metadata?.full_name || 'Your Brand',
+          owner_name: user?.user_metadata?.full_name || user?.user_metadata?.name || '',
           store_active: true, 
           last_transaction_id: transaction.reference,
-          updated_at: new Date() 
-        })
-        .eq('id', user?.id);
+          updated_at: new Date().toISOString() 
+        }, { onConflict: 'id' });
         
       // Fallback: If the column 'last_transaction_id' is missing in the DB, 
       // we still want to activate the store regardless.
@@ -43,11 +46,14 @@ export default function FinalizeActivation() {
         console.warn("Primary activation update failed, attempting minimal fallback:", updateResult.error);
         updateResult = await supabase
           .from('brand_profiles')
-          .update({ 
+          .upsert({ 
+            id: user?.id,
+            email_address: user?.email || '',
+            brand_name: user?.user_metadata?.brand_name || user?.user_metadata?.full_name || 'Your Brand',
+            owner_name: user?.user_metadata?.full_name || user?.user_metadata?.name || '',
             store_active: true, 
-            updated_at: new Date() 
-          })
-          .eq('id', user?.id);
+            updated_at: new Date().toISOString() 
+          }, { onConflict: 'id' });
       }
         
       if (updateResult.error) throw updateResult.error;
@@ -66,12 +72,16 @@ export default function FinalizeActivation() {
       
       navigate('/success', { 
         state: { 
+          type: isFreeTrial ? 'free_trial' : 'paid_plan',
           reference: transaction.reference, 
           amount: finalAmount,
           currency: finalCurrency,
           email: user?.email,
           brandName: user?.user_metadata?.brand_name || 'Your Premium Store',
-          method: finalMethod
+          method: finalMethod,
+          planId: selectedPlanId,
+          planName: selectedPlanName,
+          period: selectedPeriod
         } 
       });
       

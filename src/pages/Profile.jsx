@@ -72,7 +72,7 @@ export default function Profile() {
           .from('brand_profiles')
           .select('*')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
           
         if (data) {
           // Merge fetched data onto defaults to preserve fallback placeholder URLs if empty
@@ -94,7 +94,27 @@ export default function Profile() {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', handleResize);
     fetchProfile();
-    return () => window.removeEventListener('resize', handleResize);
+
+    const channel = supabase
+      .channel(`profile_page_sync_${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'brand_profiles', filter: `id=eq.${user.id}` },
+        (payload) => {
+          if (payload.new) {
+            setProfileData(prev => ({
+              ...prev,
+              ...Object.fromEntries(Object.entries(payload.new).filter(([_, v]) => v != null && v !== ''))
+            }));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
   const brandColor = '#6A3E1F';

@@ -128,7 +128,7 @@ export const ACTIVATION_CONFIG = {
           originalPrice: '₦60,000',
           displayPrice: '₦50,000',
           numericPrice: 50000,
-          usdPrice: 50,
+          usdPrice: 40,
           discountBadge: '17% off',
           billingDetail: 'Billed Annually (12 Months)',
         }
@@ -167,7 +167,7 @@ export const ACTIVATION_CONFIG = {
           originalPrice: '₦20,000',
           displayPrice: '₦15,000',
           numericPrice: 15000,
-          usdPrice: 8,
+          usdPrice: 10,
           discountBadge: '30% off',
           billingDetail: 'Billed Monthly. Save ₦5,000',
         },
@@ -175,7 +175,7 @@ export const ACTIVATION_CONFIG = {
           originalPrice: '₦180,000',
           displayPrice: '₦120,000',
           numericPrice: 120000,
-          usdPrice: 85,
+          usdPrice: 80,
           discountBadge: '37% off',
           billingDetail: 'Billed Annually (12 Months). Save ₦60,000',
         }
@@ -216,10 +216,10 @@ export default function Activation() {
   // Handle plan selection -> forwards plan details to finalize activation
   const handleSelectPlan = (plan) => {
     if (!plan) return;
-    const currentPriceInfo = plan.pricing?.[activeInterval] 
-      || plan.pricing?.monthly 
+    const currentPriceInfo = plan.pricing?.[activeInterval]
+      || plan.pricing?.monthly
       || plan.pricing?.yearly
-      || (plan.pricing ? Object.values(plan.pricing)[0] : null) 
+      || (plan.pricing ? Object.values(plan.pricing)[0] : null)
       || { displayPrice: 'Free', numericPrice: 0, usdPrice: 0, billingDetail: '14-Day Free Access' };
 
     navigate('/finalize-activation', {
@@ -824,10 +824,10 @@ export default function Activation() {
                 {/* Landscape Cards Grid */}
                 <div className="act-cards-grid">
                   {ACTIVATION_CONFIG.plans.map((plan) => {
-                    const pricing = plan.pricing?.[activeInterval] 
-                      || plan.pricing?.monthly 
-                      || plan.pricing?.yearly 
-                      || (plan.pricing ? Object.values(plan.pricing)[0] : null) 
+                    const pricing = plan.pricing?.[activeInterval]
+                      || plan.pricing?.monthly
+                      || plan.pricing?.yearly
+                      || (plan.pricing ? Object.values(plan.pricing)[0] : null)
                       || { displayPrice: 'Free', numericPrice: 0, usdPrice: 0, billingDetail: '14-Day Free Access' };
                     return (
                       <div

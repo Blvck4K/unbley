@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Search, Bell, Moon, LayoutGrid, Store, User, Settings, Headphones, Camera, Globe, Link as LinkIcon, Plus, ArrowRight, Lock, Menu, X } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { LayoutGrid, User, Settings, Link as LinkIcon, Plus, Menu, X, Lock, CheckCircle2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
@@ -86,21 +86,39 @@ export default function Edit() {
     secondary: '#1A1A1A',
     accent: '#06acf8'
   });
+  const [saveStatus, setSaveStatus] = useState('idle'); // 'idle' | 'saving' | 'saved'
 
+  // ── Profile completion calculation ────────────────────────────────────────
+  const completionFields = [
+    { key: 'brand_name', label: 'Brand Name' },
+    { key: 'owner_name', label: 'Owner Name' },
+    { key: 'email_address', label: 'Email' },
+    { key: 'logo_url', label: 'Logo' },
+    { key: 'brand_narrative', label: 'Brand Story' },
+    { key: 'delivery_duration', label: 'Delivery Info' },
+    { key: 'phone_number', label: 'Phone' },
+    { key: 'bank_name', label: 'Bank' },
+    { key: 'instagram_url', label: 'Instagram' },
+    { key: 'product_1_url', label: 'Product Image' }
+  ];
+  const filledCount = completionFields.filter(f => !!formData[f.key]).length;
+  const completionPct = Math.round((filledCount / completionFields.length) * 100);
+  const showProgressBar = completionPct < 100;
+
+  // ── 1. Fetch profile on mount + real-time sync ──────────────────────────
   useEffect(() => {
+    if (!user) return;
+
     async function fetchProfile() {
-      if (!user) return;
-      
       try {
         const { data } = await supabase
           .from('brand_profiles')
           .select('*')
           .eq('id', user.id)
           .single();
-          
+
         let baseData = data;
         if (!baseData) {
-          // Fallback to auth metadata
           const md = user.user_metadata || {};
           baseData = {
             brand_name: md.full_name || '',
@@ -111,18 +129,16 @@ export default function Edit() {
           };
         }
 
-        // Check for local draft
-        const draftKey = `unbley_edit_draft_${user.id}`;
-        const savedDraft = localStorage.getItem(draftKey);
-        
-        if (savedDraft) {
-          try {
-            const draftData = JSON.parse(savedDraft);
-            // Merge draft into base data
-            baseData = { ...baseData, ...draftData };
-            console.log("Draft recovered from session memory.");
-          } catch (e) {
-            console.error("Draft corruption detected:", e);
+        // Only apply draft if there is no DB data yet
+        if (data) {
+          // DB data wins — clear any stale draft so modal saves reflect immediately
+          localStorage.removeItem(`unbley_edit_draft_${user.id}`);
+        } else {
+          const savedDraft = localStorage.getItem(`unbley_edit_draft_${user.id}`);
+          if (savedDraft) {
+            try {
+              baseData = { ...baseData, ...JSON.parse(savedDraft) };
+            } catch (e) { /* ignore corrupt draft */ }
           }
         }
 
@@ -132,25 +148,76 @@ export default function Edit() {
           secondary: baseData.secondary_color || '#1A1A1A',
           accent: baseData.accent_color || '#06acf8'
         });
-
       } catch (err) {
-        console.error("Error fetching profile:", err);
+        console.error('Error fetching profile:', err);
       }
     }
 
-    // Auto-save effect
-    const draftKey = `unbley_edit_draft_${user?.id}`;
-    if (user && formData.brand_name) {
-      const timeout = setTimeout(() => {
-        localStorage.setItem(draftKey, JSON.stringify(formData));
-      }, 1000); // 1s debounce
-      return () => clearTimeout(timeout);
+    fetchProfile();
+
+    // Real-time: whenever a popup saves to brand_profiles, re-fetch here too
+    const channel = supabase
+      .channel(`edit_profile_sync_${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'brand_profiles', filter: `id=eq.${user.id}` },
+        (payload) => {
+          if (payload.new) {
+            const d = payload.new;
+            setFormData(prev => ({ ...prev, ...d }));
+            if (d.primary_color || d.secondary_color || d.accent_color) {
+              setThemeColors(prev => ({
+                primary: d.primary_color || prev.primary,
+                secondary: d.secondary_color || prev.secondary,
+                accent: d.accent_color || prev.accent
+              }));
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [user]);
+
+  // ── 2. Auto-save to Supabase as user types (debounced) ──────────────────
+  const autoSave = useCallback(async (data) => {
+    if (!user?.id || !data.brand_name) return;
+    setSaveStatus('saving');
+    try {
+      const clean = { ...data };
+      delete clean.paystack_subaccount_code;
+      delete clean.flutterwave_subaccount_code;
+      delete clean.is_admin;
+      const { error: saveErr } = await supabase
+        .from('brand_profiles')
+        .upsert({ ...clean, id: user.id, updated_at: new Date().toISOString() }, { onConflict: 'id' });
+      
+      if (saveErr) {
+        console.warn('Auto-save warning:', saveErr.message);
+        setSaveStatus('idle');
+        return;
+      }
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2000);
+    } catch (err) {
+      console.error('Auto-save error:', err.message);
+      setSaveStatus('idle');
     }
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user || !formData.brand_name) return;
+    const timeout = setTimeout(() => autoSave(formData), 1500);
+    return () => clearTimeout(timeout);
+  }, [formData, user, autoSave]);
+
+  // ── 3. Resize listener ───────────────────────────────────────────────────
+  useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', handleResize);
-    fetchProfile();
     return () => window.removeEventListener('resize', handleResize);
-  }, [user]);
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -214,7 +281,7 @@ export default function Edit() {
         ...updatableFormData,
         id: user.id,
         profile_completed: true,
-        updated_at: new Date()
+        updated_at: new Date().toISOString()
       };
       
       const { error: profileError } = await supabase
@@ -243,11 +310,7 @@ export default function Edit() {
         return;
       }
 
-      if (formData.profile_completed) {
-        navigate('/dashboard');
-      } else {
-        navigate('/activation');
-      }
+      navigate('/dashboard');
       
     } catch (err) {
       console.error(err);
@@ -418,18 +481,8 @@ export default function Edit() {
           </div>
 
           <div style={s.nav} className="edit-nav">
-            {formData.profile_completed ? (
-              <Link to="/dashboard" style={s.navItem(false)}><LayoutGrid size={16} /> Overview</Link>
-            ) : (
-              <div style={{...s.navItem(false), opacity: 0.5, cursor: 'not-allowed'}} title="Complete your profile first"><LayoutGrid size={16} /> Overview <Lock size={12} style={{marginLeft: 'auto'}}/></div>
-            )}
-            
-            {formData.profile_completed ? (
-              <Link to="/profile" style={s.navItem(false)}><User size={16} /> Profile</Link>
-            ) : (
-              <div style={{...s.navItem(false), opacity: 0.5, cursor: 'not-allowed'}} title="Complete your profile first"><User size={16} /> Profile <Lock size={12} style={{marginLeft: 'auto'}}/></div>
-            )}
-            
+            <Link to="/dashboard" style={s.navItem(false)}><LayoutGrid size={16} /> Overview</Link>
+            <Link to="/profile" style={s.navItem(false)}><User size={16} /> Profile</Link>
             <Link to="/edit" style={s.navItem(true)}><Settings size={16} /> Edit</Link>
           </div>
 
@@ -473,17 +526,41 @@ export default function Edit() {
                   <p style={s.headerSubtitle}>Curate your digital atelier. The narrative you build here defines the prestige of your collections.</p>
                 </div>
               </div>
-              <motion.button 
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                type="submit" 
-                disabled={loading} 
-                style={{ ...s.saveBtn, opacity: loading ? 0.7 : 1 }} 
-                className="edit-save-btn"
-              >
-                {loading ? 'SAVING...' : 'Save Changes'}
-              </motion.button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                {saveStatus === 'saving' && <span style={{ fontSize: '11px', color: '#8D5B36', letterSpacing: '0.05em' }}>Saving…</span>}
+                {saveStatus === 'saved' && <span style={{ fontSize: '11px', color: '#15803D', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '4px' }}><CheckCircle2 size={13} /> Saved</span>}
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  type="submit"
+                  disabled={loading}
+                  style={{ ...s.saveBtn, opacity: loading ? 0.7 : 1 }}
+                  className="edit-save-btn"
+                >
+                  {loading ? 'SAVING...' : 'Save Changes'}
+                </motion.button>
+              </div>
             </motion.div>
+
+            {/* Profile completion progress bar */}
+            {showProgressBar && (
+              <div style={{ padding: '12px 80px', borderBottom: '1px solid #EAE3D9', backgroundColor: '#FFFBF8' }} className="edit-progress-bar">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <span style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#6A3E1F', textTransform: 'uppercase' }}>Profile Completion</span>
+                  <span style={{ fontSize: '10px', fontWeight: '700', color: '#6A3E1F' }}>{completionPct}%</span>
+                </div>
+                <div style={{ height: '4px', backgroundColor: '#EAE3D9', borderRadius: '99px', overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${completionPct}%`, backgroundColor: '#6A3E1F', borderRadius: '99px', transition: 'width 0.5s ease' }} />
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px' }}>
+                  {completionFields.map(f => (
+                    <span key={f.key} style={{ fontSize: '9px', fontWeight: '600', letterSpacing: '0.05em', textTransform: 'uppercase', padding: '2px 8px', borderRadius: '99px', backgroundColor: formData[f.key] ? 'rgba(106,62,31,0.1)' : '#F3F4F6', color: formData[f.key] ? '#6A3E1F' : '#9CA3AF', border: `1px solid ${formData[f.key] ? 'rgba(106,62,31,0.25)' : '#E5E7EB'}` }}>
+                      {formData[f.key] ? '✓ ' : ''}{f.label}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Form Content Area */}
             <div style={s.content} className="edit-content">
@@ -523,26 +600,26 @@ export default function Edit() {
                       </div>
                       <div style={s.inputGroup}>
                         <label style={s.label}>Phone Number</label>
-                        <input type="tel" name="phone_number" value={formData.phone_number} onChange={handleChange} style={s.input} required />
+                        <input type="tel" name="phone_number" value={formData.phone_number} onChange={handleChange} style={s.input} />
                       </div>
                       <div style={s.inputGroup}>
                         <label style={s.label}>Brand Category</label>
-                        <input type="text" name="brand_category" value={formData.brand_category} onChange={handleChange} style={s.input} required />
+                        <input type="text" name="brand_category" value={formData.brand_category} onChange={handleChange} style={s.input} />
                       </div>
                       <div style={s.inputGroup}>
                         <label style={s.label}>Delivery Duration</label>
-                        <input type="text" name="delivery_duration" value={formData.delivery_duration} onChange={handleChange} style={s.input} required />
+                        <input type="text" name="delivery_duration" value={formData.delivery_duration} onChange={handleChange} style={s.input} />
                       </div>
                     </div>
 
                     <div style={s.inputGroup}>
                       <label style={s.label}>Brand Narrative</label>
-                      <textarea name="brand_narrative" value={formData.brand_narrative} onChange={handleChange} style={s.textarea} required />
+                      <textarea name="brand_narrative" value={formData.brand_narrative} onChange={handleChange} style={s.textarea} />
                     </div>
 
                     <div style={s.inputGroup}>
                       <label style={s.label}>Manifesto</label>
-                      <textarea name="manifesto" value={formData.manifesto} onChange={handleChange} style={s.textarea} required />
+                      <textarea name="manifesto" value={formData.manifesto} onChange={handleChange} style={s.textarea} />
                     </div>
                   </div>
 
@@ -553,25 +630,25 @@ export default function Edit() {
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px 48px', marginBottom: '32px' }} className="edit-input-grid">
                       <div style={{ ...s.inputGroup, marginBottom: 0 }}>
                         <label style={s.label}>Country</label>
-                        <input type="text" name="country" value={formData.country} onChange={handleChange} style={s.input} required />
+                        <input type="text" name="country" value={formData.country} onChange={handleChange} style={s.input} />
                       </div>
                       <div style={{ ...s.inputGroup, marginBottom: 0 }}>
                         <label style={s.label}>State / Province</label>
-                        <input type="text" name="state_province" value={formData.state_province} onChange={handleChange} style={s.input} required />
+                        <input type="text" name="state_province" value={formData.state_province} onChange={handleChange} style={s.input} />
                       </div>
                       <div style={{ ...s.inputGroup, marginBottom: 0 }}>
                         <label style={s.label}>City</label>
-                        <input type="text" name="city" value={formData.city} onChange={handleChange} style={s.input} required />
+                        <input type="text" name="city" value={formData.city} onChange={handleChange} style={s.input} />
                       </div>
                       <div style={{ ...s.inputGroup, marginBottom: 0 }}>
                         <label style={s.label}>Postal Code</label>
-                        <input type="text" name="postal_code" value={formData.postal_code} onChange={handleChange} style={s.input} required />
+                        <input type="text" name="postal_code" value={formData.postal_code} onChange={handleChange} style={s.input} />
                       </div>
                     </div>
 
                     <div style={s.inputGroup}>
                       <label style={s.label}>Address Line 1</label>
-                      <input type="text" name="address_line_1" value={formData.address_line_1} onChange={handleChange} style={s.input} required />
+                      <input type="text" name="address_line_1" value={formData.address_line_1} onChange={handleChange} style={s.input} />
                     </div>
                     <div style={{ ...s.inputGroup, marginBottom: 0 }}>
                       <label style={s.label}>Address Line 2 (Optional)</label>

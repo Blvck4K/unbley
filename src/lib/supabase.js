@@ -75,7 +75,12 @@ if (!supabaseUrl || !supabaseAnonKey || !isValidUrl(supabaseUrl)) {
   client = createClient(supabaseUrl, supabaseAnonKey);
 }
 
-export async function signInWithGoogle() {
+export async function signInWithGoogle(options = {}) {
+  const isSignup = Boolean(options?.isSignup);
+  const redirectUrl = isSignup
+    ? `${window.location.origin}/dashboard?oauth_signup=true`
+    : `${window.location.origin}/dashboard`;
+
   const { data, error } = await client.auth.signInWithOAuth({
     provider: 'google',
     options: {
@@ -83,7 +88,7 @@ export async function signInWithGoogle() {
         access_type: 'offline',
         prompt: 'consent',
       },
-      redirectTo: `${window.location.origin}/dashboard`,
+      redirectTo: redirectUrl,
     },
   });
   return { data, error };

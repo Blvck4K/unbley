@@ -1,17 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Bell, Moon, LayoutGrid, Store, User, Settings, Headphones, TrendingUp, Package, BarChart3, CheckCircle2, ChevronRight, ShoppingBag, ArrowUpRight, Edit, Menu, X, MessageSquare, ArrowLeft } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Search, Bell, Moon, LayoutGrid, Store, User, Settings, Headphones, TrendingUp, Package, BarChart3, CheckCircle2, ChevronRight, ShoppingBag, ArrowUpRight, Edit, Menu, X, MessageSquare, ArrowLeft, Sparkles } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import AdminChat from '../components/AdminChat';
 import PageTransition from '../components/PageTransition';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import SuccessModal from '../components/SuccessModal';
+import OnboardingModal from '../components/OnboardingModal';
 
 export default function Dashboard() {
   const { user } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' or 'support'
+  const [showSignupSuccessModal, setShowSignupSuccessModal] = useState(false);
+  const [signupModalData, setSignupModalData] = useState(null);
+  const [showOnboardingModal, setShowOnboardingModal] = useState(false);
+  const [activeOnboardingStep, setActiveOnboardingStep] = useState(null);
+  const location = useLocation();
 
   const [profileData, setProfileData] = useState({
     brand_name: 'Your Brand',
@@ -30,67 +37,163 @@ export default function Dashboard() {
     recentOrders: []
   });
 
-  useEffect(() => {
-    async function fetchDashboardData() {
-      if (!user) return;
-      try {
-        const { data: pData, error: pError } = await supabase
-          .from('brand_profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
+  const fetchDashboardData = useCallback(async () => {
+    if (!user) return;
+    try {
+      const { data: pData, error: pError } = await supabase
+        .from('brand_profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
 
-        if (pError) console.warn("Dashboard: Initial profile fetch warning:", pError.message);
+      if (pError) console.warn("Dashboard: Initial profile fetch warning:", pError.message);
 
-        if (pData) {
-          setProfileData(prev => ({
-            ...prev,
-            ...Object.fromEntries(Object.entries(pData).filter(([_, v]) => v != null && v !== ''))
-          }));
-        }
-
-        const { data: salesData } = await supabase
-          .from('orders')
-          .select('total_amount')
-          .eq('brand_id', user.id);
-        const calcSales = salesData ? salesData.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0) : 0;
-
-        const { count: stockCount } = await supabase
-          .from('products')
-          .select('*', { count: 'exact', head: true })
-          .eq('brand_id', user.id)
-          .eq('status', 'active');
-
-        const { count: trafficCount } = await supabase
-          .from('store_traffic')
-          .select('*', { count: 'exact', head: true })
-          .eq('brand_id', user.id);
-
-        const { data: lastOrders } = await supabase
-          .from('orders')
-          .select('*')
-          .eq('brand_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(3);
-
-        setMetrics({
-          totalSales: calcSales,
-          activeStock: stockCount || 0,
-          totalTraffic: trafficCount || 0,
-          recentOrders: lastOrders || []
-        });
-
-      } catch (err) {
-        console.error("Error loading live dashboard data:", err);
+      if (pData) {
+        setProfileData(prev => ({
+          ...prev,
+          ...Object.fromEntries(Object.entries(pData).filter(([_, v]) => v != null && v !== ''))
+        }));
       }
+
+      const { data: salesData } = await supabase
+        .from('orders')
+        .select('total_amount')
+        .eq('brand_id', user.id);
+      const calcSales = salesData ? salesData.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0) : 0;
+
+      const { count: stockCount } = await supabase
+        .from('products')
+        .select('*', { count: 'exact', head: true })
+        .eq('brand_id', user.id)
+        .eq('status', 'active');
+
+      const { count: trafficCount } = await supabase
+        .from('store_traffic')
+        .select('*', { count: 'exact', head: true })
+        .eq('brand_id', user.id);
+
+      const { data: lastOrders } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('brand_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      setMetrics({
+        totalSales: calcSales,
+        activeStock: stockCount || 0,
+        totalTraffic: trafficCount || 0,
+        recentOrders: lastOrders || []
+      });
+
+    } catch (err) {
+      console.error("Error loading live dashboard data:", err);
     }
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-    fetchDashboardData();
-    return () => window.removeEventListener('resize', handleResize);
   }, [user]);
 
+  useEffect(() => {
+    if (!user) return;
+
+    const params = new URLSearchParams(location.search);
+
+    // 1a. Check if user just signed up via Google OAuth
+    const isOAuthSignup = params.get('oauth_signup') === 'true';
+    if (isOAuthSignup) {
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, '', cleanUrl);
+      const meta = user?.user_metadata || {};
+      const successInfo = {
+        name: meta.full_name || meta.name || user?.email?.split('@')[0] || 'Creator',
+        email: user?.email || '',
+        brandName: meta.full_name || meta.name || 'Your Brand',
+        userType: meta.role || 'brand'
+      };
+      localStorage.setItem('unbley_just_signed_up', JSON.stringify(successInfo));
+      setSignupModalData(successInfo);
+      setShowSignupSuccessModal(true);
+    } else {
+      // 1b. Check if user just signed up via email/password
+      const justSignedUpRaw = localStorage.getItem('unbley_just_signed_up');
+      if (justSignedUpRaw) {
+        try {
+          const parsed = JSON.parse(justSignedUpRaw);
+          setSignupModalData(parsed);
+          setShowSignupSuccessModal(true);
+        } catch (e) {
+          console.error('Error reading signup session:', e);
+        }
+      } else {
+        // 2. Show onboarding if not dismissed
+        const forceOnboarding = params.get('onboarding') === 'true';
+        const onboardingDismissedKey = `unbley_onboarding_dismissed_${user.id}`;
+        if (forceOnboarding || !localStorage.getItem(onboardingDismissedKey)) {
+          setShowOnboardingModal(true);
+        }
+      }
+    }
+  }, [user, location.search]);
+
+  // ── Real-time: re-fetch dashboard whenever brand_profiles or products change ──
+  useEffect(() => {
+    if (!user) return;
+
+    fetchDashboardData();
+
+    const profileChannel = supabase
+      .channel(`dashboard_profile_${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'brand_profiles', filter: `id=eq.${user.id}` },
+        (payload) => {
+          if (payload.new) {
+            setProfileData(prev => ({
+              ...prev,
+              ...Object.fromEntries(Object.entries(payload.new).filter(([_, v]) => v != null && v !== ''))
+            }));
+          }
+        }
+      )
+      .subscribe();
+
+    const productsChannel = supabase
+      .channel(`dashboard_products_${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'products', filter: `brand_id=eq.${user.id}` },
+        () => { fetchDashboardData(); }
+      )
+      .subscribe();
+
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      supabase.removeChannel(profileChannel);
+      supabase.removeChannel(productsChannel);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [user, fetchDashboardData]);
+
   const brandColor = '#6A3E1F';
+
+  // Profile Completion Meter Calculation
+  const isStoreInfoDone = Boolean(profileData?.brand_name && profileData.brand_name !== 'Your Brand' && profileData?.logo_url);
+  const isWalletDone = Boolean(profileData?.phone_number && profileData.phone_number !== 'N/A' && (profileData?.bank_name || profileData?.bank_code || profileData?.account_number));
+  const isShippingDone = Boolean(profileData?.delivery_duration);
+  const isProductsDone = Boolean((metrics?.activeStock || 0) > 0);
+  const isPlanDone = Boolean(profileData?.store_active || user?.user_metadata?.store_active || (profileData?.trial_ends_at && new Date(profileData.trial_ends_at) > new Date()));
+
+  const profileSteps = [
+    { id: 'store_info', label: 'Store Info & Logo', completed: isStoreInfoDone, submodal: 'store_info' },
+    { id: 'wallet', label: 'Payout Wallet & Bank', completed: isWalletDone, submodal: 'payment' },
+    { id: 'shipping', label: 'Shipping & Delivery', completed: isShippingDone, submodal: 'shipping' },
+    { id: 'products', label: 'Add First Product', completed: isProductsDone, submodal: 'products' },
+    { id: 'subscription', label: 'Subscription / Trial', completed: isPlanDone, submodal: 'subscription' }
+  ];
+
+  const completedStepsCount = profileSteps.filter(s => s.completed).length;
+  const completionPercentage = Math.round((completedStepsCount / profileSteps.length) * 100);
+  const showProfileMeter = completionPercentage < 100;
 
   const s = {
     page: { backgroundColor: '#FBF9F5', color: '#221510', height: isMobile ? 'auto' : '100vh', minHeight: '100vh', overflow: isMobile ? 'visible' : 'hidden', display: 'flex', fontFamily: '"Inter", sans-serif' },
@@ -199,6 +302,8 @@ export default function Dashboard() {
             .dash-card-value { font-size: 28px !important; }
             
             .dash-bottom-grid { grid-template-columns: 1fr !important; gap: 24px !important; margin-top: 40px !important; }
+            .dash-meter-card { padding: 20px 16px !important; margin-top: 24px !important; }
+            .dash-meter-steps-grid { grid-template-columns: 1fr !important; }
             .dash-list-row { padding: 20px !important; flex-direction: column; align-items: flex-start !important; gap: 16px; }
             .dash-list-row > div:last-child { text-align: left !important; width: 100%; display: flex; justify-content: space-between; align-items: center; }
             .mobile-only { display: block !important; }
@@ -270,6 +375,29 @@ export default function Dashboard() {
               <input type="text" placeholder="SEARCH ..." style={s.searchInput} />
             </div>
             <div style={s.headerActions} className="dash-header-actions">
+              <button
+                onClick={() => setShowOnboardingModal(true)}
+                style={{
+                  backgroundColor: '#FFFFFF',
+                  color: brandColor,
+                  border: '1px solid #DFCFC2',
+                  padding: '9px 16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '11px',
+                  fontWeight: '700',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  letterSpacing: '0.04em'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#F7F2EC'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#FFFFFF'; }}
+                title="Complete the next steps to launch your website"
+              >
+                <Sparkles size={14} color={brandColor} /> LAUNCH CHECKLIST
+              </button>
               <Link to={`/shop-brand/${user?.id}`} style={{ textDecoration: 'none' }}>
                 <div style={{ ...s.premiumBadge, backgroundColor: brandColor, color: '#FFFFFF', padding: '10px 24px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', fontWeight: '800', border: 'none', borderRadius: '4px', boxShadow: '0 4px 12px rgba(106, 62, 31, 0.2)' }}>
                   <Store size={16} /> MANAGE STORE
@@ -320,6 +448,201 @@ export default function Dashboard() {
                     )}
                   </div>
                 </motion.div>
+
+                {/* Profile Completion Meter (Disappears once 100% completed) */}
+                <AnimatePresence>
+                  {showProfileMeter && (
+                    <motion.div
+                      variants={itemVariants}
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, height: 0, overflow: 'hidden', marginTop: 0, marginBottom: 0 }}
+                      transition={{ duration: 0.4 }}
+                      style={{
+                        marginTop: '36px',
+                        backgroundColor: '#FFFFFF',
+                        border: '1px solid #EAE3D9',
+                        borderRadius: '12px',
+                        padding: '24px 32px',
+                        boxShadow: '0 4px 16px rgba(34, 21, 16, 0.04)',
+                        position: 'relative',
+                        overflow: 'hidden'
+                      }}
+                      className="dash-meter-card"
+                    >
+                      {/* Decorative Accent Top Line */}
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          height: '3px',
+                          backgroundColor: '#EAE3D9'
+                        }}
+                      >
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${completionPercentage}%` }}
+                          transition={{ duration: 1, ease: "easeOut" }}
+                          style={{ height: '100%', backgroundColor: brandColor }}
+                        />
+                      </div>
+
+                      {/* Header row */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px', marginBottom: '20px' }}>
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                            <Sparkles size={16} color={brandColor} />
+                            <span style={{ fontSize: '11px', fontWeight: '800', letterSpacing: '0.08em', color: '#8D5B36', textTransform: 'uppercase' }}>
+                              Store Setup Progress
+                            </span>
+                            <span
+                              style={{
+                                backgroundColor: 'rgba(106, 62, 31, 0.08)',
+                                color: brandColor,
+                                padding: '2px 8px',
+                                borderRadius: '9999px',
+                                fontSize: '11px',
+                                fontWeight: '800'
+                              }}
+                            >
+                              {completionPercentage}%
+                            </span>
+                          </div>
+                          <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '20px', fontWeight: '800', color: '#221510', margin: '0 0 4px 0', letterSpacing: '-0.01em' }}>
+                            {completionPercentage === 0 
+                              ? 'Start setting up your store to launch' 
+                              : completionPercentage < 50 
+                              ? 'Great start! Complete a few more steps to launch' 
+                              : 'Almost ready! Just a few finishing touches'}
+                          </h3>
+                          <p style={{ fontSize: '13px', color: '#6B584C', margin: 0, lineHeight: '1.4' }}>
+                            {completedStepsCount} of {profileSteps.length} essential setup milestones completed. Once finished, your storefront will be fully active.
+                          </p>
+                        </div>
+
+                        <button
+                          onClick={() => {
+                            const firstIncomplete = profileSteps.find(s => !s.completed);
+                            setActiveOnboardingStep(firstIncomplete ? firstIncomplete.submodal : null);
+                            setShowOnboardingModal(true);
+                          }}
+                          style={{
+                            backgroundColor: brandColor,
+                            color: '#FFFFFF',
+                            border: 'none',
+                            padding: '10px 20px',
+                            borderRadius: '6px',
+                            fontSize: '12px',
+                            fontWeight: '700',
+                            letterSpacing: '0.04em',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            transition: 'all 0.2s',
+                            boxShadow: '0 3px 10px rgba(106, 62, 31, 0.2)'
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#522F16'; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = brandColor; }}
+                        >
+                          <span>Complete Setup</span>
+                          <ChevronRight size={15} />
+                        </button>
+                      </div>
+
+                      {/* Progress Bar Track */}
+                      <div
+                        style={{
+                          width: '100%',
+                          height: '10px',
+                          backgroundColor: '#F3EFEA',
+                          borderRadius: '9999px',
+                          overflow: 'hidden',
+                          position: 'relative',
+                          marginBottom: '20px'
+                        }}
+                      >
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${completionPercentage}%` }}
+                          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
+                          style={{
+                            height: '100%',
+                            borderRadius: '9999px',
+                            background: `linear-gradient(90deg, #8D5B36 0%, ${brandColor} 100%)`
+                          }}
+                        />
+                      </div>
+
+                      {/* Milestone Pills / Checklist */}
+                      <div
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+                          gap: '10px'
+                        }}
+                        className="dash-meter-steps-grid"
+                      >
+                        {profileSteps.map((step) => (
+                          <div
+                            key={step.id}
+                            onClick={() => {
+                              setActiveOnboardingStep(step.submodal);
+                              setShowOnboardingModal(true);
+                            }}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              padding: '8px 12px',
+                              backgroundColor: step.completed ? 'rgba(106, 62, 31, 0.05)' : '#FBF9F5',
+                              border: step.completed ? '1px solid rgba(106, 62, 31, 0.15)' : '1px solid #EAE3D9',
+                              borderRadius: '8px',
+                              cursor: 'pointer',
+                              transition: 'all 0.15s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = '#F7F2EC';
+                              e.currentTarget.style.borderColor = '#DFCFC2';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = step.completed ? 'rgba(106, 62, 31, 0.05)' : '#FBF9F5';
+                              e.currentTarget.style.borderColor = step.completed ? 'rgba(106, 62, 31, 0.15)' : '#EAE3D9';
+                            }}
+                          >
+                            {step.completed ? (
+                              <CheckCircle2 size={16} color={brandColor} style={{ flexShrink: 0 }} />
+                            ) : (
+                              <div
+                                style={{
+                                  width: '14px',
+                                  height: '14px',
+                                  borderRadius: '50%',
+                                  border: '1.5px solid #A89F91',
+                                  flexShrink: 0
+                                }}
+                              />
+                            )}
+                            <span
+                              style={{
+                                fontSize: '11.5px',
+                                fontWeight: step.completed ? '700' : '500',
+                                color: step.completed ? '#221510' : '#6B584C',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis'
+                              }}
+                            >
+                              {step.label}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
                 {/* Dynamic Real-Time Stats Grid */}
                 <div style={s.statsGrid} className="dash-stats-grid">
@@ -415,6 +738,44 @@ export default function Dashboard() {
 
           </div>
         </div>
+
+        {/* Stage 1: Signup Success Pop-up Modal */}
+        <SuccessModal
+          isOpen={showSignupSuccessModal}
+          onClose={() => {
+            localStorage.removeItem('unbley_just_signed_up');
+            setShowSignupSuccessModal(false);
+            // Immediately open Stage 2: Store launch checklist!
+            setShowOnboardingModal(true);
+          }}
+          type="signup"
+          data={signupModalData || {
+            name: profileData.owner_name || 'Creator',
+            brandName: profileData.brand_name || 'Your Brand',
+            email: profileData.email_address || user?.email,
+            userType: 'brand'
+          }}
+        />
+
+        {/* Stage 2: Onboarding Next Steps Modal */}
+        <OnboardingModal
+          isOpen={showOnboardingModal && !showSignupSuccessModal}
+          onClose={() => {
+            if (user?.id) {
+              localStorage.setItem(`unbley_onboarding_dismissed_${user.id}`, 'true');
+            }
+            setShowOnboardingModal(false);
+            setActiveOnboardingStep(null);
+          }}
+          activeStep={activeOnboardingStep}
+          onRefresh={fetchDashboardData}
+          storeData={{
+            ...profileData,
+            activeStock: metrics.activeStock,
+            store_active: profileData?.store_active || user?.user_metadata?.store_active
+          }}
+          storeId={user?.id}
+        />
       </div>
     </PageTransition>
   );

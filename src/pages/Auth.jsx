@@ -4,6 +4,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { supabase, signInWithGoogle } from '../lib/supabase';
 import PageTransition from '../components/PageTransition';
 import { motion, AnimatePresence } from 'framer-motion';
+import SuccessModal from '../components/SuccessModal';
 
 export default function Auth() {
   const [authMode, setAuthMode] = useState('signup'); // 'signin' | 'signup'
@@ -18,6 +19,8 @@ export default function Auth() {
   const [category, setCategory] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [showSignupModal, setShowSignupModal] = useState(false);
+  const [signupSuccessData, setSignupSuccessData] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -34,7 +37,7 @@ export default function Auth() {
   const handleGoogleLogin = async () => {
     try {
       setLoading(true);
-      const { error } = await signInWithGoogle();
+      const { error } = await signInWithGoogle({ isSignup: authMode === 'signup' });
       if (error) throw error;
     } catch (err) {
       setErrorMsg(err.message);
@@ -54,7 +57,7 @@ export default function Auth() {
           setLoading(false);
           return;
         }
-        const { error } = await supabase.auth.signUp({
+        const { data: signUpData, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -67,7 +70,22 @@ export default function Auth() {
           }
         });
         if (error) throw error;
-        navigate(userType === 'customer' ? '/store' : '/dashboard');
+
+        // Log successful sign-up for debugging
+        console.log('✅ sign-up succeeded', signUpData);
+
+        const successInfo = {
+          name: name || (userType === 'customer' ? 'Shopper' : 'Creator'),
+          email,
+          brandName: name || 'Your Brand',
+          userType
+        };
+
+        // Backup to localStorage so Dashboard can also present it if page reloads/navigates
+        localStorage.setItem('unbley_just_signed_up', JSON.stringify(successInfo));
+
+        setSignupSuccessData(successInfo);
+        setShowSignupModal(true);
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
@@ -200,8 +218,8 @@ export default function Auth() {
             </div>
 
             <div style={s.toggleGroup} className="auth-toggle-group">
-              <button style={s.toggleButton(authMode === 'signin')} onClick={() => setAuthMode('signin')}>MEMBER ACCESS</button>
-              <button style={s.toggleButton(authMode === 'signup')} onClick={() => setAuthMode('signup')}>GAIN ACCESS</button>
+              <button type="button" style={s.toggleButton(authMode === 'signin')} onClick={() => setAuthMode('signin')}>MEMBER ACCESS</button>
+              <button type="button" style={s.toggleButton(authMode === 'signup')} onClick={() => setAuthMode('signup')}>GAIN ACCESS</button>
             </div>
 
             <form onSubmit={handleAuth}>
@@ -403,6 +421,18 @@ export default function Auth() {
             </div>
           </div>
         </div>
+
+        {/* Signup Success Pop-up Modal */}
+        <SuccessModal
+          isOpen={showSignupModal}
+          onClose={() => {
+            localStorage.removeItem('unbley_just_signed_up');
+            setShowSignupModal(false);
+            navigate(userType === 'customer' ? '/store' : '/dashboard?onboarding=true');
+          }}
+          type="signup"
+          data={signupSuccessData || { name, email, brandName: name, userType }}
+        />
       </div>
     </PageTransition>
   );
