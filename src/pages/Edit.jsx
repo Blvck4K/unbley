@@ -3,6 +3,7 @@ import { Search, Bell, Moon, LayoutGrid, Store, User, Settings, Headphones, Came
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../context/ToastContext';
 import PageTransition from '../components/PageTransition';
 import { motion } from 'framer-motion';
 
@@ -28,14 +29,13 @@ const TwitterIcon = ({ size = 14, color = "currentColor" }) => (
 );
 
 export default function Edit() {
-  const brandColor = '#06acf8ff';
+  const brandColor = '#6A3E1F';
   const { user, refreshUser } = useAuth();
+  const { toast } = useToast();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  
-  const width = window.innerWidth; // helpful for specific calculations if needed
 
   // Refs for hidden file inputs
   const logoRef = useRef(null);
@@ -92,7 +92,7 @@ export default function Edit() {
       if (!user) return;
       
       try {
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from('brand_profiles')
           .select('*')
           .eq('id', user.id)
@@ -112,7 +112,7 @@ export default function Edit() {
         }
 
         // Check for local draft
-        const draftKey = `zizzystores_edit_draft_${user.id}`;
+        const draftKey = `unbley_edit_draft_${user.id}`;
         const savedDraft = localStorage.getItem(draftKey);
         
         if (savedDraft) {
@@ -139,7 +139,7 @@ export default function Edit() {
     }
 
     // Auto-save effect
-    const draftKey = `zizzystores_edit_draft_${user?.id}`;
+    const draftKey = `unbley_edit_draft_${user?.id}`;
     if (user && formData.brand_name) {
       const timeout = setTimeout(() => {
         localStorage.setItem(draftKey, JSON.stringify(formData));
@@ -205,7 +205,10 @@ export default function Edit() {
       if (!user) throw new Error("Not authenticated");
       
       // Exclude read-only admin/subaccount fields from the update payload
-      const { paystack_subaccount_code, flutterwave_subaccount_code, is_admin, ...updatableFormData } = formData;
+      const updatableFormData = { ...formData };
+      delete updatableFormData.paystack_subaccount_code;
+      delete updatableFormData.flutterwave_subaccount_code;
+      delete updatableFormData.is_admin;
       
       const payload = {
         ...updatableFormData,
@@ -227,12 +230,12 @@ export default function Edit() {
       if (authError) throw authError;
       
       // Clear draft on success
-      localStorage.removeItem(`zizzystores_edit_draft_${user.id}`);
+      localStorage.removeItem(`unbley_edit_draft_${user.id}`);
 
       // Refresh the local auth context status to pick up any admin changes made in Supabase
       const latestIsAdmin = await refreshUser();
 
-      alert("Profile updated successfully!");
+      toast.success("Profile updated successfully!");
 
       // For admins, bypass activation and go straight to dashboard
       if (latestIsAdmin) {
@@ -248,77 +251,27 @@ export default function Edit() {
       
     } catch (err) {
       console.error(err);
-      alert(err.message || "Failed to update profile");
+      toast.error(err.message || "Failed to update profile");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAssistanceRequest = async (e) => {
-    e.preventDefault();
-    
-    const botToken = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
-    const chatId = import.meta.env.VITE_TELEGRAM_CHAT_ID;
 
-    if (!botToken || !chatId) {
-      alert("Please contact support at diorbaron2@gmail.com for assistance.");
-      return;
-    }
-
-    const message = `
-🆘 *Help Requested: Speak with a Curator* 🆘
-
-*Brand:* ${formData.brand_name || 'N/A'}
-*Owner:* ${formData.owner_name}
-*Email:* ${formData.email_address}
-*Phone:* ${formData.phone_number}
-
-*Request:* The user has requested to speak with a curator for assistance with their profile.
-
----
-_Sent via Zizzystores Management Dashboard_
-    `;
-
-    try {
-      setLoading(true);
-      const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: message,
-          parse_mode: 'Markdown',
-        }),
-      });
-
-      if (response.ok) {
-        alert("Your request for assistance has been sent! A curator will contact you shortly.");
-      } else {
-        throw new Error('Failed to send');
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Failed to send request. Please try again later or email us directly.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const s = {
-    page: { backgroundColor: '#0A0A0A', color: '#E5E5E5', height: isMobile ? 'auto' : '100vh', minHeight: '100vh', display: 'flex', fontFamily: '"Inter", sans-serif', overflow: isMobile ? 'visible' : 'hidden' },
-    sidebar: { width: '280px', borderRight: '1px solid #1F1F1F', padding: '0', display: 'flex', flexDirection: 'column', flexShrink: 0 },
+    page: { backgroundColor: '#FBF9F5', color: '#221510', height: isMobile ? 'auto' : '100vh', minHeight: '100vh', display: 'flex', fontFamily: '"Inter", sans-serif', overflow: isMobile ? 'visible' : 'hidden' },
+    sidebar: { width: '280px', borderRight: '1px solid #EAE3D9', backgroundColor: '#FFFFFF', padding: '0', display: 'flex', flexDirection: 'column', flexShrink: 0 },
     logoContainer: { padding: '60px 40px', display: 'flex', flexDirection: 'column' },
-    logo: { fontFamily: '"Playfair Display", serif', fontSize: '20px', letterSpacing: '-0.03em', fontWeight: 'bold', color: brandColor, textTransform: 'none' },
+    logo: { fontFamily: 'var(--font-heading)', fontSize: '20px', letterSpacing: '-0.02em', fontWeight: '800', color: brandColor, textTransform: 'none' },
     nav: { padding: '0', flex: 1 },
     navItem: (active) => ({
       display: 'flex',
       alignItems: 'center',
       gap: '16px',
       padding: '16px 40px',
-      color: active ? '#FFF' : '#888',
-      backgroundColor: active ? '#111' : 'transparent',
+      color: active ? '#221510' : '#6B584C',
+      backgroundColor: active ? '#F7F2EC' : 'transparent',
       borderLeft: active ? `3px solid ${brandColor}` : '3px solid transparent',
       cursor: 'pointer',
       fontSize: '12px',
@@ -328,17 +281,17 @@ _Sent via Zizzystores Management Dashboard_
       textTransform: 'uppercase',
       textDecoration: 'none'
     }),
-    userProfile: { padding: '24px 40px', borderTop: '1px solid #1F1F1F', display: 'flex', alignItems: 'center', gap: '16px', backgroundColor: '#111' },
-    userAvatar: { width: '40px', height: '40px', backgroundColor: '#333', overflow: 'hidden', borderRadius: '50%' },
+    userProfile: { padding: '24px 40px', borderTop: '1px solid #EAE3D9', display: 'flex', alignItems: 'center', gap: '16px', backgroundColor: '#FFFFFF' },
+    userAvatar: { width: '40px', height: '40px', backgroundColor: '#EAE3D9', overflow: 'hidden', borderRadius: '50%' },
 
     // Main Area
     main: { flex: 1, display: 'flex', flexDirection: 'column', height: isMobile ? 'auto' : '100vh', overflowY: isMobile ? 'visible' : 'auto' },
 
     // Custom Header for Edit Page
-    editHeader: { padding: '60px 80px 40px', borderBottom: '1px solid #1F1F1F', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' },
-    headerTitle: { fontFamily: '"Playfair Display", serif', fontSize: '36px', color: '#FFF', fontWeight: 'bold' },
-    headerSubtitle: { fontSize: '14px', color: '#888', marginTop: '12px', maxWidth: '500px', lineHeight: '1.6' },
-    saveBtn: { backgroundColor: brandColor, color: '#000', padding: '16px 32px', fontSize: '12px', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase', border: 'none', cursor: 'pointer', borderRadius: '4px', transition: 'background-color 0.2s' },
+    editHeader: { padding: '60px 80px 40px', borderBottom: '1px solid #EAE3D9', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', backgroundColor: '#FFFFFF' },
+    headerTitle: { fontFamily: 'var(--font-heading)', fontSize: '32px', color: '#221510', fontWeight: '800', letterSpacing: '-0.02em' },
+    headerSubtitle: { fontSize: '14px', color: '#6B584C', marginTop: '12px', maxWidth: '500px', lineHeight: '1.6' },
+    saveBtn: { backgroundColor: brandColor, color: '#FFFFFF', padding: '16px 32px', fontSize: '12px', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase', border: 'none', cursor: 'pointer', borderRadius: '4px', transition: 'background-color 0.2s' },
 
     content: { padding: '60px 80px', display: 'flex', flexDirection: 'column', gap: '40px' },
 
@@ -346,38 +299,38 @@ _Sent via Zizzystores Management Dashboard_
     twoColLayout: { display: 'grid', gridTemplateColumns: 'minmax(0, 1.8fr) minmax(0, 1fr)', gap: '40px' },
 
     // Components
-    card: { backgroundColor: '#111', border: '1px solid #1F1F1F', padding: '40px', borderRadius: '8px' },
-    cardTitle: { fontFamily: '"Playfair Display", serif', fontSize: '24px', color: '#FFF', marginBottom: '32px' },
+    card: { backgroundColor: '#FFFFFF', border: '1px solid #EAE3D9', padding: '40px', borderRadius: '8px', boxShadow: '0 2px 8px rgba(34,21,16,0.03)' },
+    cardTitle: { fontFamily: 'var(--font-heading)', fontSize: '22px', color: '#221510', fontWeight: '800', letterSpacing: '-0.02em', marginBottom: '32px' },
 
-    bannerBox: { position: 'relative', height: '300px', backgroundColor: '#1A1A1A', borderRadius: '8px', overflow: 'hidden', marginBottom: '40px', display: 'flex', alignItems: 'flex-end', padding: '24px', backgroundImage: formData.banner_url ? `url(${formData.banner_url})` : 'linear-gradient(to right bottom, #112, #0A0A0A)', backgroundSize: 'cover', backgroundPosition: 'center' },
-    bannerText: { position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '72px', fontWeight: 'bold', color: 'rgba(255,255,255,0.05)', letterSpacing: '0.1em', pointerEvents: 'none' },
-    bannerBtn: { backgroundColor: '#000', border: '1px solid #333', color: '#FFF', padding: '10px 20px', fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', cursor: 'pointer', textTransform: 'uppercase' },
-    bannerInfo: { marginLeft: 'auto', fontSize: '10px', color: '#666', letterSpacing: '0.1em', textTransform: 'uppercase', textShadow: '0 1px 4px rgba(0,0,0,0.8)' },
+    bannerBox: { position: 'relative', height: '300px', backgroundColor: '#F7F2EC', borderRadius: '8px', overflow: 'hidden', marginBottom: '40px', display: 'flex', alignItems: 'flex-end', padding: '24px', backgroundImage: formData.banner_url ? `url(${formData.banner_url})` : 'linear-gradient(to right bottom, #F7F2EC, #EAE3D9)', backgroundSize: 'cover', backgroundPosition: 'center' },
+    bannerText: { position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '72px', fontWeight: 'bold', color: 'rgba(34,21,16,0.06)', letterSpacing: '0.1em', pointerEvents: 'none' },
+    bannerBtn: { backgroundColor: '#6A3E1F', border: 'none', color: '#FFF', padding: '10px 20px', fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', cursor: 'pointer', textTransform: 'uppercase', borderRadius: '4px' },
+    bannerInfo: { marginLeft: 'auto', fontSize: '10px', color: '#6B584C', letterSpacing: '0.1em', textTransform: 'uppercase', textShadow: '0 1px 4px rgba(255,255,255,0.8)' },
 
     inputGroup: { marginBottom: '32px' },
-    label: { display: 'block', fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', textTransform: 'uppercase', marginBottom: '16px' },
-    input: { width: '100%', backgroundColor: 'transparent', border: 'none', borderBottom: '1px solid #333', padding: '8px 0', color: '#FFF', fontSize: '16px', outline: 'none', transition: 'border-color 0.2s', '&:focus': { borderBottom: `1px solid ${brandColor}` } },
-    textarea: { width: '100%', backgroundColor: '#0A0A0A', border: '1px solid #1F1F1F', padding: '20px', color: '#CCC', fontSize: '14px', outline: 'none', minHeight: '120px', resize: 'vertical', lineHeight: '1.6', borderRadius: '4px' },
+    label: { display: 'block', fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#6B584C', textTransform: 'uppercase', marginBottom: '16px' },
+    input: { width: '100%', backgroundColor: 'transparent', border: 'none', borderBottom: '1px solid #DFCFC2', padding: '8px 0', color: '#221510', fontSize: '16px', outline: 'none', transition: 'border-color 0.2s', '&:focus': { borderBottom: `1px solid ${brandColor}` } },
+    textarea: { width: '100%', backgroundColor: '#FDFBF7', border: '1px solid #DFCFC2', padding: '20px', color: '#221510', fontSize: '14px', outline: 'none', minHeight: '120px', resize: 'vertical', lineHeight: '1.6', borderRadius: '4px' },
 
-    logoPreview: { width: '120px', height: '120px', backgroundColor: brandColor, margin: '0 auto 32px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '16px', overflow: 'hidden' },
-    logoInitial: { fontFamily: '"Playfair Display", serif', fontSize: '48px', color: '#000' },
-    uploadBtn: { width: '100%', backgroundColor: 'transparent', border: '1px solid #333', color: '#888', padding: '16px', fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', cursor: 'pointer', textTransform: 'uppercase', transition: 'all 0.2s', marginTop: '24px' },
+    logoPreview: { width: '120px', height: '120px', backgroundColor: '#F7F2EC', border: '1px solid #DFCFC2', margin: '0 auto 32px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '16px', overflow: 'hidden' },
+    logoInitial: { fontFamily: 'var(--font-heading)', fontSize: '48px', fontWeight: '800', color: '#6A3E1F' },
+    uploadBtn: { width: '100%', backgroundColor: '#FFFFFF', border: '1px solid #DFCFC2', color: '#6A3E1F', padding: '16px', fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', cursor: 'pointer', textTransform: 'uppercase', transition: 'all 0.2s', marginTop: '24px', borderRadius: '4px' },
 
-    socialRow: { display: 'flex', alignItems: 'center', gap: '16px', borderBottom: '1px solid #1F1F1F', paddingBottom: '16px', marginBottom: '24px' },
-    socialIcon: { color: '#666' },
+    socialRow: { display: 'flex', alignItems: 'center', gap: '16px', borderBottom: '1px solid #EAE3D9', paddingBottom: '16px', marginBottom: '24px' },
+    socialIcon: { color: '#6B584C' },
     socialInputContainer: { flex: 1 },
-    socialNetworkLabel: { fontSize: '10px', color: '#555', marginBottom: '4px', textTransform: 'lowercase' },
-    socialInput: { width: '100%', background: 'transparent', border: 'none', color: '#FFF', fontSize: '14px', outline: 'none' },
+    socialNetworkLabel: { fontSize: '10px', color: '#8D5B36', marginBottom: '4px', textTransform: 'lowercase' },
+    socialInput: { width: '100%', background: 'transparent', border: 'none', color: '#221510', fontSize: '14px', outline: 'none' },
 
-    assistanceBox: { border: '1px solid #1F1F1F', backgroundColor: '#0D1110', padding: '32px', borderRadius: '8px' },
+    assistanceBox: { border: '1px solid #DFCFC2', backgroundColor: '#F7F2EC', padding: '32px', borderRadius: '8px' },
     assistanceTitle: { fontSize: '10px', fontWeight: '700', color: brandColor, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '16px' },
-    assistanceText: { color: '#888', fontSize: '12px', lineHeight: '1.6', marginBottom: '24px' },
-    assistanceLink: { color: '#FFF', fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px' },
+    assistanceText: { color: '#6B584C', fontSize: '12px', lineHeight: '1.6', marginBottom: '24px' },
+    assistanceLink: { color: '#6A3E1F', fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px' },
 
     productGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginTop: '32px' },
-    productSquare: { aspectRatio: '1', backgroundColor: '#111', border: '1px solid #1F1F1F', borderRadius: '8px', overflow: 'hidden', position: 'relative', cursor: 'pointer', transition: 'border-color 0.2s', '&:hover': { borderColor: '#666' } },
+    productSquare: { aspectRatio: '1', backgroundColor: '#FDFBF7', border: '1px solid #DFCFC2', borderRadius: '8px', overflow: 'hidden', position: 'relative', cursor: 'pointer', transition: 'border-color 0.2s' },
     productImage: { width: '100%', height: '100%', objectFit: 'cover', opacity: 1 },
-    productEmpty: { aspectRatio: '1', border: '1px dashed #333', borderRadius: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', cursor: 'pointer', transition: 'border-color 0.2s', '&:hover': { borderColor: '#666' } }
+    productEmpty: { aspectRatio: '1', border: '1px dashed #DFCFC2', backgroundColor: '#FBF9F5', borderRadius: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', cursor: 'pointer', transition: 'border-color 0.2s' }
   };
 
   return (
@@ -393,9 +346,9 @@ _Sent via Zizzystores Management Dashboard_
               width: 280px !important; 
               height: 100vh !important; 
               z-index: 1000 !important; 
-              background-color: #0A0A0A !important;
+              background-color: #FFFFFF !important;
               transition: left 0.3s ease !important;
-              box-shadow: 10px 0 30px rgba(0,0,0,0.5) !important;
+              box-shadow: 10px 0 30px rgba(34,21,16,0.1) !important;
             }
             .edit-overlay {
               position: fixed !important;
@@ -403,7 +356,7 @@ _Sent via Zizzystores Management Dashboard_
               left: 0 !important;
               right: 0 !important;
               bottom: 0 !important;
-              background-color: rgba(0,0,0,0.7) !important;
+              background-color: rgba(34,21,16,0.4) !important;
               z-index: 999 !important;
               display: ${isSidebarOpen ? 'block' : 'none'} !important;
             }
@@ -412,7 +365,7 @@ _Sent via Zizzystores Management Dashboard_
             .edit-nav a, .edit-nav div { border-left: 3px solid transparent !important; border-bottom: none !important; padding: 16px 40px !important; font-size: 14px !important; }
             .edit-user-profile { display: flex !important; margin-top: auto; }
             
-            .edit-header { padding: 24px !important; flex-direction: column; gap: 20px; position: sticky; top: 0; background: #0A0A0A; z-index: 100; border-bottom: 1px solid #1F1F1F; align-items: flex-start !important; }
+            .edit-header { padding: 24px !important; flex-direction: column; gap: 20px; position: sticky; top: 0; background: #FFFFFF; z-index: 100; border-bottom: 1px solid #EAE3D9; align-items: flex-start !important; }
             .edit-header-title-box { order: 2; width: 100%; }
             .edit-header h1 { font-size: 28px !important; margin-bottom: 8px !important; }
             .edit-header p { font-size: 12px !important; margin-top: 4px !important; }
@@ -460,7 +413,7 @@ _Sent via Zizzystores Management Dashboard_
             >
               <X size={24} />
             </button>
-            <Link to="/" style={{ textDecoration: 'none' }}><div style={s.logo}>ZizzyStores.</div></Link>
+            <Link to="/" style={{ textDecoration: 'none' }}><div style={s.logo}>Unbley.</div></Link>
             <div style={{ fontFamily: 'Inter', fontSize: '9px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', marginTop: '8px', textTransform: 'uppercase' }}>Digital Store</div>
           </div>
 
@@ -485,12 +438,12 @@ _Sent via Zizzystores Management Dashboard_
               {formData.logo_url ? (
                 <img src={formData.logo_url} alt={formData.owner_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               ) : (
-                <span style={{ color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>{formData.owner_name?.charAt(0)?.toUpperCase() || 'U'}</span>
+                <span style={{ color: '#6A3E1F', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>{formData.owner_name?.charAt(0)?.toUpperCase() || 'U'}</span>
               )}
             </div>
             <div>
-              <div style={{ fontSize: '12px', fontWeight: '700', color: '#FFF', letterSpacing: '0.05em', textTransform: 'uppercase' }}>{formData.owner_name || 'User'}</div>
-              <div style={{ fontSize: '10px', color: '#666', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: '4px' }}>Principal Curator</div>
+              <div style={{ fontSize: '12px', fontWeight: '700', color: '#221510', letterSpacing: '0.05em', textTransform: 'uppercase' }}>{formData.owner_name || 'User'}</div>
+              <div style={{ fontSize: '10px', color: '#6B584C', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: '4px' }}>Principal Curator</div>
             </div>
           </div>
         </div>
@@ -509,7 +462,7 @@ _Sent via Zizzystores Management Dashboard_
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                 <button 
                   onClick={() => setIsSidebarOpen(true)}
-                  style={{ background: 'none', border: 'none', color: '#FFF', cursor: 'pointer' }}
+                  style={{ background: 'none', border: 'none', color: '#221510', cursor: 'pointer' }}
                   className="mobile-only"
                   type="button"
                 >
@@ -633,26 +586,26 @@ _Sent via Zizzystores Management Dashboard_
                       <div style={s.inputGroup}>
                         <label style={s.label}>Primary</label>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                          <input type="color" value={themeColors.primary} onChange={(e) => handleColorChange('primary', e.target.value)} style={{ width: '100%', height: '80px', padding: 0, border: '1px solid #333', backgroundColor: 'transparent', cursor: 'pointer', borderRadius: '4px' }} />
-                          <div style={{ fontSize: '12px', color: '#FFF', fontFamily: 'monospace' }}>{themeColors.primary}</div>
+                          <input type="color" value={themeColors.primary} onChange={(e) => handleColorChange('primary', e.target.value)} style={{ width: '100%', height: '80px', padding: 0, border: '1px solid #DFCFC2', backgroundColor: 'transparent', cursor: 'pointer', borderRadius: '4px' }} />
+                          <div style={{ fontSize: '12px', color: '#221510', fontFamily: 'monospace' }}>{themeColors.primary}</div>
                         </div>
                       </div>
                       <div style={s.inputGroup}>
                         <label style={s.label}>Secondary</label>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                          <input type="color" value={themeColors.secondary} onChange={(e) => handleColorChange('secondary', e.target.value)} style={{ width: '100%', height: '80px', padding: 0, border: '1px solid #333', backgroundColor: 'transparent', cursor: 'pointer', borderRadius: '4px' }} />
-                          <div style={{ fontSize: '12px', color: '#FFF', fontFamily: 'monospace' }}>{themeColors.secondary}</div>
+                          <input type="color" value={themeColors.secondary} onChange={(e) => handleColorChange('secondary', e.target.value)} style={{ width: '100%', height: '80px', padding: 0, border: '1px solid #DFCFC2', backgroundColor: 'transparent', cursor: 'pointer', borderRadius: '4px' }} />
+                          <div style={{ fontSize: '12px', color: '#221510', fontFamily: 'monospace' }}>{themeColors.secondary}</div>
                         </div>
                       </div>
                       <div style={s.inputGroup}>
                         <label style={s.label}>Accent</label>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                          <input type="color" value={themeColors.accent} onChange={(e) => handleColorChange('accent', e.target.value)} style={{ width: '100%', height: '80px', padding: 0, border: '1px solid #333', backgroundColor: 'transparent', cursor: 'pointer', borderRadius: '4px' }} />
-                          <div style={{ fontSize: '12px', color: '#FFF', fontFamily: 'monospace' }}>{themeColors.accent}</div>
+                          <input type="color" value={themeColors.accent} onChange={(e) => handleColorChange('accent', e.target.value)} style={{ width: '100%', height: '80px', padding: 0, border: '1px solid #DFCFC2', backgroundColor: 'transparent', cursor: 'pointer', borderRadius: '4px' }} />
+                          <div style={{ fontSize: '12px', color: '#221510', fontFamily: 'monospace' }}>{themeColors.accent}</div>
                         </div>
                       </div>
                     </div>
-                    <p style={{ fontSize: '10px', color: '#555', marginTop: '16px' }}>
+                    <p style={{ fontSize: '10px', color: '#6B584C', marginTop: '16px' }}>
                       These colors define your storefront's character. Use them sparingly but with intent.
                     </p>
                   </div>
@@ -660,7 +613,7 @@ _Sent via Zizzystores Management Dashboard_
                   {/* Personal Settlement Account */}
                   <div style={{ ...s.card, marginTop: '40px' }} className="edit-card">
                     <h2 style={s.cardTitle}>Personal Settlement Account</h2>
-                    <p style={{ fontSize: '12px', color: '#888', marginBottom: '32px' }}>Backup account for manual payouts and internal reference.</p>
+                    <p style={{ fontSize: '12px', color: '#6B584C', marginBottom: '32px' }}>Backup account for manual payouts and internal reference.</p>
                     
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px 48px' }} className="edit-input-grid">
                       <div style={s.inputGroup}>
@@ -693,10 +646,10 @@ _Sent via Zizzystores Management Dashboard_
                       {formData.logo_url ? (
                         <img src={formData.logo_url} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       ) : (
-                        <span style={s.logoInitial}>{formData.brand_name?.charAt(0)?.toUpperCase() || 'Z'}</span>
+                        <span style={s.logoInitial}>{formData.brand_name?.charAt(0)?.toUpperCase() || 'U'}</span>
                       )}
                     </div>
-                    <p style={{ fontSize: '10px', color: '#888', textAlign: 'center', lineHeight: '1.6', padding: '0 20px' }}>
+                    <p style={{ fontSize: '10px', color: '#6B584C', textAlign: 'center', lineHeight: '1.6', padding: '0 20px' }}>
                       Upload a high-resolution SVG or PNG. 1:1 ratio required.
                     </p>
                     <button type="button" style={s.uploadBtn} onClick={() => logoRef.current?.click()}>
@@ -708,32 +661,32 @@ _Sent via Zizzystores Management Dashboard_
                   {/* Payout Configuration (Admin Managed) */}
                   <div style={s.card} className="edit-card">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '32px' }}>
-                      <Lock size={14} color="#666" />
+                      <Lock size={14} color="#6B584C" />
                       <label style={{ ...s.label, marginBottom: 0 }}>Payout Configuration</label>
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                       <div style={s.inputGroup}>
-                        <div style={{ fontSize: '10px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Paystack Subaccount (Local)</div>
+                        <div style={{ fontSize: '10px', color: '#6B584C', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Paystack Subaccount (Local)</div>
                         <input 
                           type="text" 
                           value={formData.paystack_subaccount_code || 'Not Configured'} 
-                          style={{ ...s.input, backgroundColor: '#161616', color: formData.paystack_subaccount_code ? '#FFF' : '#444', cursor: 'not-allowed' }} 
+                          style={{ ...s.input, backgroundColor: '#F7F2EC', border: '1px solid #DFCFC2', padding: '10px 14px', borderRadius: '4px', color: formData.paystack_subaccount_code ? '#221510' : '#8D5B36', cursor: 'not-allowed' }} 
                           readOnly 
                         />
                       </div>
 
                       <div style={s.inputGroup}>
-                        <div style={{ fontSize: '10px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Flutterwave Subaccount (International)</div>
+                        <div style={{ fontSize: '10px', color: '#6B584C', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Flutterwave Subaccount (International)</div>
                         <input 
                           type="text" 
                           value={formData.flutterwave_subaccount_code || 'Not Configured'} 
-                          style={{ ...s.input, backgroundColor: '#161616', color: formData.flutterwave_subaccount_code ? '#FFF' : '#444', cursor: 'not-allowed' }} 
+                          style={{ ...s.input, backgroundColor: '#F7F2EC', border: '1px solid #DFCFC2', padding: '10px 14px', borderRadius: '4px', color: formData.flutterwave_subaccount_code ? '#221510' : '#8D5B36', cursor: 'not-allowed' }} 
                           readOnly 
                         />
                       </div>
 
-                      <p style={{ fontSize: '10px', color: '#555', marginTop: '8px', lineHeight: '1.4' }}>
+                      <p style={{ fontSize: '10px', color: '#6B584C', marginTop: '8px', lineHeight: '1.4' }}>
                         These identifiers are managed by the platform administrator to ensure secure revenue routing. Contact support to update your payout destination.
                       </p>
                     </div>
@@ -747,7 +700,7 @@ _Sent via Zizzystores Management Dashboard_
                       <div style={s.socialIcon}><InstagramIcon /></div>
                       <div style={s.socialInputContainer}>
                         <div style={s.socialNetworkLabel}>instagram profile url</div>
-                        <input type="text" name="instagram_url" value={formData.instagram_url} onChange={handleChange} placeholder="https://instagram.com/zizzystores" style={s.socialInput} />
+                        <input type="text" name="instagram_url" value={formData.instagram_url} onChange={handleChange} placeholder="https://instagram.com/unbley" style={s.socialInput} />
                       </div>
                     </div>
 
@@ -755,7 +708,7 @@ _Sent via Zizzystores Management Dashboard_
                       <div style={s.socialIcon}><TwitterIcon /></div>
                       <div style={s.socialInputContainer}>
                         <div style={s.socialNetworkLabel}>x (twitter) profile url</div>
-                        <input type="text" name="twitter_url" value={formData.twitter_url} onChange={handleChange} placeholder="https://x.com/zizzystores" style={s.socialInput} />
+                        <input type="text" name="twitter_url" value={formData.twitter_url} onChange={handleChange} placeholder="https://x.com/unbley" style={s.socialInput} />
                       </div>
                     </div>
 
@@ -763,7 +716,7 @@ _Sent via Zizzystores Management Dashboard_
                       <div style={s.socialIcon}><FacebookIcon /></div>
                       <div style={s.socialInputContainer}>
                         <div style={s.socialNetworkLabel}>facebook page url</div>
-                        <input type="text" name="facebook_url" value={formData.facebook_url} onChange={handleChange} placeholder="https://facebook.com/zizzystores" style={s.socialInput} />
+                        <input type="text" name="facebook_url" value={formData.facebook_url} onChange={handleChange} placeholder="https://facebook.com/unbley" style={s.socialInput} />
                       </div>
                     </div>
 
@@ -771,7 +724,7 @@ _Sent via Zizzystores Management Dashboard_
                       <div style={s.socialIcon}><TikTokIcon /></div>
                       <div style={s.socialInputContainer}>
                         <div style={s.socialNetworkLabel}>tiktok profile url</div>
-                        <input type="text" name="tiktok_url" value={formData.tiktok_url} onChange={handleChange} placeholder="https://tiktok.com/@zizzystores" style={s.socialInput} />
+                        <input type="text" name="tiktok_url" value={formData.tiktok_url} onChange={handleChange} placeholder="https://tiktok.com/@unbley" style={s.socialInput} />
                       </div>
                     </div>
 
@@ -779,7 +732,7 @@ _Sent via Zizzystores Management Dashboard_
                       <div style={s.socialIcon}><LinkIcon size={14} /></div>
                       <div style={s.socialInputContainer}>
                         <div style={s.socialNetworkLabel}>website</div>
-                        <input type="text" name="website_url" value={formData.website_url} onChange={handleChange} placeholder="www.zizzystores.com" style={s.socialInput} />
+                        <input type="text" name="website_url" value={formData.website_url} onChange={handleChange} placeholder="www.unbley.com" style={s.socialInput} />
                       </div>
                     </div>
                   </div>
@@ -793,10 +746,10 @@ _Sent via Zizzystores Management Dashboard_
                 viewport={{ once: true }}
                 transition={{ duration: 0.6 }}
               >
-                <div style={{ borderTop: '1px solid #1F1F1F', paddingTop: '40px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                <div style={{ borderTop: '1px solid #EAE3D9', paddingTop: '40px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                   <div>
-                    <h2 style={{ fontFamily: '"Playfair Display", serif', fontSize: '24px', color: '#FFF', marginBottom: '8px' }}>Product Showcase</h2>
-                    <p style={{ fontSize: '12px', color: '#888' }}>Select 4 primary items for your landing gallery.</p>
+                    <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '22px', color: '#221510', fontWeight: '800', letterSpacing: '-0.02em', marginBottom: '8px' }}>Product Showcase</h2>
+                    <p style={{ fontSize: '12px', color: '#6B584C' }}>Select 4 primary items for your landing gallery.</p>
                   </div>
                 </div>
 
@@ -816,10 +769,10 @@ _Sent via Zizzystores Management Dashboard_
                           <img src={formData[field]} alt={`Product ${idx}`} style={s.productImage} />
                         ) : (
                           <>
-                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <Plus size={16} color="#000000" />
+                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#6A3E1F', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <Plus size={16} color="#FFFFFF" />
                             </div>
-                            <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#888888', textTransform: 'uppercase' }}>Select Item</div>
+                            <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#6B584C', textTransform: 'uppercase' }}>Select Item</div>
                           </>
                         )}
                       </motion.div>

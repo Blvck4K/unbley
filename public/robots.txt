@@ -22,4 +22,4 @@ Disallow: /fillblog
 Disallow: /checkout
 Disallow: /checkout-success
 
-Sitemap: https://zizzystores.com/sitemap.xml
+Sitemap: https://unbley.com/sitemap.xml

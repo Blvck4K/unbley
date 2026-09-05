@@ -3,13 +3,16 @@ import { ShoppingCart, Lock, ArrowLeft, ArrowRight, ShieldCheck, CreditCard, Ban
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import PaystackPop from '@paystack/inline-js';
+import { useToast } from '../context/ToastContext';
+import { isDarkColor, getContrastColor, getMutedColor, getBorderColor } from '../lib/colors';
 import PageTransition from '../components/PageTransition';
 import { motion } from 'framer-motion';
 
 export default function Checkout() {
   const navigate = useNavigate();
+  const { toast } = useToast();
 
-  const [cartItems, setCartItems] = useState(() => {
+  const [cartItems] = useState(() => {
     try {
       const stored = localStorage.getItem('cart');
       return stored ? JSON.parse(stored) : [];
@@ -23,40 +26,45 @@ export default function Checkout() {
   useEffect(() => {
     async function fetchBrand() {
       if (cartItems.length > 0 && cartItems[0].brand_id) {
-        if (!brand || brand.id !== cartItems[0].brand_id) {
-          const { data } = await supabase.from('brand_profiles').select('*').eq('id', cartItems[0].brand_id).single();
-          if (data) setBrand(data);
-        }
+        const { data } = await supabase.from('brand_profiles').select('*').eq('id', cartItems[0].brand_id).single();
+        if (data) setBrand(data);
       }
     }
     fetchBrand();
   }, [cartItems]);
 
-  const accentColor = brand?.accent_color || '#0F2C59';
   const bgMain = brand?.primary_color || '#FAFAFA';
-  const secondaryBg = brand?.secondary_color || '#FFFFFF';
-  const textColor = brand ? '#FDFDFD' : '#111';
-  const mutedColor = brand ? '#999' : '#666';
-  const borderColor = brand?.secondary_color ? 'rgba(255,255,255,0.1)' : '#EAEAEA';
+  const isDark = isDarkColor(bgMain);
+  const accentColor = brand?.accent_color || '#6A3E1F';
+  const secondaryBg = brand?.secondary_color || (isDark ? '#141414' : '#FFFFFF');
+  const textColor = getContrastColor(bgMain);
+  const mutedColor = getMutedColor(bgMain);
+  const borderColor = getBorderColor(bgMain);
   const dangerColor = '#D83A3A';
-  const inputBg = brand ? 'rgba(255,255,255,0.05)' : '#F4F4F5';
+  const inputBg = isDark ? 'rgba(255,255,255,0.06)' : '#FFFFFF';
 
   const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.qty), 0);
   const total = subtotal;
 
   const [formData, setFormData] = useState({
-    firstName: 'Julianne',
-    lastName: 'Moore',
+    firstName: '',
+    lastName: '',
     email: '',
     phone: '',
-    address: 'Studio 42, 5th Avenue',
-    city: 'New York',
-    zip: '10001',
+    address: '',
+    city: '',
+    zip: '',
   });
 
   const [errors, setErrors] = useState({});
   const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState('paystack'); // 'paystack' or 'flutterwave'
+  const hasPaystack = Boolean(import.meta.env.VITE_PAYSTACK_PUBLIC_KEY);
+  const hasFlutterwave = Boolean(import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY);
+  const [paymentMethod, setPaymentMethod] = useState(() => {
+    if (hasPaystack) return 'paystack';
+    if (hasFlutterwave) return 'flutterwave';
+    return 'paystack';
+  });
 
   const formatCurrency = (amount) => `₦${amount.toLocaleString()}`;
 
@@ -74,6 +82,7 @@ export default function Checkout() {
 
     const orderData = {
       brand_id: brandId,
+      brand_name: brand?.brand_name || 'Digital Atelier',
       order_number: `ORD-${(new Date()).getTime().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`,
       total_amount: Number(total) || 0,
       status: 'paid',
@@ -183,32 +192,35 @@ View in Dashboard.
   };
 
   const handlePaymentSubmit = () => {
+    if (cartItems.length === 0) {
+      toast.error("Your cart is empty. Please add items to checkout.");
+      navigate('/store');
+      return;
+    }
+
     // Validation
     const newErrors = {};
     if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
     if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
-    if (!formData.email.trim()) newErrors.email = 'Email address is required';
-    if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email address is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+    if (!formData.phone.trim()) {
+      newErrors.phone = 'Phone number is required';
+    } else if (formData.phone.replace(/[^0-9]/g, '').length < 7) {
+      newErrors.phone = 'Please enter a valid phone number';
+    }
     if (!formData.address.trim()) newErrors.address = 'Street address is required';
     if (!formData.city.trim()) newErrors.city = 'City is required';
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      // Optional: scroll to first error
       const firstError = document.querySelector('.has-error');
       if (firstError) {
         firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
-      return;
-    }
-
-    if (paymentMethod === 'paystack' && !brand?.paystack_subaccount_code) {
-      alert("This brand has not configured their local payout setup yet. Please use the international option or contact support.");
-      return;
-    }
-
-    if (paymentMethod === 'flutterwave' && !brand?.flutterwave_subaccount_code) {
-      alert("This brand has not configured their international payout setup yet. Please use the local option or contact support.");
       return;
     }
 
@@ -222,52 +234,69 @@ View in Dashboard.
   };
 
   const handlePaystack = () => {
+    const paystackKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY;
+    if (!paystackKey) {
+      toast.error("Paystack is currently unavailable. Please select Flutterwave or contact support.");
+      setIsProcessing(false);
+      return;
+    }
+
     try {
       const paystack = new PaystackPop();
       paystack.newTransaction({
-        key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
+        key: paystackKey,
         email: formData.email,
-        amount: total * 100,
+        amount: Math.round(total * 100),
         currency: 'NGN',
-        ref: (new Date()).getTime().toString(),
+        ref: `UNB-PSTK-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
         ...(brand?.paystack_subaccount_code ? { subaccount: brand.paystack_subaccount_code } : {}),
         onSuccess: (transaction) => onSuccess(transaction),
         onCancel: () => onClose(),
       });
     } catch (error) {
       console.error("Paystack initialization failed:", error);
+      toast.error("Failed to initialize Paystack gateway. Please try again or use Flutterwave.");
       setIsProcessing(false);
     }
   };
 
   const handleFlutterwave = () => {
-    if (!import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY) {
-      alert("System Configuration Error: Please add your VITE_FLUTTERWAVE_PUBLIC_KEY to the .env file!");
+    const flwKey = import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY;
+    if (!flwKey) {
+      toast.error("Payment configuration is missing. Please contact support.");
+      setIsProcessing(false);
+      return;
+    }
+
+    if (typeof window.FlutterwaveCheckout !== 'function') {
+      toast.error("Flutterwave checkout is loading or blocked by your browser. Please disable ad-blockers and try again.");
       setIsProcessing(false);
       return;
     }
 
     try {
       window.FlutterwaveCheckout({
-        public_key: import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY,
-        tx_ref: (new Date()).getTime().toString(),
+        public_key: flwKey,
+        tx_ref: `UNB-FLW-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
         amount: total,
         currency: "NGN",
-        payment_options: "card, account, ussd, qr",
+        payment_options: "card, account, ussd, banktransfer, qr",
         customer: {
           email: formData.email,
           phone_number: formData.phone,
-          name: `${formData.firstName} ${formData.lastName}`,
+          name: `${formData.firstName} ${formData.lastName}`.trim(),
         },
-        subaccounts: [
-          {
-            id: brand.flutterwave_subaccount_code,
-          }
-        ],
+        ...(brand?.flutterwave_subaccount_code ? {
+          subaccounts: [
+            {
+              id: brand.flutterwave_subaccount_code,
+            }
+          ]
+        } : {}),
         customizations: {
-          title: brand?.brand_name || "Zizzystores Order",
+          title: brand?.brand_name || "Unbley Order",
           description: `Order from ${brand?.brand_name || 'Store'}`,
-          logo: brand?.logo_url || "https://zizzystores.com/logo.png",
+          logo: brand?.logo_url || (typeof window !== 'undefined' ? `${window.location.origin}/favicon.svg` : "https://unbley.com/favicon.svg"),
         },
         callback: (data) => {
           console.log("Flutterwave Success:", data);
@@ -277,6 +306,7 @@ View in Dashboard.
       });
     } catch (error) {
       console.error("Flutterwave initialization failed:", error);
+      toast.error("Failed to launch Flutterwave checkout. Please try again.");
       setIsProcessing(false);
     }
   };
@@ -295,7 +325,7 @@ View in Dashboard.
     // Stepper
     stepper: { display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '64px' },
     step: { display: 'flex', alignItems: 'center', gap: '8px' },
-    stepNumActive: { width: '24px', height: '24px', borderRadius: '50%', backgroundColor: accentColor, color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '700' },
+    stepNumActive: { width: '24px', height: '24px', borderRadius: '50%', backgroundColor: accentColor, color: isDarkColor(accentColor) ? '#FFFFFF' : '#111111', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '700' },
     stepNumIdle: { width: '24px', height: '24px', borderRadius: '50%', backgroundColor: secondaryBg, border: `1px solid ${borderColor}`, color: mutedColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '700' },
     stepTextActive: { fontSize: '13px', fontWeight: '700', color: accentColor },
     stepTextIdle: { fontSize: '13px', fontWeight: '500', color: mutedColor },
@@ -313,11 +343,11 @@ View in Dashboard.
     inputGroup: { display: 'flex', flexDirection: 'column', gap: '8px' },
     inputGroupFull: { display: 'flex', flexDirection: 'column', gap: '8px', gridColumn: '1 / -1' },
     label: { fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase', color: textColor },
-    input: { backgroundColor: inputBg, border: '1px solid transparent', padding: '16px', fontSize: '14px', color: textColor, borderRadius: '4px', outline: 'none', transition: 'border-color 0.2s, background-color 0.2s', width: '100%' },
+    input: { backgroundColor: inputBg, border: `1px solid ${borderColor}`, padding: '16px', fontSize: '14px', color: textColor, borderRadius: '4px', outline: 'none', transition: 'border-color 0.2s, background-color 0.2s', width: '100%' },
     errorText: { color: dangerColor, fontSize: '11px', marginTop: '4px' },
 
     actionsCol: { display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '32px' },
-    continueBtn: { backgroundColor: accentColor, color: '#000', border: 'none', padding: '18px 32px', fontSize: '14px', fontWeight: '700', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', transition: 'opacity 0.2s', width: '100%' },
+    continueBtn: { backgroundColor: accentColor, color: isDarkColor(accentColor) ? '#FFFFFF' : '#111111', border: 'none', padding: '18px 32px', fontSize: '14px', fontWeight: '700', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', transition: 'opacity 0.2s', width: '100%' },
     disclaimerText: { fontSize: '12px', color: mutedColor, textAlign: 'center' },
     backBtn: { background: 'none', border: 'none', color: mutedColor, fontSize: '13px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '16px', padding: '12px' },
 
@@ -367,6 +397,37 @@ View in Dashboard.
     };
   };
 
+  if (cartItems.length === 0) {
+    return (
+      <PageTransition>
+        <div style={s.page}>
+          <div style={s.header} className="checkout-header">
+            <div style={s.logo}>{brand?.brand_name ? brand.brand_name.toUpperCase() : 'DIGITAL ATELIER'}</div>
+            <div style={s.headerRight}>
+              <Lock size={14} />
+              SECURE CHECKOUT
+            </div>
+          </div>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 24px', textAlign: 'center' }}>
+            <div style={{ width: '80px', height: '80px', borderRadius: '50%', backgroundColor: secondaryBg, border: `1px solid ${borderColor}`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' }}>
+              <ShoppingCart size={36} color={mutedColor} />
+            </div>
+            <h2 style={{ fontSize: '24px', fontWeight: '700', color: textColor, marginBottom: '12px' }}>Your Cart is Empty</h2>
+            <p style={{ fontSize: '14px', color: mutedColor, maxWidth: '420px', lineHeight: '1.6', marginBottom: '32px' }}>
+              There are no items in your cart to checkout. Please explore our collections to add items before proceeding.
+            </p>
+            <button
+              onClick={() => brand?.id ? navigate(`/shop-brand/${brand.id}`) : navigate('/store')}
+              style={{ ...s.continueBtn, width: 'auto', padding: '16px 36px', display: 'inline-flex' }}
+            >
+              <ArrowLeft size={16} /> Explore Collections
+            </button>
+          </div>
+        </div>
+      </PageTransition>
+    );
+  }
+
   return (
     <PageTransition>
       <div style={s.page}>
@@ -392,7 +453,7 @@ View in Dashboard.
         <div style={s.headerRight}>
           <Lock size={14} />
           SECURE CHECKOUT
-          <ShoppingCart size={18} style={{ marginLeft: '16px', color: '#111' }} cursor="pointer" onClick={() => navigate('/cart')} />
+          <ShoppingCart size={18} style={{ marginLeft: '16px', color: textColor }} cursor="pointer" onClick={() => navigate('/cart')} />
         </div>
       </div>
 
@@ -557,7 +618,7 @@ View in Dashboard.
               {cartItems.map((item) => (
                 <div key={item.id} style={s.summaryItem}>
                   <div style={s.summaryItemImg}>
-                    <img src={item.img?.split(',')[0]} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=200&q=80' }} />
+                    <img src={item.img ? item.img.split(',')[0] : 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=200&q=80'} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=200&q=80' }} />
                   </div>
                   <div style={s.summaryItemDetails}>
                     <div style={s.summaryItemName}>{item.name}</div>

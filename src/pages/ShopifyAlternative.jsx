@@ -9,32 +9,31 @@ import SEO from '../components/SEO';
 
 export default function ShopifyAlternative() {
   const comparison = [
-    { feature: "Starting Monthly Price", shopify: "$29 / mo", zizzy: "₦2,500 / mo ($2.50 / mo)*" },
-    { feature: "Yearly Cost (1st Year)", shopify: "$348+ / yr", zizzy: "₦30,000 / $30 / yr" },
-    { feature: "Renewal Price", shopify: "$348+ / yr", zizzy: "₦50,000 / $60 / yr" },
-    { feature: ".top Domain Included", shopify: "No ($15+ extra)", zizzy: "Yes (FREE)" },
-    { feature: "Accept Naira Locally", shopify: "Difficult", zizzy: "Native Support" },
-    { feature: "No Coding Required", shopify: "Yes", zizzy: "Yes" },
-    { feature: "Nigerian Support Team", shopify: "Global / English", zizzy: "Local & Personalized" }
+    { feature: "Starting Monthly Price", shopify: "$29 / mo", unbley: "₦2,500 / mo ($2.50 / mo)*" },
+    { feature: "Yearly Cost (1st Year)", shopify: "$348+ / yr", unbley: "₦30,000 / $30 / yr" },
+    { feature: "Renewal Price", shopify: "$348+ / yr", unbley: "₦50,000 / $60 / yr" },
+    { feature: ".top Domain Included", shopify: "No ($15+ extra)", unbley: "Yes (FREE)" },
+    { feature: "Accept Naira Locally", shopify: "Difficult", unbley: "Native Support" },
+    { feature: "No Coding Required", shopify: "Yes", unbley: "Yes" },
+    { feature: "Nigerian Support Team", shopify: "Global / English", unbley: "Local & Personalized" }
   ];
 
   return (
     <>
       <SEO 
         title="Shopify Alternative in Nigeria & Global | Best Value Ecommerce"
-        description="Tired of paying Shopify in USD? ZizzyStores is the best Shopify alternative for Nigerian and global brand owners. Start at only ₦30,000 / $30 for a full year."
-        canonical="https://zizzystores.com/shopify-alternative"
+        description="Tired of paying Shopify in USD? Unbley is the best Shopify alternative for Nigerian and global brand owners. Start at only ₦30,000 / $30 for a full year."
+        canonical="https://unbley.com/shopify-alternative"
         keywords="Shopify alternative Nigeria, best ecommerce platform Nigeria, affordable shopify alternative, ecommerce for creators"
       />
 
+      <Navbar />
       <PageTransition>
-        <Navbar />
-
         <main style={{ paddingTop: '80px' }}>
           {/* Comparison Hero */}
           <section style={{ padding: 'clamp(40px, 8vw, 80px) 20px', backgroundColor: 'var(--bg-light)' }}>
             <div className="container" style={{ textAlign: 'center', maxWidth: '800px', margin: '0 auto' }}>
-              <div style={{ display: 'inline-block', padding: '8px 20px', backgroundColor: '#e2f2ff', color: 'var(--primary)', borderRadius: '40px', fontWeight: '700', marginBottom: '24px' }}>
+              <div style={{ display: 'inline-block', padding: '8px 20px', backgroundColor: 'var(--accent-soft)', color: 'var(--primary)', borderRadius: '40px', fontWeight: '700', marginBottom: '24px' }}>
                 SAVINGS ALERT
               </div>
               <h1 style={{ fontSize: 'clamp(28px, 8vw, 56px)', fontWeight: '800', lineHeight: '1.1', marginBottom: '20px', letterSpacing: '-0.02em' }}>
@@ -43,7 +42,7 @@ export default function ShopifyAlternative() {
               <p style={{ fontSize: 'clamp(16px, 4vw, 18px)', color: 'var(--text-secondary)', marginBottom: '32px' }}>
                 Why pay <strong>$29 a month</strong> (over ₦45,000 monthly) when you can launch your entire storefront for just <strong>₦30k / $30 a YEAR</strong>?
               </p>
-              <Link to="/auth?mode=signup" className="btn btn-primary" style={{ padding: '12px 32px' }}>Switch to ZizzyStores & Save Today</Link>
+              <Link to="/auth?mode=signup" className="btn btn-primary" style={{ padding: '12px 32px' }}>Switch to Unbley & Save Today</Link>
             </div>
           </section>
 
@@ -66,7 +65,7 @@ export default function ShopifyAlternative() {
                       <tr style={{ borderBottom: '2px solid var(--border-color)', backgroundColor: 'var(--bg-gray)' }}>
                         <th style={{ padding: '20px', textAlign: 'left', fontWeight: '700' }}>Features</th>
                         <th style={{ padding: '20px', textAlign: 'center', color: '#999' }}>Shopify</th>
-                        <th style={{ padding: '20px', textAlign: 'center', color: 'var(--primary)' }}>ZizzyStores</th>
+                        <th style={{ padding: '20px', textAlign: 'center', color: 'var(--primary)' }}>Unbley</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -74,7 +73,7 @@ export default function ShopifyAlternative() {
                         <tr key={index} style={{ borderBottom: '1px solid var(--border-color)' }}>
                           <td style={{ padding: '20px', fontWeight: '600' }}>{row.feature}</td>
                           <td style={{ padding: '20px', textAlign: 'center', opacity: 0.7 }}>{row.shopify}</td>
-                          <td style={{ padding: '20px', textAlign: 'center', fontWeight: '700', color: 'var(--primary)' }}>{row.zizzy}</td>
+                          <td style={{ padding: '20px', textAlign: 'center', fontWeight: '700', color: 'var(--primary)' }}>{row.unbley}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -82,7 +81,7 @@ export default function ShopifyAlternative() {
                 </div>
               </div>
               <p style={{ textAlign: 'center', marginTop: '24px', color: 'var(--text-secondary)', fontSize: '14px' }}>
-                *Based on ZizzyStores (₦30,000 first year). Shopify prices exclude additional apps and transaction fees.
+                *Based on Unbley (₦30,000 first year). Shopify prices exclude additional apps and transaction fees.
               </p>
             </div>
           </section>

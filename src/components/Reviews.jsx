@@ -3,7 +3,7 @@ import { Star } from 'lucide-react';
 
 export default function Reviews() {
   const reviews = [
-    { name: 'Spots Blvck', brand: 'Brand Owner', text: 'ZizzyStores made getting our boutique online incredibly easy. The 40% discount was a lifesaver and the site looks premium.' },
+    { name: 'Spots Blvck', brand: 'Brand Owner', text: 'Unbley made getting our boutique online incredibly easy. The 40% discount was a lifesaver and the site looks premium.' },
     { name: 'Raggs.', brand: 'Brand Owner', text: 'I was amazed by how fast my electronics store was launched. Full stack and domain included perfectly as promised.' },
     { name: 'M3thods.', brand: 'Brand Owner', text: 'The expert support really walked me through the process. My sales have doubled since moving to the new custom platform.' },
     { name: 'Astraclothes.', brand: 'Brand Owner', text: 'Highly recommended. Secure, fast, and exactly what my business needed. They took care of the domain hassle completely.' },
@@ -15,7 +15,7 @@ export default function Reviews() {
       <div className="container">
         <div style={{ textAlign: 'center', marginBottom: '48px' }}>
           <h2 style={{ fontSize: '32px', fontWeight: '700', marginBottom: '16px' }}>What Our Clients Say</h2>
-          <p className="text-secondary">Join hundreds of successful brand owners who trust ZizzyStores.</p>
+          <p className="text-secondary">Join hundreds of successful brand owners who trust Unbley.</p>
         </div>
       </div>
 

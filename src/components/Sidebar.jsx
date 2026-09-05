@@ -1,29 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { LayoutGrid, User, Settings, ChevronRight, X, Menu } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 export default function Sidebar({ profileData, isSidebarOpen, setIsSidebarOpen }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const location = useLocation();
-  const brandColor = '#06acf8ff';
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  const brandColor = '#6A3E1F';
 
   const s = {
     sidebar: { 
       width: isCollapsed ? '80px' : '280px', 
-      borderRight: '1px solid #1F1F1F', 
+      borderRight: '1px solid #EAE3D9', 
       padding: '0', 
       display: 'flex', 
       flexDirection: 'column', 
       transition: 'width 0.3s ease',
       height: '100%',
-      backgroundColor: '#0A0A0A',
+      backgroundColor: '#FFFFFF',
       flexShrink: 0,
       zIndex: 1000
     },
@@ -35,10 +28,10 @@ export default function Sidebar({ profileData, isSidebarOpen, setIsSidebarOpen }
       position: 'relative'
     },
     logo: { 
-      fontFamily: '"Playfair Display", serif', 
+      fontFamily: 'var(--font-heading)', 
       fontSize: isCollapsed ? '16px' : '20px', 
-      letterSpacing: '-0.03em', 
-      fontWeight: 'bold',
+      letterSpacing: '-0.02em', 
+      fontWeight: '800',
       color: brandColor, 
       textTransform: 'none' 
     },
@@ -49,8 +42,8 @@ export default function Sidebar({ profileData, isSidebarOpen, setIsSidebarOpen }
       gap: '20px', 
       padding: isCollapsed ? '20px 0' : '16px 40px', 
       justifyContent: isCollapsed ? 'center' : 'flex-start', 
-      color: active ? '#FFF' : '#888', 
-      backgroundColor: active ? '#111' : 'transparent', 
+      color: active ? '#221510' : '#6B584C', 
+      backgroundColor: active ? '#F7F2EC' : 'transparent', 
       borderLeft: !isCollapsed && active ? `3px solid ${brandColor}` : '3px solid transparent', 
       cursor: 'pointer', 
       fontSize: '12px', 
@@ -62,18 +55,18 @@ export default function Sidebar({ profileData, isSidebarOpen, setIsSidebarOpen }
     }),
     userProfile: { 
       padding: isCollapsed ? '24px 0' : '24px 40px', 
-      borderTop: '1px solid #1F1F1F', 
+      borderTop: '1px solid #EAE3D9', 
       display: 'flex', 
       alignItems: 'center', 
       justifyContent: isCollapsed ? 'center' : 'flex-start', 
       gap: '16px', 
-      backgroundColor: '#111' 
+      backgroundColor: '#FBF9F5' 
     },
     userAvatar: { 
       width: '32px', 
       height: '32px', 
       minWidth: '32px', 
-      backgroundColor: '#333', 
+      backgroundColor: '#EAE3D9', 
       overflow: 'hidden', 
       borderRadius: '50%', 
       display: 'flex', 
@@ -82,11 +75,11 @@ export default function Sidebar({ profileData, isSidebarOpen, setIsSidebarOpen }
     },
     collapseBtn: { 
       padding: '20px', 
-      borderTop: '1px solid #1F1F1F', 
+      borderTop: '1px solid #EAE3D9', 
       cursor: 'pointer', 
       display: 'flex', 
       justifyContent: 'center', 
-      color: '#666',
+      color: '#6B584C',
       background: 'none',
       width: '100%'
     }
@@ -105,9 +98,9 @@ export default function Sidebar({ profileData, isSidebarOpen, setIsSidebarOpen }
             width: ${isCollapsed ? '80px' : '280px'} !important; 
             height: 100vh !important; 
             z-index: 1001 !important; 
-            background-color: #0A0A0A !important;
+            background-color: #FFFFFF !important;
             transition: left 0.3s ease, width 0.3s ease !important;
-            box-shadow: 10px 0 30px rgba(0,0,0,0.5) !important;
+            box-shadow: 10px 0 30px rgba(34,21,16,0.1) !important;
           }
            .dash-overlay {
             position: fixed !important;
@@ -115,7 +108,7 @@ export default function Sidebar({ profileData, isSidebarOpen, setIsSidebarOpen }
             left: 0 !important;
             right: 0 !important;
             bottom: 0 !important;
-            background-color: rgba(0,0,0,0.7) !important;
+            background-color: rgba(34,21,16,0.4) !important;
             z-index: 1000 !important;
             display: ${isSidebarOpen ? 'block' : 'none'} !important;
           }
@@ -133,17 +126,17 @@ export default function Sidebar({ profileData, isSidebarOpen, setIsSidebarOpen }
         <div style={s.logoContainer}>
           <button 
             onClick={() => setIsSidebarOpen(false)}
-            style={{ position: 'absolute', top: '24px', right: isCollapsed ? '50%' : '24px', transform: isCollapsed ? 'translateX(50%)' : 'none', background: 'none', border: 'none', color: '#666', cursor: 'pointer' }}
+            style={{ position: 'absolute', top: '24px', right: isCollapsed ? '50%' : '24px', transform: isCollapsed ? 'translateX(50%)' : 'none', background: 'none', border: 'none', color: '#6B584C', cursor: 'pointer' }}
             className="mobile-only"
           >
             <X size={24} />
           </button>
           
           <Link to="/" style={{ textDecoration: 'none' }}>
-            <div style={s.logo}>{isCollapsed ? 'Z.' : 'ZizzyStores.'}</div>
+            <div style={s.logo}>{isCollapsed ? 'U.' : 'Unbley.'}</div>
           </Link>
           {!isCollapsed && (
-            <div style={{ fontFamily: 'Inter', fontSize: '9px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', marginTop: '8px', textTransform: 'uppercase' }}>
+            <div style={{ fontFamily: 'Inter', fontSize: '9px', fontWeight: '700', letterSpacing: '0.1em', color: '#8D5B36', marginTop: '8px', textTransform: 'uppercase' }}>
               Digital Store
             </div>
           )}
@@ -175,15 +168,15 @@ export default function Sidebar({ profileData, isSidebarOpen, setIsSidebarOpen }
             {profileData?.logo_url ? (
               <img src={profileData.logo_url} alt={profileData.owner_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
-              <span style={{ color: '#FFF', fontSize: '10px' }}>{profileData?.owner_name?.charAt(0)?.toUpperCase() || 'U'}</span>
+              <span style={{ color: '#6A3E1F', fontSize: '10px', fontWeight: 'bold' }}>{profileData?.owner_name?.charAt(0)?.toUpperCase() || 'U'}</span>
             )}
           </div>
           {!isCollapsed && (
             <div>
-              <div style={{ fontSize: '11px', fontWeight: '700', color: '#FFF', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+              <div style={{ fontSize: '11px', fontWeight: '700', color: '#221510', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                 {profileData?.owner_name || 'User'}
               </div>
-              <div style={{ fontSize: '9px', color: '#666', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: '4px' }}>
+              <div style={{ fontSize: '9px', color: '#6B584C', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: '4px' }}>
                 Principal Curator
               </div>
             </div>

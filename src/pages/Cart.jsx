@@ -3,12 +3,15 @@ import { ShoppingCart, Trash2, ArrowLeft, ShieldCheck, Truck, Globe, CreditCard,
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../context/ToastContext';
+import { isDarkColor, getContrastColor, getMutedColor, getBorderColor } from '../lib/colors';
 import PageTransition from '../components/PageTransition';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Cart() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { toast } = useToast();
   const [cartItems, setCartItems] = useState(() => {
     try {
       const stored = localStorage.getItem('cart');
@@ -34,10 +37,8 @@ export default function Cart() {
     async function fetchData() {
       if (cartItems.length > 0 && cartItems[0].brand_id) {
         const id = cartItems[0].brand_id;
-        if (!brand || brand.id !== id) {
-          const { data: bData } = await supabase.from('brand_profiles').select('*').eq('id', id).single();
-          if (bData) setBrand(bData);
-        }
+        const { data: bData } = await supabase.from('brand_profiles').select('*').eq('id', id).single();
+        if (bData) setBrand(bData);
         
         const cartIds = cartItems.map(i => i.id);
         const { data: pData } = await supabase.from('products').select('*').eq('brand_id', id).limit(6);
@@ -54,20 +55,24 @@ export default function Cart() {
 
   const [removedItems, setRemovedItems] = useState([]);
   
-  const accentColor = brand?.accent_color || '#0F2C59';
   const bgMain = brand?.primary_color || '#FAFAFA';
-  const secondaryBg = brand?.secondary_color || '#FFFFFF';
-  const textColor = brand ? '#FDFDFD' : '#111';
-  const mutedColor = brand ? '#999' : '#666';
-  const borderColor = brand?.secondary_color ? 'rgba(255,255,255,0.1)' : '#EAEAEA';
+  const isDark = isDarkColor(bgMain);
+  const accentColor = brand?.accent_color || '#6A3E1F';
+  const secondaryBg = brand?.secondary_color || (isDark ? '#141414' : '#FFFFFF');
+  const textColor = getContrastColor(bgMain);
+  const mutedColor = getMutedColor(bgMain);
+  const borderColor = getBorderColor(bgMain);
   const dangerColor = '#D83A3A';
 
   const formatPrice = (price) => `₦${price.toLocaleString()}`;
 
   const handleRemove = (id) => {
     const item = cartItems.find(i => i.id === id);
-    setRemovedItems([...removedItems, item]);
-    setCartItems(cartItems.filter(i => i.id !== id));
+    if (item) {
+      setRemovedItems([...removedItems, item]);
+      setCartItems(cartItems.filter(i => i.id !== id));
+      toast.info(`Removed "${item.name}" from cart.`);
+    }
   };
 
   const handleUndo = () => {
@@ -75,6 +80,7 @@ export default function Cart() {
       const itemToRestore = removedItems[removedItems.length - 1];
       setCartItems([...cartItems, itemToRestore]);
       setRemovedItems(removedItems.slice(0, -1));
+      toast.success(`Restored "${itemToRestore.name}".`);
     }
   };
 
@@ -103,7 +109,7 @@ export default function Cart() {
     logo: { fontFamily: '"Inter", sans-serif', fontSize: '18px', fontWeight: 'bold', letterSpacing: '0.05em', color: textColor },
     headerRight: { display: 'flex', alignItems: 'center', gap: '24px' },
     iconButton: { cursor: 'pointer', display: 'flex', alignItems: 'center', color: textColor, position: 'relative' },
-    cartBadge: { position: 'absolute', top: '-6px', right: '-8px', backgroundColor: accentColor, color: '#000', fontSize: '9px', fontWeight: 'bold', width: '14px', height: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%' },
+    cartBadge: { position: 'absolute', top: '-6px', right: '-8px', backgroundColor: accentColor, color: isDarkColor(accentColor) ? '#FFFFFF' : '#111111', fontSize: '9px', fontWeight: 'bold', width: '14px', height: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%' },
 
     // Main Content
     content: { maxWidth: '1400px', margin: '0 auto' },
@@ -143,15 +149,15 @@ export default function Cart() {
     totalLabel: { fontSize: '14px', fontWeight: '700', color: textColor },
     totalValue: { fontSize: '20px', fontWeight: '700', color: accentColor },
 
-    checkoutBtn: { width: '100%', padding: '16px', backgroundColor: accentColor, color: '#000', fontSize: '13px', fontWeight: '700', border: 'none', borderRadius: '4px', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '16px', transition: 'background-color 0.2s', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' },
+    checkoutBtn: { width: '100%', padding: '16px', backgroundColor: accentColor, color: isDarkColor(accentColor) ? '#FFFFFF' : '#111111', fontSize: '13px', fontWeight: '700', border: 'none', borderRadius: '4px', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '16px', transition: 'opacity 0.2s', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' },
     continueLink: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: textColor, backgroundColor: 'transparent', border: `1px solid ${borderColor}`, padding: '14px', borderRadius: '4px', fontSize: '11px', textDecoration: 'none', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', transition: 'background-color 0.2s', fontWeight: '600' },
 
     trustBadges: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginTop: '24px' },
     trustBadge: { backgroundColor: secondaryBg, padding: '16px', border: `1px solid ${borderColor}`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px', borderRadius: '4px' },
     trustBadgeLabel: { fontSize: '8px', fontWeight: '700', color: mutedColor, letterSpacing: '0.1em', textTransform: 'uppercase', textAlign: 'center' },
 
-    undoToast: { backgroundColor: accentColor, color: '#000', padding: '14px 24px', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' },
-    undoBtn: { background: 'transparent', border: 'none', color: '#000', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' },
+    undoToast: { backgroundColor: accentColor, color: isDarkColor(accentColor) ? '#FFFFFF' : '#111111', padding: '14px 24px', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' },
+    undoBtn: { background: 'transparent', border: 'none', color: isDarkColor(accentColor) ? '#FFFFFF' : '#111111', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' },
 
     // Recommendations
     recommendations: { marginTop: '80px' },
@@ -190,7 +196,7 @@ export default function Cart() {
         <ShieldCheck size={48} color={dangerColor} style={{ marginBottom: '24px' }} />
         <h2 style={{ fontFamily: '"Playfair Display", serif', fontSize: '28px', marginBottom: '16px' }}>Owner Environment Active</h2>
         <p style={{ color: '#999', marginBottom: '32px', textAlign: 'center', maxWidth: '400px', lineHeight: '1.6' }}>
-          You cannot construct a cart or checkout your own digital assets. Please switch to a buyer account to test the checkout matrix.
+          You cannot checkout products from your own brand. Please sign in with a customer account to test the checkout experience.
         </p>
         <button onClick={() => navigate(-1)} style={{ padding: '12px 32px', border: `1px solid ${accentColor}`, backgroundColor: 'transparent', color: '#FFF', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer' }}>
           RETURN TO DASHBOARD
@@ -270,7 +276,7 @@ export default function Cart() {
                     <h3 style={{ fontSize: '18px', color: textColor, marginBottom: '8px' }}>Your Cart is Empty</h3>
                     <p style={{ fontSize: '14px', marginBottom: '32px' }}>Discover unique items to add to your collection.</p>
                     <div style={{ display: 'flex', justifyContent: 'center' }}>
-                      <div style={{...s.continueLink, width: 'auto', padding: '16px 32px'}} onClick={() => navigate(-1)}>
+                      <div style={{...s.continueLink, width: 'auto', padding: '16px 32px'}} onClick={() => brand?.id ? navigate(`/shop-brand/${brand.id}`) : navigate('/store')}>
                         Explore Collection
                       </div>
                     </div>
@@ -288,7 +294,7 @@ export default function Cart() {
                       className="cart-item"
                     >
                       <div style={s.itemImageWrap} className="cart-item-image-wrap">
-                        <img src={item.img?.split(',')[0]} alt={item.name} style={s.itemImage} onError={handleImageError} />
+                        <img src={item.img ? item.img.split(',')[0] : 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=600&q=80'} alt={item.name} style={s.itemImage} onError={handleImageError} />
                       </div>
 
                       <div style={s.itemDetails}>
@@ -357,7 +363,7 @@ export default function Cart() {
                 <ShieldCheck size={16} /> Checkout Securely
               </button>
 
-              <div style={s.continueLink} onClick={() => brand ? navigate(`/shop-brand/${brand.id}`) : navigate(-1)}>
+              <div style={s.continueLink} onClick={() => brand?.id ? navigate(`/shop-brand/${brand.id}`) : navigate('/store')}>
                 <ArrowLeft size={14} /> Continue Shopping
               </div>
             </div>

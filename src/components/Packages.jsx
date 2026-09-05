@@ -37,7 +37,7 @@ export default function Packages() {
         <div className="flex justify-between items-center" style={{ marginBottom: '48px', flexDirection: window.innerWidth <= 768 ? 'column' : 'row', textAlign: window.innerWidth <= 768 ? 'center' : 'left', gap: '20px' }}>
           <div>
             <h2 style={{ fontSize: '32px', fontWeight: '800', marginBottom: '12px' }}>Brands Of the Month</h2>
-            <p className="text-secondary" style={{ fontSize: '14px' }}>Premium Stores enjoying active growth via ZizzyStores.</p>
+            <p className="text-secondary" style={{ fontSize: '14px' }}>Premium Stores enjoying active growth via Unbley.</p>
           </div>
           <a href="store" className="font-bold flex items-center gap-2" style={{ fontSize: '14px', color: 'var(--text-muted)' }}>
             View All Brands <ArrowRight size={16} />

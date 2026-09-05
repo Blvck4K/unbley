@@ -29,17 +29,17 @@ export default function AllBlog() {
   });
 
   const s = {
-    page: { backgroundColor: '#F9F7F2', minHeight: '100vh', color: '#1A1A1A', fontFamily: '"Inter", sans-serif' },
+    page: { backgroundColor: '#FBF9F5', minHeight: '100vh', color: '#221510', fontFamily: '"Inter", sans-serif' },
     header: { padding: '120px 0 80px', maxWidth: '1200px', margin: '0 auto', paddingLeft: '20px', paddingRight: '20px' },
-    topLabel: { fontSize: '12px', fontWeight: '700', letterSpacing: '0.1em', color: '#888', textTransform: 'uppercase', marginBottom: '24px', display: 'block' },
-    title: { fontFamily: '"Playfair Display", serif', fontSize: 'clamp(48px, 8vw, 56px)', lineHeight: '1', fontWeight: '700', marginBottom: '40px', letterSpacing: '-0.02em' },
-    subtitle: { fontSize: '18px', lineHeight: '1.6', color: '#444', maxWidth: '600px', marginBottom: '60px' },
+    topLabel: { fontSize: '12px', fontWeight: '700', letterSpacing: '0.1em', color: '#8D5B36', textTransform: 'uppercase', marginBottom: '24px', display: 'block' },
+    title: { fontFamily: 'var(--font-heading)', fontSize: 'clamp(40px, 6vw, 56px)', lineHeight: '1.1', fontWeight: '800', color: '#221510', marginBottom: '40px', letterSpacing: '-0.03em' },
+    subtitle: { fontSize: '18px', lineHeight: '1.6', color: '#6B584C', maxWidth: '600px', marginBottom: '60px' },
 
-    filterContainer: { display: 'flex', gap: '32px', marginBottom: '80px', borderBottom: '1px solid #E5E1D8', paddingBottom: '20px', overflowX: 'auto' },
+    filterContainer: { display: 'flex', gap: '32px', marginBottom: '80px', borderBottom: '1px solid #DFCFC2', paddingBottom: '20px', overflowX: 'auto' },
     filterItem: (active) => ({
       fontSize: '14px',
       fontWeight: '600',
-      color: active ? '#1A1A1A' : '#888',
+      color: active ? '#6A3E1F' : '#6B584C',
       cursor: 'pointer',
       padding: '8px 0',
       position: 'relative',
@@ -49,42 +49,41 @@ export default function AllBlog() {
     }),
 
     grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '80px 40px', maxWidth: '1200px', margin: '0 auto', padding: '0 20px 120px' },
-    card: { cursor: 'pointer', display: 'flex', flexDirection: 'column', backgroundColor: '#FFF', border: '1px solid #E5E1D8', borderRadius: '8px', transition: 'all 0.3s ease', overflow: 'hidden' },
+    card: { cursor: 'pointer', display: 'flex', flexDirection: 'column', backgroundColor: '#FFFFFF', border: '1px solid #EAE3D9', borderRadius: '12px', transition: 'all 0.3s ease', overflow: 'hidden', boxShadow: '0 4px 20px rgba(34,21,16,0.03)' },
     cardContent: { padding: '40px', paddingTop: '24px' },
     imageWrapper: { width: '100%', height: '240px', overflow: 'hidden' },
     image: { width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease' },
     meta: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' },
-    cardCategory: { fontSize: '12px', fontWeight: '700', letterSpacing: '0.1em', color: '#089cff', textTransform: 'uppercase' },
-    cardReadTime: { fontSize: '11px', color: '#888', textTransform: 'uppercase' },
-    cardTitle: { fontFamily: '"Playfair Display", serif', fontSize: '28px', fontWeight: '700', lineHeight: '1.3', marginBottom: '16px', color: '#1A1A1A' },
+    cardCategory: { fontSize: '12px', fontWeight: '700', letterSpacing: '0.1em', color: '#8D5B36', textTransform: 'uppercase' },
+    cardReadTime: { fontSize: '11px', color: '#6B584C', textTransform: 'uppercase' },
+    cardTitle: { fontFamily: 'var(--font-heading)', fontSize: '24px', fontWeight: '800', letterSpacing: '-0.02em', lineHeight: '1.3', marginBottom: '16px', color: '#221510' },
     cardExcerpt: {
       fontSize: '15px',
       lineHeight: '1.6',
-      color: '#666',
+      color: '#6B584C',
       marginBottom: '24px',
       display: '-webkit-box',
       WebkitLineClamp: '3',
       WebkitBoxOrient: 'vertical',
       overflow: 'hidden'
     },
-    cardLink: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' },
+    cardLink: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: '700', color: '#6A3E1F', textTransform: 'uppercase', letterSpacing: '0.05em' },
 
     pagination: { display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '40px', paddingBottom: '120px', maxWidth: '1200px', margin: '0 auto' },
-    pageNum: (active) => ({ fontSize: '14px', fontWeight: '700', color: active ? '#1A1A1A' : '#CCC', cursor: 'pointer', borderBottom: active ? '2px solid #1A1A1A' : 'none', paddingBottom: '4px' }),
-    pagBtn: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'pointer', color: '#888' }
+    pageNum: (active) => ({ fontSize: '14px', fontWeight: '700', color: active ? '#6A3E1F' : '#DFCFC2', cursor: 'pointer', borderBottom: active ? '2px solid #6A3E1F' : 'none', paddingBottom: '4px' }),
+    pagBtn: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'pointer', color: '#6B584C' }
   };
 
   return (
     <>
       <SEO
-        title="ZizzyStores Blog – Ecommerce & Growth Tips for Nigerian Brands"
-        description="Learn how to build, grow, and scale your brand online in Nigeria with ZizzyStores. Expert insights on e-commerce, branding, and business growth."
-        canonical="https://zizzystores.com/all-blogs"
+        title="Unbley Blog – Ecommerce & Growth Tips for Nigerian Brands"
+        description="Learn how to build, grow, and scale your brand online in Nigeria with Unbley. Expert insights on e-commerce, branding, and business growth."
+        canonical="https://unbley.com/all-blogs"
       />
+      <Navbar />
       <PageTransition>
         <div style={s.page}>
-          <Navbar />
-
           <header style={s.header} className="blog-header">
             <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '40px' }}>
@@ -135,16 +134,16 @@ export default function AllBlog() {
                         marginBottom: '20px',
                         fontSize: '12px',
                         fontWeight: '700',
-                        color: '#888',
+                        color: '#6B584C',
                         textTransform: 'uppercase',
                         letterSpacing: '0.05em'
                       }}
                     >
-                      <span style={{ color: '#089cff' }}>{latestPost.category}</span>
+                      <span style={{ color: '#8D5B36' }}>{latestPost.category}</span>
                       <span>•</span>
                       <span>{latestPost.read_time}</span>
                       <span>•</span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#1A1A1A' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#6A3E1F' }}>
                         Read Entry <ArrowRight size={14} />
                       </span>
                     </motion.div>
@@ -159,10 +158,11 @@ export default function AllBlog() {
                     style={{
                       flex: '1 1 510px',
                       height: '300px',
-                      borderRadius: '15px',
+                      borderRadius: '16px',
                       overflow: 'hidden',
-                      boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
-                      cursor: 'pointer'
+                      boxShadow: '0 20px 40px rgba(34,21,16,0.08)',
+                      cursor: 'pointer',
+                      border: '1px solid #EAE3D9'
                     }}
                     onClick={() => navigate(`/blog/${latestPost.slug || latestPost.id}`)}
                   >
@@ -182,13 +182,13 @@ export default function AllBlog() {
                     whileTap={{ scale: 0.98 }}
                     onClick={() => navigate('/admin-blog')}
                     style={{
-                      backgroundColor: '#1A1A1A',
+                      backgroundColor: '#6A3E1F',
                       color: '#FFF',
                       padding: '12px 24px',
-                      borderRadius: '4px',
+                      borderRadius: '8px',
                       fontSize: '11px',
                       fontWeight: '700',
-                      letterSpacing: '0.1em',
+                      letterSpacing: '0.08em',
                       textTransform: 'uppercase',
                       border: 'none',
                       cursor: 'pointer',
@@ -196,7 +196,8 @@ export default function AllBlog() {
                       alignItems: 'center',
                       gap: '8px',
                       marginLeft: 'auto',
-                      alignSelf: 'flex-start'
+                      alignSelf: 'flex-start',
+                      boxShadow: '0 4px 12px rgba(106,62,31,0.2)'
                     }}
                   >
                     Admin Dashboard <ArrowRight size={14} />
@@ -216,7 +217,7 @@ export default function AllBlog() {
                   {activeCategory === cat && (
                     <motion.div
                       layoutId="underline"
-                      style={{ position: 'absolute', bottom: '-21px', left: 0, right: 0, height: '2px', backgroundColor: '#1A1A1A' }}
+                      style={{ position: 'absolute', bottom: '-21px', left: 0, right: 0, height: '2px', backgroundColor: '#6A3E1F' }}
                     />
                   )}
                 </div>

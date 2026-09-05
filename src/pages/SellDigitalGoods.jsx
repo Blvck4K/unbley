@@ -44,14 +44,13 @@ export default function SellDigitalGoods() {
     <>
       <SEO 
         title="Sell Digital Products Online | Best Platform for Digital Downloads"
-        description="Launch your digital storefront in minutes. Sell ebooks, software, templates, and courses with secure payments and instant delivery. Join ZizzyStores today."
+        description="Launch your digital storefront in minutes. Sell ebooks, software, templates, and courses with secure payments and instant delivery. Join Unbley today."
         keywords="sell digital products, sell ebooks online, digital downloads platform, ecommerce for digital creators, sell software online"
-        canonical="https://zizzystores.com/sell-digital-goods"
+        canonical="https://unbley.com/sell-digital-goods"
       />
       
+      <Navbar />
       <PageTransition>
-        <Navbar />
-        
         <main style={{ paddingTop: '100px' }}>
           <section style={{ padding: '80px 0', backgroundColor: 'var(--bg-light)' }}>
             <div className="container">
@@ -60,7 +59,7 @@ export default function SellDigitalGoods() {
                   The Ultimate Platform to <span style={{ color: 'var(--primary)' }}>Sell Digital Products</span> Online
                 </h1>
                 <p style={{ fontSize: '18px', color: 'var(--text-secondary)', marginBottom: '32px' }}>
-                  Whether you're selling professional software, creative templates, or educational ebooks, ZizzyStores provides the tools you need to launch, manage, and scale your digital empire.
+                  Whether you're selling professional software, creative templates, or educational ebooks, Unbley provides the tools you need to launch, manage, and scale your digital empire.
                 </p>
                 <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
                   <a href="/auth?mode=signup" className="btn btn-primary" style={{ padding: '12px 32px' }}>Start Selling Now</a>
@@ -92,7 +91,7 @@ export default function SellDigitalGoods() {
                       width: '48px', 
                       height: '48px', 
                       borderRadius: '12px', 
-                      backgroundColor: 'rgba(8, 156, 255, 0.1)', 
+                      backgroundColor: 'var(--accent-soft)', 
                       color: 'var(--primary)',
                       display: 'flex',
                       alignItems: 'center',
@@ -113,7 +112,7 @@ export default function SellDigitalGoods() {
             <div className="container">
               <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '64px' }}>
                 <div style={{ flex: '1', minWidth: '300px' }}>
-                  <h2 style={{ fontSize: '36px', fontWeight: '700', marginBottom: '24px' }}>What Can You Sell on ZizzyStores?</h2>
+                  <h2 style={{ fontSize: '36px', fontWeight: '700', marginBottom: '24px' }}>What Can You Sell on Unbley?</h2>
                   <p style={{ fontSize: '18px', opacity: 0.8, marginBottom: '32px' }}>
                     Our platform is versatile enough to handle any digital file type. Creators around the world use us to sell:
                   </p>
@@ -145,7 +144,7 @@ export default function SellDigitalGoods() {
                   </ul>
                 </div>
                 <div style={{ flex: '1', minWidth: '300px', backgroundColor: 'rgba(255,255,255,0.05)', padding: '40px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.1)' }}>
-                  <h3 style={{ fontSize: '24px', marginBottom: '16px' }}>"ZizzyStores has completely automated my ebook sales. I've sold to customers in over 30 countries without lifting a finger."</h3>
+                  <h3 style={{ fontSize: '24px', marginBottom: '16px' }}>"Unbley has completely automated my ebook sales. I've sold to customers in over 30 countries without lifting a finger."</h3>
                   <p style={{ fontWeight: '600', color: 'var(--primary)' }}>— Marcus Chen, Digital Author</p>
                 </div>
               </div>

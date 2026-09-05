@@ -31,7 +31,6 @@ export default function ExploreBrand() {
   const navigate = useNavigate();
 
   const [brand, setBrand] = useState(null);
-  const [products, setProducts] = useState([]);
   const [similarBrands, setSimilarBrands] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -52,14 +51,6 @@ export default function ExploreBrand() {
         if (bErr || !bData) throw bErr || new Error("Brand not found");
         setBrand(bData);
 
-        const { data: pData } = await supabase
-          .from('products')
-          .select('*')
-          .eq('brand_id', id)
-          .limit(3);
-          
-        if (pData) setProducts(pData);
-
         const { data: sData } = await supabase
           .from('brand_profiles')
           .select('*')
@@ -77,60 +68,60 @@ export default function ExploreBrand() {
     loadBrand();
   }, [id]);
 
-  const brandColor = brand?.accent_color || '#06acf8ff';
+  const brandColor = brand?.accent_color || '#6A3E1F';
 
   const s = {
-    page: { backgroundColor: '#0A0A0A', color: '#E5E5E5', height: '100vh', overflow: 'hidden', display: 'flex', fontFamily: '"Inter", sans-serif' },
+    page: { backgroundColor: '#FBF9F5', color: '#221510', height: '100vh', overflow: 'hidden', display: 'flex', fontFamily: '"Inter", sans-serif' },
     main: { flex: 1, display: 'flex', flexDirection: 'column' },
-    header: { height: '80px', padding: '0 80px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #1F1F1F', flexShrink: 0 },
-    headerTitle: { fontFamily: '"Playfair Display", serif', fontSize: '24px', color: '#FFF' },
-    searchBar: { display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#111', padding: '10px 16px', width: '320px', border: '1px solid #1F1F1F', borderRadius: '4px' },
-    searchInput: { background: 'transparent', border: 'none', color: '#FFF', fontSize: '12px', outline: 'none', width: '100%', letterSpacing: '0.05em' },
+    header: { height: '80px', padding: '0 80px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #EAE3D9', backgroundColor: '#FFFFFF', flexShrink: 0 },
+    headerTitle: { fontFamily: 'var(--font-heading)', fontSize: '22px', color: '#221510', fontWeight: '800', letterSpacing: '-0.02em' },
+    searchBar: { display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#F7F2EC', padding: '10px 16px', width: '320px', border: '1px solid #DFCFC2', borderRadius: '8px' },
+    searchInput: { background: 'transparent', border: 'none', color: '#221510', fontSize: '12px', outline: 'none', width: '100%', letterSpacing: '0.05em' },
     headerActions: { display: 'flex', alignItems: 'center', gap: '24px' },
-    shopBtn: { backgroundColor: brandColor, color: '#000', fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', padding: '10px 20px', textTransform: 'uppercase', border: 'none', cursor: 'pointer', borderRadius: '4px', textDecoration: 'none' },
-    content: { padding: '80px', flex: 1, overflowY: 'auto' },
+    shopBtn: { backgroundColor: brandColor, color: '#FFFFFF', fontSize: '11px', fontWeight: '700', letterSpacing: '0.08em', padding: '12px 24px', textTransform: 'uppercase', border: 'none', cursor: 'pointer', borderRadius: '8px', textDecoration: 'none', boxShadow: '0 2px 8px rgba(106,62,31,0.2)' },
+    content: { padding: '64px 80px', flex: 1, overflowY: 'auto' },
 
     // Components
-    banner: { position: 'relative', height: '400px', backgroundColor: '#111', border: '1px solid #1F1F1F', display: 'flex', flexDirection: 'column', padding: '64px', overflow: 'hidden', marginBottom: '32px' },
-    bannerBg: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundImage: `url("${brand?.banner_url || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1200&q=80'}")`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.2 },
+    banner: { position: 'relative', height: '400px', backgroundColor: '#261710', border: '1px solid #3D291E', borderRadius: '16px', display: 'flex', flexDirection: 'column', padding: '64px', overflow: 'hidden', marginBottom: '32px', boxShadow: '0 8px 30px rgba(38,23,16,0.15)' },
+    bannerBg: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundImage: `url("${brand?.banner_url || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1200&q=80'}")`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.3 },
     bannerContent: { position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: '32px', marginTop: 'auto' },
-    brandBadge: { width: '80px', height: '80px', border: `2px solid ${brandColor}`, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#111', overflow: 'hidden' },
-    brandBadgeText: { fontFamily: '"Playfair Display", serif', fontSize: '24px', fontStyle: 'italic', color: brandColor },
+    brandBadge: { width: '88px', height: '88px', border: `2px solid #DFCFC2`, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF', overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.2)' },
+    brandBadgeText: { fontFamily: 'var(--font-heading)', fontSize: '28px', fontWeight: '800', color: brandColor },
 
-    sectionTitleBase: { fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '16px' },
+    sectionTitleBase: { fontSize: '11px', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '16px' },
 
-    narrativeBox: { backgroundColor: '#111', border: '1px solid #1F1F1F', padding: '48px', position: 'relative', marginBottom: '64px' },
-    narrativeTitle: { fontFamily: '"Playfair Display", serif', fontSize: '32px', fontStyle: 'italic', color: '#FFF', lineHeight: '1.2', marginBottom: '24px', maxWidth: '80%' },
-    narrativeText: { color: '#888', fontSize: '14px', lineHeight: '1.6', maxWidth: '90%' },
+    narrativeBox: { backgroundColor: '#FFFFFF', border: '1px solid #EAE3D9', borderRadius: '16px', padding: '48px', position: 'relative', marginBottom: '64px', boxShadow: '0 4px 20px rgba(34,21,16,0.03)' },
+    narrativeTitle: { fontFamily: 'var(--font-heading)', fontSize: '32px', fontWeight: '800', letterSpacing: '-0.02em', color: '#221510', lineHeight: '1.2', marginBottom: '24px', maxWidth: '80%' },
+    narrativeText: { color: '#6B584C', fontSize: '15px', lineHeight: '1.7', maxWidth: '90%' },
 
-    ctaContainer: { backgroundColor: '#111', border: `1px solid ${brandColor}`, padding: '64px', marginBottom: '64px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', position: 'relative', overflow: 'hidden' },
-    ctaTitle: { fontFamily: '"Playfair Display", serif', fontSize: '36px', color: '#FFF', fontStyle: 'italic', marginBottom: '32px' },
-    ctaButton: { display: 'flex', alignItems: 'center', gap: '16px', backgroundColor: brandColor, color: '#000', padding: '24px 48px', fontSize: '20px', fontWeight: 'bold', textDecoration: 'none', cursor: 'pointer', border: 'none', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' },
-    ctaBridgeMessage: { marginTop: '16px', color: '#888', fontSize: '14px', fontStyle: 'italic' },
+    ctaContainer: { backgroundColor: '#F7F2EC', border: '1px solid #DFCFC2', borderRadius: '16px', padding: '64px', marginBottom: '64px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', position: 'relative', overflow: 'hidden' },
+    ctaTitle: { fontFamily: 'var(--font-heading)', fontSize: '36px', color: '#221510', fontWeight: '800', letterSpacing: '-0.02em', marginBottom: '32px' },
+    ctaButton: { display: 'flex', alignItems: 'center', gap: '16px', backgroundColor: brandColor, color: '#FFFFFF', padding: '20px 40px', fontSize: '16px', fontWeight: 'bold', textDecoration: 'none', cursor: 'pointer', border: 'none', borderRadius: '8px', textTransform: 'uppercase', letterSpacing: '0.05em', boxShadow: '0 4px 16px rgba(106,62,31,0.25)' },
+    ctaBridgeMessage: { marginTop: '16px', color: '#6B584C', fontSize: '14px', fontStyle: 'italic' },
 
-    triggersTitle: { fontWeight: '700', fontSize: '14px', color: '#FFF', marginTop: '48px', marginBottom: '24px' },
+    triggersTitle: { fontWeight: '700', fontSize: '15px', color: '#221510', marginTop: '48px', marginBottom: '24px' },
     triggersGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px', width: '100%' },
-    triggerItem: { display: 'flex', alignItems: 'center', gap: '12px', fontSize: '14px', color: '#CCC' },
+    triggerItem: { display: 'flex', alignItems: 'center', gap: '12px', fontSize: '14px', color: '#4A3B32', fontWeight: '500' },
 
     productsSection: { marginBottom: '64px' },
     productsHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '32px' },
-    productsTitle: { fontFamily: '"Playfair Display", serif', fontSize: '36px', fontStyle: 'italic', color: '#FFF' },
-    exploreLink: { fontSize: '12px', color: '#FFF', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px', letterSpacing: '0.05em', cursor: 'pointer' },
+    productsTitle: { fontFamily: 'var(--font-heading)', fontSize: '32px', fontWeight: '800', letterSpacing: '-0.02em', color: '#221510' },
+    exploreLink: { fontSize: '13px', color: '#6A3E1F', fontWeight: '600', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px', letterSpacing: '0.05em', cursor: 'pointer' },
 
     productGrid: { display: 'grid', gridTemplateColumns: 'minmax(300px, 1.2fr) minmax(200px, 0.8fr)', gap: '16px' },
-    productMain: { backgroundColor: '#111', minHeight: '500px', backgroundImage: `url("${brand?.product_1_url || 'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=800&q=80'}")`, backgroundSize: 'cover', backgroundPosition: 'center', borderRadius: '4px', cursor: 'pointer' },
+    productMain: { backgroundColor: '#F7F2EC', minHeight: '500px', backgroundImage: `url("${brand?.product_1_url || 'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=800&q=80'}")`, backgroundSize: 'cover', backgroundPosition: 'center', borderRadius: '12px', cursor: 'pointer', border: '1px solid #EAE3D9' },
     productSubGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: '16px', minHeight: '500px' },
-    productItemCard: { backgroundColor: '#111', backgroundSize: 'cover', backgroundPosition: 'center', borderRadius: '4px', cursor: 'pointer' },
+    productItemCard: { backgroundColor: '#F7F2EC', backgroundSize: 'cover', backgroundPosition: 'center', borderRadius: '12px', cursor: 'pointer', border: '1px solid #EAE3D9' },
 
     similarSection: { marginBottom: '64px' },
     similarGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px' },
-    similarCard: { backgroundColor: '#111', border: '1px solid #1F1F1F', padding: '32px', display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', transition: 'border-color 0.2s', },
-    similarLogo: { width: '80px', height: '80px', backgroundColor: '#222', borderRadius: '50%', marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-    similarName: { color: '#FFF', fontWeight: 'bold', fontSize: '16px', marginBottom: '8px' },
-    similarCategory: { color: '#888', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.1em' },
+    similarCard: { backgroundColor: '#FFFFFF', border: '1px solid #EAE3D9', borderRadius: '12px', padding: '32px', display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 2px 10px rgba(34,21,16,0.03)' },
+    similarLogo: { width: '80px', height: '80px', backgroundColor: '#F7F2EC', borderRadius: '50%', marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #EAE3D9' },
+    similarName: { color: '#221510', fontWeight: 'bold', fontSize: '16px', marginBottom: '8px' },
+    similarCategory: { color: '#6B584C', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.1em' },
 
-    footer: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #1F1F1F', paddingTop: '32px', paddingBottom: '32px' },
-    footerLinks: { display: 'flex', gap: '32px', fontSize: '9px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', textTransform: 'uppercase' },
+    footer: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #EAE3D9', paddingTop: '32px', paddingBottom: '32px' },
+    footerLinks: { display: 'flex', gap: '32px', fontSize: '11px', fontWeight: '600', letterSpacing: '0.05em', color: '#6B584C', textTransform: 'uppercase' },
   };
 
   return (
@@ -153,7 +144,8 @@ export default function ExploreBrand() {
             position: sticky;
             top: 0;
             z-index: 100;
-            background-color: #0A0A0A;
+            background-color: #FFFFFF;
+            border-bottom: 1px solid #EAE3D9 !important;
           }
           .header-right { flex-direction: column; width: 100%; gap: 16px !important; }
           .search-bar { display: none !important; }
@@ -201,10 +193,10 @@ export default function ExploreBrand() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
             <button
               onClick={() => navigate(-1)}
-              style={{ background: 'transparent', border: 'none', color: '#888', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '8px', transition: 'color 0.2s' }}
+              style={{ background: 'transparent', border: 'none', color: '#6B584C', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '8px', transition: 'color 0.2s' }}
               title="Go Back"
-              onMouseEnter={(e) => e.currentTarget.style.color = '#FFF'}
-              onMouseLeave={(e) => e.currentTarget.style.color = '#888'}
+              onMouseEnter={(e) => e.currentTarget.style.color = '#221510'}
+              onMouseLeave={(e) => e.currentTarget.style.color = '#6B584C'}
             >
               <ArrowLeft size={20} />
             </button>
@@ -213,16 +205,16 @@ export default function ExploreBrand() {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }} className="header-right">
             <div style={s.searchBar} className="search-bar">
-              <Search size={14} color="#666" />
+              <Search size={14} color="#6B584C" />
               <input type="text" placeholder="Search ..." style={s.searchInput} />
             </div>
 
             <button onClick={() => navigate(`/shop-brand/${id}`)} style={s.shopBtn} className="shop-btn">Shop {brand.brand_name} Now</button>
             <div style={s.headerActions}>
-              <div title="Like Brand" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#888', transition: 'color 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.color = '#FFF'} onMouseLeave={(e) => e.currentTarget.style.color = '#888'}>
+              <div title="Like Brand" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#6B584C', transition: 'color 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.color = '#221510'} onMouseLeave={(e) => e.currentTarget.style.color = '#6B584C'}>
                 <Heart size={18} />
               </div>
-              <div title="Save Brand" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#888', transition: 'color 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.color = '#FFF'} onMouseLeave={(e) => e.currentTarget.style.color = '#888'}>
+              <div title="Save Brand" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#6B584C', transition: 'color 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.color = '#221510'} onMouseLeave={(e) => e.currentTarget.style.color = '#6B584C'}>
                 <Bookmark size={18} />
               </div>
             </div>
@@ -267,13 +259,13 @@ export default function ExploreBrand() {
                   transition={{ delay: 0.4, duration: 0.6 }}
                   style={{ ...s.sectionTitleBase, color: brandColor }}
                 >
-                  Curated by ZizzyStores — premium digital ateliers only.
+                  Curated by Unbley — premium digital ateliers only.
                 </motion.div>
                 <motion.h1 
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.5, duration: 0.6 }}
-                  style={{ fontFamily: '"Playfair Display", serif', fontStyle: 'italic', fontSize: '48px', color: '#FFF', margin: 0 }} 
+                  style={{ fontFamily: 'var(--font-heading)', fontSize: '48px', fontWeight: '800', letterSpacing: '-0.03em', color: '#FFF', margin: 0 }} 
                   className="hero-title"
                 >
                   {brand.brand_name}
@@ -288,63 +280,63 @@ export default function ExploreBrand() {
                 <div style={{ ...s.sectionTitleBase, color: brandColor }}>The Brand Narrative</div>
                 <h2 style={s.narrativeTitle} className="narrative-title">Transcending the ordinary through the Digital Atelier experience.</h2>
                 <p style={s.narrativeText}>
-                  {brand.brand_narrative || "Zizzystores isn't just a marketplace. It's a curated ecosystem where digital craftsmanship meets commercial viability. We believe that every product carries a soul, and every store should be an architectural masterpiece. Our mission is to redefine luxury in the digital age by prioritizing breathing room and editorial excellence over sheer volume."}
+                  {brand.brand_narrative || "Unbley isn't just a marketplace. It's a curated ecosystem where digital craftsmanship meets commercial viability. We believe that every product carries a soul, and every store should be an architectural masterpiece. Our mission is to redefine luxury in the digital age by prioritizing breathing room and editorial excellence over sheer volume."}
                 </p>
               </div>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-              <div style={{ backgroundColor: '#111', border: '1px solid #1F1F1F', padding: '32px' }}>
+              <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #EAE3D9', borderRadius: '16px', padding: '32px', boxShadow: '0 4px 20px rgba(34,21,16,0.03)' }}>
                 <div style={{ fontSize: '11px', fontWeight: '800', letterSpacing: '0.1em', color: brandColor, textTransform: 'uppercase', marginBottom: '32px' }}>Detailed Brand Info</div>
 
                 <div style={{ marginBottom: '24px' }}>
-                  <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', textTransform: 'uppercase', marginBottom: '8px' }}>Brand Name</div>
-                  <div style={{ fontFamily: '"Playfair Display", serif', fontSize: '20px', fontStyle: 'italic', color: '#FFF' }}>{brand.brand_name}</div>
+                  <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#6B584C', textTransform: 'uppercase', marginBottom: '8px' }}>Brand Name</div>
+                  <div style={{ fontFamily: 'var(--font-heading)', fontSize: '18px', color: '#221510', fontWeight: '700' }}>{brand.brand_name}</div>
                 </div>
 
                 <div style={{ marginBottom: '24px' }}>
-                  <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', textTransform: 'uppercase', marginBottom: '8px' }}>Brand Owner</div>
-                  <div style={{ fontFamily: '"Playfair Display", serif', fontSize: '20px', fontStyle: 'italic', color: '#FFF' }}>{brand.owner_name || 'Anonymous Artisan'}</div>
+                  <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#6B584C', textTransform: 'uppercase', marginBottom: '8px' }}>Brand Owner</div>
+                  <div style={{ fontFamily: 'var(--font-heading)', fontSize: '18px', color: '#221510', fontWeight: '700' }}>{brand.owner_name || 'Anonymous Artisan'}</div>
                 </div>
 
                 <div style={{ marginBottom: '24px' }}>
-                  <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', textTransform: 'uppercase', marginBottom: '8px' }}>Email Inquiry</div>
+                  <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#6B584C', textTransform: 'uppercase', marginBottom: '8px' }}>Email Inquiry</div>
                   <div style={{ fontSize: '14px', fontWeight: '700', letterSpacing: '0.05em', color: brandColor, textTransform: 'uppercase' }}>{brand.email_address || 'INFO@BRAND.COM'}</div>
                 </div>
 
                 <div style={{ marginBottom: '24px' }}>
-                  <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', textTransform: 'uppercase', marginBottom: '8px' }}>Phone Number</div>
+                  <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#6B584C', textTransform: 'uppercase', marginBottom: '8px' }}>Phone Number</div>
                   <div style={{ fontSize: '14px', fontWeight: '700', letterSpacing: '0.05em', color: brandColor, textTransform: 'uppercase' }}>{brand.phone_number || '1 (555) 012-3456'}</div>
                 </div>
 
                 <div style={{ marginBottom: '24px' }}>
-                  <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', textTransform: 'uppercase', marginBottom: '8px' }}>Location</div>
-                  <div style={{ fontSize: '14px', fontWeight: '700', letterSpacing: '0.05em', color: '#FFF' }}>{brand.location || 'Undisclosed Studio'}</div>
+                  <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#6B584C', textTransform: 'uppercase', marginBottom: '8px' }}>Location</div>
+                  <div style={{ fontSize: '14px', fontWeight: '700', letterSpacing: '0.05em', color: '#221510' }}>{brand.location || 'Undisclosed Studio'}</div>
                 </div>
 
                 <div>
-                  <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', textTransform: 'uppercase', marginBottom: '8px' }}>Delivery Duration</div>
-                  <div style={{ fontSize: '14px', fontWeight: '700', letterSpacing: '0.05em', color: '#FFF' }}>{brand.delivery_info || '2-3 days standard'}</div>
+                  <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#6B584C', textTransform: 'uppercase', marginBottom: '8px' }}>Delivery Duration</div>
+                  <div style={{ fontSize: '14px', fontWeight: '700', letterSpacing: '0.05em', color: '#221510' }}>{brand.delivery_info || '2-3 days standard'}</div>
                 </div>
               </div>
 
-              <div style={{ backgroundColor: '#111', border: '1px solid #1F1F1F', padding: '32px' }}>
+              <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #EAE3D9', borderRadius: '16px', padding: '32px', boxShadow: '0 4px 20px rgba(34,21,16,0.03)' }}>
                 <div style={{ fontSize: '11px', fontWeight: '800', letterSpacing: '0.1em', color: brandColor, textTransform: 'uppercase', marginBottom: '32px' }}>Quick Connectivity</div>
 
                 <div style={{ display: 'flex', gap: '16px' }}>
-                  <div style={{ width: '48px', height: '48px', borderRadius: '50%', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.color = '#FFF'; e.currentTarget.style.borderColor = '#FFF' }} onMouseLeave={(e) => { e.currentTarget.style.color = '#888'; e.currentTarget.style.borderColor = '#333' }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '50%', border: '1px solid #DFCFC2', backgroundColor: '#F7F2EC', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6B584C', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.color = '#FFFFFF'; e.currentTarget.style.backgroundColor = brandColor; e.currentTarget.style.borderColor = brandColor; }} onMouseLeave={(e) => { e.currentTarget.style.color = '#6B584C'; e.currentTarget.style.backgroundColor = '#F7F2EC'; e.currentTarget.style.borderColor = '#DFCFC2'; }}>
                     <Globe size={18} color="currentColor" />
                   </div>
-                  <div style={{ width: '48px', height: '48px', borderRadius: '50%', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.color = '#FFF'; e.currentTarget.style.borderColor = '#FFF' }} onMouseLeave={(e) => { e.currentTarget.style.color = '#888'; e.currentTarget.style.borderColor = '#333' }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '50%', border: '1px solid #DFCFC2', backgroundColor: '#F7F2EC', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6B584C', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.color = '#FFFFFF'; e.currentTarget.style.backgroundColor = brandColor; e.currentTarget.style.borderColor = brandColor; }} onMouseLeave={(e) => { e.currentTarget.style.color = '#6B584C'; e.currentTarget.style.backgroundColor = '#F7F2EC'; e.currentTarget.style.borderColor = '#DFCFC2'; }}>
                     <InstagramIcon size={18} color="currentColor" />
                   </div>
-                  <div style={{ width: '48px', height: '48px', borderRadius: '50%', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.color = '#FFF'; e.currentTarget.style.borderColor = '#FFF' }} onMouseLeave={(e) => { e.currentTarget.style.color = '#888'; e.currentTarget.style.borderColor = '#333' }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '50%', border: '1px solid #DFCFC2', backgroundColor: '#F7F2EC', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6B584C', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.color = '#FFFFFF'; e.currentTarget.style.backgroundColor = brandColor; e.currentTarget.style.borderColor = brandColor; }} onMouseLeave={(e) => { e.currentTarget.style.color = '#6B584C'; e.currentTarget.style.backgroundColor = '#F7F2EC'; e.currentTarget.style.borderColor = '#DFCFC2'; }}>
                     <TwitterIcon size={18} color="currentColor" />
                   </div>
-                  <div style={{ width: '48px', height: '48px', borderRadius: '50%', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.color = '#FFF'; e.currentTarget.style.borderColor = '#FFF' }} onMouseLeave={(e) => { e.currentTarget.style.color = '#888'; e.currentTarget.style.borderColor = '#333' }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '50%', border: '1px solid #DFCFC2', backgroundColor: '#F7F2EC', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6B584C', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.color = '#FFFFFF'; e.currentTarget.style.backgroundColor = brandColor; e.currentTarget.style.borderColor = brandColor; }} onMouseLeave={(e) => { e.currentTarget.style.color = '#6B584C'; e.currentTarget.style.backgroundColor = '#F7F2EC'; e.currentTarget.style.borderColor = '#DFCFC2'; }}>
                     <FacebookIcon size={18} color="currentColor" />
                   </div>
-                  <div style={{ width: '48px', height: '48px', borderRadius: '50%', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.color = '#FFF'; e.currentTarget.style.borderColor = '#FFF' }} onMouseLeave={(e) => { e.currentTarget.style.color = '#888'; e.currentTarget.style.borderColor = '#333' }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '50%', border: '1px solid #DFCFC2', backgroundColor: '#F7F2EC', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6B584C', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.color = '#FFFFFF'; e.currentTarget.style.backgroundColor = brandColor; e.currentTarget.style.borderColor = brandColor; }} onMouseLeave={(e) => { e.currentTarget.style.color = '#6B584C'; e.currentTarget.style.backgroundColor = '#F7F2EC'; e.currentTarget.style.borderColor = '#DFCFC2'; }}>
                     <TikTokIcon size={18} color="currentColor" />
                   </div>
                 </div>
@@ -366,7 +358,7 @@ export default function ExploreBrand() {
               You'll be redirected to the brand's official store to complete your purchase.
             </div>
 
-            <div style={s.triggersTitle} className="triggers-title">Why Explore Zizzystores:</div>
+            <div style={s.triggersTitle} className="triggers-title">Why Explore Unbley:</div>
             <div style={s.triggersGrid} className="triggers-grid">
               <div style={s.triggerItem}>
                 <ShieldCheck size={20} color={brandColor} />
@@ -431,7 +423,7 @@ export default function ExploreBrand() {
               {similarBrands.length > 0 ? similarBrands.map((b) => (
                 <div key={b.id} style={s.similarCard} onClick={() => navigate(`/explore-brand/${b.id}`)} onMouseEnter={(e) => e.currentTarget.style.borderColor = brandColor} onMouseLeave={(e) => e.currentTarget.style.borderColor = '#1F1F1F'}>
                   <div style={{...s.similarLogo, backgroundImage: b.logo_url ? `url(${b.logo_url})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center'}}>
-                    {!b.logo_url && <span style={{ fontFamily: '"Playfair Display", serif', fontSize: '24px', fontStyle: 'italic', color: '#555' }}>{b.brand_name?.charAt(0)?.toUpperCase() || 'B'}</span>}
+                    {!b.logo_url && <span style={{ fontFamily: 'var(--font-heading)', fontSize: '24px', fontWeight: '800', color: '#555' }}>{b.brand_name?.charAt(0)?.toUpperCase() || 'B'}</span>}
                   </div>
                   <div style={s.similarName}>{b.brand_name || 'Curated Selection'}</div>
                   <div style={s.similarCategory}>{b.brand_category || 'View Directory'}</div>
@@ -445,7 +437,7 @@ export default function ExploreBrand() {
           {/* Footer Area */}
           <div style={s.footer} className="footer">
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontFamily: '"Playfair Display", serif', fontSize: '14px', fontStyle: 'italic', fontWeight: 'bold', color: brandColor }}>{brand.brand_name}</span>
+              <span style={{ fontFamily: 'var(--font-heading)', fontSize: '14px', fontWeight: '800', letterSpacing: '-0.02em', color: brandColor }}>{brand.brand_name}</span>
               <span style={{ fontSize: '9px', color: '#555', letterSpacing: '0.05em' }}>© {new Date().getFullYear()} DIGITAL ATELIER</span>
             </div>
             <div style={s.footerLinks} className="footer-links">

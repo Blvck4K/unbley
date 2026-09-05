@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 
 export const AuthContext = createContext({});

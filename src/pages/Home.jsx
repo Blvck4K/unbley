@@ -16,11 +16,11 @@ export default function Home() {
   return (
     <>
       <SEO 
-        title="ZizzyStores | Launch Your Professional Online Store in 5 Minutes"
+        title="Unbley | Launch Your Professional Online Store in 5 Minutes"
         description="The easiest way to create an online store in Nigeria and beyond. Launch your boutique brand with a professional storefront for only ₦30,000 / $30 for the first year."
       />
-      <PageTransition>
       <Navbar />
+      <PageTransition>
       <Hero />
       <Features />
       <HowItWorks />

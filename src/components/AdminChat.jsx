@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, Send, User, MessageCircle, Clock, Trash2, ChevronLeft } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useToast } from '../context/ToastContext';
 
 const AdminChat = () => {
+    const { toast } = useToast();
     const [conversations, setConversations] = useState([]);
     const [selectedEmail, setSelectedEmail] = useState(null);
     const [messages, setMessages] = useState([]);
@@ -77,7 +79,7 @@ const AdminChat = () => {
     const fetchConversations = async () => {
         try {
             // Get unique emails and their last message time
-            const { data, error } = await supabase
+            const { data } = await supabase
                 .from('concierge_messages')
                 .select('user_email, message, created_at, sender')
                 .order('created_at', { ascending: false });
@@ -101,7 +103,7 @@ const AdminChat = () => {
 
     const fetchMessages = async (email) => {
         try {
-            const { data, error } = await supabase
+            const { data } = await supabase
                 .from('concierge_messages')
                 .select('*')
                 .eq('user_email', email)
@@ -133,24 +135,23 @@ const AdminChat = () => {
             setReply('');
         } catch (err) {
             console.error("Error sending reply:", err);
-            alert("Failed to send reply. Please check your Supabase connection.");
+            toast.error("Failed to send reply. Please check your connection.");
         } finally {
             setLoading(false);
         }
     };
 
     // Styling constants
-    const brandColor = '#06acf8ff';
-    const bgColor = '#0A0A0A';
-    const cardColor = '#111111';
-    const borderColor = '#1F1F1F';
+    const brandColor = '#6A3E1F';
+    const bgColor = '#FBF9F5';
+    const borderColor = '#EAE3D9';
 
     const filteredConversations = conversations.filter(c => 
         c.user_email.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (
-        <div style={{ display: 'flex', height: '100%', backgroundColor: bgColor, border: isMobile ? 'none' : `1px solid ${borderColor}`, overflow: 'hidden', position: 'relative' }}>
+        <div style={{ display: 'flex', height: '100%', backgroundColor: bgColor, border: isMobile ? 'none' : `1px solid ${borderColor}`, borderRadius: '12px', overflow: 'hidden', position: 'relative' }}>
             
             {/* Left Sidebar: Active Conversations */}
             <div style={{ 
@@ -159,25 +160,25 @@ const AdminChat = () => {
                 display: (isMobile && viewMode === 'chat') ? 'none' : 'flex', 
                 flexDirection: 'column',
                 height: '100%',
-                backgroundColor: bgColor
+                backgroundColor: '#FFFFFF'
             }}>
                 <div style={{ padding: '24px', borderBottom: `1px solid ${borderColor}` }}>
-                    <div style={{ fontFamily: '"Playfair Display", serif', fontSize: '20px', fontStyle: 'italic', color: '#FFF', marginBottom: '16px' }}>Concierge Inbox</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#111', padding: '8px 12px', border: `1px solid ${borderColor}` }}>
-                        <Search size={14} color="#666" />
+                    <div style={{ fontFamily: 'var(--font-heading)', fontSize: '20px', color: '#221510', fontWeight: '800', letterSpacing: '-0.02em', marginBottom: '16px' }}>Concierge Inbox</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#F7F2EC', padding: '10px 14px', border: `1px solid #DFCFC2`, borderRadius: '8px' }}>
+                        <Search size={14} color="#6B584C" />
                         <input 
                             type="text" 
                             placeholder="Search email..." 
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            style={{ background: 'transparent', border: 'none', color: '#FFF', fontSize: '11px', outline: 'none', width: '100%' }} 
+                            style={{ background: 'transparent', border: 'none', color: '#221510', fontSize: '12px', outline: 'none', width: '100%' }} 
                         />
                     </div>
                 </div>
 
                 <div style={{ flex: 1, overflowY: 'auto' }}>
                     {filteredConversations.length === 0 ? (
-                        <div style={{ padding: '40px 24px', textAlign: 'center', color: '#444', fontSize: '12px' }}>No conversations yet.</div>
+                        <div style={{ padding: '40px 24px', textAlign: 'center', color: '#6B584C', fontSize: '13px' }}>No conversations yet.</div>
                     ) : (
                         filteredConversations.map((conv) => (
                             <div 
@@ -190,18 +191,18 @@ const AdminChat = () => {
                                     padding: '20px 24px', 
                                     borderBottom: `1px solid ${borderColor}`, 
                                     cursor: 'pointer',
-                                    backgroundColor: selectedEmail === conv.user_email ? '#111' : 'transparent',
+                                    backgroundColor: selectedEmail === conv.user_email ? '#F7F2EC' : 'transparent',
                                     transition: 'all 0.2s',
-                                    borderLeft: selectedEmail === conv.user_email ? `3px solid ${brandColor}` : '3px solid transparent'
+                                    borderLeft: selectedEmail === conv.user_email ? `4px solid ${brandColor}` : '4px solid transparent'
                                 }}
                             >
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                                    <div style={{ fontSize: '12px', fontWeight: '700', color: selectedEmail === conv.user_email ? '#FFF' : '#AAA', width: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    <div style={{ fontSize: '13px', fontWeight: '700', color: selectedEmail === conv.user_email ? '#221510' : '#4A3B32', width: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                         {conv.user_email.split('@')[0]}
                                     </div>
-                                    <div style={{ fontSize: '10px', color: '#444' }}>{new Date(conv.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                                    <div style={{ fontSize: '11px', color: '#6B584C' }}>{new Date(conv.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                                 </div>
-                                <div style={{ fontSize: '11px', color: '#666', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                <div style={{ fontSize: '12px', color: '#6B584C', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                     {conv.sender === 'admin' ? 'You: ' : ''}{conv.message}
                                 </div>
                             </div>
@@ -225,32 +226,32 @@ const AdminChat = () => {
                     zIndex: 20
                 }}>
                     {/* Chat Header */}
-                    <div style={{ padding: isMobile ? '16px' : '24px 32px', borderBottom: `1px solid ${borderColor}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ padding: isMobile ? '16px' : '20px 32px', borderBottom: `1px solid ${borderColor}`, backgroundColor: '#FFFFFF', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '12px' : '16px' }}>
                             {isMobile && (
                                 <button 
                                     onClick={() => setViewMode('list')}
-                                    style={{ background: 'none', border: 'none', color: '#666', padding: '4px', cursor: 'pointer' }}
+                                    style={{ background: 'none', border: 'none', color: '#6B584C', padding: '4px', cursor: 'pointer' }}
                                 >
                                     <ChevronLeft size={20} />
                                 </button>
                             )}
-                            <div style={{ width: isMobile ? '32px' : '40px', height: isMobile ? '32px' : '40px', backgroundColor: '#222', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <div style={{ width: isMobile ? '32px' : '40px', height: isMobile ? '32px' : '40px', backgroundColor: '#F7F2EC', border: '1px solid #DFCFC2', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 <User size={20} color={brandColor} />
                             </div>
                             <div>
-                                <div style={{ fontSize: '14px', fontWeight: '700', color: '#FFF' }}>{selectedEmail}</div>
-                                <div style={{ fontSize: '10px', color: '#10B981', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                    <div style={{ width: '6px', height: '6px', backgroundColor: '#10B981', borderRadius: '50%' }} /> Active Consumer
+                                <div style={{ fontSize: '14px', fontWeight: '700', color: '#221510' }}>{selectedEmail}</div>
+                                <div style={{ fontSize: '11px', color: '#16A34A', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '600' }}>
+                                    <div style={{ width: '6px', height: '6px', backgroundColor: '#16A34A', borderRadius: '50%' }} /> Active Consumer
                                 </div>
                             </div>
                         </div>
-                        <div style={{ color: '#444', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', display: isMobile ? 'none' : 'block' }}>Live Connection</div>
+                        <div style={{ color: '#6B584C', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.1em', display: isMobile ? 'none' : 'block' }}>Live Connection</div>
                     </div>
 
                     <div ref={scrollRef} style={{ flex: 1, padding: isMobile ? '20px' : '32px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                         <div style={{ textAlign: 'center', marginBottom: isMobile ? '20px' : '32px' }}>
-                            <div style={{ fontSize: '9px', color: '#333', textTransform: 'uppercase', letterSpacing: '0.2em' }}>Beginning of Conversation</div>
+                            <div style={{ fontSize: '11px', color: '#8D5B36', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.15em' }}>Beginning of Conversation</div>
                         </div>
 
                         {messages.map((msg) => (
@@ -258,7 +259,7 @@ const AdminChat = () => {
                                 key={msg.id} 
                                 style={{ 
                                     alignSelf: msg.sender === 'admin' ? 'flex-end' : 'flex-start',
-                                    maxWidth: isMobile ? '85%' : '60%',
+                                    maxWidth: isMobile ? '85%' : '65%',
                                     display: 'flex',
                                     flexDirection: 'column',
                                     alignItems: msg.sender === 'admin' ? 'flex-end' : 'flex-start'
@@ -266,18 +267,19 @@ const AdminChat = () => {
                             >
                                 <div 
                                     style={{ 
-                                        backgroundColor: msg.sender === 'admin' ? '#FFF' : '#111',
-                                        color: msg.sender === 'admin' ? '#000' : '#CCC',
+                                        backgroundColor: msg.sender === 'admin' ? brandColor : '#FFFFFF',
+                                        color: msg.sender === 'admin' ? '#FFFFFF' : '#221510',
                                         padding: '12px 20px',
-                                        borderRadius: msg.sender === 'admin' ? '20px 20px 4px 20px' : '20px 20px 20px 4px',
-                                        fontSize: '13px',
+                                        borderRadius: msg.sender === 'admin' ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                                        fontSize: '14px',
                                         lineHeight: '1.6',
-                                        border: msg.sender === 'admin' ? 'none' : `1px solid ${borderColor}`
+                                        border: msg.sender === 'admin' ? 'none' : `1px solid ${borderColor}`,
+                                        boxShadow: '0 2px 8px rgba(34,21,16,0.04)'
                                     }}
                                 >
                                     {msg.message}
                                 </div>
-                                <div style={{ fontSize: '9px', color: '#333', marginTop: '6px', textTransform: 'uppercase' }}>
+                                <div style={{ fontSize: '10px', color: '#6B584C', marginTop: '6px', textTransform: 'uppercase' }}>
                                     {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </div>
                             </div>
@@ -285,14 +287,14 @@ const AdminChat = () => {
                     </div>
 
                     {/* Footer Input */}
-                    <form onSubmit={handleSendReply} style={{ padding: isMobile ? '16px' : '24px 32px', borderTop: `1px solid ${borderColor}`, backgroundColor: bgColor }}>
-                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', backgroundColor: '#111', border: `1px solid ${borderColor}`, padding: isMobile ? '8px 16px' : '12px 20px', borderRadius: '4px' }}>
+                    <form onSubmit={handleSendReply} style={{ padding: isMobile ? '16px' : '20px 32px', borderTop: `1px solid ${borderColor}`, backgroundColor: '#FFFFFF' }}>
+                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', backgroundColor: '#F7F2EC', border: `1px solid #DFCFC2`, padding: isMobile ? '8px 16px' : '10px 18px', borderRadius: '8px' }}>
                             <input 
                                 type="text" 
                                 placeholder={isMobile ? "Reply..." : `Reply to ${selectedEmail.split('@')[0]}...`}
                                 value={reply}
                                 onChange={(e) => setReply(e.target.value)}
-                                style={{ flex: 1, background: 'transparent', border: 'none', color: '#FFF', fontSize: isMobile ? '14px' : '13px', outline: 'none' }} 
+                                style={{ flex: 1, background: 'transparent', border: 'none', color: '#221510', fontSize: isMobile ? '14px' : '13px', outline: 'none' }} 
                             />
                             <button 
                                 type="submit" 
@@ -306,11 +308,11 @@ const AdminChat = () => {
                 </div>
             ) : (
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px' }}>
-                    <div style={{ width: '80px', height: '80px', backgroundColor: '#111', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '32px' }}>
-                        <MessageCircle size={32} color="#333" />
+                    <div style={{ width: '80px', height: '80px', backgroundColor: '#F7F2EC', border: '1px solid #DFCFC2', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '32px' }}>
+                        <MessageCircle size={32} color={brandColor} />
                     </div>
-                    <div style={{ fontFamily: '"Playfair Display", serif', fontSize: '32px', color: '#FFF', fontStyle: 'italic', marginBottom: '16px' }}>Client Interactions</div>
-                    <p style={{ fontSize: '13px', color: '#666', textAlign: 'center', maxWidth: '400px', lineHeight: '1.8' }}>Select a conversation from the sidebar to begin interacting with your customers. All messages sent here appear instantly in their local store chat widget.</p>
+                    <div style={{ fontFamily: 'var(--font-heading)', fontSize: '28px', color: '#221510', fontWeight: '800', letterSpacing: '-0.02em', marginBottom: '16px' }}>Client Interactions</div>
+                    <p style={{ fontSize: '14px', color: '#6B584C', textAlign: 'center', maxWidth: '400px', lineHeight: '1.8' }}>Select a conversation from the sidebar to begin interacting with your customers. All messages sent here appear instantly in their local store chat widget.</p>
                 </div>
             )}
         </div>

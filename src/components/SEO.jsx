@@ -6,14 +6,14 @@ import React from 'react';
  */
 const SEO = ({
   title,
-  description = "Start your professional online store with ZizzyStores. The easiest way to sell products in Nigeria and beyond.",
+  description = "Start your professional online store with Unbley. The easiest way to sell products in Nigeria and beyond.",
   canonical,
   ogImage,
   ogType = 'website',
-  twitterHandle = '@zizzystores',
+  twitterHandle = '@unbley',
   keywords
 }) => {
-  const siteName = 'ZizzyStores';
+  const siteName = 'Unbley';
   const fullTitle = title ? `${title} | ${siteName}` : siteName;
 
   // Clean meta description (remove HTML, collapse whitespace, truncate to 160)
@@ -27,11 +27,11 @@ const SEO = ({
   }, [description]);
 
   // Default fallback image if none provided
-  const defaultImage = 'https://zizzystores.com/og-default.jpg';
+  const defaultImage = 'https://unbley.com/og-default.jpg';
   const finalImage = ogImage || defaultImage;
 
   // Use canonical if provided, otherwise fallback to current origin
-  const siteUrl = 'https://zizzystores.com';
+  const siteUrl = 'https://unbley.com';
   // During SSG/SSR, window is not available, so we use the siteUrl as base
   const finalUrl = canonical || siteUrl;
 

@@ -18,8 +18,8 @@ const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
 const fbAppId = process.env.VITE_FB_APP_ID || '';
 
 if (!supabaseUrl || !supabaseKey) {
-  console.error('❌ Supabase credentials missing. Check your .env file.');
-  process.exit(1);
+  console.warn('⚠️ Supabase credentials missing (VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY). Skipping social preview generation.');
+  process.exit(0);
 }
 
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -52,8 +52,8 @@ async function generatePreviews() {
     for (const post of posts) {
       const title = post.title;
       const description = post.meta_description || post.excerpt || '';
-      const image = post.cover_image_url || 'https://zizzystores.com/og-default.jpg';
-      const url = `https://zizzystores.com/blog/${post.slug}`;
+      const image = post.cover_image_url || 'https://unbley.com/og-default.jpg';
+      const url = `https://unbley.com/blog/${post.slug}`;
       const folderPath = path.join(distDir, 'blog', post.slug);
 
       injectMeta(folderPath, template, { title, description, image, url });
@@ -83,7 +83,7 @@ function injectMeta(folderPath, template, data) {
 
   const cleanDesc = cleanString(data.description).substring(0, 160);
   const cleanTitle = cleanString(data.title);
-  const fullTitle = `${cleanTitle} | ZizzyStores`;
+  const fullTitle = `${cleanTitle} | Unbley`;
 
   // Inject/Replace Meta Tags using regex
   // We use exactly 1678x937 for these specific blog images

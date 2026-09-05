@@ -2,7 +2,7 @@
 import { supabase } from './src/lib/supabase.js';
 
 async function checkTable() {
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from('blog_posts')
     .select('*')
     .limit(1);

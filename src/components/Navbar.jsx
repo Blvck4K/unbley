@@ -3,11 +3,14 @@ import { Search, ShoppingCart, Menu, X, User as UserIcon, LogIn, LayoutGrid } fr
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../context/ToastContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Navbar() {
   const [search, setSearch] = useState('');
   const [scrolled, setScrolled] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const { toast } = useToast();
   const navigate = useNavigate();
 
   const { user, signOut } = useAuth();
@@ -28,16 +31,31 @@ export default function Navbar() {
     window.addEventListener('resize', handleResize);
     window.addEventListener('scroll', handleScroll);
 
+    const updateCartCount = () => {
+      try {
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        const count = cart.reduce((total, item) => total + (item.qty || 1), 0);
+        setCartCount(count);
+      } catch {
+        setCartCount(0);
+      }
+    };
+    updateCartCount();
+    window.addEventListener('storage', updateCartCount);
+    window.addEventListener('cartUpdated', updateCartCount);
+
     return () => {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('storage', updateCartCount);
+      window.removeEventListener('cartUpdated', updateCartCount);
     };
   }, []);
 
   const handleSearch = async (e) => {
     if (e.key === 'Enter' && search.trim()) {
       try {
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from('brand_profiles')
           .select('id')
           .ilike('brand_name', `%${search}%`)
@@ -48,11 +66,11 @@ export default function Navbar() {
           navigate(`/shop-brand/${data.id}`);
           setIsMenuOpen(false);
         } else {
-          alert("Brand not found. Try searching by their exact name or domain!");
+          toast.info("Brand not found. Try searching by their exact name or domain!");
         }
       } catch (err) {
         console.error("Search failed:", err);
-        alert("Brand not found.");
+        toast.info("Brand not found.");
       }
     }
   };
@@ -64,16 +82,16 @@ export default function Navbar() {
       className="navbar"
       style={{
         height: '72px',
-        backgroundColor: scrolled ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 255, 255, 0.95)',
-        boxShadow: scrolled ? '0 10px 30px -10px rgba(0,0,0,0.1)' : 'none',
+        backgroundColor: scrolled ? 'rgba(255, 255, 255, 0.85)' : 'rgba(255, 255, 255, 0.98)',
+        boxShadow: scrolled ? '0 10px 30px -10px rgba(34, 21, 16, 0.08)' : 'none',
         transition: 'all 0.3s ease'
       }}
     >
       <div className="container flex justify-between items-center" style={{ width: '100%', height: '100%' }}>
         <div className="flex items-center justify-between" style={{ width: isMobile ? '100%' : 'auto', gap: isMobile ? '0' : '32px' }}>
-          <Link to="/" className="font-bold flex items-center gap-0" onClick={() => setIsMenuOpen(false)} style={{ fontSize: '32px', fontFamily: '"Playfair Display", serif', letterSpacing: '-0.03em', color: 'inherit', textDecoration: 'none' }}>
+          <Link to="/" className="font-bold flex items-center gap-0" onClick={() => setIsMenuOpen(false)} style={{ fontSize: '30px', fontFamily: 'var(--font-heading)', fontWeight: '800', letterSpacing: '-0.03em', color: 'var(--primary)', textDecoration: 'none' }}>
             <motion.div whileHover={{ scale: 1.05 }} transition={{ type: "spring", stiffness: 400, damping: 10 }} className="flex items-center" style={{ gap: '0px' }}>
-              <span>ZizzyStores.</span>
+              <span>Unbley.</span>
             </motion.div>
           </Link>
 
@@ -205,6 +223,30 @@ export default function Navbar() {
                 style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: '14px', width: '160px' }}
               />
             </div>
+
+            {/* Desktop Cart */}
+            <Link to="/cart" title="Shopping Bag" style={{ position: 'relative', color: 'inherit', display: 'flex', alignItems: 'center', padding: '8px' }}>
+              <ShoppingCart size={20} />
+              {cartCount > 0 && (
+                <span style={{
+                  position: 'absolute',
+                  top: '-2px',
+                  right: '-2px',
+                  backgroundColor: 'var(--primary, #6A3E1F)',
+                  color: '#FFF',
+                  fontSize: '10px',
+                  fontWeight: 'bold',
+                  width: '18px',
+                  height: '18px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  {cartCount}
+                </span>
+              )}
+            </Link>
 
             <div className="flex items-center gap-4">
               {user ? (

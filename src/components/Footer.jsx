@@ -1,56 +1,57 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { FaWhatsapp, FaInstagram, FaTwitter, FaFacebook, FaYoutube, FaPinterest } from "react-icons/fa";
+import logoImg from '../assets/logogo.png';
 
 export default function Footer() {
   return (
-    <footer className="footer" style={{ padding: '80px 0 30px', backgroundColor: '#000000', color: '#ffffff', borderTop: 'none' }}>
+    <footer className="footer" style={{ padding: '80px 0 30px', backgroundColor: '#24160E', color: '#FDFBF7', borderTop: 'none' }}>
       <style>{`
         .footer-brand p {
-            color: #a3a3a3 !important;
+            color: #C9BFB5 !important;
         }
         .footer-col h4 {
-            color: #ffffff !important;
+            color: #FDFBF7 !important;
         }
         .footer a {
-            color: #a3a3a3 !important;
+            color: #C9BFB5 !important;
         }
         .footer-content-wrapper {
             position: relative;
             z-index: 10;
         }
         .footer-link {
-          color: #a3a3a3 !important;
+          color: #C9BFB5 !important;
           text-decoration: none;
           transition: color 0.2s ease !important;
           font-size: 15px !important;
           display: inline-block;
         }
         .footer-link:hover {
-          color: var(--accent) !important; /* light blue */
+          color: #E8A87C !important;
         }
         .footer-social {
-          color: #a3a3a3 !important;
+          color: #C9BFB5 !important;
           transition: color 0.2s ease, transform 0.2s ease !important;
           display: inline-flex;
         }
         .footer-social:hover {
-          color: var(--accent) !important;
+          color: #E8A87C !important;
           transform: translateY(-2px);
         }
         .footer-brand-title {
           font-size: 32px;
           letter-spacing: -0.03em;
-          color: #ffffff;
-          font-family: 'Playfair Display', serif;
-          font-weight: 700;
+          color: #FDFBF7;
+          font-family: var(--font-heading);
+          font-weight: 800;
         }
         .footer-cta {
           display: inline-flex;
           align-items: center;
           margin-top: 24px;
           padding: 14px 28px;
-          background-color: var(--accent);
+          background-color: #8D5B36;
           color: #ffffff !important;
           border-radius: 8px;
           font-size: 15px !important;
@@ -59,23 +60,23 @@ export default function Footer() {
           transition: background-color 0.2s ease, transform 0.2s ease !important;
         }
         .footer-cta:hover {
-          background-color: #0052cc;
+          background-color: #6A3E1F;
           transform: translateY(-2px);
         }
         .footer-bottom-divider {
-          border-top: 1px solid #1a1a1a !important;
+          border-top: 1px solid #3D291D !important;
         }
         .footer-bottom-text {
-          color: #737373 !important;
+          color: #A8998C !important;
         }
         .footer-bottom-link {
-          color: #737373 !important;
+          color: #A8998C !important;
           text-decoration: none;
           font-size: 13px !important;
           transition: color 0.2s ease !important;
         }
         .footer-bottom-link:hover {
-          color: var(--accent) !important;
+          color: #E8A87C !important;
         }
         .footer-heading {
           font-size: 14px !important;
@@ -83,7 +84,7 @@ export default function Footer() {
           margin-bottom: 20px !important;
           text-transform: uppercase;
           letter-spacing: 0.05em;
-          color: #ffffff;
+          color: #FDFBF7;
         }
         @media (max-width: 768px) {
           .footer-grid {
@@ -105,8 +106,8 @@ export default function Footer() {
         <div className="footer-grid">
           <div className="footer-brand" style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <div className="footer-brand-title" style={{ display: 'flex', alignItems: 'center', gap: '0px', justifyContent: 'center' }}>
-              <img src="https://raw.githubusercontent.com/Blvck4K/Jss-png/main/Untitled%20design.png" alt="ZizzyStores Logo" style={{ width: '40px', height: '40px', objectFit: 'contain', marginRight: '0px' }} />
-              <span>ZizzyStores.</span>
+              <img src={logoImg} alt="Unbley Logo" style={{ width: '40px', height: '40px', objectFit: 'contain', marginRight: '0px' }} />
+              <span>Unbley.</span>
             </div>
             <p style={{ maxWidth: '320px', margin: '16px auto 0', lineHeight: '1.6', fontSize: '15px' }}>
               Build your brand’s online store, own your domain, and sell professionally.
@@ -153,7 +154,7 @@ export default function Footer() {
         </div>
 
         <div className="footer-bottom footer-bottom-divider" style={{ flexDirection: 'column', gap: '8px', textAlign: 'center', paddingTop: '24px', marginTop: '16px' }}>
-          <div className="footer-bottom-text" style={{ fontSize: '12px' }}>© {new Date().getFullYear()} ZIZZYSTORES. ALL RIGHTS RESERVED.</div>
+          <div className="footer-bottom-text" style={{ fontSize: '12px' }}>© {new Date().getFullYear()} UNBLEY. ALL RIGHTS RESERVED.</div>
           <div className="flex gap-6 justify-center">
             <a href="#" className="footer-bottom-link">Privacy</a>
             <a href="#" className="footer-bottom-link">Terms</a>

@@ -17,10 +17,10 @@
       "has": [
         {
           "type": "host",
-          "value": "www.zizzystores.com"
+          "value": "www.unbley.com"
         }
       ],
-      "destination": "https://zizzystores.com/:path*",
+      "destination": "https://unbley.com/:path*",
       "permanent": true
     }
   ],

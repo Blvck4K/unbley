@@ -6,11 +6,19 @@ import PageTransition from '../components/PageTransition';
 import { motion } from 'framer-motion';
 
 export default function Storefront() {
-  const brandColor = '#06acf8';
-  const bgColor = '#050505';
+  const brandColor = '#6A3E1F';
+  const bgColor = '#FBF9F5';
 
   const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     async function loadBrands() {
@@ -37,7 +45,7 @@ export default function Storefront() {
   const s = {
     page: {
       backgroundColor: bgColor,
-      color: '#E5E5E5',
+      color: '#221510',
       minHeight: '100vh',
       fontFamily: '"Inter", sans-serif',
       position: 'relative',
@@ -52,7 +60,7 @@ export default function Storefront() {
       transform: 'translateX(-50%)',
       width: '100%',
       height: '800px',
-      background: `radial-gradient(ellipse at 50% 20%, rgba(6, 172, 248, 0.15) 0%, rgba(6, 172, 248, 0.05) 30%, transparent 60%)`,
+      background: `radial-gradient(ellipse at 50% 20%, rgba(106, 62, 31, 0.08) 0%, rgba(106, 62, 31, 0.03) 30%, transparent 60%)`,
       pointerEvents: 'none',
       zIndex: 0
     },
@@ -65,7 +73,9 @@ export default function Storefront() {
       justifyContent: 'space-between',
       alignItems: 'center',
       padding: '32px 64px',
-      borderBottom: '1px solid rgba(255,255,255,0.05)'
+      borderBottom: '1px solid #EAE3D9',
+      backgroundColor: 'rgba(255, 255, 255, 0.8)',
+      backdropFilter: 'blur(12px)'
     },
     navCenter: {
       position: 'absolute',
@@ -76,7 +86,7 @@ export default function Storefront() {
       alignItems: 'center'
     },
     navLink: (active) => ({
-      color: active ? '#FFF' : '#888',
+      color: active ? '#221510' : '#6B584C',
       fontSize: '11px',
       fontWeight: '600',
       letterSpacing: '0.05em',
@@ -101,14 +111,13 @@ export default function Storefront() {
       maxWidth: '900px'
     },
     heroTitle: {
-      fontFamily: '"Playfair Display", serif',
-      fontStyle: 'italic',
-      fontSize: '72px',
-      fontWeight: '400',
-      color: '#FFF',
+      fontFamily: 'var(--font-heading)',
+      fontSize: isMobile ? '38px' : '64px',
+      fontWeight: '800',
+      color: '#221510',
       lineHeight: '1.1',
       marginBottom: '24px',
-      letterSpacing: '-0.02em'
+      letterSpacing: '-0.03em'
     },
     heroHighlight: {
       color: brandColor,
@@ -116,7 +125,7 @@ export default function Storefront() {
     },
     heroDesc: {
       fontSize: '14px',
-      color: '#A0A0A0',
+      color: '#6B584C',
       lineHeight: '1.6',
       maxWidth: '460px'
     },
@@ -147,18 +156,20 @@ export default function Storefront() {
       display: 'flex',
       alignItems: 'center',
       gap: '12px',
-      backgroundColor: '#0A0A0A',
-      border: '1px solid #1A1A1A',
+      backgroundColor: '#FFFFFF',
+      border: '1px solid #DFCFC2',
+      borderRadius: '8px',
+      boxShadow: '0 2px 8px rgba(34, 21, 16, 0.04)',
       padding: '12px 16px',
       width: '280px'
     },
     searchInput: {
       backgroundColor: 'transparent',
       border: 'none',
-      color: '#FFF',
-      fontSize: '10px',
+      color: '#221510',
+      fontSize: '11px',
       fontWeight: '600',
-      letterSpacing: '0.1em',
+      letterSpacing: '0.05em',
       width: '100%',
       outline: 'none'
     },
@@ -183,7 +194,9 @@ export default function Storefront() {
     cardImageWrap: {
       width: '100%',
       aspectRatio: '1',
-      backgroundColor: '#111',
+      backgroundColor: '#F7F2EC',
+      border: '1px solid #EAE3D9',
+      borderRadius: '8px',
       overflow: 'hidden',
       position: 'relative'
     },
@@ -211,83 +224,91 @@ export default function Storefront() {
       color: brandColor
     },
     cardTitle: {
-      fontFamily: '"Playfair Display", serif',
-      fontSize: '24px',
-      color: '#FFF'
+      fontFamily: 'var(--font-heading)',
+      fontSize: '20px',
+      color: '#221510',
+      fontWeight: '700',
+      letterSpacing: '-0.01em'
     },
     cardDesc: {
-      fontSize: '12px',
-      color: '#888',
-      fontStyle: 'italic',
-      fontFamily: '"Playfair Display", serif',
-      lineHeight: '1.4',
+      fontSize: '13px',
+      color: '#6B584C',
+      lineHeight: '1.5',
       marginTop: '4px',
       maxWidth: '90%'
     },
     cardBadge: {
       width: '28px',
       height: '28px',
-      border: '1px solid #222',
+      border: '1px solid #DFCFC2',
+      borderRadius: '6px',
+      backgroundColor: '#F7F2EC',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      color: '#888',
+      color: '#6A3E1F',
       fontSize: '11px',
-      fontFamily: '"Playfair Display", serif',
-      fontStyle: 'italic'
+      fontFamily: 'var(--font-heading)',
+      fontWeight: '700'
     },
 
     // Newsletter Section
     newsletter: {
       position: 'relative',
       zIndex: 10,
-      borderTop: '1px solid #111',
-      padding: '120px 0',
+      borderTop: '1px solid #EAE3D9',
+      backgroundColor: '#F7F2EC',
+      padding: '100px 0',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       textAlign: 'center'
     },
     newsletterTitle: {
-      fontFamily: '"Playfair Display", serif',
+      fontFamily: 'var(--font-heading)',
       fontSize: '32px',
-      fontStyle: 'italic',
-      color: '#FFF',
+      fontWeight: '800',
+      letterSpacing: '-0.02em',
+      color: '#221510',
       marginBottom: '16px'
     },
     newsletterDesc: {
-      fontSize: '12px',
-      color: '#888',
-      marginBottom: '40px'
+      fontSize: '13px',
+      color: '#6B584C',
+      marginBottom: '40px',
+      maxWidth: '480px'
     },
     newsletterForm: {
       display: 'flex',
       width: '100%',
       maxWidth: '480px',
-      gap: '16px'
+      gap: '12px'
     },
     newsletterInput: {
       flex: 1,
-      backgroundColor: '#111',
-      border: '1px solid #222',
-      padding: '16px 20px',
-      color: '#FFF',
-      fontSize: '11px',
-      letterSpacing: '0.05em',
+      backgroundColor: '#FFFFFF',
+      border: '1px solid #DFCFC2',
+      borderRadius: '8px',
+      padding: '14px 18px',
+      color: '#221510',
+      fontSize: '12px',
+      letterSpacing: '0.02em',
       outline: 'none',
       fontFamily: '"Inter", sans-serif'
     },
     newsletterBtn: {
       backgroundColor: brandColor,
-      color: '#000',
+      color: '#FFFFFF',
       border: 'none',
+      borderRadius: '8px',
       padding: '0 32px',
       fontSize: '11px',
       fontWeight: '700',
       letterSpacing: '0.1em',
       textTransform: 'uppercase',
       cursor: 'pointer',
-      transition: 'opacity 0.2s'
+      transition: 'opacity 0.2s',
+      boxShadow: '0 4px 12px rgba(106, 62, 31, 0.2)'
     },
 
     // Footer
@@ -295,17 +316,18 @@ export default function Storefront() {
       position: 'relative',
       zIndex: 10,
       padding: '40px 64px',
-      borderTop: '1px solid #111',
+      borderTop: '1px solid #3D291E',
+      backgroundColor: '#24160E',
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center'
     },
     footerBrand: {
-      fontFamily: '"Playfair Display", serif',
+      fontFamily: 'var(--font-heading)',
       fontSize: '20px',
-      fontStyle: 'italic',
-      color: '#FFF',
-      fontWeight: '600'
+      color: '#FDFBF7',
+      fontWeight: '800',
+      letterSpacing: '-0.02em'
     },
     footerLinks: {
       display: 'flex',
@@ -315,22 +337,31 @@ export default function Storefront() {
       transform: 'translateX(-50%)' // Perfectly centered
     },
     footerLink: {
-      fontSize: '9px',
+      fontSize: '10px',
       fontWeight: '600',
       letterSpacing: '0.1em',
-      color: '#666',
+      color: '#C9BFB5',
       textTransform: 'uppercase',
       cursor: 'pointer'
     },
     footerCopyright: {
       fontSize: '9px',
       letterSpacing: '0.05em',
-      color: '#444',
+      color: '#9C8E80',
       textTransform: 'uppercase'
     }
   };
 
-  // No static products array here anymore
+  const filteredBrands = brands.filter((brand) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      brand.brand_name?.toLowerCase().includes(q) ||
+      brand.tagline?.toLowerCase().includes(q) ||
+      brand.subcategory?.toLowerCase().includes(q) ||
+      brand.manifesto?.toLowerCase().includes(q)
+    );
+  });
 
   return (
     <PageTransition>
@@ -340,17 +371,16 @@ export default function Storefront() {
       {/* Navbar */}
       <nav style={s.navbar} className="store-nav">
         <div style={{
-          fontFamily: '"Playfair Display", serif',
-          fontSize: '28px',
+          fontFamily: 'var(--font-heading)',
+          fontSize: '26px',
           color: brandColor,
-          fontWeight: '700',
+          fontWeight: '800',
           textTransform: 'uppercase',
-          letterSpacing: '0.05em',
-          textShadow: `0 0 12px ${brandColor}40`
-        }} className="store-logo">ZIZZYSTORES.</div>
+          letterSpacing: '-0.02em'
+        }} className="store-logo">UNBLEY.</div>
 
         <div style={s.navIcons}>
-          <Link to="/" title="Log Out" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#888', transition: 'color 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.color = '#FFF'} onMouseLeave={(e) => e.currentTarget.style.color = '#888'}>
+          <Link to="/" title="Log Out" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#6B584C', transition: 'color 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.color = '#221510'} onMouseLeave={(e) => e.currentTarget.style.color = '#6B584C'}>
             <LogOut size={20} />
           </Link>
         </div>
@@ -382,23 +412,33 @@ export default function Storefront() {
       {/* filters removed per request */}
       <div style={{...s.filterBar, justifyContent: 'center'}} className="store-filter-bar">
         <div style={s.searchBox}>
-          <Search size={14} color="#666" />
-          <input type="text" placeholder="SEARCH BRANDS..." style={s.searchInput} />
+          <Search size={14} color="#6B584C" />
+          <input 
+            type="text" 
+            placeholder="SEARCH BRANDS..." 
+            style={s.searchInput} 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
       </div>
 
       {/* Product Grid */}
       <div style={s.grid} className="store-grid">
         {loading ? (
-          <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '64px', color: '#888' }}>
+          <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '64px', color: '#6B584C' }}>
             Syncing Brand Matrix...
           </div>
         ) : brands.length === 0 ? (
-          <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '64px', color: '#888' }}>
+          <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '64px', color: '#6B584C' }}>
             No independent ateliers are currently broadcasting. Check back later.
           </div>
+        ) : filteredBrands.length === 0 ? (
+          <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '64px', color: '#6B584C' }}>
+            No ateliers match "{searchQuery}".
+          </div>
         ) : (
-          brands.map((brand, idx) => (
+          filteredBrands.map((brand, idx) => (
             <motion.div 
               key={brand.id || idx}
               initial={{ opacity: 0, y: 20 }}
@@ -419,7 +459,7 @@ export default function Storefront() {
                   <div style={s.cardLeft}>
                     <div style={{...s.cardCategory, color: brand.accent_color || brandColor}}>{brand.subcategory || 'INDEPENDENT'}</div>
                     <div style={s.cardTitle}>{brand.brand_name}</div>
-                    <div style={s.cardDesc}>{brand.tagline || brand.manifesto?.substring(0, 60) + '...' || 'Mastering the architecture of modern commerce.'}</div>
+                    <div style={s.cardDesc}>{brand.tagline || (brand.manifesto ? brand.manifesto.substring(0, 60) + '...' : 'Mastering the architecture of modern commerce.')}</div>
                   </div>
                   <div style={s.cardBadge}>{brand.brand_name?.charAt(0)?.toUpperCase() || 'O'}</div>
                 </div>
@@ -445,7 +485,7 @@ export default function Storefront() {
 
       {/* Footer */}
       <footer style={s.footer} className="store-footer">
-        <div style={s.footerBrand}>Zizzystores</div>
+        <div style={s.footerBrand}>Unbley</div>
         <div style={s.footerLinks} className="store-footer-links">
           <div style={s.footerLink}>Terms</div>
           <div style={s.footerLink}>Privacy</div>
@@ -491,25 +531,26 @@ export default function Storefront() {
           width: 36px;
           height: 36px;
           border-radius: 50%;
-          background-color: rgba(0,0,0,0.5);
+          background-color: rgba(255,255,255,0.9);
           backdrop-filter: blur(4px);
           display: flex;
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          border: 1px solid rgba(255,255,255,0.1);
-          color: #FFF;
+          border: 1px solid #DFCFC2;
+          color: #221510;
           transition: all 0.2s;
         }
         .icon-btn:hover {
           background-color: ${brandColor};
-          color: #000;
+          color: #FFF;
           border-color: ${brandColor};
         }
         .show-more-btn {
-          background-color: transparent;
-          border: 1px solid #333;
-          color: #FFF;
+          background-color: #FFFFFF;
+          border: 1px solid #DFCFC2;
+          border-radius: 6px;
+          color: #221510;
           padding: 12px 0;
           width: 100%;
           margin-top: 8px;
@@ -530,7 +571,7 @@ export default function Storefront() {
         }
         .show-more-btn:hover {
           background-color: ${brandColor} !important;
-          color: #000 !important;
+          color: #FFF !important;
         }
       `}</style>
       </div>

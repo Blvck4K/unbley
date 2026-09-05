@@ -14,8 +14,8 @@ export default function SuccessPage() {
   const [realState, setRealState] = useState({
     reference: location.state?.reference || '...',
     amount: typeof location.state?.amount === 'number' ? location.state.amount : 30000,
-    email: location.state?.email || user?.email || 'admin@zizzystores.com',
-    brandName: location.state?.brandName || user?.user_metadata?.brand_name || 'Premium Zizzystores Vendor',
+    email: location.state?.email || user?.email || 'admin@unbley.com',
+    brandName: location.state?.brandName || user?.user_metadata?.brand_name || 'Premium Unbley Vendor',
     method: location.state?.method || 'paystack',
     currency: location.state?.currency || 'NGN'
   });
@@ -27,7 +27,7 @@ export default function SuccessPage() {
       // If no reference in memory, or if we want to confirm the "legit" ID from DB
       if (!location.state?.reference || realState.reference === '...') {
         try {
-          const { data, error } = await supabase
+          const { data } = await supabase
             .from('brand_profiles')
             .select('last_transaction_id, brand_name, email_address')
             .eq('id', user.id)
@@ -47,18 +47,18 @@ export default function SuccessPage() {
       }
     }
     verifyRealtimeData();
-  }, [user, location.state]);
+  }, [user, location.state, realState.reference]);
 
   const { reference, amount, email, brandName } = realState;
 
-  const brandColor = '#06acf8';
+  const brandColor = '#6A3E1F';
   const successColor = '#10B981'; // Vibrant green for success
-  const bgColor = '#050505';
+  const bgColor = '#FBF9F5';
 
   const s = {
     page: {
       backgroundColor: bgColor,
-      color: '#FFF',
+      color: '#221510',
       minHeight: '100vh',
       fontFamily: '"Inter", sans-serif',
       display: 'flex',
@@ -70,13 +70,14 @@ export default function SuccessPage() {
       justifyContent: 'space-between',
       alignItems: 'center',
       padding: '24px 48px',
-      borderBottom: '1px solid #1A1A1A'
+      borderBottom: '1px solid #EAE3D9',
+      backgroundColor: '#FFFFFF'
     },
     logo: {
-      fontFamily: '"Playfair Display", serif',
+      fontFamily: 'var(--font-heading)',
       fontSize: '20px',
-      fontWeight: '700',
-      letterSpacing: '0.05em',
+      fontWeight: '800',
+      letterSpacing: '-0.02em',
       color: brandColor,
       textTransform: 'uppercase'
     },
@@ -87,7 +88,7 @@ export default function SuccessPage() {
       fontSize: '10px',
       fontWeight: '700',
       letterSpacing: '0.2em',
-      color: '#666',
+      color: '#6B584C',
       textTransform: 'uppercase'
     },
     container: {
@@ -104,7 +105,7 @@ export default function SuccessPage() {
     iconBox: {
       width: '64px',
       height: '64px',
-      backgroundColor: 'rgba(16, 185, 129, 0.15)',
+      backgroundColor: 'rgba(16, 185, 129, 0.12)',
       borderRadius: '16px',
       display: 'flex',
       alignItems: 'center',
@@ -112,14 +113,16 @@ export default function SuccessPage() {
       marginBottom: '32px'
     },
     title: {
-      fontFamily: '"Playfair Display", serif',
-      fontSize: '36px',
-      fontWeight: '600',
+      fontFamily: 'var(--font-heading)',
+      fontSize: '32px',
+      fontWeight: '800',
+      letterSpacing: '-0.02em',
       marginBottom: '16px',
-      textAlign: 'center'
+      textAlign: 'center',
+      color: '#221510'
     },
     subtitle: {
-      color: '#888',
+      color: '#6B584C',
       fontSize: '14px',
       lineHeight: '1.6',
       textAlign: 'center',
@@ -127,14 +130,15 @@ export default function SuccessPage() {
       marginBottom: '48px'
     },
     card: {
-      backgroundColor: '#111',
-      border: '1px solid #222',
+      backgroundColor: '#FFFFFF',
+      border: '1px solid #EAE3D9',
       borderRadius: '8px',
       width: '100%',
       padding: '32px',
       position: 'relative',
       overflow: 'hidden',
-      marginBottom: '48px'
+      marginBottom: '48px',
+      boxShadow: '0 4px 16px rgba(34,21,16,0.04)'
     },
     glowLine: {
       position: 'absolute',
@@ -158,20 +162,21 @@ export default function SuccessPage() {
     label: {
       fontSize: '10px',
       fontWeight: '700',
-      color: '#666',
+      color: '#6B584C',
       letterSpacing: '0.1em',
       textTransform: 'uppercase'
     },
     value: {
       fontSize: '16px',
       fontWeight: '600',
-      color: '#FFF'
+      color: '#221510'
     },
     valueLarge: {
-      fontFamily: '"Playfair Display", serif',
+      fontFamily: 'var(--font-heading)',
       fontSize: '28px',
-      fontWeight: '700',
-      color: '#FFF'
+      fontWeight: '800',
+      letterSpacing: '-0.02em',
+      color: '#221510'
     },
     badge: {
       backgroundColor: 'rgba(16, 185, 129, 0.1)',
@@ -187,7 +192,7 @@ export default function SuccessPage() {
     },
     divider: {
       height: '1px',
-      backgroundColor: '#222',
+      backgroundColor: '#EAE3D9',
       margin: '32px 0'
     },
 
@@ -196,7 +201,8 @@ export default function SuccessPage() {
       alignSelf: 'flex-start',
       fontSize: '14px',
       fontWeight: '600',
-      marginBottom: '24px'
+      marginBottom: '24px',
+      color: '#221510'
     },
     stepsGrid: {
       display: 'grid',
@@ -206,8 +212,8 @@ export default function SuccessPage() {
       marginBottom: '48px'
     },
     stepCard: {
-      backgroundColor: '#0A0A0A',
-      border: '1px solid #1A1A1A',
+      backgroundColor: '#FDFBF7',
+      border: '1px solid #DFCFC2',
       borderRadius: '8px',
       padding: '24px',
       display: 'flex',
@@ -218,7 +224,7 @@ export default function SuccessPage() {
     stepIconBox: {
       width: '32px',
       height: '32px',
-      backgroundColor: 'rgba(6, 172, 248, 0.1)',
+      backgroundColor: '#F7F2EC',
       borderRadius: '8px',
       display: 'flex',
       alignItems: 'center',
@@ -228,11 +234,11 @@ export default function SuccessPage() {
     stepTitle: {
       fontSize: '14px',
       fontWeight: '600',
-      color: '#FFF'
+      color: '#221510'
     },
     stepDesc: {
       fontSize: '12px',
-      color: '#888',
+      color: '#6B584C',
       lineHeight: '1.5',
       marginBottom: '8px'
     },
@@ -260,7 +266,7 @@ export default function SuccessPage() {
     },
     btnPrimary: {
       backgroundColor: brandColor,
-      color: '#000',
+      color: '#FFFFFF',
       border: 'none',
       borderRadius: '4px',
       padding: '16px 32px',
@@ -274,9 +280,9 @@ export default function SuccessPage() {
       transition: 'opacity 0.2s'
     },
     btnSecondary: {
-      backgroundColor: '#111',
-      color: '#FFF',
-      border: '1px solid #333',
+      backgroundColor: '#FFFFFF',
+      color: '#221510',
+      border: '1px solid #DFCFC2',
       borderRadius: '4px',
       padding: '16px 32px',
       fontSize: '13px',
@@ -296,7 +302,7 @@ export default function SuccessPage() {
 
     const receiptContent = `
 ========================================
-         ZIZZYSTORES RECEIPT
+         UNBLEY RECEIPT
 ========================================
 
 STORE NAME:   ${brandName}
@@ -309,7 +315,7 @@ TRANSACTION:  ${reference}
 DATE:         ${new Date().toLocaleString()}
 
 ----------------------------------------
-Thank you for joining Zizzystores.
+Thank you for joining Unbley.
 Your digital atelier is securely activated.
 ========================================
 `;
@@ -317,7 +323,7 @@ Your digital atelier is securely activated.
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Zizzystores-Receipt-${reference}.txt`;
+    a.download = `Unbley-Receipt-${reference}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -345,7 +351,7 @@ Your digital atelier is securely activated.
 
       {/* Header */}
       <header style={s.header} className="success-page-header">
-        <div style={s.logo}>Zizzystores.</div>
+        <div style={s.logo}>Unbley.</div>
         <div style={s.secureBadgeHeader}>
           PAYMENT SECURE <ShieldCheck size={14} color={successColor} />
         </div>
@@ -411,14 +417,14 @@ Your digital atelier is securely activated.
                 {(amount || 0).toLocaleString(undefined, { minimumFractionDigits: realState.currency === 'USD' ? 2 : 0 })}
               </div>
               <div style={{ ...s.label, marginTop: '12px' }}>PAYMENT METHOD</div>
-              <div style={{ ...s.value, fontSize: '13px', color: '#AAA', textTransform: 'capitalize' }}>
+              <div style={{ ...s.value, fontSize: '13px', color: '#6B584C', textTransform: 'capitalize' }}>
                 {realState.method === 'flutterwave' ? 'Flutterwave International' : 'Paystack Local'}
               </div>
             </div>
 
-            <div style={{ ...s.infoBlock, backgroundColor: '#0A0A0A', padding: '20px', borderRadius: '6px', border: '1px solid #1A1A1A', flex: '1 1 auto', minWidth: '200px' }}>
+            <div style={{ ...s.infoBlock, backgroundColor: '#F7F2EC', padding: '20px', borderRadius: '6px', border: '1px solid #DFCFC2', flex: '1 1 auto', minWidth: '200px' }}>
               <div style={s.label}>TRANSACTION ID</div>
-              <div style={{ ...s.value, fontFamily: 'monospace', fontSize: '14px', letterSpacing: '0.05em', color: '#CCC', margin: '4px 0 12px' }}>
+              <div style={{ ...s.value, fontFamily: 'monospace', fontSize: '14px', letterSpacing: '0.05em', color: '#221510', margin: '4px 0 12px' }}>
                 {reference}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: successColor, fontWeight: '600' }}>
@@ -440,8 +446,8 @@ Your digital atelier is securely activated.
           </button>
         </div>
 
-        <div style={{ margin: '64px 0', fontSize: '11px', color: '#555', textAlign: 'center' }}>
-          Having trouble? Contact our <span style={{ color: successColor, cursor: 'pointer' }}>support team</span> for priority assistance.
+        <div style={{ margin: '64px 0', fontSize: '11px', color: '#6B584C', textAlign: 'center' }}>
+          Having trouble? Contact our <span style={{ color: brandColor, fontWeight: '600', cursor: 'pointer' }}>support team</span> for priority assistance.
         </div>
 
       </main>

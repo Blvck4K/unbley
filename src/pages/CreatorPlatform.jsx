@@ -47,17 +47,16 @@ export default function CreatorPlatform() {
         title="Ecommerce for Creators & Creative Brands"
         description="Build a professional storefront for your creative brand. The most trusted platform for artisans, designers, and creative entrepreneurs to grow their business."
         keywords="ecommerce for creators, creative brand platform, launch online store, artist shop platform, boutique ecommerce builder"
-        canonical="https://zizzystores.com/creator-platform"
+        canonical="https://unbley.com/creator-platform"
       />
       
+      <Navbar />
       <PageTransition>
-        <Navbar />
-        
         <main style={{ paddingTop: '100px' }}>
           <section style={{ padding: '80px 0', backgroundColor: 'var(--bg-light)' }}>
             <div className="container">
               <div style={{ textAlign: 'center', maxWidth: '800px', margin: '0 auto', marginBottom: '64px' }}>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 20px', borderRadius: '40px', backgroundColor: 'rgba(8, 156, 255, 0.1)', color: 'var(--primary)', fontWeight: '600', marginBottom: '24px' }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 20px', borderRadius: '40px', backgroundColor: 'var(--accent-soft)', color: 'var(--primary)', fontWeight: '600', marginBottom: '24px' }}>
                   <Sparkles size={18} />
                   <span>The Future of Creative Commerce</span>
                 </div>
@@ -65,7 +64,7 @@ export default function CreatorPlatform() {
                   Where <span style={{ color: 'var(--primary)' }}>Creative Passion</span> Meets Business Growth
                 </h1>
                 <p style={{ fontSize: '18px', color: 'var(--text-secondary)', marginBottom: '32px' }}>
-                  ZizzyStores is designed for the modern artisan. We provide the professional tools you need to build your boutique brand and sell directly to your audience without the middleman.
+                  Unbley is designed for the modern artisan. We provide the professional tools you need to build your boutique brand and sell directly to your audience without the middleman.
                 </p>
                 <a href="/auth?mode=signup" className="btn btn-primary" style={{ padding: '12px 32px' }}>Build Your Brand Now</a>
               </div>
@@ -112,7 +111,7 @@ export default function CreatorPlatform() {
               <div style={{ textAlign: 'center', maxWidth: '800px', margin: '0 auto' }}>
                 <h2 style={{ fontSize: '36px', fontWeight: '700', marginBottom: '32px' }}>Join a Growing Community of 1,000+ Creators</h2>
                 <p style={{ fontSize: '18px', opacity: 0.8, marginBottom: '40px' }}>
-                  Join the artists, designers, and creative entrepreneurs who have launched their high-value brands on ZizzyStores. We've helped creators generate over $5M in revenue since our launch.
+                  Join the artists, designers, and creative entrepreneurs who have launched their high-value brands on Unbley. We've helped creators generate over $5M in revenue since our launch.
                 </p>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '32px' }}>
                   <div style={{ textAlign: 'center' }}>

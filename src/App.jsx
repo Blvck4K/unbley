@@ -1,9 +1,10 @@
 import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import ErrorBoundary from './components/ErrorBoundary';
-import { useState } from 'react';
+import ScrollToTop from './components/ScrollToTop';
 
 // Lazy load pages
 const Home = lazy(() => import('./pages/Home'));
@@ -47,45 +48,48 @@ const PageLoader = () => (
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Suspense fallback={<PageLoader />}>
-          <ErrorBoundary>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/store" element={<Storefront />} />
-              <Route path="/explore-brand" element={<ExploreBrand />} />
-              <Route path="/explore-brand/:id" element={<ExploreBrand />} />
-              <Route path="/shop-brand" element={<ShopBrand />} />
-              <Route path="/shop-brand/:id" element={<ShopBrand />} />
-              <Route path="/@:slug" element={<ShopBrand />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/all-blogs" element={<AllBlog />} />
-              <Route path="/blog/:slug" element={<Blog />} />
-              <Route path="/admin-blog" element={<AdminBlog />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/product" element={<ProductDetail />} />
-              <Route path="/sell-digital-products" element={<SellDigitalGoods />} />
-              <Route path="/creator-platform" element={<CreatorPlatform />} />
-              <Route path="/create-online-store" element={<CreateOnlineStore />} />
-              <Route path="/shopify-alternative" element={<ShopifyAlternative />} />
-              <Route path="/affordable-ecommerce-platform" element={<AffordableEcommerce />} />
-              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-              <Route path="/edit" element={<ProtectedRoute><Edit /></ProtectedRoute>} />
-              <Route path="/activation" element={<ProtectedRoute><Activation /></ProtectedRoute>} />
-              <Route path="/finalize-activation" element={<ProtectedRoute><FinalizeActivation /></ProtectedRoute>} />
-              <Route path="/success" element={<ProtectedRoute><SuccessPage /></ProtectedRoute>} />
-              <Route path="/checkout-success" element={<CheckoutSuccess />} />
-              <Route path="/fillblog" element={<FillBlog />} />
-            </Routes>
-          </ErrorBoundary>
-        </Suspense>
-        <ChatWidget />
-        <FloatingWhatsApp />
-      </BrowserRouter>
+      <ToastProvider>
+        <BrowserRouter>
+          <ScrollToTop />
+          <Suspense fallback={<PageLoader />}>
+            <ErrorBoundary>
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/store" element={<Storefront />} />
+                <Route path="/explore-brand" element={<ExploreBrand />} />
+                <Route path="/explore-brand/:id" element={<ExploreBrand />} />
+                <Route path="/shop-brand" element={<ShopBrand />} />
+                <Route path="/shop-brand/:id" element={<ShopBrand />} />
+                <Route path="/@:slug" element={<ShopBrand />} />
+                <Route path="/cart" element={<Cart />} />
+                <Route path="/all-blogs" element={<AllBlog />} />
+                <Route path="/blog/:slug" element={<Blog />} />
+                <Route path="/admin-blog" element={<AdminBlog />} />
+                <Route path="/checkout" element={<Checkout />} />
+                <Route path="/product" element={<ProductDetail />} />
+                <Route path="/sell-digital-products" element={<SellDigitalGoods />} />
+                <Route path="/creator-platform" element={<CreatorPlatform />} />
+                <Route path="/create-online-store" element={<CreateOnlineStore />} />
+                <Route path="/shopify-alternative" element={<ShopifyAlternative />} />
+                <Route path="/affordable-ecommerce-platform" element={<AffordableEcommerce />} />
+                <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                <Route path="/edit" element={<ProtectedRoute><Edit /></ProtectedRoute>} />
+                <Route path="/activation" element={<ProtectedRoute><Activation /></ProtectedRoute>} />
+                <Route path="/finalize-activation" element={<ProtectedRoute><FinalizeActivation /></ProtectedRoute>} />
+                <Route path="/success" element={<ProtectedRoute><SuccessPage /></ProtectedRoute>} />
+                <Route path="/checkout-success" element={<CheckoutSuccess />} />
+                <Route path="/fillblog" element={<FillBlog />} />
+              </Routes>
+            </ErrorBoundary>
+          </Suspense>
+          <ChatWidget />
+          <FloatingWhatsApp />
+        </BrowserRouter>
+      </ToastProvider>
     </AuthProvider>
   );
 }

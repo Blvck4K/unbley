@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, ShoppingCart, User, ChevronDown, ShieldCheck, Truck, Headphones, Filter, Plus, Trash2, X, Image as ImageIcon, Edit2 } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../context/ToastContext';
+import { isDarkColor, getContrastColor, getMutedColor, getBorderColor } from '../lib/colors';
 import PageTransition from '../components/PageTransition';
-import { motion } from 'framer-motion';
 
 const useWindowWidth = () => {
   const [width, setWidth] = useState(window.innerWidth);
@@ -20,6 +22,7 @@ export default function ShopBrand({ customId }) {
   const { id: urlId, slug } = useParams(); // URL parameter targeting the brand ID or slug
   const id = customId || urlId;
   const { user } = useAuth();
+  const { toast, confirmDialog } = useToast();
   const navigate = useNavigate();
   
   const width = useWindowWidth();
@@ -62,7 +65,7 @@ export default function ShopBrand({ customId }) {
         const cart = JSON.parse(localStorage.getItem('cart') || '[]');
         const count = cart.reduce((total, item) => total + item.qty, 0);
         setCartCount(count);
-      } catch (e) {
+      } catch {
         setCartCount(0);
       }
     };
@@ -79,9 +82,13 @@ export default function ShopBrand({ customId }) {
   useEffect(() => {
     async function fetchStoreData() {
       if (!id && !slug) {
-        setLoading(false);
-        setError("Invalid URL Context. The specific brand link is incomplete.");
-        return;
+        if (user?.id) {
+          navigate(`/shop-brand/${user.id}`, { replace: true });
+          return;
+        } else {
+          navigate('/store', { replace: true });
+          return;
+        }
       }
       try {
         setLoading(true);
@@ -93,14 +100,14 @@ export default function ShopBrand({ customId }) {
             .from('brand_profiles')
             .select('*')
             .eq('id', id)
-            .single());
+            .maybeSingle());
         } else if (slug) {
-          // Fetch specific Brand Profile by Slug (assuming a slug/brand_name field)
+          // Fetch specific Brand Profile by Slug (case-insensitive)
           ({ data: brandData, error: brandError } = await supabase
             .from('brand_profiles')
             .select('*')
-            .eq('brand_name', slug.replace(/-/g, ' ')) // Simple mapping for demonstration
-            .single());
+            .ilike('brand_name', slug.replace(/-/g, ' '))
+            .maybeSingle());
         }
 
         if (brandError) throw brandError;
@@ -127,7 +134,7 @@ export default function ShopBrand({ customId }) {
     }
 
     fetchStoreData();
-  }, [id]);
+  }, [id, slug, user?.id]);
 
   // Admin Product Creation Logic
   const handleImageSelect = (e) => {
@@ -215,7 +222,7 @@ export default function ShopBrand({ customId }) {
         if (updateError) throw updateError;
         
         setProducts(prev => prev.map(p => p.id === editingProductId ? { ...p, title: newProduct.title, price: newProduct.price, description: newProduct.description, tag: newProduct.tag, sizes: newProduct.sizes, colors: newProduct.colors, image_url: finalImageUrl } : p));
-        alert('Asset Updated Successfully!');
+        toast.success('Asset updated successfully!');
       } else {
         const { data: newProd, error: insertError } = await supabase
           .from('products')
@@ -235,7 +242,7 @@ export default function ShopBrand({ customId }) {
           
         if (insertError) throw insertError;
         setProducts([newProd, ...products]);
-        alert('Asset Deployed Successfully!');
+        toast.success('Asset deployed successfully!');
       }
       
       setNewProduct({ title: '', price: '', description: '', tag: '', sizes: '', colors: '', imageFile: null, imagePreview: null, additionalImages: [] });
@@ -244,7 +251,7 @@ export default function ShopBrand({ customId }) {
 
     } catch (err) {
       console.error('Failed saving product:', err);
-      alert('Error saving product: ' + err.message);
+      toast.error('Error saving product: ' + err.message);
     } finally {
       setUploading(false);
     }
@@ -260,8 +267,13 @@ export default function ShopBrand({ customId }) {
       return;
     }
     
-    const confirmDelete = window.confirm("Are you sure you want to permanently delete this product? This act is irreversible.");
-    if (!confirmDelete) return;
+    const confirmed = await confirmDialog({
+      title: 'Delete Asset',
+      message: 'Are you sure you want to permanently delete this product? This action cannot be undone.',
+      confirmText: 'Delete',
+      type: 'danger'
+    });
+    if (!confirmed) return;
 
     try {
       const { error } = await supabase
@@ -274,9 +286,10 @@ export default function ShopBrand({ customId }) {
       
       console.log('Product deleted successfully from DB');
       setProducts(prev => prev.filter(p => p.id !== productId));
+      toast.success('Product deleted successfully');
     } catch (err) {
       console.error('Deletion failed:', err);
-      alert('Deletion failed: ' + err.message);
+      toast.error('Deletion failed: ' + err.message);
     }
   };
 
@@ -288,7 +301,7 @@ export default function ShopBrand({ customId }) {
       
       // Prevent ordering from multiple brands in same cart to avoid conflicted split payments
       if (cart.length > 0 && cart[0].brand_id !== product.brand_id) {
-        alert("Your cart contains items from a differing brand. Please checkout your current items first.");
+        toast.error("Your cart contains items from another brand. Please checkout or clear your cart first.");
         return;
       }
 
@@ -319,16 +332,26 @@ export default function ShopBrand({ customId }) {
       setTimeout(() => {
         btn.innerText = originalText;
         btn.style.backgroundColor = accentColor;
-        btn.style.color = '#000';
+        btn.style.color = accentTextColor;
       }, 1500);
       
+      toast.success(`Added ${product.title} to bag`);
     } catch (err) {
       console.error("Cart error", err);
+      toast.error("Could not add to bag");
     }
   };
 
   if (loading) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#0A0A0A', color: '#FFF' }}>Initializing Digital Atelier...</div>;
-  if (error) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#0A0A0A', color: '#FFF' }}><h2>Store Not Found</h2><p>The atelier you are seeking does not exist or the link is invalid.</p></div>;
+  if (error) return (
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backgroundColor: '#0A0A0A', color: '#FFF', gap: '16px', padding: '24px', textAlign: 'center' }}>
+      <h2>Store Not Found</h2>
+      <p style={{ color: '#999', maxWidth: '400px', lineHeight: '1.5' }}>The atelier you are seeking does not exist or the link is invalid.</p>
+      <button onClick={() => navigate('/store')} style={{ backgroundColor: '#FFF', color: '#000', border: 'none', padding: '12px 24px', borderRadius: '4px', fontWeight: '700', fontSize: '12px', letterSpacing: '0.05em', textTransform: 'uppercase', cursor: 'pointer', marginTop: '12px' }}>
+        Browse All Stores
+      </button>
+    </div>
+  );
   if (!brand) return null;
 
   // Dynamic Theme Generation tied directly to DB variables
@@ -336,11 +359,10 @@ export default function ShopBrand({ customId }) {
   const secondaryColor = brand.secondary_color || '#1A1A1A';
   const accentColor = brand.accent_color || '#06acf8';
   
-  // Simple heuristic: if primary color is light, text should be dark. (Defaulting to dark mode rules for this engine right now)
-  const isDarkBase = true; // Assuming the base brand intent is normally dark in a premium setting 
-  const textColor = '#FDFDFD';
-  const mutedColor = '#999';
-  const borderColor = secondaryColor;
+  const textColor = getContrastColor(primaryColor);
+  const mutedColor = getMutedColor(primaryColor);
+  const borderColor = getBorderColor(primaryColor);
+  const accentTextColor = isDarkColor(accentColor) ? '#FFFFFF' : '#000000';
 
   const fontConfig = {
     heading: '"Playfair Display", serif',
@@ -392,7 +414,7 @@ export default function ShopBrand({ customId }) {
     image: { width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease' },
 
     tagBase: { position: 'absolute', top: '12px', left: '12px', padding: '4px 8px', fontSize: '9px', fontWeight: '800', fontFamily: fontConfig.body, letterSpacing: '0.1em', textTransform: 'uppercase', zIndex: 10, backgroundColor: textColor, color: primaryColor },
-    editBtn: { padding: '8px', backgroundColor: 'rgba(0,0,0,0.6)', color: '#FFF', borderRadius: '4px', zIndex: 20, border: '1px solid #333', cursor: 'pointer', transition: 'all 0.2s', '&:hover': { backgroundColor: accentColor, color: '#000' } },
+    editBtn: { padding: '8px', backgroundColor: 'rgba(0,0,0,0.6)', color: '#FFF', borderRadius: '4px', zIndex: 20, border: '1px solid #333', cursor: 'pointer', transition: 'all 0.2s', '&:hover': { backgroundColor: accentColor, color: accentTextColor } },
     deleteBtn: { padding: '8px', backgroundColor: 'rgba(0,0,0,0.6)', color: '#FFF', borderRadius: '4px', zIndex: 20, border: '1px solid #333', cursor: 'pointer', transition: 'background 0.2s', '&:hover': { backgroundColor: '#D44040' } },
 
     productInfo: { display: 'flex', flexDirection: 'column', alignItems: 'flex-start', padding: '20px' },
@@ -402,7 +424,7 @@ export default function ShopBrand({ customId }) {
     
     // Buttons
     buttonGroup: { display: 'flex', gap: '8px', width: '100%', marginTop: 'auto' },
-    addToCartBtn: { flex: 1, backgroundColor: accentColor, color: '#000', padding: '12px', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.1em', border: 'none', borderRadius: '4px', cursor: 'pointer', transition: 'opacity 0.2s' },
+    addToCartBtn: { flex: 1, backgroundColor: accentColor, color: accentTextColor, padding: '12px', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.1em', border: 'none', borderRadius: '4px', cursor: 'pointer', transition: 'opacity 0.2s' },
     viewBtn: { flex: 1, backgroundColor: 'transparent', color: textColor, padding: '12px', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.1em', border: `1px solid ${borderColor}`, borderRadius: '4px', cursor: 'pointer', transition: 'background-color 0.2s' },
 
     // Empty State
@@ -447,7 +469,7 @@ export default function ShopBrand({ customId }) {
           <div style={{ ...s.iconButton, position: 'relative', display: 'flex' }} onClick={() => navigate('/cart')} title="Cart">
             <ShoppingCart size={isMobile ? 22 : 18} />
             {cartCount > 0 && (
-              <span style={{ position: 'absolute', top: '-8px', right: '-8px', backgroundColor: accentColor, color: '#000', fontSize: '10px', fontWeight: 'bold', width: '18px', height: '18px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `2px solid ${primaryColor}` }}>
+              <span style={{ position: 'absolute', top: '-8px', right: '-8px', backgroundColor: accentColor, color: accentTextColor, fontSize: '10px', fontWeight: 'bold', width: '18px', height: '18px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `2px solid ${primaryColor}` }}>
                 {cartCount}
               </span>
             )}
@@ -508,7 +530,7 @@ export default function ShopBrand({ customId }) {
               <div style={{ fontSize: '14px', fontWeight: 'bold', color: accentColor, marginBottom: '4px' }}>Owner Environment Active</div>
               <div style={{ fontSize: '12px', color: '#CCC' }}>You are viewing your own storefront. You can instantly modify your digital inventory.</div>
             </div>
-            <button onClick={() => { setEditingProductId(null); setNewProduct({ title: '', price: '', description: '', tag: '', sizes: '', colors: '', imageFile: null, imagePreview: null, additionalImages: [] }); setIsAddModalOpen(true); }} style={{ backgroundColor: accentColor, color: '#000', padding: '12px 24px', border: 'none', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button onClick={() => { setEditingProductId(null); setNewProduct({ title: '', price: '', description: '', tag: '', sizes: '', colors: '', imageFile: null, imagePreview: null, additionalImages: [] }); setIsAddModalOpen(true); }} style={{ backgroundColor: accentColor, color: accentTextColor, padding: '12px 24px', border: 'none', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Plus size={16} /> Add Product
             </button>
           </div>
@@ -626,7 +648,7 @@ export default function ShopBrand({ customId }) {
         </div>
         
         <div style={s.footerBottom}>
-          <div style={s.copyright}>© {new Date().getFullYear()} {brand.brand_name || 'BRAND'}. Secured by Zizzystores Infrastructural Core.</div>
+          <div style={s.copyright}>© {new Date().getFullYear()} {brand.brand_name || 'BRAND'}. Secured by Unbley Infrastructural Core.</div>
         </div>
       </div>
 
@@ -726,7 +748,7 @@ export default function ShopBrand({ customId }) {
 
               <div style={{ display: 'flex', gap: '16px', marginTop: '32px' }}>
                 <button type="button" onClick={() => setIsAddModalOpen(false)} style={{ flex: 1, padding: '16px', border: `1px solid ${borderColor}`, backgroundColor: 'transparent', color: textColor, fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer' }}>CANCEL</button>
-                <button type="submit" disabled={uploading} style={{ flex: 1, padding: '16px', border: 'none', backgroundColor: accentColor, color: '#000', fontWeight: 'bold', borderRadius: '4px', cursor: uploading ? 'not-allowed' : 'pointer', opacity: uploading ? 0.7 : 1 }}>
+                <button type="submit" disabled={uploading} style={{ flex: 1, padding: '16px', border: 'none', backgroundColor: accentColor, color: accentTextColor, fontWeight: 'bold', borderRadius: '4px', cursor: uploading ? 'not-allowed' : 'pointer', opacity: uploading ? 0.7 : 1 }}>
                   {uploading ? (editingProductId ? 'UPDATING...' : 'UPLOADING...') : (editingProductId ? 'UPDATE ASSET' : 'DEPLOY ASSET')}
                 </button>
               </div>

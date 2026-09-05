@@ -7,7 +7,7 @@ const isValidUrl = (url) => {
   try {
     new URL(url);
     return true;
-  } catch (err) {
+  } catch {
     return false;
   }
 };

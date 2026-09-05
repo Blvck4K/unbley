@@ -22,7 +22,7 @@ export default function AffordableEcommerce() {
     {
       icon: <Zap size={24} />,
       title: "No Hidden Fees",
-      description: "Tired of transaction fees? ZizzyStores don't take a percentage of your sales. What you earn is yours."
+      description: "Tired of transaction fees? Unbley doesn't take a percentage of your sales. What you earn is yours."
     }
   ];
 
@@ -30,14 +30,13 @@ export default function AffordableEcommerce() {
     <>
       <SEO 
         title="Affordable Ecommerce Website Nigeria & Global | Only ₦30,000 / $30"
-        description="Looking for a cheap ecommerce website in Nigeria? ZizzyStores offers the most affordable way to launch a professional online store for ₦30,000 a year."
+        description="Looking for a cheap ecommerce website in Nigeria? Unbley offers the most affordable way to launch a professional online store for ₦30,000 a year."
         keywords="cheap ecommerce website Nigeria, affordable online store builder, best value ecommerce platform, website for my business Nigeria"
-        canonical="https://zizzystores.com/affordable-ecommerce-platform"
+        canonical="https://unbley.com/affordable-ecommerce-platform"
       />
 
+      <Navbar />
       <PageTransition>
-        <Navbar />
-
         <main style={{ paddingTop: '80px' }}>
           {/* Value Hero */}
           <section style={{ padding: '80px 20px', backgroundColor: 'var(--bg-light)', textAlign: 'center' }}>
@@ -60,7 +59,7 @@ export default function AffordableEcommerce() {
                 {values.map((value, index) => (
                   <div key={index} style={{ padding: '32px', backgroundColor: 'white', borderRadius: '24px', border: '1px solid var(--border-color)', textAlign: 'center' }}>
                     <div style={{
-                      width: '56px', height: '56px', backgroundColor: 'rgba(8, 156, 255, 0.1)',
+                      width: '56px', height: '56px', backgroundColor: 'var(--accent-soft)',
                       color: 'var(--primary)', borderRadius: '16px', display: 'flex',
                       alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px'
                     }}>
@@ -109,7 +108,7 @@ export default function AffordableEcommerce() {
                 </div>
                 <div style={{ flex: '1', minWidth: '300px', backgroundColor: 'rgba(255,255,255,0.05)', padding: '48px', borderRadius: '32px', border: '1px solid rgba(255,255,255,0.1)' }}>
                   <div style={{ textAlign: 'center' }}>
-                    <h3 style={{ fontSize: '24px', fontWeight: '700', marginBottom: '8px' }}>ZizzyStores Bundle</h3>
+                    <h3 style={{ fontSize: '24px', fontWeight: '700', marginBottom: '8px' }}>Unbley Bundle</h3>
                     <div style={{ fontSize: '64px', fontWeight: '800', color: '#ffffff50', marginBottom: '8px' }}>₦30k</div>
                     <div style={{ fontSize: '20px', opacity: 0.6, marginBottom: '24px' }}>Entire Year ($30)</div>
                     <p style={{ fontSize: '15px', color: '#ccc', marginBottom: '32px' }}>
@@ -154,7 +153,7 @@ export default function AffordableEcommerce() {
                 </Link>
                 <Link to="/shopify-alternative" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', backgroundColor: 'white', borderRadius: '12px', border: '1px solid var(--border-color)', textDecoration: 'none', color: 'inherit' }}>
                   <Settings size={18} color="var(--primary)" />
-                  <span>Zizzy vs Shopify</span>
+                  <span>Unbley vs Shopify</span>
                 </Link>
               </div>
             </div>

@@ -32,12 +32,11 @@ export default function CreateOnlineStore() {
         title="Create Online Store | Start Your Ecommerce Business in 5 Minutes"
         description="The easiest way to create an online store in Nigeria and beyond. Launch your boutique brand with a professional storefront for only ₦30,000 / $30 for the first year."
         keywords="create online store Nigeria, how to start ecommerce business, online store builder, ecommerce website Nigeria"
-        canonical="https://zizzystores.com/create-online-store"
+        canonical="https://unbley.com/create-online-store"
       />
       
+      <Navbar />
       <PageTransition>
-        <Navbar />
-        
         <main style={{ paddingTop: '80px' }}>
           {/* Hero Section */}
           <section style={{ padding: '60px 20px', textAlign: 'center', backgroundColor: 'var(--bg-light)' }}>
@@ -46,11 +45,11 @@ export default function CreateOnlineStore() {
                 Create Your <span style={{ color: 'var(--primary)' }}>Online Store</span> in Under 5 Minutes
               </h1>
               <p style={{ fontSize: '18px', color: 'var(--text-secondary)', marginBottom: '32px', maxWidth: '700px', margin: '0 auto 32px' }}>
-                The most affordable and powerful ecommerce platform built for Nigerian and global brand owners. Start selling today with yours truly, <strong>ZizzyStores</strong>.
+                The most affordable and powerful ecommerce platform built for Nigerian and global brand owners. Start selling today with yours truly, <strong>Unbley</strong>.
               </p>
               <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
                 <Link to="/auth?mode=signup" className="btn btn-primary" style={{ padding: '12px 32px' }}>Get Started</Link>
-                <Link to="/shopify-alternative" className="btn btn-outline" style={{ padding: '12px 32px' }}>Shopify vs ZizzyStores</Link>
+                <Link to="/shopify-alternative" className="btn btn-outline" style={{ padding: '12px 32px' }}>Shopify vs Unbley</Link>
               </div>
             </div>
           </section>
@@ -97,7 +96,7 @@ export default function CreateOnlineStore() {
                 {steps.map((step, index) => (
                   <div key={index} style={{ textAlign: 'center', padding: '24px' }}>
                     <div style={{ 
-                      width: '64px', height: '64px', backgroundColor: 'rgba(8, 156, 255, 0.1)', 
+                      width: '64px', height: '64px', backgroundColor: 'var(--accent-soft)', 
                       color: 'var(--primary)', borderRadius: '20px', display: 'flex', 
                       alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' 
                     }}>
@@ -144,7 +143,7 @@ export default function CreateOnlineStore() {
                 <div style={{ flex: '1', minWidth: '300px', backgroundColor: 'var(--bg-gray)', padding: '40px', borderRadius: '32px' }}>
                   <Link to="/affordable-ecommerce-platform" style={{ textDecoration: 'none', color: 'inherit' }}>
                     <h3 style={{ fontSize: '24px', fontWeight: '700', marginBottom: '16px' }}>Looking for the Most Affordable Option?</h3>
-                    <p style={{ color: 'var(--text-secondary)', marginBottom: '24px' }}>Learn why thousands of Nigerian merchants choose ZizzyStores as their affordable ecommerce partner.</p>
+                    <p style={{ color: 'var(--text-secondary)', marginBottom: '24px' }}>Learn why thousands of Nigerian merchants choose Unbley as their affordable ecommerce partner.</p>
                     <span style={{ color: 'var(--primary)', fontWeight: '700' }}>Learn more →</span>
                   </Link>
                 </div>

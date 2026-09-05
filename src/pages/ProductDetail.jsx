@@ -3,6 +3,8 @@ import { ShoppingCart, Star, Plus, Minus, Truck, ShieldCheck, ArrowRight, ArrowL
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../context/ToastContext';
+import { isDarkColor, getContrastColor, getMutedColor, getBorderColor } from '../lib/colors';
 import PageTransition from '../components/PageTransition';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -20,6 +22,7 @@ export default function ProductDetail() {
   
   const [qty, setQty] = useState(1);
   const { user } = useAuth();
+  const { toast, confirmDialog } = useToast();
   const isOwner = user?.id === brand?.id;
   const isCustomer = user?.user_metadata?.role === 'customer' || user?.user_metadata?.userType === 'customer';
   const [cartCount, setCartCount] = useState(0);
@@ -61,7 +64,7 @@ export default function ProductDetail() {
         const cart = JSON.parse(localStorage.getItem('cart') || '[]');
         const count = cart.reduce((total, item) => total + item.qty, 0);
         setCartCount(count);
-      } catch (e) {
+      } catch {
         setCartCount(0);
       }
     };
@@ -125,24 +128,29 @@ export default function ProductDetail() {
     fetchProductData();
   }, [id]);
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!product) return;
     try {
       let existingCart = JSON.parse(localStorage.getItem('cart') || '[]');
       
       // Enforce Dedicated Single-Brand Cart Rule
       if (existingCart.length > 0 && existingCart[0].brand_id !== brand.id) {
-        const strictOverride = window.confirm("Your cart holds assets from another creator. Adding this will replace your current cart. Proceed?");
-        if (!strictOverride) return;
-        existingCart = []; // Wipe it clear for the new dedicated brand
+        const proceed = await confirmDialog({
+          title: 'Replace Current Cart?',
+          message: 'Your cart contains items from another creator. Adding this item will start a new cart for this store.',
+          confirmText: 'Replace & Add',
+          cancelText: 'Keep Current Cart'
+        });
+        if (!proceed) return;
+        existingCart = [];
       }
 
       if (product.sizes && !selectedSize) {
-        alert("Please select a size first.");
+        toast.info("Please select a size first.");
         return;
       }
       if (product.colors && !selectedColor) {
-        alert("Please select a color first.");
+        toast.info("Please select a color first.");
         return;
       }
 
@@ -174,35 +182,36 @@ export default function ProductDetail() {
       
       localStorage.setItem('cart', JSON.stringify(existingCart));
       window.dispatchEvent(new Event('cartUpdated'));
-      
-      // Give feedback but don't force them out
-      const userRes = window.confirm(`${qty}x ${product.title} deployed to your secure Cart. Do you wish to checkout immediately?`);
-      if (userRes) navigate('/cart');
-      
+      toast.success(`${qty}x ${product.title} added to cart!`);
     } catch(err) {
       console.error('Cart Failure:', err);
-      alert('Failed to connect to cart matrix.');
+      toast.error('Failed to add item to cart.');
     }
   };
 
-  const handleBuyNow = () => {
+  const handleBuyNow = async () => {
     if (!product) return;
     try {
       let existingCart = JSON.parse(localStorage.getItem('cart') || '[]');
       
       // Enforce Dedicated Single-Brand Cart Rule
       if (existingCart.length > 0 && existingCart[0].brand_id !== brand.id) {
-        const strictOverride = window.confirm("Your cart holds assets from another creator. Checking out this asset will clear your pending items. Proceed?");
-        if (!strictOverride) return;
+        const proceed = await confirmDialog({
+          title: 'Replace Current Cart?',
+          message: 'Your cart contains items from another creator. Checking out this item will clear pending items from your cart.',
+          confirmText: 'Continue Checkout',
+          cancelText: 'Cancel'
+        });
+        if (!proceed) return;
         existingCart = [];
       }
 
       if (product.sizes && !selectedSize) {
-        alert("Please select a size first.");
+        toast.info("Please select a size first.");
         return;
       }
       if (product.colors && !selectedColor) {
-        alert("Please select a color first.");
+        toast.info("Please select a color first.");
         return;
       }
 
@@ -237,6 +246,7 @@ export default function ProductDetail() {
       navigate('/cart');
     } catch(err) {
       console.error(err);
+      toast.error('Could not proceed to checkout.');
     }
   };
 
@@ -307,38 +317,37 @@ export default function ProductDetail() {
 
       if (updateError) throw updateError;
       
-      setProduct({ ...product, title: editForm.title, price: editForm.price, description: editForm.description, tag: editForm.tag, image_url: imageUrl });
+      setProduct({ ...product, title: editForm.title, price: editForm.price, description: editForm.description, tag: editForm.tag, image_url: finalImageUrl });
       setIsEditModalOpen(false);
-      alert('Asset Updated Successfully!');
+      toast.success('Product updated successfully!');
     } catch (err) {
       console.error(err);
-      alert('Error updating asset.');
+      toast.error('Error updating product: ' + (err.message || 'Unknown error'));
     } finally {
       setUploading(false);
     }
   };
 
   const handleDeleteProduct = async () => {
-    console.log('Delete attempt:', { productId: product.id, userId: user?.id, brandId: brand?.id, isOwner });
-
-    if (!isOwner) {
-      console.error('Deletion rejected: User is not authorized.');
-      return;
-    }
+    if (!isOwner) return;
     
-    const confirmDelete = window.confirm("Are you sure you want to permanently delete this product? This act is irreversible.");
+    const confirmDelete = await confirmDialog({
+      title: 'Delete Product',
+      message: 'Are you sure you want to permanently delete this product? This action cannot be undone.',
+      confirmText: 'Delete Permanently',
+      cancelText: 'Keep Product'
+    });
     if (!confirmDelete) return;
 
     try {
       const { error } = await supabase.from('products').delete().eq('id', product.id).eq('brand_id', brand.id);
       if (error) throw error;
       
-      console.log('Product deleted successfully from DB');
-      alert('Asset neutralized.');
+      toast.success('Product removed successfully.');
       navigate(`/shop-brand/${brand.id}`);
     } catch (err) {
       console.error('Deletion failed:', err);
-      alert('Deletion failed: ' + err.message);
+      toast.error('Deletion failed: ' + (err.message || 'Unknown error'));
     }
   };
 
@@ -348,18 +357,19 @@ export default function ProductDetail() {
     setEditForm(prev => ({ ...prev, imageFile: file, imagePreview: URL.createObjectURL(file) }));
   };
 
-  if (loading) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#0A0A0A', color: '#FFF' }}>Syncing Asset Data...</div>;
-  if (error) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#0A0A0A', color: '#FFF' }}><h2>{error}</h2><button onClick={() => navigate(-1)} style={{ marginLeft: '16px', padding: '8px', cursor: 'pointer' }}>Go Back</button></div>;
+  if (loading) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#FBF9F5', color: '#221510' }}>Loading product details...</div>;
+  if (error) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#FBF9F5', color: '#221510' }}><h2>{error}</h2><button onClick={() => navigate(-1)} style={{ marginLeft: '16px', padding: '8px', cursor: 'pointer' }}>Go Back</button></div>;
   if (!product || !brand) return null;
 
-  // Exact Theme Match for Seamless Transition from ShopBrand
+  // Dynamic Theme Matching
   const primaryColor = brand.primary_color || '#0A0A0A';
-  const secondaryColor = brand.secondary_color || '#1A1A1A';
-  const accentColor = brand.accent_color || '#06acf8';
+  const isDark = isDarkColor(primaryColor);
+  const secondaryColor = brand.secondary_color || (isDark ? '#1A1A1A' : '#F4EFEB');
+  const accentColor = brand.accent_color || '#6A3E1F';
   
-  const textColor = '#FDFDFD';
-  const mutedColor = '#999';
-  const borderColor = secondaryColor;
+  const textColor = getContrastColor(primaryColor);
+  const mutedColor = getMutedColor(primaryColor);
+  const borderColor = getBorderColor(primaryColor);
 
   const fontConfig = {
     heading: '"Playfair Display", serif',

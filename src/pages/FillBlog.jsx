@@ -13,6 +13,7 @@ import PageTransition from '../components/PageTransition';
 import { supabase } from '../lib/supabase';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../context/ToastContext';
 
 // Tiptap Imports
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -81,6 +82,7 @@ const Divider = () => <div style={{ width: '1px', height: '20px', backgroundColo
 
 export default function FillBlog() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const editId = searchParams.get('id');
@@ -186,7 +188,7 @@ export default function FillBlog() {
   }, [editId]);
 
   const handleSave = async (isPublishing = false) => {
-    if (!title) return alert("Title is required");
+    if (!title) return toast.error("Title is required");
     setIsSaving(true);
     try {
       const postData = {
@@ -208,10 +210,10 @@ export default function FillBlog() {
       } else {
         await supabase.from('blog_posts').insert([postData]);
       }
-      alert(isPublishing ? "Post Published!" : "Draft Saved!");
+      toast.success(isPublishing ? "Post Published!" : "Draft Saved!");
       navigate('/admin-blog');
     } catch (err) {
-      alert("Error: " + err.message);
+      toast.error("Error: " + err.message);
     } finally {
       setIsSaving(false);
     }
@@ -236,14 +238,16 @@ export default function FillBlog() {
       case 'color': editor.chain().focus().setColor(val).run(); break;
       case 'fontFamily': editor.chain().focus().setFontFamily(val).run(); break;
       case 'table': editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(); break;
-      case 'image':
+      case 'image': {
         const url = prompt("Enter Image URL:");
         if (url) editor.chain().focus().setImage({ src: url }).run();
         break;
-      case 'link':
+      }
+      case 'link': {
         const link = prompt("Enter Link URL:");
         if (link) editor.chain().focus().setLink({ href: link }).run();
         break;
+      }
       default: break;
     }
   };
@@ -274,7 +278,7 @@ export default function FillBlog() {
       const { data: { publicUrl } } = supabase.storage.from('blog_images').getPublicUrl(filePath);
       setCoverImageUrl(publicUrl);
     } catch (err) {
-      alert('Error uploading image: ' + err.message);
+      toast.error('Error uploading image: ' + err.message);
     } finally {
       setUploading(false);
     }
@@ -282,29 +286,29 @@ export default function FillBlog() {
 
   return (
     <PageTransition>
-      <div style={{ backgroundColor: '#FAFAFA', minHeight: '100vh', fontFamily: "'Inter', sans-serif", color: '#1a1a1a' }}>
+      <div style={{ backgroundColor: '#FBF9F5', minHeight: '100vh', fontFamily: "'Inter', sans-serif", color: '#221510' }}>
         <Navbar />
 
         <main className="editor-main-layout" style={{ maxWidth: '1200px', margin: '0 auto', padding: '120px 20px', display: 'grid', gridTemplateColumns: '1fr 340px', gap: '64px' }}>
           <div className="content-area">
-            <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: '48px', marginBottom: '40px' }}>
+            <h1 style={{ fontFamily: "var(--font-heading)", fontSize: '42px', fontWeight: '800', letterSpacing: '-0.02em', color: '#221510', marginBottom: '40px' }}>
               {editId ? 'Edit Post' : 'Create New Post'}
             </h1>
 
             <div style={{ marginBottom: '48px' }}>
-              <label style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', color: '#888', display: 'block', marginBottom: '8px' }}>POST TITLE</label>
+              <label style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em', color: '#8D5B36', display: 'block', marginBottom: '8px' }}>POST TITLE</label>
               <input
                 type="text"
                 placeholder="Enter a descriptive headline..."
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                style={{ width: '100%', border: 'none', background: 'transparent', fontSize: 'clamp(32px, 5vw, 48px)', fontFamily: "'Playfair Display', serif", outline: 'none' }}
+                style={{ width: '100%', border: 'none', background: 'transparent', fontSize: 'clamp(32px, 5vw, 48px)', fontFamily: "var(--font-heading)", fontWeight: '800', letterSpacing: '-0.02em', color: '#221510', outline: 'none' }}
                 className="editor-title-input"
               />
             </div>
 
-            <div style={{ borderTop: '1px solid #E5E7EB', paddingTop: '32px' }}>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '24px', backgroundColor: '#F9FAFB', padding: '12px', borderRadius: '12px', border: '1px solid #F1F1F1', alignItems: 'center' }}>
+            <div style={{ borderTop: '1px solid #DFCFC2', paddingTop: '32px' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '24px', backgroundColor: '#F7F2EC', padding: '12px', borderRadius: '12px', border: '1px solid #DFCFC2', alignItems: 'center' }}>
                 <ToolbarButton onClick={() => applyFormatting('undo')} title="Undo"><Undo size={16} /></ToolbarButton>
                 <ToolbarButton onClick={() => applyFormatting('redo')} title="Redo"><Redo size={16} /></ToolbarButton>
 
@@ -325,14 +329,14 @@ export default function FillBlog() {
 
                 <ToolbarSelect
                   title="Text Color"
-                  value={editor?.getAttributes('textStyle').color || '#111'}
+                  value={editor?.getAttributes('textStyle').color || '#221510'}
                   onChange={(val) => applyFormatting('color', val)}
                   options={[
-                    { label: 'Black', value: '#111111' },
-                    { label: 'Gray', value: '#666666' },
-                    { label: 'Red', value: '#E11D48' },
-                    { label: 'Blue', value: '#2563EB' },
-                    { label: 'Green', value: '#16A34A' },
+                    { label: 'Espresso', value: '#221510' },
+                    { label: 'Saddle Brown', value: '#6A3E1F' },
+                    { label: 'Walnut Gray', value: '#6B584C' },
+                    { label: 'Chestnut', value: '#8D5B36' },
+                    { label: 'Charcoal', value: '#111111' },
                     { label: 'Gold', value: '#D97706' }
                   ]}
                 />
@@ -367,35 +371,35 @@ export default function FillBlog() {
                 <ToolbarButton onClick={() => applyFormatting('link')} active={editor?.isActive('link')} title="Insert Link"><LinkIcon size={16} /></ToolbarButton>
               </div>
 
-              <div style={{ minHeight: '600px', padding: '40px', backgroundColor: '#FFF', borderRadius: '8px', border: '1px solid #F3F4F6', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }} className="tiptap-editor-container">
+              <div style={{ minHeight: '600px', padding: '40px', backgroundColor: '#FFFFFF', borderRadius: '12px', border: '1px solid #EAE3D9', boxShadow: '0 4px 20px rgba(34, 21, 16, 0.03)' }} className="tiptap-editor-container">
                 <EditorContent editor={editor} />
               </div>
             </div>
 
-            <div style={{ marginTop: '40px', backgroundColor: '#FFF', borderRadius: '12px', padding: '32px', border: '1px solid #E5E7EB', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+            <div style={{ marginTop: '40px', backgroundColor: '#FFFFFF', borderRadius: '12px', padding: '32px', border: '1px solid #EAE3D9', boxShadow: '0 4px 20px rgba(34,21,16,0.03)' }}>
               <button 
                 onClick={() => setIsSearchOptOpen(!isSearchOptOpen)} 
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', background: 'none', border: 'none', fontWeight: 800, fontSize: '14px', cursor: 'pointer', color: '#111' }}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', background: 'none', border: 'none', fontWeight: 800, fontSize: '14px', cursor: 'pointer', color: '#221510' }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <Search size={18} color="var(--primary)" /> 
+                  <Search size={18} color="#6A3E1F" /> 
                   <span>GOOGLE SEARCH (SEO)</span>
                 </div>
                 {isSearchOptOpen ? <ChevronDown size={18} style={{ transform: 'rotate(180deg)' }} /> : <ChevronDown size={18} />}
               </button>
               
               {isSearchOptOpen && (
-                <div style={{ marginTop: '32px', borderTop: '1px solid #F3F4F6', paddingTop: '24px' }}>
+                <div style={{ marginTop: '32px', borderTop: '1px solid #DFCFC2', paddingTop: '24px' }}>
                   <div style={{ marginBottom: '24px' }}>
-                    <label style={{ fontSize: '11px', fontWeight: 700, color: '#888', display: 'block', marginBottom: '8px', letterSpacing: '0.05em' }}>PREVIEW IN GOOGLE</label>
-                    <div style={{ backgroundColor: 'white', padding: '16px', borderRadius: '8px', border: '1px solid #EEE', maxWidth: '600px' }}>
-                      <div style={{ color: '#1a0dab', fontSize: '18px', marginBottom: '4px', textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'arial, sans-serif' }}>
-                        {metaTitle || title || 'Post Title'} | ZizzyStores
+                    <label style={{ fontSize: '11px', fontWeight: 700, color: '#6B584C', display: 'block', marginBottom: '8px', letterSpacing: '0.05em' }}>PREVIEW IN GOOGLE</label>
+                    <div style={{ backgroundColor: '#FDFBF7', padding: '16px', borderRadius: '8px', border: '1px solid #DFCFC2', maxWidth: '600px' }}>
+                      <div style={{ color: '#6A3E1F', fontSize: '18px', fontWeight: '600', marginBottom: '4px', textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'arial, sans-serif' }}>
+                        {metaTitle || title || 'Post Title'} | Unbley
                       </div>
-                      <div style={{ color: '#006621', fontSize: '14px', marginBottom: '4px', fontFamily: 'arial, sans-serif' }}>
-                        https://zizzystores.com/blog/{slug || 'post-url'}
+                      <div style={{ color: '#8D5B36', fontSize: '13px', marginBottom: '4px', fontFamily: 'arial, sans-serif' }}>
+                        https://unbley.com/blog/{slug || 'post-url'}
                       </div>
-                      <div style={{ color: '#545454', fontSize: '13px', lineHeight: '1.4', fontFamily: 'arial, sans-serif' }}>
+                      <div style={{ color: '#6B584C', fontSize: '13px', lineHeight: '1.4', fontFamily: 'arial, sans-serif' }}>
                         {metaDescription || (excerpt ? excerpt.substring(0, 160) : 'Start writing your post content to automatically generate a search description here...')}
                       </div>
                     </div>
@@ -403,33 +407,33 @@ export default function FillBlog() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label style={{ fontSize: '11px', fontWeight: 700, color: '#888', display: 'block', marginBottom: '8px' }}>SEO META TITLE (SEARCH ENGINE LISTING)</label>
+                      <label style={{ fontSize: '11px', fontWeight: 700, color: '#6B584C', display: 'block', marginBottom: '8px' }}>SEO META TITLE (SEARCH ENGINE LISTING)</label>
                       <input 
                         type="text"
                         value={metaTitle} 
                         onChange={(e) => setMetaTitle(e.target.value)} 
                         placeholder="Leave blank to use post title..."
-                        style={{ width: '100%', padding: '12px', border: '1px solid #E5E7EB', borderRadius: '6px', fontSize: '14px', outline: 'none' }} 
+                        style={{ width: '100%', padding: '12px', border: '1px solid #DFCFC2', borderRadius: '8px', fontSize: '14px', outline: 'none', backgroundColor: '#FFFFFF', color: '#221510' }} 
                       />
-                      <p style={{ fontSize: '10px', color: '#888', marginTop: '6px' }}>Keep under 60 characters for best results.</p>
+                      <p style={{ fontSize: '11px', color: '#6B584C', marginTop: '6px' }}>Keep under 60 characters for best results.</p>
                     </div>
 
                     <div>
-                      <label style={{ fontSize: '11px', fontWeight: 700, color: '#888', display: 'block', marginBottom: '8px' }}>META DESCRIPTION (GOOGLE)</label>
+                      <label style={{ fontSize: '11px', fontWeight: 700, color: '#6B584C', display: 'block', marginBottom: '8px' }}>META DESCRIPTION (GOOGLE)</label>
                       <textarea 
                         value={metaDescription} 
                         onChange={(e) => setMetaDescription(e.target.value)} 
                         placeholder="Brief summary for search engines (invisible to users)..."
-                        style={{ width: '100%', height: '100px', padding: '12px', border: '1px solid #E5E7EB', borderRadius: '6px', fontSize: '14px', outline: 'none' }} 
+                        style={{ width: '100%', height: '100px', padding: '12px', border: '1px solid #DFCFC2', borderRadius: '8px', fontSize: '14px', outline: 'none', backgroundColor: '#FFFFFF', color: '#221510' }} 
                       />
                       <div className="flex justify-between items-center mt-2">
-                        <p style={{ fontSize: '10px', color: '#888' }}>Ideal: 150-160 characters.</p>
+                        <p style={{ fontSize: '11px', color: '#6B584C' }}>Ideal: 150-160 characters.</p>
                         <button 
                           onClick={() => {
                             const plainText = content.replace(/<[^>]*>/g, '').trim();
                             setMetaDescription(plainText.substring(0, 155) + (plainText.length > 155 ? '...' : ''));
                           }}
-                          style={{ fontSize: '11px', background: 'none', border: 'none', color: 'var(--primary)', fontWeight: 600, cursor: 'pointer', padding: 0 }}
+                          style={{ fontSize: '11px', background: 'none', border: 'none', color: '#6A3E1F', fontWeight: 700, cursor: 'pointer', padding: 0 }}
                         >
                           AUTO-GENERATE
                         </button>
@@ -437,25 +441,25 @@ export default function FillBlog() {
                     </div>
                     
                     <div>
-                      <label style={{ fontSize: '11px', fontWeight: 700, color: '#888', display: 'block', marginBottom: '8px' }}>CARD EXCERPT (LISTING VIEW)</label>
+                      <label style={{ fontSize: '11px', fontWeight: 700, color: '#6B584C', display: 'block', marginBottom: '8px' }}>CARD EXCERPT (LISTING VIEW)</label>
                       <textarea 
                         value={excerpt} 
                         onChange={(e) => setExcerpt(e.target.value)} 
                         placeholder="Snippet shown on the blog archive cards..."
-                        style={{ width: '100%', height: '100px', padding: '12px', border: '1px solid #E5E7EB', borderRadius: '6px', fontSize: '14px', outline: 'none' }} 
+                        style={{ width: '100%', height: '100px', padding: '12px', border: '1px solid #DFCFC2', borderRadius: '8px', fontSize: '14px', outline: 'none', backgroundColor: '#FFFFFF', color: '#221510' }} 
                       />
                     </div>
                     
                     <div>
-                      <label style={{ fontSize: '11px', fontWeight: 700, color: '#888', display: 'block', marginBottom: '8px' }}>SEO KEYWORDS (META TAGS)</label>
+                      <label style={{ fontSize: '11px', fontWeight: 700, color: '#6B584C', display: 'block', marginBottom: '8px' }}>SEO KEYWORDS (META TAGS)</label>
                       <input 
                         type="text"
                         value={metaKeywords} 
                         onChange={(e) => setMetaKeywords(e.target.value)} 
                         placeholder="e.g. fashion, nigerian brands, e-commerce tips..."
-                        style={{ width: '100%', padding: '12px', border: '1px solid #E5E7EB', borderRadius: '6px', fontSize: '14px', outline: 'none' }} 
+                        style={{ width: '100%', padding: '12px', border: '1px solid #DFCFC2', borderRadius: '8px', fontSize: '14px', outline: 'none', backgroundColor: '#FFFFFF', color: '#221510' }} 
                       />
-                      <p style={{ fontSize: '10px', color: '#888', marginTop: '6px' }}>Comma separated keywords for search engines.</p>
+                      <p style={{ fontSize: '11px', color: '#6B584C', marginTop: '6px' }}>Comma separated keywords for search engines.</p>
                     </div>
                   </div>
                 </div>
@@ -465,40 +469,40 @@ export default function FillBlog() {
 
           <aside className="content-area-aside">
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '40px' }}>
-              <button onClick={() => handleSave(false)} disabled={isSaving} style={{ padding: '12px', fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer' }}>SAVE DRAFT</button>
-              <button onClick={() => handleSave(true)} disabled={isSaving} style={{ padding: '12px', fontWeight: 700, backgroundColor: '#111', color: '#FFF', borderRadius: '4px', cursor: 'pointer' }}>PUBLISH POST</button>
+              <button onClick={() => handleSave(false)} disabled={isSaving} style={{ padding: '12px', fontWeight: 700, background: 'none', border: '1px solid #DFCFC2', borderRadius: '8px', cursor: 'pointer', color: '#6A3E1F' }}>SAVE DRAFT</button>
+              <button onClick={() => handleSave(true)} disabled={isSaving} style={{ padding: '12px', fontWeight: 700, backgroundColor: '#6A3E1F', color: '#FFF', borderRadius: '8px', border: 'none', cursor: 'pointer', boxShadow: '0 4px 12px rgba(106,62,31,0.2)' }}>PUBLISH POST</button>
             </div>
 
-            <div style={{ backgroundColor: '#F9FAFB', padding: '24px', borderRadius: '8px', border: '1px solid #F3F4F6', marginBottom: '32px' }}>
-              <label style={{ fontSize: '10px', fontWeight: 700, color: '#888', display: 'block', marginBottom: '12px' }}>COVER IMAGE</label>
+            <div style={{ backgroundColor: '#F7F2EC', padding: '24px', borderRadius: '12px', border: '1px solid #DFCFC2', marginBottom: '32px' }}>
+              <label style={{ fontSize: '11px', fontWeight: 700, color: '#8D5B36', display: 'block', marginBottom: '12px' }}>COVER IMAGE</label>
               {coverImageUrl ? (
                 <div style={{ position: 'relative', marginBottom: '16px' }}>
-                  <img src={coverImageUrl} alt="Cover" style={{ width: '100%', height: '160px', objectFit: 'cover', borderRadius: '4px' }} />
+                  <img src={coverImageUrl} alt="Cover" style={{ width: '100%', height: '160px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #DFCFC2' }} />
                   <button
                     onClick={() => setCoverImageUrl('')}
-                    style={{ position: 'absolute', top: '8px', right: '8px', backgroundColor: 'rgba(0,0,0,0.5)', color: '#FFF', border: 'none', borderRadius: '50%', width: '24px', height: '24px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    style={{ position: 'absolute', top: '8px', right: '8px', backgroundColor: 'rgba(34,21,16,0.7)', color: '#FFF', border: 'none', borderRadius: '50%', width: '24px', height: '24px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                   >
                     <X size={14} />
                   </button>
                 </div>
               ) : (
-                <div style={{ border: '2px dashed #E5E7EB', borderRadius: '8px', padding: '32px', textAlign: 'center', backgroundColor: '#FFF', position: 'relative', transition: 'all 0.2s' }}>
-                  <ImageIcon size={24} color="#888" style={{ marginBottom: '12px' }} />
-                  <p style={{ fontSize: '11px', color: '#666', marginBottom: '0' }}>Click to upload cover image</p>
+                <div style={{ border: '2px dashed #DFCFC2', borderRadius: '8px', padding: '32px', textAlign: 'center', backgroundColor: '#FFFFFF', position: 'relative', transition: 'all 0.2s' }}>
+                  <ImageIcon size={24} color="#6B584C" style={{ marginBottom: '12px' }} />
+                  <p style={{ fontSize: '11px', color: '#6B584C', marginBottom: '0' }}>Click to upload cover image</p>
                   <label style={{ position: 'absolute', inset: 0, cursor: 'pointer' }}>
                     <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} disabled={uploading} />
                   </label>
-                  {uploading && <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(255,255,255,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px' }}><Loader2 className="animate-spin" size={20} color="#111" /></div>}
+                  {uploading && <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(255,255,255,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px' }}><Loader2 className="animate-spin" size={20} color="#6A3E1F" /></div>}
                 </div>
               )}
             </div>
 
-            <div style={{ backgroundColor: '#F9FAFB', padding: '24px', borderRadius: '8px', border: '1px solid #F3F4F6', marginBottom: '32px' }}>
-              <label style={{ fontSize: '10px', fontWeight: 700, color: '#888', display: 'block', marginBottom: '12px' }}>CATEGORY</label>
+            <div style={{ backgroundColor: '#F7F2EC', padding: '24px', borderRadius: '12px', border: '1px solid #DFCFC2', marginBottom: '32px' }}>
+              <label style={{ fontSize: '11px', fontWeight: 700, color: '#8D5B36', display: 'block', marginBottom: '12px' }}>CATEGORY</label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                style={{ width: '100%', padding: '10px', backgroundColor: '#FFF', border: '1px solid #E5E7EB', borderRadius: '4px', cursor: 'pointer' }}
+                style={{ width: '100%', padding: '10px', backgroundColor: '#FFFFFF', border: '1px solid #DFCFC2', borderRadius: '8px', color: '#221510', cursor: 'pointer' }}
               >
                 <option value="E-commerce">E-commerce</option>
                 <option value="Fashion Business">Fashion Business</option>
@@ -508,11 +512,11 @@ export default function FillBlog() {
               </select>
             </div>
 
-            <div style={{ backgroundColor: '#F9FAFB', padding: '24px', borderRadius: '8px', border: '1px solid #F3F4F6', marginBottom: '32px' }}>
-              <label style={{ fontSize: '10px', fontWeight: 700, color: '#888', display: 'block', marginBottom: '12px' }}>TAGS (ENTER TO ADD)</label>
+            <div style={{ backgroundColor: '#F7F2EC', padding: '24px', borderRadius: '12px', border: '1px solid #DFCFC2', marginBottom: '32px' }}>
+              <label style={{ fontSize: '11px', fontWeight: 700, color: '#8D5B36', display: 'block', marginBottom: '12px' }}>TAGS (ENTER TO ADD)</label>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
                 {tags.map(tag => (
-                  <span key={tag} style={{ backgroundColor: '#EEE', padding: '4px 10px', borderRadius: '4px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span key={tag} style={{ backgroundColor: '#FFFFFF', border: '1px solid #DFCFC2', color: '#6A3E1F', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600' }}>
                     {tag}
                     <X size={12} onClick={() => removeTag(tag)} style={{ cursor: 'pointer' }} />
                   </span>
@@ -523,16 +527,16 @@ export default function FillBlog() {
                 onChange={(e) => setNewTag(e.target.value)}
                 onKeyDown={addTag}
                 placeholder="Add a tag..."
-                style={{ width: '100%', padding: '10px', backgroundColor: '#FFF', border: '1px solid #E5E7EB', borderRadius: '4px' }} 
+                style={{ width: '100%', padding: '10px', backgroundColor: '#FFFFFF', border: '1px solid #DFCFC2', borderRadius: '8px', color: '#221510' }} 
               />
             </div>
 
-            <div style={{ backgroundColor: '#F9FAFB', padding: '24px', borderRadius: '8px', border: '1px solid #F3F4F6', marginBottom: '32px' }}>
-              <label style={{ fontSize: '10px', fontWeight: 700, color: '#888', display: 'block', marginBottom: '12px' }}>AUTHOR</label>
-              <input value={authorName} onChange={(e) => setAuthorName(e.target.value)} style={{ width: '100%', padding: '10px', backgroundColor: '#FFF', border: '1px solid #E5E7EB', borderRadius: '4px', marginBottom: '24px' }} />
+            <div style={{ backgroundColor: '#F7F2EC', padding: '24px', borderRadius: '12px', border: '1px solid #DFCFC2', marginBottom: '32px' }}>
+              <label style={{ fontSize: '11px', fontWeight: 700, color: '#8D5B36', display: 'block', marginBottom: '12px' }}>AUTHOR</label>
+              <input value={authorName} onChange={(e) => setAuthorName(e.target.value)} style={{ width: '100%', padding: '10px', backgroundColor: '#FFFFFF', border: '1px solid #DFCFC2', borderRadius: '8px', color: '#221510', marginBottom: '24px' }} />
 
-              <label style={{ fontSize: '10px', fontWeight: 700, color: '#888', display: 'block', marginBottom: '12px' }}>DATE</label>
-              <input type="date" value={publishedAt} onChange={(e) => setPublishedAt(e.target.value)} style={{ width: '100%', padding: '10px', backgroundColor: '#FFF', border: '1px solid #E5E7EB', borderRadius: '4px' }} />
+              <label style={{ fontSize: '11px', fontWeight: 700, color: '#8D5B36', display: 'block', marginBottom: '12px' }}>DATE</label>
+              <input type="date" value={publishedAt} onChange={(e) => setPublishedAt(e.target.value)} style={{ width: '100%', padding: '10px', backgroundColor: '#FFFFFF', border: '1px solid #DFCFC2', borderRadius: '8px', color: '#221510' }} />
             </div>
           </aside>
         </main>
@@ -541,8 +545,8 @@ export default function FillBlog() {
         <style>{`
           .tiptap-editor-container .ProseMirror { outline: none; min-height: 500px; }
           .tiptap-editor-container p { margin-bottom: 1.5em; }
-          .tiptap-editor-container h1 { font-family: 'Playfair Display', serif; font-size: 2.5em; margin-bottom: 0.5em; }
-          .tiptap-editor-container h2 { font-family: 'Playfair Display', serif; font-size: 2em; margin-bottom: 0.5em; }
+          .tiptap-editor-container h1 { font-family: var(--font-heading); font-weight: 800; letter-spacing: -0.02em; font-size: 2.5em; margin-bottom: 0.5em; }
+          .tiptap-editor-container h2 { font-family: var(--font-heading); font-weight: 800; letter-spacing: -0.02em; font-size: 2em; margin-bottom: 0.5em; }
           .tiptap-editor-container ul { list-style-type: disc; padding-left: 1.5rem; }
           .tiptap-editor-container ol { list-style-type: decimal; padding-left: 1.5rem; }
           .tiptap-editor-container table { border-collapse: collapse; width: 100%; margin: 2rem 0; }

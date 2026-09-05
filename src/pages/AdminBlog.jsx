@@ -3,29 +3,31 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import PageTransition from '../components/PageTransition';
 import { motion } from 'framer-motion';
-import {
-  TrendingUp, Plus, Edit, Trash2, Filter,
-  ChevronLeft, ChevronRight, Eye, Image as ImageIcon,
-  Bold, Italic, Link as LinkIcon, List, Type
-} from 'lucide-react';
+import { TrendingUp, Plus, Edit, Trash2, Filter, Eye } from 'lucide-react';
 
 import { useBlog } from '../hooks/useBlog';
-import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../context/ToastContext';
 import { supabase } from '../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 
 export default function AdminBlog() {
   const navigate = useNavigate();
+  const { toast, confirmDialog } = useToast();
   const [activeTab, setActiveTab] = useState('Dashboard');
   const { posts, loading } = useBlog();
-  const { isAdmin } = useAuth();
 
   const handleEdit = (id) => {
     navigate(`/fillblog?id=${id}`);
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this post?")) return;
+    const confirmed = await confirmDialog({
+      title: 'Delete Manuscript',
+      message: 'Are you sure you want to delete this blog post? This action cannot be undone.',
+      confirmText: 'Delete',
+      type: 'danger'
+    });
+    if (!confirmed) return;
 
     try {
       const { error } = await supabase
@@ -34,10 +36,11 @@ export default function AdminBlog() {
         .eq('id', id);
 
       if (error) throw error;
+      toast.success('Manuscript deleted successfully');
       // Realtime will trigger refresh via useBlog
     } catch (err) {
       console.error("Error deleting post:", err);
-      alert("Failed to delete");
+      toast.error("Failed to delete post: " + err.message);
     }
   };
 
@@ -48,41 +51,41 @@ export default function AdminBlog() {
   };
 
   const s = {
-    page: { backgroundColor: '#F9F7F2', minHeight: '100vh', color: '#1A1A1A', fontFamily: '"Inter", sans-serif' },
+    page: { backgroundColor: '#FBF9F5', minHeight: '100vh', color: '#221510', fontFamily: '"Inter", sans-serif' },
     container: { maxWidth: '1200px', margin: '0 auto', padding: '0 24px 120px' },
 
     // Header
-    topNav: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '40px 0 80px', borderBottom: '1px solid #E5E1D8', marginBottom: '60px' },
+    topNav: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '40px 0 80px', borderBottom: '1px solid #DFCFC2', marginBottom: '60px' },
     navLinks: { display: 'flex', gap: '32px', overflowX: 'auto', paddingBottom: '12px' },
-    navLink: (active) => ({ fontSize: '13px', fontWeight: '600', color: active ? '#1A1A1A' : '#888', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: active ? '2px solid #1A1A1A' : 'none', paddingBottom: '4px' }),
+    navLink: (active) => ({ fontSize: '13px', fontWeight: '600', color: active ? '#6A3E1F' : '#6B584C', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: active ? '2px solid #6A3E1F' : 'none', paddingBottom: '4px' }),
 
     headerArea: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '60px', flexWrap: 'wrap', gap: '24px' },
-    breadcrumb: { fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.15em', color: '#888', marginBottom: '12px', display: 'block' },
-    title: { fontFamily: '"Playfair Display", serif', fontSize: 'clamp(32px, 8vw, 56px)', fontWeight: '700', letterSpacing: '-0.02em', margin: 0 },
-    createBtn: { display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#052A24', color: '#FFF', padding: '14px 24px', borderRadius: '4px', fontSize: '14px', fontWeight: '600', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' },
+    breadcrumb: { fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.15em', color: '#8D5B36', marginBottom: '12px', display: 'block' },
+    title: { fontFamily: 'var(--font-heading)', fontSize: 'clamp(32px, 8vw, 56px)', fontWeight: '800', color: '#221510', letterSpacing: '-0.03em', margin: 0 },
+    createBtn: { display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#6A3E1F', color: '#FFF', padding: '14px 24px', borderRadius: '8px', fontSize: '14px', fontWeight: '600', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap', boxShadow: '0 4px 12px rgba(106,62,31,0.2)' },
 
     // Analytics Row
     statsRow: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px', marginBottom: '80px' },
-    statCard: { backgroundColor: '#FFF', border: '1px solid #E5E1D8', padding: '40px', borderRadius: '4px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' },
-    statLabel: { fontSize: '12px', color: '#888', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '16px' },
-    statValue: { fontSize: '48px', fontWeight: '400', fontFamily: '"Playfair Display", serif' },
-    readershipCard: { gridColumn: 'span 1', backgroundColor: '#083968ff', color: '#F9F7F2', padding: '40px', borderRadius: '4px', position: 'relative', overflow: 'hidden' },
-    graphOverlay: { position: 'absolute', bottom: '20px', right: '20px', opacity: 0.2 },
+    statCard: { backgroundColor: '#FFF', border: '1px solid #EAE3D9', padding: '40px', borderRadius: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', boxShadow: '0 4px 20px rgba(34,21,16,0.03)' },
+    statLabel: { fontSize: '12px', color: '#6B584C', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '16px' },
+    statValue: { fontSize: '48px', fontWeight: '800', letterSpacing: '-0.02em', fontFamily: 'var(--font-heading)', color: '#221510' },
+    readershipCard: { gridColumn: 'span 1', backgroundColor: '#261710', color: '#FDFBF7', padding: '40px', borderRadius: '12px', position: 'relative', overflow: 'hidden', boxShadow: '0 8px 30px rgba(38,23,16,0.15)' },
+    graphOverlay: { position: 'absolute', bottom: '20px', right: '20px', opacity: 0.15 },
 
     // Table Section
-    sectionTitle: { fontSize: '24px', fontFamily: '"Playfair Display", serif', fontWeight: '600', marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-    tableHeader: { display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 100px', padding: '16px 24px', backgroundColor: '#F1EFE9', borderRadius: '4px', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#888', marginBottom: '8px' },
-    tableRow: { display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 100px', padding: '24px', backgroundColor: '#FFF', borderRadius: '4px', borderBottom: '1px solid #F1EFE9', alignItems: 'center', cursor: 'default' },
-    manuscriptTitle: { fontSize: '15px', fontWeight: '700', color: '#1A1A1A', marginBottom: '4px' },
-    manuscriptMeta: { fontSize: '12px', color: '#888' },
-    statusChip: (published) => ({ padding: '4px 12px', borderRadius: '20px', fontSize: '10px', fontWeight: '700', backgroundColor: published ? '#E1F2EE' : '#F1EFE9', color: published ? '#0051ffff' : '#888', textTransform: 'uppercase' }),
+    sectionTitle: { fontSize: '24px', fontFamily: 'var(--font-heading)', fontWeight: '800', letterSpacing: '-0.02em', color: '#221510', marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+    tableHeader: { display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 100px', padding: '16px 24px', backgroundColor: '#F7F2EC', borderRadius: '8px', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#6B584C', marginBottom: '8px', border: '1px solid #DFCFC2' },
+    tableRow: { display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 100px', padding: '24px', backgroundColor: '#FFF', borderRadius: '8px', border: '1px solid #EAE3D9', alignItems: 'center', cursor: 'default', marginBottom: '8px' },
+    manuscriptTitle: { fontSize: '15px', fontWeight: '700', color: '#221510', marginBottom: '4px' },
+    manuscriptMeta: { fontSize: '12px', color: '#6B584C' },
+    statusChip: (published) => ({ padding: '4px 12px', borderRadius: '20px', fontSize: '10px', fontWeight: '700', backgroundColor: published ? '#F7F2EC' : '#F1EFE9', color: published ? '#6A3E1F' : '#6B584C', border: `1px solid ${published ? '#DFCFC2' : '#EAE3D9'}`, textTransform: 'uppercase' }),
 
     // Editor Card
-    editorCard: { backgroundColor: '#FFF', border: '1px solid #E5E1D8', borderRadius: '8px', padding: '0', overflow: 'hidden', marginTop: '120px', boxShadow: '0 40px 100px -20px rgba(0,0,0,0.05)' },
-    editorHeader: { padding: '24px 40px', borderBottom: '1px solid #F1EFE9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#FCFBFA' },
-    editorTitleInput: { width: '100%', border: 'none', background: 'none', outline: 'none', fontFamily: '"Playfair Display", serif', fontSize: '64px', fontWeight: '700', color: '#1A1A1A', padding: '60px 0 40px', letterSpacing: '-0.02em' },
-    heroPlaceholder: { width: '100%', height: '300px', backgroundColor: '#F1EFE9', display: 'flex', flexHorizontal: 'column', alignItems: 'center', justifyContent: 'center', color: '#888', cursor: 'pointer', borderRadius: '4px', marginBottom: '40px' },
-    formattingBar: { position: 'fixed', bottom: '40px', left: '50%', transform: 'translateX(-50%)', backgroundColor: '#052A24', color: '#FFF', padding: '12px 24px', borderRadius: '12px', display: 'flex', gap: '24px', boxShadow: '0 20px 40px rgba(0,0,0,0.2)', zIndex: 1000 }
+    editorCard: { backgroundColor: '#FFF', border: '1px solid #EAE3D9', borderRadius: '12px', padding: '0', overflow: 'hidden', marginTop: '120px', boxShadow: '0 40px 100px -20px rgba(34,21,16,0.05)' },
+    editorHeader: { padding: '24px 40px', borderBottom: '1px solid #EAE3D9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#FCFBFA' },
+    editorTitleInput: { width: '100%', border: 'none', background: 'none', outline: 'none', fontFamily: 'var(--font-heading)', fontSize: '56px', fontWeight: '800', color: '#221510', padding: '60px 0 40px', letterSpacing: '-0.03em' },
+    heroPlaceholder: { width: '100%', height: '300px', backgroundColor: '#F7F2EC', display: 'flex', flexHorizontal: 'column', alignItems: 'center', justifyContent: 'center', color: '#6B584C', cursor: 'pointer', borderRadius: '8px', marginBottom: '40px', border: '1px dashed #DFCFC2' },
+    formattingBar: { position: 'fixed', bottom: '40px', left: '50%', transform: 'translateX(-50%)', backgroundColor: '#261710', color: '#FFF', padding: '12px 24px', borderRadius: '12px', display: 'flex', gap: '24px', boxShadow: '0 20px 40px rgba(0,0,0,0.2)', zIndex: 1000 }
   };
 
   return (
@@ -93,15 +96,15 @@ export default function AdminBlog() {
         <div style={s.container}>
           {/* Internal Nav */}
           <div style={s.topNav}>
-            <div className="font-bold" style={{ fontSize: '20px', letterSpacing: '-0.03em' }}>The Archivist</div>
+            <div className="font-bold" style={{ fontSize: '20px', letterSpacing: '-0.03em', color: '#221510' }}>The Archivist</div>
             <div style={s.navLinks}>
               {['Essays', 'Categories', 'Authors', 'Dashboard'].map(tab => (
                 <div key={tab} style={s.navLink(activeTab === tab)} onClick={() => setActiveTab(tab)}>{tab}</div>
               ))}
             </div>
             <div className="flex gap-4">
-              <Filter size={18} color="#888" />
-              <Eye size={18} color="#888" />
+              <Filter size={18} color="#6B584C" />
+              <Eye size={18} color="#6B584C" />
             </div>
           </div>
 
@@ -130,10 +133,10 @@ export default function AdminBlog() {
               <span style={s.statValue}>{loading ? '...' : stats.drafts}</span>
             </div>
             <div style={s.readershipCard} className="admin-readership-card">
-              <span style={s.statLabel}>Monthly Readership</span>
+              <span style={{ ...s.statLabel, color: '#C9BFB5' }}>Monthly Readership</span>
               <div className="flex items-baseline gap-2" style={{ marginBottom: '8px' }}>
-                <span style={{ ...s.statValue, fontSize: '48px' }}>42.8k</span>
-                <TrendingUp size={24} color="#00FFB2" />
+                <span style={{ ...s.statValue, fontSize: '48px', color: '#FDFBF7' }}>42.8k</span>
+                <TrendingUp size={24} color="#DFCFC2" />
               </div>
               <div style={s.graphOverlay}>
                 <TrendingUp size={120} />

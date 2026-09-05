@@ -8,10 +8,10 @@ import { Rocket, Target, Globe, PhoneOff, CheckCircle2, ShoppingBag, CreditCard,
 const aboutStyles = `
   .about-hero {
     padding: 180px 0 100px;
-    background-color: #ffffff;
+    background-color: var(--bg-surface);
     background-image:
-      radial-gradient(at 0% 0%, hsla(210, 100%, 98%, 1) 0, transparent 50%),
-      radial-gradient(at 100% 0%, hsla(190, 100%, 98%, 1) 0, transparent 50%);
+      radial-gradient(at 0% 0%, rgba(247, 242, 236, 0.9) 0, transparent 55%),
+      radial-gradient(at 100% 0%, rgba(234, 227, 217, 0.6) 0, transparent 55%);
     text-align: center;
     position: relative;
     overflow: hidden;
@@ -25,9 +25,10 @@ const aboutStyles = `
     pointer-events: none;
   }
   .about-hero-title {
-    font-family: 'Playfair Display', serif;
+    font-family: var(--font-heading);
     font-size: clamp(40px, 6vw, 64px);
-    font-weight: 700;
+    font-weight: 800;
+    letter-spacing: -0.03em;
     color: var(--text-primary);
     margin-bottom: 24px;
     line-height: 1.1;
@@ -56,9 +57,10 @@ const aboutStyles = `
     display: inline-block;
   }
   .section-title {
-    font-family: 'Playfair Display', serif;
+    font-family: var(--font-heading);
     font-size: clamp(32px, 4vw, 48px);
-    font-weight: 700;
+    font-weight: 800;
+    letter-spacing: -0.02em;
     margin-bottom: 24px;
     color: var(--text-primary);
   }
@@ -90,7 +92,7 @@ const aboutStyles = `
   .feature-box:hover {
     transform: translateY(-5px);
     box-shadow: var(--shadow-lg);
-    border-color: rgba(9, 98, 252, 0.2);
+    border-color: rgba(106, 62, 31, 0.25);
   }
   .feature-icon-wrapper {
     width: 56px;
@@ -106,6 +108,7 @@ const aboutStyles = `
   .feature-box h4 {
     font-size: 20px;
     font-weight: 700;
+    color: var(--text-primary);
     margin-bottom: 12px;
   }
   .feature-box p {
@@ -123,15 +126,16 @@ const aboutStyles = `
     align-items: flex-start;
   }
   .why-icon {
-    color: #10b981;
+    color: #6A3E1F;
     flex-shrink: 0;
-    background: #f0fdf4;
+    background: #F7F2EC;
     padding: 8px;
     border-radius: 50%;
   }
   .why-content h4 {
     font-size: 18px;
     font-weight: 700;
+    color: var(--text-primary);
     margin-bottom: 8px;
   }
   .why-content p {
@@ -139,13 +143,14 @@ const aboutStyles = `
     line-height: 1.6;
   }
   .vision-box {
-    background: linear-gradient(135deg, var(--text-primary), #1a1a1a);
-    color: white;
+    background: linear-gradient(135deg, #261710, #3D291E);
+    color: #FDFBF7;
     padding: 80px 64px;
     border-radius: var(--radius-2xl);
     margin-bottom: 64px;
     position: relative;
     overflow: hidden;
+    box-shadow: 0 12px 36px rgba(38, 23, 16, 0.15);
   }
   .vision-box::before {
     content: "";
@@ -154,13 +159,13 @@ const aboutStyles = `
     right: 0;
     bottom: 0;
     width: 50%;
-    background: radial-gradient(circle at top right, rgba(9, 98, 252, 0.15), transparent 70%);
+    background: radial-gradient(circle at top right, rgba(141, 91, 54, 0.25), transparent 70%);
   }
   .vision-box .section-title {
-    color: white;
+    color: #FDFBF7;
   }
   .vision-box .section-body {
-    color: #a3a3a3;
+    color: #C9BFB5;
   }
   .audience-tags {
     display: flex;
@@ -169,8 +174,8 @@ const aboutStyles = `
     margin-top: 40px;
   }
   .audience-tag {
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     padding: 12px 24px;
     border-radius: 100px;
     font-size: 15px;
@@ -178,22 +183,25 @@ const aboutStyles = `
     display: flex;
     align-items: center;
     gap: 10px;
-    color: white;
+    color: #FDFBF7;
     backdrop-filter: blur(10px);
   }
   .cta-banner {
-    background: var(--bg-light);
-    border: 1px solid var(--border-color);
+    background: #F7F2EC;
+    border: 1px solid #DFCFC2;
     text-align: center;
     padding: 80px 24px;
     border-radius: var(--radius-2xl);
     margin: 100px auto;
     max-width: 900px;
+    box-shadow: 0 4px 20px rgba(34, 21, 16, 0.04);
   }
   .cta-banner h2 {
-    font-family: 'Playfair Display', serif;
+    font-family: var(--font-heading);
     font-size: clamp(32px, 4vw, 42px);
-    font-weight: 700;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
     margin-bottom: 16px;
   }
   .cta-banner p {
@@ -215,10 +223,11 @@ const aboutStyles = `
     border: none;
     cursor: pointer;
     text-decoration: none;
+    box-shadow: 0 4px 14px rgba(106, 62, 31, 0.25);
   }
   .cta-button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 20px -10px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 10px 20px -10px rgba(106, 62, 31, 0.4);
     background: var(--primary-hover);
   }
   @media (max-width: 768px) {
@@ -239,25 +248,25 @@ export default function About() {
   return (
     <>
       <SEO 
-        title="About Us | Zizzystores"
-        description="Zizzystores is a modern e-commerce solution built for brands that want to own their identity, build trust, and sell smarter online."
+        title="About Us | Unbley"
+        description="Unbley is a modern e-commerce solution built for brands that want to own their identity, build trust, and sell smarter online."
       />
+      <Navbar />
       <PageTransition>
         <style dangerouslySetInnerHTML={{ __html: aboutStyles }} />
-        <Navbar />
         
         <main>
           {/* Hero Section */}
           <section className="about-hero">
             <div className="container">
               <div className="hero-badge mx-auto" style={{ margin: '0 auto 24px', display: 'inline-flex' }}>
-                <span role="img" aria-label="rocket">🚀</span> About Zizzystores
+                <span role="img" aria-label="rocket">🚀</span> About Unbley
               </div>
               <h1 className="about-hero-title">
                 Who We Are
               </h1>
               <p className="about-hero-subtitle">
-                Zizzystores is a modern e-commerce solution built for brands that want to own their identity, build trust, and sell smarter online.
+                Unbley is a modern e-commerce solution built for brands that want to own their identity, build trust, and sell smarter online.
               </p>
             </div>
           </section>
@@ -320,7 +329,7 @@ export default function About() {
                 <div style={{ direction: 'ltr', paddingRight: '48px' }}>
                   <div style={{ aspectRatio: '1/1', background: 'var(--bg-white)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)', position: 'relative' }}>
                      <Target size={80} color="var(--accent)" opacity={0.2} style={{ position: 'absolute' }} />
-                     <h3 style={{ fontFamily: 'Playfair Display', fontSize: '32px', fontWeight: 'bold', zIndex: 1, textAlign: 'center' }}>Building<br />Trust</h3>
+                     <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '30px', fontWeight: '800', letterSpacing: '-0.02em', zIndex: 1, textAlign: 'center' }}>Building<br />Trust</h3>
                   </div>
                 </div>
               </div>
@@ -334,7 +343,7 @@ export default function About() {
                 <span className="section-label">What We Do</span>
                 <h2 className="section-title text-center">Complete Selling Systems</h2>
                 <p className="section-body">
-                  At Zizzystores, we don't just "build websites" — we create complete selling systems. Everything is designed to help your brand look legit, premium, and trustworthy.
+                  At Unbley, we don't just "build websites" — we create complete selling systems. Everything is designed to help your brand look legit, premium, and trustworthy.
                 </p>
               </div>
 
@@ -371,7 +380,7 @@ export default function About() {
             </div>
           </section>
 
-          {/* Why Zizzystores */}
+          {/* Why Unbley */}
           <section className="about-section-alt">
             <div className="container">
               <div className="grid-2">
@@ -409,7 +418,7 @@ export default function About() {
                       <div className="why-icon"><CheckCircle2 size={24} /></div>
                       <div className="why-content">
                         <h4>Built for Nigeria 🇳🇬</h4>
-                        <p>We understand how Nigerian brands operate: Payment systems, delivery challenges, and customer behavior. Zizzystores is built with all of that in mind.</p>
+                        <p>We understand how Nigerian brands operate: Payment systems, delivery challenges, and customer behavior. Unbley is built with all of that in mind.</p>
                       </div>
                     </div>
                   </div>
@@ -429,7 +438,7 @@ export default function About() {
                     We are building more than just a service. We are building a future where every brand owns its platform, every business looks trustworthy online, and selling online becomes easy and scalable.
                   </p>
                   <p className="section-body" style={{ color: 'white', fontWeight: 'bold' }}>
-                    Zizzystores aims to become the go-to platform for brand owners across Africa.
+                    Unbley aims to become the go-to platform for brand owners across Africa.
                   </p>
 
                   <div className="audience-tags">

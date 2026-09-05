@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import SEO from '../components/SEO';
@@ -30,17 +30,7 @@ export default function Blog() {
     setTimeout(() => setShowCopied(false), 2000);
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.2 } }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.6 } }
-  };
-
-  const fetchPost = async () => {
+  const fetchPost = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -70,11 +60,11 @@ export default function Blog() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [slug]);
 
   useEffect(() => {
     if (slug) fetchPost();
-  }, [slug]);
+  }, [slug, fetchPost]);
 
   useEffect(() => {
     if (post?.id) {
@@ -126,50 +116,50 @@ export default function Blog() {
   }, [post?.content]);
 
   const s = {
-    page: { backgroundColor: 'var(--bg-light)', minHeight: '100vh', color: 'var(--text-primary)', fontFamily: '"Inter", sans-serif' },
+    page: { backgroundColor: '#FBF9F5', minHeight: '100vh', color: '#221510', fontFamily: '"Inter", sans-serif' },
     hero: { padding: '160px 0 100px', maxWidth: '1200px', margin: '0 auto', paddingLeft: '24px', paddingRight: '24px' },
     heroGrid: { display: 'grid', gridTemplateColumns: post?.cover_image_url ? '1.2fr 1fr' : '1fr', gap: '64px', alignItems: 'center' },
-    title: { fontFamily: '"Playfair Display", serif', fontSize: 'clamp(32px, 5vw, 64px)', fontWeight: '700', marginBottom: '24px', letterSpacing: '-0.02em', lineHeight: '1.1' },
-    byline: { fontSize: '14px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '500' },
-    heroImage: { width: '150%', height: 'clamp(250px, 40vw, 450px)', objectFit: 'cover', borderRadius: '12px', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' },
+    title: { fontFamily: 'var(--font-heading)', fontSize: 'clamp(32px, 5vw, 64px)', fontWeight: '800', color: '#221510', marginBottom: '24px', letterSpacing: '-0.03em', lineHeight: '1.1' },
+    byline: { fontSize: '14px', color: '#6B584C', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '500' },
+    heroImage: { width: '100%', height: 'clamp(250px, 40vw, 450px)', objectFit: 'cover', borderRadius: '16px', border: '1px solid #EAE3D9', boxShadow: '0 20px 40px rgba(34,21,16,0.08)' },
 
     // Article Layout
     container: { display: 'grid', gridTemplateColumns: '280px 1fr', gap: '120px', maxWidth: '1300px', margin: '0 auto', padding: '0 40px 200px', width: '100%', boxSizing: 'border-box' },
     sidebar: { position: 'sticky', top: '140px', height: 'fit-content' },
     sidebarItem: { marginBottom: '48px' },
-    sidebarLabel: { fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.15em', color: '#888', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-    sidebarValue: { fontSize: '15px', fontWeight: '600', color: '#121212' },
+    sidebarLabel: { fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.12em', color: '#8D5B36', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+    sidebarValue: { fontSize: '15px', fontWeight: '600', color: '#221510' },
 
     // ToC Styles
-    tocLink: { display: 'block', fontSize: '14px', color: '#777', textDecoration: 'none', marginBottom: '16px', transition: 'all 0.3s', cursor: 'pointer', lineHeight: '1.6', fontWeight: '500' },
-    tocLinkActive: { color: '#121212', fontWeight: '700' },
+    tocLink: { display: 'block', fontSize: '14px', color: '#6B584C', textDecoration: 'none', marginBottom: '16px', transition: 'all 0.3s', cursor: 'pointer', lineHeight: '1.6', fontWeight: '500' },
+    tocLinkActive: { color: '#6A3E1F', fontWeight: '700' },
 
     // Content Styles
-    article: { maxWidth: '780px', fontSize: '20px', lineHeight: '1.85', color: '#222', letterSpacing: '-0.01em' },
-    h2: { fontFamily: '"Playfair Display", serif', fontSize: '42px', fontWeight: '700', marginTop: '80px', marginBottom: '32px', color: '#121212', letterSpacing: '-0.02em' },
+    article: { maxWidth: '780px', fontSize: '20px', lineHeight: '1.85', color: '#221510', letterSpacing: '-0.01em' },
+    h2: { fontFamily: 'var(--font-heading)', fontSize: '40px', fontWeight: '800', marginTop: '80px', marginBottom: '32px', color: '#221510', letterSpacing: '-0.02em' },
     p: { marginBottom: '32px' },
     list: { paddingLeft: '24px', marginBottom: '32px', listStyleType: 'disc' },
     listItem: { marginBottom: '12px' },
 
     // CTA Section
-    cta: { backgroundColor: '#FFFFFF', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-xl)', padding: '64px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '120px', position: 'relative', overflow: 'hidden' },
+    cta: { backgroundColor: '#FFFFFF', border: '1px solid #EAE3D9', borderRadius: '16px', padding: '64px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '120px', position: 'relative', overflow: 'hidden', boxShadow: '0 8px 30px rgba(34,21,16,0.04)' },
     ctaText: { maxWidth: '500px' },
-    ctaTitle: { fontSize: '32px', fontWeight: '800', marginBottom: '16px' }
+    ctaTitle: { fontSize: '32px', fontWeight: '800', color: '#221510', marginBottom: '16px' }
   };
 
   if (loading) {
     return (
-      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#F9F7F2' }}>
-        <Loader2 className="animate-spin" size={48} color="#888" />
+      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#FBF9F5' }}>
+        <Loader2 className="animate-spin" size={48} color="#6A3E1F" />
       </div>
     );
   }
 
   if (!post) {
     return (
-      <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backgroundColor: '#F9F7F2', gap: '20px' }}>
-        <h1 style={{ fontFamily: '"Playfair Display", serif', fontSize: '32px' }}>The archive is silent.</h1>
-        <p style={{ color: '#888' }}>The manuscript you seek could not be found.</p>
+      <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backgroundColor: '#FBF9F5', gap: '20px' }}>
+        <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '32px', fontWeight: '800', letterSpacing: '-0.02em', color: '#221510' }}>The archive is silent.</h1>
+        <p style={{ color: '#6B584C' }}>The manuscript you seek could not be found.</p>
         <button className="btn btn-outline" onClick={() => window.history.back()}>Go Back</button>
       </div>
     );
@@ -178,11 +168,11 @@ export default function Blog() {
   return (
     <>
       <SEO
-        title={post?.meta_title || post?.title || "ZizzyStores Blog"}
-        description={post?.meta_description || post?.excerpt || "Read this story on ZizzyStores Blog – Nigerian Ecommerce & Growth."}
+        title={post?.meta_title || post?.title || "Unbley Blog"}
+        description={post?.meta_description || post?.excerpt || "Read this story on Unbley Blog – Nigerian Ecommerce & Growth."}
         keywords={post?.meta_keywords || post?.tags?.join(', ')}
-        canonical={post ? `https://zizzystores.com/blog/${post.slug}` : `https://zizzystores.com/blog`}
-        ogImage={post?.cover_image_url || 'https://zizzystores.com/og-default.jpg'}
+        canonical={post ? `https://unbley.com/blog/${post.slug}` : `https://unbley.com/blog`}
+        ogImage={post?.cover_image_url || 'https://unbley.com/og-default.jpg'}
         ogType="article"
       />
       <PageTransition>
@@ -292,24 +282,21 @@ export default function Blog() {
               )}
             </aside>
 
-            <motion.main
-              variants={containerVariants}
-              initial="visible"
-              animate="visible"
+            <main
               style={s.article}
             >
               {/* Metadata Overview for Reviewers */}
-              <div className="reviewer-box" style={{ padding: '32px', backgroundColor: '#F3F4F6', borderRadius: '12px', border: '1px solid #E5E7EB', marginBottom: '60px' }}>
+              <div className="reviewer-box" style={{ padding: '32px', backgroundColor: '#F7F2EC', borderRadius: '16px', border: '1px solid #DFCFC2', marginBottom: '60px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '32px' }}>
-                  <div style={{ borderBottom: '1px solid #E5E7EB', paddingBottom: '16px' }}>
+                  <div style={{ borderBottom: '1px solid #DFCFC2', paddingBottom: '16px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '8px' }}>
-                      <label style={{ fontSize: '11px', fontWeight: 900, color: '#4B5563', letterSpacing: '0.1em' }}>LIVE LINK / PERMALINK</label>
+                      <label style={{ fontSize: '11px', fontWeight: 900, color: '#6A3E1F', letterSpacing: '0.1em' }}>LIVE LINK / PERMALINK</label>
                       <button
                         onClick={handleCopyLink}
                         style={{
                           display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 700,
-                          color: showCopied ? '#059669' : '#111', background: 'none', border: 'none', cursor: 'pointer',
-                          padding: '4px 8px', borderRadius: '4px', backgroundColor: showCopied ? '#D1FAE5' : '#E5E7EB',
+                          color: showCopied ? '#6A3E1F' : '#221510', background: 'none', border: '1px solid #DFCFC2', cursor: 'pointer',
+                          padding: '6px 12px', borderRadius: '6px', backgroundColor: showCopied ? '#FDFBF7' : '#FFFFFF',
                           transition: 'all 0.2s'
                         }}
                       >
@@ -317,15 +304,15 @@ export default function Blog() {
                         {showCopied ? 'COPIED!' : 'COPY LINK'}
                       </button>
                     </div>
-                    <code style={{ fontSize: '14px', color: '#111', fontWeight: 500, wordBreak: 'break-all', backgroundColor: '#FFF', padding: '8px 12px', borderRadius: '6px', border: '1px solid #E5E7EB', display: 'block' }}>
+                    <code style={{ fontSize: '14px', color: '#221510', fontWeight: 500, wordBreak: 'break-all', backgroundColor: '#FFFFFF', padding: '10px 14px', borderRadius: '8px', border: '1px solid #DFCFC2', display: 'block' }}>
                       {post.slug ? `${window.location.protocol}//${window.location.host}/blog/${post.slug}` : 'Generating...'}
                     </code>
                   </div>
 
                   {post.meta_description && (
                     <div>
-                      <label style={{ fontSize: '11px', fontWeight: 900, color: '#4B5563', letterSpacing: '0.1em', display: 'block', marginBottom: '8px' }}>SEO META DESCRIPTION</label>
-                      <p style={{ fontSize: '15px', color: '#6B7280', margin: 0, lineHeight: '1.6' }}>{post.meta_description}</p>
+                      <label style={{ fontSize: '11px', fontWeight: 900, color: '#6A3E1F', letterSpacing: '0.1em', display: 'block', marginBottom: '8px' }}>SEO META DESCRIPTION</label>
+                      <p style={{ fontSize: '15px', color: '#6B584C', margin: 0, lineHeight: '1.6' }}>{post.meta_description}</p>
                     </div>
                   )}
                 </div>
@@ -333,7 +320,7 @@ export default function Blog() {
 
               <div
                 className="rich-content"
-                style={{ fontSize: '18px', lineHeight: '1.8', color: '#374151' }}
+                style={{ fontSize: '18px', lineHeight: '1.8', color: '#221510' }}
                 dangerouslySetInnerHTML={{ __html: processedContent }}
               />
 
@@ -357,7 +344,7 @@ export default function Blog() {
                   <LayoutGrid size={120} />
                 </div>
               </motion.div>
-            </motion.main>
+            </main>
           </div>
 
           <Footer />
@@ -431,10 +418,13 @@ export default function Blog() {
             border-left: 2px solid #121212;
             padding-left: 40px;
             margin: 60px 0;
-            font-family: 'Playfair Display', serif;
-            font-size: 32px;
+            font-family: var(--font-heading);
+            font-style: italic;
+            font-weight: 600;
+            font-size: 28px;
+            letter-spacing: -0.01em;
             line-height: 1.4;
-            color: #121212;
+            color: #221510;
           }
 
           .rich-content img {
@@ -446,8 +436,10 @@ export default function Blog() {
           }
 
           .rich-content h1, .rich-content h2, .rich-content h3 {
-            font-family: 'Playfair Display', serif;
-            color: #121212;
+            font-family: var(--font-heading);
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: #221510;
             margin-top: 2.5em;
             margin-bottom: 0.8em;
             scroll-margin-top: 140px;
@@ -514,7 +506,9 @@ export default function Blog() {
           }
 
           .blog-hero-text h1 {
-            font-family: 'Playfair Display', serif;
+            font-family: var(--font-heading);
+            font-weight: 800;
+            letter-spacing: -0.03em;
           }
         `}</style>
         </div>

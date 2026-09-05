@@ -3,16 +3,17 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import PageTransition from '../components/PageTransition';
 import SEO from '../components/SEO';
+import { useToast } from '../context/ToastContext';
 import { Link } from 'react-router-dom';
 import { MessageCircle, Mail, Globe, CheckCircle2, Send, Rocket, Building, User, Edit3 } from 'lucide-react';
 
 const contactStyles = `
   .contact-hero {
     padding: 180px 0 100px;
-    background-color: #ffffff;
+    background-color: var(--bg-surface);
     background-image:
-      radial-gradient(at 0% 0%, hsla(210, 100%, 98%, 1) 0, transparent 50%),
-      radial-gradient(at 100% 0%, hsla(190, 100%, 98%, 1) 0, transparent 50%);
+      radial-gradient(at 0% 0%, rgba(247, 242, 236, 0.9) 0, transparent 55%),
+      radial-gradient(at 100% 0%, rgba(234, 227, 217, 0.6) 0, transparent 55%);
     text-align: center;
     position: relative;
     overflow: hidden;
@@ -26,9 +27,10 @@ const contactStyles = `
     pointer-events: none;
   }
   .contact-hero-title {
-    font-family: 'Playfair Display', serif;
+    font-family: var(--font-heading);
     font-size: clamp(40px, 6vw, 64px);
-    font-weight: 700;
+    font-weight: 800;
+    letter-spacing: -0.03em;
     color: var(--text-primary);
     margin-bottom: 24px;
     line-height: 1.1;
@@ -50,9 +52,10 @@ const contactStyles = `
     display: inline-block;
   }
   .section-title {
-    font-family: 'Playfair Display', serif;
+    font-family: var(--font-heading);
     font-size: clamp(32px, 4vw, 42px);
-    font-weight: 700;
+    font-weight: 800;
+    letter-spacing: -0.02em;
     margin-bottom: 24px;
     color: var(--text-primary);
   }
@@ -76,7 +79,7 @@ const contactStyles = `
   .contact-card:hover {
     transform: translateY(-5px);
     box-shadow: var(--shadow-sm);
-    border-color: rgba(9, 98, 252, 0.2);
+    border-color: rgba(106, 62, 31, 0.25);
   }
   .contact-icon {
     width: 48px;
@@ -92,6 +95,7 @@ const contactStyles = `
   .contact-card h4 {
     font-size: 18px;
     font-weight: 700;
+    color: var(--text-primary);
     margin-bottom: 8px;
   }
   .contact-card p, .contact-card a {
@@ -131,7 +135,7 @@ const contactStyles = `
   .input-icon {
     position: absolute;
     left: 16px;
-    color: #9ca3af;
+    color: #6B584C;
   }
   .form-control {
     width: 100%;
@@ -139,6 +143,7 @@ const contactStyles = `
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
     background: var(--bg-light);
+    color: var(--text-primary);
     font-family: inherit;
     font-size: 15px;
     transition: var(--transition);
@@ -169,10 +174,12 @@ const contactStyles = `
     border: none;
     cursor: pointer;
     transition: var(--transition);
+    box-shadow: 0 4px 14px rgba(106, 62, 31, 0.25);
   }
   .btn-submit:hover:not(:disabled) {
     background: var(--primary-hover);
     transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(106, 62, 31, 0.35);
   }
   .btn-submit:disabled {
     opacity: 0.7;
@@ -193,32 +200,41 @@ const contactStyles = `
     color: var(--text-secondary);
   }
   .why-item svg {
-    color: #10b981;
+    color: #6A3E1F;
     flex-shrink: 0;
   }
 
   .cta-banner {
-    background: var(--bg-dark);
-    color: white;
+    background: linear-gradient(135deg, #261710, #3D291E);
+    color: #FDFBF7;
     text-align: center;
     padding: 80px 24px;
     border-radius: var(--radius-2xl);
     margin: 80px auto;
+    box-shadow: 0 12px 36px rgba(38, 23, 16, 0.15);
+  }
+  .cta-banner h2 {
+    color: #FDFBF7;
+  }
+  .cta-banner p {
+    color: #C9BFB5;
   }
   .cta-button {
     display: inline-block;
-    background: var(--accent);
-    color: white;
+    background: #FFFFFF;
+    color: #6A3E1F;
     padding: 16px 40px;
     border-radius: var(--radius-md);
     font-weight: 700;
     text-decoration: none;
     margin-top: 24px;
     transition: var(--transition);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
   }
   .cta-button:hover {
-    background: #0052cc;
+    background: #F7F2EC;
     transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
   }
 
   @media (max-width: 768px) {
@@ -236,6 +252,7 @@ const contactStyles = `
 `;
 
 export default function Contact() {
+  const { toast } = useToast();
   const [formData, setFormData] = useState({ name: '', email: '', businessName: '', message: '' });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -255,7 +272,7 @@ export default function Contact() {
 
       if (!botToken || !chatId) {
         console.error("Telegram bot config is missing.");
-        alert("Contact form configuration is incomplete, but our team is reachable via WhatsApp!");
+        toast.error("Contact form configuration is incomplete, but our team is reachable via WhatsApp!");
         setLoading(false);
         return;
       }
@@ -284,13 +301,14 @@ ${formData.message}
       if (!response.ok) throw new Error("Failed to send message to Telegram");
 
       setSuccess(true);
+      toast.success("Thank you! Your message has been sent successfully.");
       setFormData({ name: '', email: '', businessName: '', message: '' });
 
       // Hide success message after 5 seconds
       setTimeout(() => setSuccess(false), 5000);
     } catch (err) {
       console.error("Error sending message:", err);
-      alert("Failed to send message. Please try again or use WhatsApp.");
+      toast.error("Failed to send message. Please try again or reach out on WhatsApp.");
     } finally {
       setLoading(false);
     }
@@ -299,19 +317,19 @@ ${formData.message}
   return (
     <>
       <SEO
-        title="Contact Us | Zizzystores"
-        description="Get in touch with Zizzystores. We're here to help you build your ecommerce website, get a custom domain, and manage your online store in Nigeria."
+        title="Contact Us | Unbley"
+        description="Get in touch with Unbley. We're here to help you build your ecommerce website, get a custom domain, and manage your online store in Nigeria."
       />
+      <Navbar />
       <PageTransition>
         <style dangerouslySetInnerHTML={{ __html: contactStyles }} />
-        <Navbar />
 
         <main>
           {/* Hero Section */}
           <section className="contact-hero">
             <div className="container">
               <div className="hero-badge mx-auto" style={{ margin: '0 auto 24px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span role="img" aria-label="telephone" style={{ marginRight: '8px' }}>📞</span> Contact Us — Zizzystores
+                <span role="img" aria-label="telephone" style={{ marginRight: '8px' }}>📞</span> Contact Us — Unbley
               </div>
               <h1 className="contact-hero-title">
                 Get in Touch
@@ -331,7 +349,7 @@ ${formData.message}
                   <span className="section-label">Talk to Us Directly</span>
                   <h2 className="section-title">We're always ready to assist you.</h2>
                   <p style={{ color: 'var(--text-secondary)', fontSize: '18px', marginBottom: '40px', lineHeight: '1.6' }}>
-                    At Zizzystores, we make it easy for brands to create an online store in Nigeria, and our support team is always ready to assist you.
+                    At Unbley, we make it easy for brands to create an online store in Nigeria, and our support team is always ready to assist you.
                   </p>
 
                   <div className="contact-card">
@@ -348,7 +366,7 @@ ${formData.message}
                     <div>
                       <h4>Email Support</h4>
                       <p style={{ marginBottom: '12px' }}>For detailed inquiries, partnerships, or business discussions. We typically respond within 24 hours.</p>
-                      <a href="mailto:support@zizzystores.com">👉 support@zizzystores.com</a>
+                      <a href="mailto:support@unbley.com">👉 support@unbley.com</a>
                     </div>
                   </div>
 
@@ -357,12 +375,12 @@ ${formData.message}
                     <div>
                       <h4>Website</h4>
                       <p style={{ marginBottom: '12px' }}>Explore our platform and see how it works.</p>
-                      <Link to="/">👉 www.zizzystores.com</Link>
+                      <Link to="/">👉 www.unbley.com</Link>
                     </div>
                   </div>
 
                   <div style={{ marginTop: '48px' }}>
-                    <h3 style={{ fontSize: '24px', fontWeight: 'bold', fontFamily: 'Playfair Display' }}>Why Contact Zizzystores?</h3>
+                    <h3 style={{ fontSize: '24px', fontWeight: '800', letterSpacing: '-0.02em', fontFamily: 'var(--font-heading)' }}>Why Contact Unbley?</h3>
                     <p style={{ color: 'var(--text-secondary)', marginTop: '8px' }}>We're not just support — we're your growth partner.</p>
 
                     <div className="why-list">
@@ -377,7 +395,7 @@ ${formData.message}
                 {/* Right Column: Contact Form */}
                 <div>
                   <div className="contact-form-wrapper">
-                    <h3 style={{ fontSize: '28px', fontWeight: 'bold', fontFamily: 'Playfair Display', marginBottom: '8px' }}>Send us a Message</h3>
+                    <h3 style={{ fontSize: '28px', fontWeight: '800', letterSpacing: '-0.02em', fontFamily: 'var(--font-heading)', marginBottom: '8px' }}>Send us a Message</h3>
                     <p style={{ color: 'var(--text-secondary)', marginBottom: '32px' }}>Fill out the form below and we'll get back to you shortly.</p>
 
                     {success && (
@@ -452,21 +470,21 @@ ${formData.message}
           {/* CTA Banner */}
           <section className="container">
             <div className="cta-banner">
-              <h2 style={{ fontFamily: 'Playfair Display', fontSize: '36px', fontWeight: 'bold', marginBottom: '16px' }}>Ready to Build Your Store?</h2>
+              <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '36px', fontWeight: '800', letterSpacing: '-0.02em', marginBottom: '16px' }}>Ready to Build Your Store?</h2>
               <p style={{ fontSize: '18px', opacity: '0.9', maxWidth: '600px', margin: '0 auto 8px' }}>
                 Don't let customers miss out because you don't have a proper website.
               </p>
               <p style={{ fontSize: '18px', opacity: '0.9', fontWeight: 'bold' }}>Own your domain. Sell like a real brand.</p>
 
               <Link to="/auth" className="cta-button">
-                👉 Start your journey today with Zizzystores
+                👉 Start your journey today with Unbley
               </Link>
             </div>
           </section>
 
           {/* SEO Hidden Elements - Helper for crawlers based on user request */}
           <div style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', border: 0 }}>
-            <p>Zizzystores helps businesses: Create online store in Nigeria, Build ecommerce websites easily, Get affordable online store solutions, Find a Shopify alternative in Nigeria. If you're searching for: "create online store Nigeria", "ecommerce website Nigeria", "cheap online store builder Nigeria" 👉 You're in the right place.</p>
+            <p>Unbley helps businesses: Create online store in Nigeria, Build ecommerce websites easily, Get affordable online store solutions, Find a Shopify alternative in Nigeria. If you're searching for: "create online store Nigeria", "ecommerce website Nigeria", "cheap online store builder Nigeria" 👉 You're in the right place.</p>
           </div>
 
         </main>
