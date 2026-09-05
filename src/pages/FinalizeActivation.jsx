@@ -12,10 +12,12 @@ export default function FinalizeActivation() {
   const navigate = useNavigate();
   const location = useLocation();
   
+  const selectedPlanId = location.state?.planId || 'activation';
   const selectedPlanName = location.state?.planName || 'Store Activation';
   const selectedPeriod = location.state?.period || 'Selected Period';
-  const selectedAmount = location.state?.amount || 30000;
-  const selectedUsdAmount = location.state?.usdAmount || 30;
+  const selectedAmount = location.state?.amount !== undefined ? location.state.amount : 30000;
+  const selectedUsdAmount = location.state?.usdAmount !== undefined ? location.state.usdAmount : 30;
+  const isFreeTrial = selectedAmount === 0 || selectedPlanId === 'free-trial';
 
   const [processing, setProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -58,8 +60,9 @@ export default function FinalizeActivation() {
       if (authError) throw authError;
 
       // 3. Complete! Navigate to Success Page
-      const finalAmount = paymentMethod === 'paystack' ? selectedAmount : selectedUsdAmount;
-      const finalCurrency = paymentMethod === 'paystack' ? 'NGN' : 'USD';
+      const finalAmount = isFreeTrial ? 0 : (paymentMethod === 'paystack' ? selectedAmount : selectedUsdAmount);
+      const finalCurrency = isFreeTrial ? 'NGN' : (paymentMethod === 'paystack' ? 'NGN' : 'USD');
+      const finalMethod = isFreeTrial ? 'Free Trial' : paymentMethod;
       
       navigate('/success', { 
         state: { 
@@ -68,7 +71,7 @@ export default function FinalizeActivation() {
           currency: finalCurrency,
           email: user?.email,
           brandName: user?.user_metadata?.brand_name || 'Your Premium Store',
-          method: paymentMethod
+          method: finalMethod
         } 
       });
       
@@ -82,6 +85,26 @@ export default function FinalizeActivation() {
   const onClose = () => {
     console.log('Customer abandoned flow');
     setProcessing(false);
+  };
+
+  const handleFreeTrial = async () => {
+    setProcessing(true);
+    setErrorMsg('');
+    try {
+      await onSuccess({ reference: `trial_${Date.now()}` });
+    } catch (err) {
+      console.error("Trial activation error:", err);
+      setErrorMsg("Failed to activate free trial. Please try again.");
+      setProcessing(false);
+    }
+  };
+
+  const handleActionClick = () => {
+    if (isFreeTrial) {
+      handleFreeTrial();
+    } else {
+      handlePayClick();
+    }
   };
 
   const handlePayClick = () => {
@@ -220,39 +243,62 @@ export default function FinalizeActivation() {
               Activate your professional store and secure your complimentary domain for the first year.
             </p>
 
-            <div style={{ marginBottom: '32px' }}>
-              <div style={{ fontSize: '10px', color: '#6B584C', marginBottom: '16px', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.05em' }}>SELECT REGION</div>
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <motion.div 
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => setPaymentMethod('paystack')}
-                  style={{ 
-                    flex: 1, padding: '16px', borderRadius: '8px', 
-                    backgroundColor: paymentMethod === 'paystack' ? '#F7F2EC' : '#FFFFFF',
-                    border: `1.5px solid ${paymentMethod === 'paystack' ? brandColor : '#DFCFC2'}`,
-                    cursor: 'pointer'
-                  }}
-                >
-                  <div style={{ color: paymentMethod === 'paystack' ? brandColor : '#6B584C', fontSize: '12px', fontWeight: 'bold' }}>Local (Paystack)</div>
-                  <div style={{ color: '#8D5B36', fontSize: '10px', marginTop: '4px' }}>Nigeria Cards & Transfer</div>
-                </motion.div>
-                <motion.div 
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => setPaymentMethod('flutterwave')}
-                  style={{ 
-                    flex: 1, padding: '16px', borderRadius: '8px', 
-                    backgroundColor: paymentMethod === 'flutterwave' ? '#F7F2EC' : '#FFFFFF',
-                    border: `1.5px solid ${paymentMethod === 'flutterwave' ? brandColor : '#DFCFC2'}`,
-                    cursor: 'pointer'
-                  }}
-                >
-                  <div style={{ color: paymentMethod === 'flutterwave' ? brandColor : '#6B584C', fontSize: '12px', fontWeight: 'bold' }}>International (FW)</div>
-                  <div style={{ color: '#8D5B36', fontSize: '10px', marginTop: '4px' }}>Cards outside Nigeria</div>
-                </motion.div>
+            {!isFreeTrial ? (
+              <div style={{ marginBottom: '32px' }}>
+                <div style={{ fontSize: '10px', color: '#6B584C', marginBottom: '16px', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.05em' }}>SELECT REGION</div>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <motion.div 
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setPaymentMethod('paystack')}
+                    style={{ 
+                      flex: 1, padding: '16px', borderRadius: '8px', 
+                      backgroundColor: paymentMethod === 'paystack' ? '#F7F2EC' : '#FFFFFF',
+                      border: `1.5px solid ${paymentMethod === 'paystack' ? brandColor : '#DFCFC2'}`,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <div style={{ color: paymentMethod === 'paystack' ? brandColor : '#6B584C', fontSize: '12px', fontWeight: 'bold' }}>Local (Paystack)</div>
+                    <div style={{ color: '#8D5B36', fontSize: '10px', marginTop: '4px' }}>Nigeria Cards & Transfer</div>
+                  </motion.div>
+                  <motion.div 
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setPaymentMethod('flutterwave')}
+                    style={{ 
+                      flex: 1, padding: '16px', borderRadius: '8px', 
+                      backgroundColor: paymentMethod === 'flutterwave' ? '#F7F2EC' : '#FFFFFF',
+                      border: `1.5px solid ${paymentMethod === 'flutterwave' ? brandColor : '#DFCFC2'}`,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <div style={{ color: paymentMethod === 'flutterwave' ? brandColor : '#6B584C', fontSize: '12px', fontWeight: 'bold' }}>International (FW)</div>
+                    <div style={{ color: '#8D5B36', fontSize: '10px', marginTop: '4px' }}>Cards outside Nigeria</div>
+                  </motion.div>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div style={{
+                backgroundColor: '#F7F2EC',
+                border: '1px solid #DFCFC2',
+                borderRadius: '8px',
+                padding: '16px 20px',
+                marginBottom: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px'
+              }}>
+                <Sparkles size={22} color={brandColor} />
+                <div>
+                  <div style={{ fontSize: '13px', fontWeight: '700', color: '#221510' }}>
+                    14-Day Full Access Free Trial
+                  </div>
+                  <div style={{ fontSize: '11.5px', color: '#6B584C', marginTop: '2px' }}>
+                    No credit card or payment required. Activate and start selling immediately.
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div style={s.checkoutBox}>
               <div style={{ fontSize: '10px', color: '#6B584C', marginBottom: '8px', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.05em' }}>
@@ -260,7 +306,7 @@ export default function FinalizeActivation() {
               </div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
                 <div style={s.price}>
-                  {paymentMethod === 'paystack' ? `₦${selectedAmount.toLocaleString()}` : `$${selectedUsdAmount}.00`}
+                  {isFreeTrial ? 'Free (₦0)' : (paymentMethod === 'paystack' ? `₦${selectedAmount.toLocaleString()}` : `$${selectedUsdAmount}.00`)}
                 </div>
               </div>
               <div style={{ fontSize: '11px', color: '#6B584C', marginTop: '8px' }}>
@@ -270,14 +316,19 @@ export default function FinalizeActivation() {
 
             {errorMsg && <div style={s.errorBox}>{errorMsg}</div>}
 
-            <button style={s.payBtn} onClick={handlePayClick} disabled={processing}>
-              {processing ? 'Processing...' : `Pay via ${paymentMethod === 'paystack' ? 'Paystack' : 'Flutterwave'}`}
+            <button style={s.payBtn} onClick={handleActionClick} disabled={processing}>
+              <span>
+                {processing 
+                  ? 'Activating Store...' 
+                  : (isFreeTrial ? 'Start 14-Day Free Trial Now' : `Pay via ${paymentMethod === 'paystack' ? 'Paystack' : 'Flutterwave'}`)
+                }
+              </span>
               <ArrowRight size={20} />
             </button>
 
             <div style={{ textAlign: 'center', color: '#6B584C', fontSize: '11px', marginTop: '24px' }}>
               <Shield size={14} style={{ marginRight: '8px', verticalAlign: 'middle', color: '#6A3E1F' }} />
-              Secure 256-bit encrypted transaction.
+              {isFreeTrial ? 'No credit card required. Cancel anytime.' : 'Secure 256-bit encrypted transaction.'}
             </div>
           </div>
         </div>

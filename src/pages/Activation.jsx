@@ -37,7 +37,7 @@ export const ACTIVATION_CONFIG = {
   conditions: {
     showAsPopup: true,            // true = displays as centered landscape pop-up over dashboard
     allowDismiss: true,           // true = shows 'X' button and allows peeking at dashboard
-    defaultInterval: 'quarterly', // Default active tab: 'quarterly' | 'biannually' | 'yearly'
+    defaultInterval: 'monthly', // Default active tab: 'monthly' | 'yearly'
     showTrialButton: true,        // Show 'Start free trial (No card required)' button
     autoOpenOnLoad: true,         // Pop-up opens immediately on page load
   },
@@ -48,23 +48,21 @@ export const ACTIVATION_CONFIG = {
   socialProof: {
     prefixText: "Join other businesses like",
     brands: [
-      { name: "Sheroes", link: "#" },
-      { name: "Beauty Shop Africa", link: "#" },
-      { name: "Dyelab", link: "#" }
+      { name: "M3thods", link: "#" },
+      { name: "Smokywurld", link: "#" }
     ],
     suffixText: "on Unbley and skyrocket your growth at 30% off !",
     helpButtonText: "Need Help?",
     helpActionUrl: "https://wa.me/2349000000000?text=Hello%20Unbley%2C%20I%20need%20help%20activating%20my%20store",
     logoutButtonText: "Log Out",
-    trialButtonText: "Start free trial (No card required)",
+    trialButtonText: "Start 14-days free trial",
   },
 
   // ---------------------------------------------------------------------------------------
   // 3. BILLING CYCLE TABS
   // ---------------------------------------------------------------------------------------
   intervals: [
-    { id: 'quarterly', label: 'Quarterly' },
-    { id: 'biannually', label: 'Biannually' },
+    { id: 'monthly', label: 'Monthly' },
     { id: 'yearly', label: 'Yearly' }
   ],
 
@@ -73,6 +71,46 @@ export const ACTIVATION_CONFIG = {
   // ---------------------------------------------------------------------------------------
   plans: [
     {
+      id: 'free-trial',
+      name: 'Unbley Free Trial',
+      subtitle: 'For new businesses still figuring things out',
+      isRecommended: false,
+      recommendedBadge: null,
+      // Pricing per billing interval
+      pricing: {
+        monthly: {
+          displayPrice: 'Free',
+          numericPrice: 0,
+          usdPrice: 0,
+          billingDetail: '14 Days Free Access (No Card Required)',
+        },
+        yearly: {
+          displayPrice: 'Free',
+          numericPrice: 0,
+          usdPrice: 0,
+          billingDetail: '14 Days Free Access (No Card Required)',
+        }
+      },
+      // Checklist items
+      features: [
+        '14-days full access',
+        'Add & Manage products',
+        'Business Website + customisation',
+        'No credit card required'
+      ],
+      buttonText: 'Start 14-Days Free Trial',
+      theme: {
+        cardBg: '#FFFFFF',
+        cardBorder: '#EAE3D9',
+        buttonBg: '#6A3E1F',
+        buttonHoverBg: '#522F16',
+        badgeBg: '#8D5B36',
+        badgeText: '#FFFFFF',
+        checkColor: '#6A3E1F'
+      }
+    },
+
+    {
       id: 'starter',
       name: 'Unbley Starter',
       subtitle: 'For new businesses still figuring things out',
@@ -80,22 +118,18 @@ export const ACTIVATION_CONFIG = {
       recommendedBadge: 'RECOMMENDED',
       // Pricing per billing interval
       pricing: {
-        quarterly: {
-          displayPrice: '₦15,000',
-          numericPrice: 15000,
-          usdPrice: 15,
-          billingDetail: 'Billed Every Quarter (3 Months)',
-        },
-        biannually: {
-          displayPrice: '₦28,000',
-          numericPrice: 28000,
-          usdPrice: 28,
-          billingDetail: 'Billed Every 6 Months',
+        monthly: {
+          displayPrice: '₦5,000',
+          numericPrice: 5000,
+          usdPrice: 5,
+          billingDetail: 'Billed Monthly',
         },
         yearly: {
+          originalPrice: '₦60,000',
           displayPrice: '₦50,000',
           numericPrice: 50000,
           usdPrice: 50,
+          discountBadge: '17% off',
           billingDetail: 'Billed Annually (12 Months)',
         }
       },
@@ -122,36 +156,28 @@ export const ACTIVATION_CONFIG = {
     },
 
     {
-      id: 'pro',
-      name: 'Unbley Pro',
+      id: 'business',
+      name: 'Unbley Business',
       subtitle: 'For solopreneurs with a small customer base',
       isRecommended: false,
       recommendedBadge: null,
       // Pricing per billing interval
       pricing: {
-        quarterly: {
-          originalPrice: '₦30,000',
-          displayPrice: '₦21,000',
-          numericPrice: 21000,
-          usdPrice: 25,
+        monthly: {
+          originalPrice: '₦20,000',
+          displayPrice: '₦15,000',
+          numericPrice: 15000,
+          usdPrice: 8,
           discountBadge: '30% off',
-          billingDetail: 'Billed Every Quarter (3 Months). Save ₦9,000',
-        },
-        biannually: {
-          originalPrice: '₦60,000',
-          displayPrice: '₦39,000',
-          numericPrice: 39000,
-          usdPrice: 45,
-          discountBadge: '35% off',
-          billingDetail: 'Billed Every 6 Months. Save ₦21,000',
+          billingDetail: 'Billed Monthly. Save ₦5,000',
         },
         yearly: {
-          originalPrice: '₦120,000',
-          displayPrice: '₦75,000',
-          numericPrice: 75000,
+          originalPrice: '₦180,000',
+          displayPrice: '₦120,000',
+          numericPrice: 120000,
           usdPrice: 85,
           discountBadge: '37% off',
-          billingDetail: 'Billed Annually (12 Months). Save ₦45,000',
+          billingDetail: 'Billed Annually (12 Months). Save ₦60,000',
         }
       },
       // Checklist items
@@ -189,16 +215,22 @@ export default function Activation() {
 
   // Handle plan selection -> forwards plan details to finalize activation
   const handleSelectPlan = (plan) => {
-    const currentPriceInfo = plan.pricing[activeInterval] || plan.pricing.quarterly;
+    if (!plan) return;
+    const currentPriceInfo = plan.pricing?.[activeInterval] 
+      || plan.pricing?.monthly 
+      || plan.pricing?.yearly
+      || (plan.pricing ? Object.values(plan.pricing)[0] : null) 
+      || { displayPrice: 'Free', numericPrice: 0, usdPrice: 0, billingDetail: '14-Day Free Access' };
+
     navigate('/finalize-activation', {
       state: {
         planId: plan.id,
         planName: plan.name,
         interval: activeInterval,
-        amount: currentPriceInfo.numericPrice,
-        usdAmount: currentPriceInfo.usdPrice,
-        period: currentPriceInfo.billingDetail,
-        displayPrice: currentPriceInfo.displayPrice
+        amount: currentPriceInfo.numericPrice ?? 0,
+        usdAmount: currentPriceInfo.usdPrice ?? 0,
+        period: currentPriceInfo.billingDetail || 'Selected Period',
+        displayPrice: currentPriceInfo.displayPrice || 'Free'
       }
     });
   };
@@ -271,11 +303,11 @@ export default function Activation() {
           .act-popup-card {
             background: #FFFFFF;
             width: 100%;
-            max-width: 1040px;
+            max-width: 1180px;
             border-radius: 20px;
             border: 1px solid var(--border-color, #EAE3D9);
             box-shadow: 0 25px 60px -15px rgba(34, 21, 16, 0.22);
-            padding: 36px 40px;
+            padding: 36px 36px;
             position: relative;
             max-height: 94vh;
             overflow-y: auto;
@@ -420,14 +452,14 @@ export default function Activation() {
           /* Landscape Grid of Cards */
           .act-cards-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 24px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
             align-items: stretch;
           }
 
           .act-card {
             border-radius: 18px;
-            padding: 34px 30px;
+            padding: 30px 22px;
             display: flex;
             flex-direction: column;
             position: relative;
@@ -441,7 +473,7 @@ export default function Activation() {
           .act-card-recommended-badge {
             position: absolute;
             top: -11px;
-            right: 24px;
+            right: 20px;
             color: #FFFFFF;
             font-size: 10px;
             font-weight: 800;
@@ -453,7 +485,7 @@ export default function Activation() {
           }
 
           .act-card-title {
-            font-size: 24px;
+            font-size: 22px;
             font-weight: 800;
             color: var(--text-primary, #221510);
             margin-bottom: 6px;
@@ -461,18 +493,19 @@ export default function Activation() {
           }
 
           .act-card-sub {
-            font-size: 13px;
+            font-size: 12.5px;
             color: var(--text-secondary, #6B584C);
-            margin-bottom: 24px;
+            margin-bottom: 20px;
             line-height: 1.4;
+            min-height: 35px;
           }
 
           .act-price-wrap {
-            margin-bottom: 20px;
+            margin-bottom: 18px;
           }
 
           .act-price-original {
-            font-size: 14px;
+            font-size: 13px;
             color: var(--text-muted, #8D5B36);
             text-decoration: line-through;
             font-weight: 600;
@@ -482,11 +515,12 @@ export default function Activation() {
           .act-price-main-row {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
+            flex-wrap: wrap;
           }
 
           .act-price-number {
-            font-size: 34px;
+            font-size: 30px;
             font-weight: 800;
             color: var(--text-primary, #221510);
             letter-spacing: -0.03em;
@@ -497,9 +531,9 @@ export default function Activation() {
             background: rgba(141, 91, 54, 0.12);
             color: var(--accent, #8D5B36);
             border: 1px solid #DFCFC2;
-            font-size: 11px;
+            font-size: 10.5px;
             font-weight: 700;
-            padding: 3px 9px;
+            padding: 3px 8px;
             border-radius: 9999px;
             display: inline-flex;
             align-items: center;
@@ -507,7 +541,7 @@ export default function Activation() {
           }
 
           .act-price-detail {
-            font-size: 11.5px;
+            font-size: 11px;
             color: var(--text-secondary, #6B584C);
             margin-top: 6px;
             font-weight: 500;
@@ -593,7 +627,13 @@ export default function Activation() {
             transform: translateX(-50%) translateY(-2px);
           }
 
-          /* Responsive Breakpoint for Small Screens */
+          /* Responsive Breakpoint for Medium & Small Screens */
+          @media (max-width: 1080px) {
+            .act-cards-grid {
+              grid-template-columns: repeat(2, 1fr);
+            }
+          }
+
           @media (max-width: 860px) {
             .act-popup-card {
               padding: 24px 18px;
@@ -734,7 +774,7 @@ export default function Activation() {
                       className="act-pill-action"
                     >
                       <HelpCircle size={14} color="var(--primary, #6A3E1F)" />
-                      {ACTIVATION_CONFIG.socialProof.needHelpText}
+                      {ACTIVATION_CONFIG.socialProof.helpButtonText || ACTIVATION_CONFIG.socialProof.needHelpText || "Need Help?"}
                     </a>
 
                     <button onClick={handleLogout} className="act-pill-action">
@@ -770,7 +810,10 @@ export default function Activation() {
 
                   {ACTIVATION_CONFIG.conditions.showTrialButton && (
                     <button
-                      onClick={() => handleSelectPlan(ACTIVATION_CONFIG.plans[0])}
+                      onClick={() => {
+                        const trialPlan = ACTIVATION_CONFIG.plans.find(p => p.id === 'free-trial') || ACTIVATION_CONFIG.plans[0];
+                        handleSelectPlan(trialPlan);
+                      }}
                       className="act-trial-pill"
                     >
                       {ACTIVATION_CONFIG.socialProof.trialButtonText}
@@ -778,10 +821,14 @@ export default function Activation() {
                   )}
                 </div>
 
-                {/* Landscape 2-Column Cards Grid */}
+                {/* Landscape Cards Grid */}
                 <div className="act-cards-grid">
                   {ACTIVATION_CONFIG.plans.map((plan) => {
-                    const pricing = plan.pricing[activeInterval] || plan.pricing.quarterly;
+                    const pricing = plan.pricing?.[activeInterval] 
+                      || plan.pricing?.monthly 
+                      || plan.pricing?.yearly 
+                      || (plan.pricing ? Object.values(plan.pricing)[0] : null) 
+                      || { displayPrice: 'Free', numericPrice: 0, usdPrice: 0, billingDetail: '14-Day Free Access' };
                     return (
                       <div
                         key={plan.id}
