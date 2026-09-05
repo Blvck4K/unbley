@@ -9,8 +9,10 @@ export default function Auth() {
   const [authMode, setAuthMode] = useState('signup'); // 'signin' | 'signup'
   const [userType, setUserType] = useState('brand'); // 'customer' | 'brand'
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [category, setCategory] = useState('');
@@ -47,6 +49,11 @@ export default function Auth() {
     setErrorMsg('');
     try {
       if (authMode === 'signup') {
+        if (password !== confirmPassword) {
+          setErrorMsg('Passwords do not match. Please check and try again.');
+          setLoading(false);
+          return;
+        }
         const { error } = await supabase.auth.signUp({
           email,
           password,
@@ -119,11 +126,11 @@ export default function Auth() {
 
           <div style={{ flex: 1 }}>
             <div style={{ marginBottom: '40px' }}>
-              <h3 style={{ fontSize: '15px', fontWeight: '600', color: '#221510', marginBottom: '16px', lineHeight: '1.4' }}>Accelerate your digital retail.</h3>
+              <h3 style={{ fontSize: '15px', fontWeight: '600', color: '#221510', marginBottom: '16px', lineHeight: '1.4' }}>Accelerate your business online.</h3>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <li style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#6B584C' }}><CheckCircle2 size={12} color={brandColor} /> Launch in 24 hours</li>
-                <li style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#6B584C' }}><CheckCircle2 size={12} color={brandColor} /> Trusted by 100+ brands</li>
-                <li style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#6B584C' }}><CheckCircle2 size={12} color={brandColor} /> Zero hidden fees</li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#6B584C' }}><CheckCircle2 size={12} color={brandColor} /> Trusted by 100+ businesses</li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#6B584C' }}><CheckCircle2 size={12} color={brandColor} /> Free 14-day trial available</li>
               </ul>
             </div>
           </div>
@@ -141,7 +148,7 @@ export default function Auth() {
 
         {/* Main Content */}
         <div style={s.main} className="auth-main">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
@@ -246,9 +253,43 @@ export default function Auth() {
                         <div style={s.inputGroup}>
                           <label style={s.label}>CREATE PASSWORD</label>
                           <div style={{ position: 'relative' }}>
-                            <input type={showPassword ? 'text' : 'password'} placeholder="••••••••" style={s.input} value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
-                            <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: 0, top: '6px', background: 'none', border: 'none', color: '#888', cursor: 'pointer' }}>
+                            <input
+                              type={showPassword ? 'text' : 'password'}
+                              placeholder="••••••••"
+                              style={s.input}
+                              value={password}
+                              onChange={(e) => setPassword(e.target.value)}
+                              required
+                              minLength={6}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowPassword(!showPassword)}
+                              style={{ position: 'absolute', right: 0, top: '6px', background: 'none', border: 'none', color: '#888', cursor: 'pointer' }}
+                            >
                               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
+                          </div>
+                        </div>
+
+                        <div style={s.inputGroup}>
+                          <label style={s.label}>CONFIRM PASSWORD</label>
+                          <div style={{ position: 'relative' }}>
+                            <input
+                              type={showConfirmPassword ? 'text' : 'password'}
+                              placeholder="••••••••"
+                              style={s.input}
+                              value={confirmPassword}
+                              onChange={(e) => setConfirmPassword(e.target.value)}
+                              required
+                              minLength={6}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                              style={{ position: 'absolute', right: 0, top: '6px', background: 'none', border: 'none', color: '#888', cursor: 'pointer' }}
+                            >
+                              {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                             </button>
                           </div>
                         </div>
@@ -279,11 +320,11 @@ export default function Auth() {
                 </motion.div>
               </AnimatePresence>
 
-              <motion.button 
+              <motion.button
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
-                type="submit" 
-                disabled={loading} 
+                type="submit"
+                disabled={loading}
                 style={{ ...s.button, opacity: loading ? 0.7 : 1 }}
               >
                 {loading ? 'PROCESSING...' : (authMode === 'signup' ? (userType === 'brand' ? 'JOIN AS BRAND OWNER' : 'CREATE ACCOUNT') : 'Welcome Back')}
