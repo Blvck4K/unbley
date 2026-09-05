@@ -1,20 +1,20 @@
 import React, { useState } from 'react';
-import { 
-  Check, 
-  HelpCircle, 
-  LogOut, 
-  X, 
-  Lock, 
-  ArrowUpRight, 
-  Search, 
-  Bell, 
-  Moon, 
-  LayoutGrid, 
-  User, 
-  Edit, 
-  HeadphonesIcon, 
-  TrendingUp, 
-  Package, 
+import {
+  Check,
+  HelpCircle,
+  LogOut,
+  X,
+  Lock,
+  ArrowUpRight,
+  Search,
+  Bell,
+  Moon,
+  LayoutGrid,
+  User,
+  Edit,
+  HeadphonesIcon,
+  TrendingUp,
+  Package,
   BarChart3
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -31,7 +31,7 @@ import { useAuth } from '../hooks/useAuth';
 // =========================================================================================
 
 export const ACTIVATION_CONFIG = {
-  // ---------------------------------------------------------------------------------------
+  // -----------------------------------------------------------------------------------------
   // 1. DISPLAY CONDITIONS & BEHAVIOR
   // ---------------------------------------------------------------------------------------
   conditions: {
@@ -697,14 +697,14 @@ export default function Activation() {
         {/* 2. Landscape Pop-up Modal (Condition: isOpen && showAsPopup) */}
         <AnimatePresence>
           {isOpen && ACTIVATION_CONFIG.conditions.showAsPopup && (
-            <motion.div 
+            <motion.div
               className="act-popup-overlay"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.25 }}
             >
-              <motion.div 
+              <motion.div
                 className="act-popup-card"
                 initial={{ opacity: 0, scale: 0.95, y: 15 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -727,10 +727,10 @@ export default function Activation() {
                   </div>
 
                   <div className="act-header-actions">
-                    <a 
-                      href={ACTIVATION_CONFIG.socialProof.helpActionUrl} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
+                    <a
+                      href={ACTIVATION_CONFIG.socialProof.helpActionUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="act-pill-action"
                     >
                       <HelpCircle size={14} color="var(--primary, #6A3E1F)" />
@@ -743,8 +743,8 @@ export default function Activation() {
                     </button>
 
                     {ACTIVATION_CONFIG.conditions.allowDismiss && (
-                      <button 
-                        onClick={() => setIsOpen(false)} 
+                      <button
+                        onClick={() => setIsOpen(false)}
                         className="act-close-btn"
                         title="Close pop-up"
                       >
@@ -769,7 +769,7 @@ export default function Activation() {
                   </div>
 
                   {ACTIVATION_CONFIG.conditions.showTrialButton && (
-                    <button 
+                    <button
                       onClick={() => handleSelectPlan(ACTIVATION_CONFIG.plans[0])}
                       className="act-trial-pill"
                     >
@@ -783,8 +783,8 @@ export default function Activation() {
                   {ACTIVATION_CONFIG.plans.map((plan) => {
                     const pricing = plan.pricing[activeInterval] || plan.pricing.quarterly;
                     return (
-                      <div 
-                        key={plan.id} 
+                      <div
+                        key={plan.id}
                         className="act-card"
                         style={{
                           backgroundColor: plan.theme?.cardBg || '#FFFFFF',
@@ -793,7 +793,7 @@ export default function Activation() {
                       >
                         {/* Recommended Badge */}
                         {plan.isRecommended && plan.recommendedBadge && (
-                          <div 
+                          <div
                             className="act-card-recommended-badge"
                             style={{
                               backgroundColor: plan.theme?.badgeBg || 'var(--primary, #6A3E1F)',
@@ -839,9 +839,9 @@ export default function Activation() {
                         <ul className="act-feature-list">
                           {plan.features.map((feat, idx) => (
                             <li key={idx} className="act-feature-item">
-                              <Check 
-                                size={16} 
-                                strokeWidth={2.6} 
+                              <Check
+                                size={16}
+                                strokeWidth={2.6}
                                 className="act-check-icon"
                                 style={{ color: plan.theme?.checkColor || 'var(--primary, #6A3E1F)' }}
                               />
@@ -871,7 +871,7 @@ export default function Activation() {
 
         {/* 3. Floating Re-open Trigger (Displays if the user closes the modal) */}
         {!isOpen && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="act-floating-trigger"
