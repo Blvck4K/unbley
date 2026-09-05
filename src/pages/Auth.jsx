@@ -105,6 +105,31 @@ export default function Auth() {
     <PageTransition>
       <div style={s.page}>
         <style>{`
+          .auth-back-circle-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #FFFFFF;
+            border: 1px solid #DFCFC2;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #6A3E1F;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(106, 62, 31, 0.06);
+            cursor: pointer;
+            flex-shrink: 0;
+          }
+
+          .auth-back-circle-btn:hover {
+            background-color: #F7F2EC;
+            border-color: #6A3E1F;
+            color: #522F16;
+            transform: translateX(-3px);
+            box-shadow: 0 4px 12px rgba(106, 62, 31, 0.12);
+          }
+
           @media (max-width: 768px) {
             .auth-main { padding: 48px 24px !important; }
             .auth-title { font-size: 32px !important; text-align: center; }
@@ -115,12 +140,26 @@ export default function Auth() {
             .auth-google-apple { flex-direction: column !important; gap: 12px !important; }
             .auth-sidebar { display: none !important; }
             .auth-quote-box { display: none !important; }
-            .auth-mobile-logo { display: block !important; }
+            .auth-mobile-header { display: flex !important; }
+            .auth-mobile-logo { display: none !important; }
           }
         `}</style>
-        {/* Left Sidebar Layout */}
+
+        {/* Left Sidebar */}
         <div style={s.sidebar} className="auth-sidebar text-left">
-          <div style={{ fontFamily: 'var(--font-heading)', fontSize: '24px', letterSpacing: '-0.02em', fontWeight: '800', color: brandColor, marginBottom: '80px', textTransform: 'none' }}>
+          {/* Circular Back Button */}
+          <div style={{ marginBottom: '36px' }}>
+            <Link
+              to="/"
+              className="auth-back-circle-btn"
+              title="Return to Homepage"
+              aria-label="Return to Homepage"
+            >
+              <ArrowLeft size={18} />
+            </Link>
+          </div>
+
+          <div style={{ fontFamily: 'var(--font-heading)', fontSize: '24px', letterSpacing: '-0.02em', fontWeight: '800', color: brandColor, marginBottom: '60px', textTransform: 'none' }}>
             Unbley.
           </div>
 
@@ -134,16 +173,6 @@ export default function Auth() {
               </ul>
             </div>
           </div>
-
-          <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#8D5B36', textTransform: 'uppercase', marginBottom: '32px' }}>
-            Navigation
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            <Link to="/" style={{ color: '#6B584C', fontSize: '13px', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '12px', transition: 'color 0.2s' }}>
-              <ArrowLeft size={16} /> Return Homepage
-            </Link>
-          </div>
         </div>
 
         {/* Main Content */}
@@ -154,11 +183,20 @@ export default function Auth() {
             transition={{ duration: 0.6, ease: "easeOut" }}
             style={s.content}
           >
-            {/* Mobile Logo */}
-            <div className="auth-mobile-logo" style={{ display: 'none', textAlign: 'center', marginBottom: '48px' }}>
+            {/* Mobile Header with Circular Back Button & Logo */}
+            <div className="auth-mobile-header" style={{ display: 'none', alignItems: 'center', justifyContent: 'space-between', marginBottom: '36px' }}>
+              <Link
+                to="/"
+                className="auth-back-circle-btn"
+                title="Return to Homepage"
+                aria-label="Return to Homepage"
+              >
+                <ArrowLeft size={18} />
+              </Link>
               <Link to="/" style={{ fontFamily: 'var(--font-heading)', fontSize: '24px', letterSpacing: '-0.02em', fontWeight: '800', color: brandColor, textDecoration: 'none', textTransform: 'none' }}>
                 Unbley.
               </Link>
+              <div style={{ width: '40px' }} /> {/* Keeps the logo centered */}
             </div>
 
             <div style={s.toggleGroup} className="auth-toggle-group">
