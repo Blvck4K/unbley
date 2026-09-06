@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronRight, Landmark, Store, Banknote, Tag, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -11,6 +12,7 @@ import SubscriptionPlanModal from './onboarding/SubscriptionPlanModal';
 
 export default function OnboardingModal({ isOpen = true, onClose, storeData = {}, storeId = null, onRefresh = null, activeStep = null }) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [activeModal, setActiveModal] = useState(activeStep);
   const [liveData, setLiveData] = useState({ brand_name: storeData?.brand_name || '', logo_url: storeData?.logo_url || '', phone_number: storeData?.phone_number || '', bank_name: storeData?.bank_name || '', account_number: storeData?.account_number || '', delivery_duration: storeData?.delivery_duration || '', store_active: storeData?.store_active || storeData?.is_active || false, trial_ends_at: storeData?.trial_ends_at || null });
   const [liveProductCount, setLiveProductCount] = useState(storeData?.activeStock || 0);
@@ -90,7 +92,10 @@ export default function OnboardingModal({ isOpen = true, onClose, storeData = {}
   const completedCount = steps.filter(s => s.completed).length;
   const allDone = completedCount === steps.length;
   const handleRefreshData = () => { fetchLiveProfile(); if (onRefresh) onRefresh(); };
-  const handlePreviewSample = () => { window.open(storeId ? '/shop-brand/' + storeId : '/store', '_blank'); };
+  const handleDone = () => {
+    if (onClose) onClose();
+    navigate('/dashboard');
+  };
 
   return (
     <>
@@ -132,7 +137,7 @@ export default function OnboardingModal({ isOpen = true, onClose, storeData = {}
               })}
             </div>
 
-            <button onClick={allDone ? onClose : handlePreviewSample} style={{ width: '100%', padding: '12px 16px', backgroundColor: allDone ? brandColor : '#E5E7EB', border: '1px solid ' + (allDone ? brandColor : '#D1D5DB'), borderRadius: '8px', color: allDone ? '#FFFFFF' : '#374151', fontSize: '13px', fontWeight: '700', cursor: 'pointer', transition: 'all 0.15s ease', textAlign: 'center' }} onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = brandColor; e.currentTarget.style.borderColor = brandColor; e.currentTarget.style.color = '#FFFFFF'; }} onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = allDone ? brandColor : '#E5E7EB'; e.currentTarget.style.borderColor = allDone ? brandColor : '#D1D5DB'; e.currentTarget.style.color = allDone ? '#FFFFFF' : '#374151'; }}>
+            <button onClick={handleDone} style={{ width: '100%', padding: '12px 16px', backgroundColor: allDone ? brandColor : '#E5E7EB', border: '1px solid ' + (allDone ? brandColor : '#D1D5DB'), borderRadius: '8px', color: allDone ? '#FFFFFF' : '#374151', fontSize: '13px', fontWeight: '700', cursor: 'pointer', transition: 'all 0.15s ease', textAlign: 'center' }} onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = brandColor; e.currentTarget.style.borderColor = brandColor; e.currentTarget.style.color = '#FFFFFF'; }} onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = allDone ? brandColor : '#E5E7EB'; e.currentTarget.style.borderColor = allDone ? brandColor : '#D1D5DB'; e.currentTarget.style.color = allDone ? '#FFFFFF' : '#374151'; }}>
               {allDone ? String.fromCodePoint(0x1F389) + ' Launch Your Store' : 'Done'}
             </button>
           </motion.div>
