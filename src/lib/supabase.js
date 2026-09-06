@@ -77,9 +77,17 @@ if (!supabaseUrl || !supabaseAnonKey || !isValidUrl(supabaseUrl)) {
 
 export async function signInWithGoogle(options = {}) {
   const isSignup = Boolean(options?.isSignup);
+  const origin = window.location.origin;
+
+  try {
+    localStorage.setItem('unbley_oauth_mode', isSignup ? 'signup' : 'signin');
+  } catch (e) {
+    console.warn('Could not set oauth mode in storage:', e);
+  }
+
   const redirectUrl = isSignup
-    ? `${window.location.origin}/dashboard?oauth_signup=true`
-    : `${window.location.origin}/dashboard`;
+    ? `${origin}/success?type=signup`
+    : `${origin}/dashboard`;
 
   const { data, error } = await client.auth.signInWithOAuth({
     provider: 'google',

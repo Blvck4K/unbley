@@ -36,6 +36,7 @@ const Contact = lazy(() => import('./pages/Contact'));
 
 import ChatWidget from './components/ChatWidget';
 import FloatingWhatsApp from './components/FloatingWhatsApp';
+import OAuthRedirectHandler from './components/OAuthRedirectHandler';
 
 // Loading Component
 const PageLoader = () => (
@@ -51,6 +52,7 @@ function App() {
       <ToastProvider>
         <BrowserRouter>
           <ScrollToTop />
+          <OAuthRedirectHandler />
           <Suspense fallback={<PageLoader />}>
             <ErrorBoundary>
               <Routes>
