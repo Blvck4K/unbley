@@ -8,8 +8,9 @@ import { useAuth } from '../../hooks/useAuth';
 export default function ProductsModal({ isOpen = false, onClose, onComplete }) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [error, setError] = useState(null);
-  const [step, setStep] = useState(1); // Step 1: Quick add, Step 2: Detailed add
+  const fileInputRef = React.useRef(null);
   const [formData, setFormData] = useState({
     title: '',
     price: '',
@@ -24,11 +25,13 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete }) {
   };
 
   const handleImageUpload = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      setError('Please upload an image file');
+      setError('Please upload an image file (PNG, JPG, WEBP)');
       return;
     }
 
@@ -36,6 +39,9 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete }) {
       setError('File size must be less than 5MB');
       return;
     }
+
+    setUploadingImage(true);
+    setError(null);
 
     try {
       const fileExt = file.name.split('.').pop();
@@ -51,18 +57,35 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete }) {
         .from('brand-assets')
         .getPublicUrl(`products/${fileName}`);
 
+      // Update image URL without submitting form! User can now enter description and click Add Product themselves
       setFormData(prev => ({ ...prev, image_url: data.publicUrl }));
-      setError(null);
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Failed to upload image. Please try again.');
+    } finally {
+      setUploadingImage(false);
+      // Reset input value so same file could be selected again if needed
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
+  };
+
+  const handleRemoveImage = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setFormData(prev => ({ ...prev, image_url: '' }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.title || !formData.price) {
-      setError('Please fill in product name and price');
+    if (!formData.title?.trim() || !formData.price) {
+      setError('Please fill in both product name and price');
+      return;
+    }
+
+    if (uploadingImage) {
+      setError('Please wait for the product image to finish uploading');
       return;
     }
 
@@ -73,9 +96,9 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete }) {
         .insert([
           {
             brand_id: user.id,
-            title: formData.title,
+            title: formData.title.trim(),
             price: parseFloat(formData.price) || 0,
-            description: formData.description || '',
+            description: formData.description?.trim() || '',
             image_url: formData.image_url || '',
             status: 'active'
           }
@@ -83,19 +106,18 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete }) {
 
       if (insertError) throw insertError;
 
-      // Reset form
+      // Reset form on success
       setFormData({
         title: '',
         price: '',
         description: '',
         image_url: ''
       });
-      setStep(1);
 
       onComplete?.();
       handleClose();
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Failed to add product. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -103,7 +125,6 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete }) {
 
   const handleClose = () => {
     setError(null);
-    setStep(1);
     setFormData({
       title: '',
       price: '',
@@ -146,8 +167,11 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete }) {
             borderRadius: '16px',
             border: '1px solid #EAE3D9',
             boxShadow: '0 20px 50px rgba(34, 21, 16, 0.2)',
-            maxWidth: '540px',
+            maxWidth: '560px',
             width: '100%',
+            maxHeight: '90vh',
+            display: 'flex',
+            flexDirection: 'column',
             overflow: 'hidden',
             fontFamily: '"Inter", sans-serif'
           }}
@@ -155,11 +179,12 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete }) {
         >
           {/* Header */}
           <div style={{
-            padding: '28px 28px 20px',
+            padding: '24px 28px 18px',
             borderBottom: '1px solid #EAE3D9',
             display: 'flex',
             justifyContent: 'space-between',
-            alignItems: 'flex-start'
+            alignItems: 'flex-start',
+            flexShrink: 0
           }}>
             <div>
               <h2 style={{
@@ -167,23 +192,24 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete }) {
                 fontWeight: '800',
                 color: '#111827',
                 margin: 0,
-                marginBottom: '8px',
+                marginBottom: '6px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '10px'
               }}>
-                <Tag size={24} color="#6A3E1F" />
-                Add Your First Product
+                <Tag size={22} color="#6A3E1F" />
+                Add New Product
               </h2>
               <p style={{
                 fontSize: '13px',
                 color: '#6B7280',
                 margin: 0
               }}>
-                Get started by adding your first product (step {step} of 2)
+                Enter your product details, upload photos, write your description and submit.
               </p>
             </div>
             <button
+              type="button"
               onClick={handleClose}
               style={{
                 border: '1px solid #E5E7EB',
@@ -212,14 +238,14 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete }) {
             </button>
           </div>
 
-          {/* Content */}
-          <div style={{ padding: '24px 28px', maxHeight: '70vh', overflowY: 'auto' }}>
+          {/* Scrollable Content Body */}
+          <div style={{ padding: '24px 28px', overflowY: 'auto', flex: 1 }}>
             {error && (
               <div style={{
                 backgroundColor: '#FEE2E2',
                 border: '1px solid #FCA5A5',
                 borderRadius: '8px',
-                padding: '12px',
+                padding: '12px 14px',
                 marginBottom: '20px',
                 display: 'flex',
                 alignItems: 'flex-start',
@@ -229,274 +255,302 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete }) {
                 <p style={{
                   fontSize: '13px',
                   color: '#991B1B',
-                  margin: 0
+                  margin: 0,
+                  fontWeight: '500'
                 }}>
                   {error}
                 </p>
               </div>
             )}
 
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {/* Step 1: Basic Info */}
-              {step === 1 && (
-                <>
-                  {/* Product Name */}
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      fontSize: '13px',
-                      fontWeight: '600',
-                      color: '#111827',
-                      marginBottom: '6px'
-                    }}>
-                      Product Name *
-                    </label>
-                    <input
-                      type="text"
-                      name="title"
-                      value={formData.title}
-                      onChange={handleInputChange}
-                      placeholder="e.g., Premium Leather Handbag"
-                      style={{
-                        width: '100%',
-                        padding: '10px 12px',
-                        border: '1px solid #D1D5DB',
-                        borderRadius: '8px',
-                        fontSize: '13px',
-                        fontFamily: 'inherit',
-                        boxSizing: 'border-box',
-                        transition: 'all 0.15s ease'
-                      }}
-                      onFocus={(e) => {
-                        e.target.style.borderColor = '#6A3E1F';
-                        e.target.style.boxShadow = '0 0 0 3px rgba(106, 62, 31, 0.1)';
-                      }}
-                      onBlur={(e) => {
-                        e.target.style.borderColor = '#D1D5DB';
-                        e.target.style.boxShadow = 'none';
-                      }}
-                    />
-                  </div>
-
-                  {/* Price */}
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      fontSize: '13px',
-                      fontWeight: '600',
-                      color: '#111827',
-                      marginBottom: '6px'
-                    }}>
-                      Price (₦) *
-                    </label>
-                    <input
-                      type="number"
-                      name="price"
-                      value={formData.price}
-                      onChange={handleInputChange}
-                      placeholder="15,000"
-                      step="0.01"
-                      min="0"
-                      style={{
-                        width: '100%',
-                        padding: '10px 12px',
-                        border: '1px solid #D1D5DB',
-                        borderRadius: '8px',
-                        fontSize: '13px',
-                        fontFamily: 'inherit',
-                        boxSizing: 'border-box',
-                        transition: 'all 0.15s ease'
-                      }}
-                      onFocus={(e) => {
-                        e.target.style.borderColor = '#6A3E1F';
-                        e.target.style.boxShadow = '0 0 0 3px rgba(106, 62, 31, 0.1)';
-                      }}
-                      onBlur={(e) => {
-                        e.target.style.borderColor = '#D1D5DB';
-                        e.target.style.boxShadow = 'none';
-                      }}
-                    />
-                  </div>
-
-                  {/* Quick Actions */}
-                  <div style={{
-                    backgroundColor: '#F3F4F6',
-                    border: '1px solid #E5E7EB',
-                    borderRadius: '8px',
-                    padding: '14px',
-                    marginTop: '8px'
+            <form
+              onSubmit={handleSubmit}
+              onKeyDown={(e) => {
+                // Prevent accidental form submission when pressing enter in single-line inputs
+                if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+                  e.preventDefault();
+                }
+              }}
+              style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}
+            >
+              {/* Product Name & Price Row */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 140px', gap: '14px' }}>
+                <div>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '13px',
+                    fontWeight: '600',
+                    color: '#111827',
+                    marginBottom: '6px'
                   }}>
-                    <p style={{
-                      fontSize: '13px',
-                      fontWeight: '600',
-                      color: '#111827',
-                      margin: '0 0 10px 0'
-                    }}>
-                      Quick Start Tips
-                    </p>
-                    <ul style={{
-                      margin: 0,
-                      paddingLeft: '20px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '6px'
-                    }}>
-                      <li style={{ fontSize: '12px', color: '#6B7280' }}>Use clear, descriptive product names</li>
-                      <li style={{ fontSize: '12px', color: '#6B7280' }}>Set competitive prices for your market</li>
-                      <li style={{ fontSize: '12px', color: '#6B7280' }}>You can add more details later</li>
-                    </ul>
-                  </div>
-                </>
-              )}
-
-              {/* Step 2: Detailed Info */}
-              {step === 2 && (
-                <>
-                  {/* Product Image */}
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      fontSize: '13px',
-                      fontWeight: '600',
-                      color: '#111827',
-                      marginBottom: '10px'
-                    }}>
-                      Product Image
-                    </label>
-                    <div style={{
-                      border: '2px dashed #D1D5DB',
+                    Product Name *
+                  </label>
+                  <input
+                    type="text"
+                    name="title"
+                    value={formData.title}
+                    onChange={handleInputChange}
+                    placeholder="e.g., Signature Trench Coat"
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '11px 14px',
+                      border: '1px solid #D1D5DB',
                       borderRadius: '8px',
-                      padding: '20px',
+                      fontSize: '13.5px',
+                      fontFamily: 'inherit',
+                      boxSizing: 'border-box',
+                      transition: 'all 0.15s ease'
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = '#6A3E1F';
+                      e.target.style.boxShadow = '0 0 0 3px rgba(106, 62, 31, 0.1)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = '#D1D5DB';
+                      e.target.style.boxShadow = 'none';
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '13px',
+                    fontWeight: '600',
+                    color: '#111827',
+                    marginBottom: '6px'
+                  }}>
+                    Price (₦) *
+                  </label>
+                  <input
+                    type="number"
+                    name="price"
+                    value={formData.price}
+                    onChange={handleInputChange}
+                    placeholder="25,000"
+                    step="any"
+                    min="0"
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '11px 14px',
+                      border: '1px solid #D1D5DB',
+                      borderRadius: '8px',
+                      fontSize: '13.5px',
+                      fontFamily: 'inherit',
+                      boxSizing: 'border-box',
+                      transition: 'all 0.15s ease'
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = '#6A3E1F';
+                      e.target.style.boxShadow = '0 0 0 3px rgba(106, 62, 31, 0.1)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = '#D1D5DB';
+                      e.target.style.boxShadow = 'none';
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Product Image Section */}
+              <div>
+                <label style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  color: '#111827',
+                  marginBottom: '8px'
+                }}>
+                  <span>Product Image</span>
+                  {formData.image_url && (
+                    <button
+                      type="button"
+                      onClick={handleRemoveImage}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#DC2626',
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                        padding: '0',
+                        fontWeight: '600'
+                      }}
+                    >
+                      Remove Image
+                    </button>
+                  )}
+                </label>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png, image/jpeg, image/webp"
+                  onChange={handleImageUpload}
+                  style={{ display: 'none' }}
+                  id="product-photo-upload-input"
+                />
+
+                {formData.image_url ? (
+                  <div style={{
+                    border: '1px solid #EAE3D9',
+                    borderRadius: '10px',
+                    padding: '12px 16px',
+                    backgroundColor: '#FAFAF9',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '16px'
+                  }}>
+                    <img
+                      src={formData.image_url}
+                      alt="Product Preview"
+                      style={{
+                        width: '64px',
+                        height: '64px',
+                        objectFit: 'cover',
+                        borderRadius: '8px',
+                        border: '1px solid #E5E7EB',
+                        backgroundColor: '#FFFFFF'
+                      }}
+                    />
+                    <div style={{ flex: 1 }}>
+                      <p style={{ margin: '0 0 4px 0', fontSize: '13px', fontWeight: '700', color: '#111827' }}>
+                        Image Uploaded Successfully
+                      </p>
+                      <p style={{ margin: 0, fontSize: '12px', color: '#6B7280' }}>
+                        Ready for display on your storefront
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      style={{
+                        padding: '7px 12px',
+                        backgroundColor: '#FFFFFF',
+                        border: '1px solid #D1D5DB',
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        color: '#374151',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Change
+                    </button>
+                  </div>
+                ) : (
+                  <div
+                    onClick={() => {
+                      if (!uploadingImage) {
+                        fileInputRef.current?.click();
+                      }
+                    }}
+                    style={{
+                      border: '2px dashed #D1D5DB',
+                      borderRadius: '10px',
+                      padding: '24px 20px',
                       textAlign: 'center',
-                      cursor: 'pointer',
-                      backgroundColor: '#FAFAF9',
+                      cursor: uploadingImage ? 'wait' : 'pointer',
+                      backgroundColor: uploadingImage ? '#F9FAFB' : '#FAFAF9',
                       transition: 'all 0.15s ease'
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = '#6A3E1F';
-                      e.currentTarget.style.backgroundColor = '#FFFBF8';
+                      if (!uploadingImage) {
+                        e.currentTarget.style.borderColor = '#6A3E1F';
+                        e.currentTarget.style.backgroundColor = '#FFFBF8';
+                      }
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = '#D1D5DB';
-                      e.currentTarget.style.backgroundColor = '#FAFAF9';
-                    }}>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageUpload}
-                        style={{ display: 'none' }}
-                        id="product-image-upload"
-                      />
-                      <label htmlFor="product-image-upload" style={{ cursor: 'pointer' }}>
-                        {formData.image_url ? (
-                          <div>
-                            <img src={formData.image_url} alt="Product" style={{
-                              maxWidth: '100px',
-                              maxHeight: '100px',
-                              margin: '0 auto 10px',
-                              borderRadius: '4px'
-                            }} />
-                            <p style={{ fontSize: '12px', color: '#6B7280', margin: 0 }}>Click to change image</p>
-                          </div>
-                        ) : (
-                          <div>
-                            <Upload size={24} color="#6B7280" style={{ margin: '0 auto 8px' }} />
-                            <p style={{ fontSize: '13px', fontWeight: '600', color: '#111827', margin: '8px 0 4px' }}>
-                              Upload product image
-                            </p>
-                            <p style={{ fontSize: '12px', color: '#6B7280', margin: 0 }}>PNG, JPG up to 5MB</p>
-                          </div>
-                        )}
-                      </label>
-                    </div>
-                  </div>
-
-                  {/* Description */}
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      fontSize: '13px',
-                      fontWeight: '600',
-                      color: '#111827',
-                      marginBottom: '6px'
-                    }}>
-                      Product Description (Optional)
-                    </label>
-                    <textarea
-                      name="description"
-                      value={formData.description}
-                      onChange={handleInputChange}
-                      placeholder="Describe your product, materials, sizes, colors, etc."
-                      rows="4"
-                      style={{
-                        width: '100%',
-                        padding: '10px 12px',
-                        border: '1px solid #D1D5DB',
-                        borderRadius: '8px',
-                        fontSize: '13px',
-                        fontFamily: 'inherit',
-                        boxSizing: 'border-box',
-                        resize: 'vertical',
-                        transition: 'all 0.15s ease'
-                      }}
-                      onFocus={(e) => {
-                        e.target.style.borderColor = '#6A3E1F';
-                        e.target.style.boxShadow = '0 0 0 3px rgba(106, 62, 31, 0.1)';
-                      }}
-                      onBlur={(e) => {
-                        e.target.style.borderColor = '#D1D5DB';
-                        e.target.style.boxShadow = 'none';
-                      }}
-                    />
-                  </div>
-
-                  {/* Info Box */}
-                  <div style={{
-                    backgroundColor: '#F0FDF4',
-                    border: '1px solid #BBEF63',
-                    borderRadius: '8px',
-                    padding: '12px'
-                  }}>
-                    <p style={{
-                      fontSize: '12px',
-                      color: '#15803D',
-                      margin: 0
-                    }}>
-                      ✓ You're almost done! Complete this step and you'll be ready to start selling.
-                    </p>
-                  </div>
-                </>
-              )}
-
-              {/* Step Progress */}
-              <div style={{
-                display: 'flex',
-                justifyContent: 'center',
-                gap: '8px',
-                marginTop: '12px'
-              }}>
-                {[1, 2].map((s) => (
-                  <div
-                    key={s}
-                    style={{
-                      width: '8px',
-                      height: '8px',
-                      borderRadius: '50%',
-                      backgroundColor: step >= s ? '#6A3E1F' : '#E5E7EB',
-                      transition: 'all 0.15s ease'
+                      if (!uploadingImage) {
+                        e.currentTarget.style.borderColor = '#D1D5DB';
+                        e.currentTarget.style.backgroundColor = '#FAFAF9';
+                      }
                     }}
-                  />
-                ))}
+                  >
+                    {uploadingImage ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                        <div style={{
+                          width: '24px',
+                          height: '24px',
+                          border: '3px solid #E5E7EB',
+                          borderTopColor: '#6A3E1F',
+                          borderRadius: '50%',
+                          animation: 'spin 1s linear infinite'
+                        }} />
+                        <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+                        <p style={{ fontSize: '13px', fontWeight: '600', color: '#111827', margin: 0 }}>
+                          Uploading image to storage...
+                        </p>
+                        <p style={{ fontSize: '12px', color: '#6B7280', margin: 0 }}>
+                          Your form will remain intact.
+                        </p>
+                      </div>
+                    ) : (
+                      <>
+                        <Upload size={24} color="#6B7280" style={{ margin: '0 auto 8px' }} />
+                        <p style={{ fontSize: '13px', fontWeight: '600', color: '#111827', margin: '4px 0 2px' }}>
+                          Click to upload product image
+                        </p>
+                        <p style={{ fontSize: '12px', color: '#6B7280', margin: 0 }}>
+                          PNG, JPG, or WEBP up to 5MB
+                        </p>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
 
-              {/* Buttons */}
-              <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+              {/* Product Description */}
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  color: '#111827',
+                  marginBottom: '6px'
+                }}>
+                  Product Description
+                </label>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  placeholder="Describe your product's craftsmanship, key details, materials, sizing, dimensions, and styling notes..."
+                  rows="4"
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    border: '1px solid #D1D5DB',
+                    borderRadius: '8px',
+                    fontSize: '13px',
+                    fontFamily: 'inherit',
+                    lineHeight: '1.5',
+                    boxSizing: 'border-box',
+                    resize: 'vertical',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = '#6A3E1F';
+                    e.target.style.boxShadow = '0 0 0 3px rgba(106, 62, 31, 0.1)';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = '#D1D5DB';
+                    e.target.style.boxShadow = 'none';
+                  }}
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', gap: '12px', marginTop: '8px', paddingTop: '16px', borderTop: '1px solid #F3F4F6' }}>
                 <button
                   type="button"
-                  onClick={() => step === 2 ? setStep(1) : handleClose()}
+                  onClick={handleClose}
                   style={{
                     flex: 1,
-                    padding: '10px',
+                    padding: '11px',
                     backgroundColor: '#F3F4F6',
                     border: '1px solid #D1D5DB',
                     borderRadius: '8px',
@@ -513,68 +567,37 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete }) {
                     e.currentTarget.style.backgroundColor = '#F3F4F6';
                   }}
                 >
-                  {step === 2 ? 'Back' : 'Cancel'}
+                  Cancel
                 </button>
-                {step === 1 ? (
-                  <button
-                    type="button"
-                    onClick={() => setStep(2)}
-                    disabled={!formData.title || !formData.price}
-                    style={{
-                      flex: 1,
-                      padding: '10px',
-                      backgroundColor: (!formData.title || !formData.price) ? '#D1D5DB' : '#6A3E1F',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontSize: '13px',
-                      fontWeight: '600',
-                      color: '#FFFFFF',
-                      cursor: (!formData.title || !formData.price) ? 'not-allowed' : 'pointer',
-                      transition: 'all 0.15s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      if (formData.title && formData.price) {
-                        e.currentTarget.style.backgroundColor = '#5a3219';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (formData.title && formData.price) {
-                        e.currentTarget.style.backgroundColor = '#6A3E1F';
-                      }
-                    }}
-                  >
-                    Next
-                  </button>
-                ) : (
-                  <button
-                    type="submit"
-                    disabled={loading || !formData.title || !formData.price}
-                    style={{
-                      flex: 1,
-                      padding: '10px',
-                      backgroundColor: loading || !formData.title || !formData.price ? '#D1D5DB' : '#6A3E1F',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontSize: '13px',
-                      fontWeight: '600',
-                      color: '#FFFFFF',
-                      cursor: loading || !formData.title || !formData.price ? 'not-allowed' : 'pointer',
-                      transition: 'all 0.15s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!loading && formData.title && formData.price) {
-                        e.currentTarget.style.backgroundColor = '#5a3219';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!loading && formData.title && formData.price) {
-                        e.currentTarget.style.backgroundColor = '#6A3E1F';
-                      }
-                    }}
-                  >
-                    {loading ? 'Adding...' : 'Add Product'}
-                  </button>
-                )}
+                <button
+                  type="submit"
+                  disabled={loading || uploadingImage || !formData.title?.trim() || !formData.price}
+                  style={{
+                    flex: 2,
+                    padding: '11px 20px',
+                    backgroundColor: loading || uploadingImage || !formData.title?.trim() || !formData.price ? '#D1D5DB' : '#6A3E1F',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '13.5px',
+                    fontWeight: '700',
+                    color: '#FFFFFF',
+                    cursor: loading || uploadingImage || !formData.title?.trim() || !formData.price ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.15s ease',
+                    boxShadow: '0 2px 8px rgba(106, 62, 31, 0.2)'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!loading && !uploadingImage && formData.title?.trim() && formData.price) {
+                      e.currentTarget.style.backgroundColor = '#5a3219';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!loading && !uploadingImage && formData.title?.trim() && formData.price) {
+                      e.currentTarget.style.backgroundColor = '#6A3E1F';
+                    }
+                  }}
+                >
+                  {loading ? 'Adding Product...' : uploadingImage ? 'Uploading Image...' : 'Add Product'}
+                </button>
               </div>
             </form>
           </div>

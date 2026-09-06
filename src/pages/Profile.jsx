@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Bell, LayoutGrid, User, Settings, Headphones, Globe, Heart, Bookmark, Edit, Mail, ArrowRight, Menu, X } from 'lucide-react';
+import { Bell, LayoutGrid, User, Settings, Headphones, Globe, Heart, Bookmark, Edit, Mail, ArrowRight, Menu, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
@@ -311,7 +311,6 @@ _Sent via Unbley Digital Atelier_
             .prof-user-profile { display: flex !important; margin-top: auto; }
             
             .prof-header { height: auto !important; padding: 20px 24px !important; flex-wrap: wrap; gap: 16px; justify-content: space-between; position: sticky; top: 0; background: #FFFFFF; z-index: 100; border-bottom: 1px solid #EAE3D9; }
-            .prof-search { width: 100% !important; order: 3; margin-top: 8px; }
             
             .prof-content { padding: 24px 20px !important; overflow: visible !important; }
             .prof-banner { padding: 48px 24px !important; height: auto !important; min-height: 280px; margin-bottom: 24px !important; }
@@ -395,13 +394,7 @@ _Sent via Unbley Digital Atelier_
               <div style={s.headerTitle}>Brand Profile</div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }} className="prof-search">
-              <div style={s.searchBar} className="prof-search">
-                <Search size={14} color="#6B584C" />
-                <input type="text" placeholder="Search ..." style={s.searchInput} />
-              </div>
-              <div style={s.headerActions}></div>
-            </div>
+            <div style={s.headerActions}></div>
           </div>
 
           {/* Content Area */}

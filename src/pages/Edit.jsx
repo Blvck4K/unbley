@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { LayoutGrid, User, Settings, Link as LinkIcon, Plus, Menu, X, Lock, CheckCircle2 } from 'lucide-react';
+import { LayoutGrid, User, Settings, Link as LinkIcon, Plus, Menu, X, Lock, CheckCircle2, HelpCircle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../context/ToastContext';
 import PageTransition from '../components/PageTransition';
 import { motion } from 'framer-motion';
+import EditTour from '../components/EditTour';
 
 const FacebookIcon = ({ size = 14, color = "currentColor" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke="none">
@@ -36,6 +37,7 @@ export default function Edit() {
   const [loading, setLoading] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [showEditTour, setShowEditTour] = useState(false);
 
   // Refs for hidden file inputs
   const logoRef = useRef(null);
@@ -87,6 +89,18 @@ export default function Edit() {
     accent: '#06acf8'
   });
   const [saveStatus, setSaveStatus] = useState('idle'); // 'idle' | 'saving' | 'saved'
+
+  // Auto-trigger tour on first visit
+  useEffect(() => {
+    if (!user) return;
+    const tourSeenKey = `unbley_edit_tour_seen_${user.id}`;
+    if (!localStorage.getItem(tourSeenKey)) {
+      const timer = setTimeout(() => {
+        setShowEditTour(true);
+      }, 700);
+      return () => clearTimeout(timer);
+    }
+  }, [user]);
 
   // ── Profile completion calculation ────────────────────────────────────────
   const completionFields = [
@@ -432,7 +446,9 @@ export default function Edit() {
             .edit-header-title-box { order: 2; width: 100%; }
             .edit-header h1 { font-size: 28px !important; margin-bottom: 8px !important; }
             .edit-header p { font-size: 12px !important; margin-top: 4px !important; }
-            .edit-save-btn { width: 100%; order: 3; padding: 14px !important; }
+            .edit-header-actions { width: 100% !important; display: flex !important; flex-wrap: wrap !important; gap: 8px !important; order: 3; }
+            .edit-header-actions button { flex: 1 1 calc(50% - 4px) !important; padding: 12px 8px !important; font-size: 10px !important; justify-content: center !important; text-align: center !important; }
+            .edit-progress-bar { padding: 12px 20px !important; }
             .edit-menu-btn { order: 1; }
             
             .edit-content { padding: 20px !important; gap: 32px !important; }
@@ -514,6 +530,7 @@ export default function Edit() {
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                 <button 
+                  id="tour-edit-mobile-menu"
                   onClick={() => setIsSidebarOpen(true)}
                   style={{ background: 'none', border: 'none', color: '#221510', cursor: 'pointer' }}
                   className="mobile-only"
@@ -526,10 +543,36 @@ export default function Edit() {
                   <p style={s.headerSubtitle}>Curate your digital atelier. The narrative you build here defines the prestige of your collections.</p>
                 </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }} className="edit-header-actions">
+                <button
+                  id="tour-edit-guide-trigger"
+                  type="button"
+                  onClick={() => setShowEditTour(true)}
+                  style={{
+                    backgroundColor: '#FFFFFF',
+                    color: '#6B584C',
+                    border: '1px solid #DFCFC2',
+                    padding: '14px 18px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '11px',
+                    fontWeight: '700',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    letterSpacing: '0.04em'
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#F7F2EC'; e.currentTarget.style.color = brandColor; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#FFFFFF'; e.currentTarget.style.color = '#6B584C'; }}
+                  title="Take a guided tour of the edit page"
+                >
+                  <HelpCircle size={14} color="#8D5B36" /> TOUR GUIDE
+                </button>
                 {saveStatus === 'saving' && <span style={{ fontSize: '11px', color: '#8D5B36', letterSpacing: '0.05em' }}>Saving…</span>}
                 {saveStatus === 'saved' && <span style={{ fontSize: '11px', color: '#15803D', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '4px' }}><CheckCircle2 size={13} /> Saved</span>}
                 <motion.button
+                  id="tour-edit-save-btn"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   type="submit"
@@ -544,7 +587,7 @@ export default function Edit() {
 
             {/* Profile completion progress bar */}
             {showProgressBar && (
-              <div style={{ padding: '12px 80px', borderBottom: '1px solid #EAE3D9', backgroundColor: '#FFFBF8' }} className="edit-progress-bar">
+              <div id="tour-edit-progress" style={{ padding: '12px 80px', borderBottom: '1px solid #EAE3D9', backgroundColor: '#FFFBF8' }} className="edit-progress-bar">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                   <span style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#6A3E1F', textTransform: 'uppercase' }}>Profile Completion</span>
                   <span style={{ fontSize: '10px', fontWeight: '700', color: '#6A3E1F' }}>{completionPct}%</span>
@@ -573,7 +616,7 @@ export default function Edit() {
                   transition={{ duration: 0.6 }}
                 >
                   {/* Banner Upload */}
-                  <div style={s.bannerBox} className="edit-banner-box">
+                  <div id="tour-edit-banner" style={s.bannerBox} className="edit-banner-box">
                     <div style={s.bannerText} className="edit-banner-text">BRAND</div>
                     <button type="button" style={s.bannerBtn} onClick={() => bannerRef.current?.click()}>
                       {loading ? 'UPLOADING...' : 'Change Banner'}
@@ -582,7 +625,7 @@ export default function Edit() {
                   </div>
 
                   {/* Core Identity Form */}
-                  <div style={s.card} className="edit-card">
+                  <div id="tour-edit-core-identity" style={s.card} className="edit-card">
                     <h2 style={s.cardTitle}>Core Identity</h2>
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px 48px', marginBottom: '40px' }} className="edit-input-grid">
@@ -657,7 +700,7 @@ export default function Edit() {
                   </div>
 
                   {/* Brand Theme / Colors */}
-                  <div style={{ ...s.card, marginTop: '40px' }} className="edit-card">
+                  <div id="tour-edit-colors" style={{ ...s.card, marginTop: '40px' }} className="edit-card">
                     <h2 style={s.cardTitle}>Brand Theme</h2>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }} className="edit-color-grid">
                       <div style={s.inputGroup}>
@@ -717,7 +760,7 @@ export default function Edit() {
                   style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}
                 >
                   {/* Logo Upload Box */}
-                  <div style={s.card} className="edit-card">
+                  <div id="tour-edit-logo" style={s.card} className="edit-card">
                     <label style={{ ...s.label, marginBottom: '40px' }}>Brand Logo</label>
                     <div style={s.logoPreview}>
                       {formData.logo_url ? (
@@ -770,7 +813,7 @@ export default function Edit() {
                   </div>
 
                   {/* Social Handles Box */}
-                  <div style={s.card} className="edit-card">
+                  <div id="tour-edit-socials" style={s.card} className="edit-card">
                     <label style={{ ...s.label, marginBottom: '32px' }}>Social Handles</label>
 
                     <div style={s.socialRow}>
@@ -818,6 +861,7 @@ export default function Edit() {
 
               {/* Bottom Area: Product Showcase */}
               <motion.div
+                id="tour-edit-showcase"
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -860,6 +904,14 @@ export default function Edit() {
             </div>
           </form>
         </div>
+
+        {/* Interactive Tour Guide for Edit Page */}
+        <EditTour
+          isActive={showEditTour}
+          onClose={() => setShowEditTour(false)}
+          userId={user?.id}
+          onSidebarToggle={(open) => setIsSidebarOpen(open)}
+        />
       </div>
     </PageTransition>
   );

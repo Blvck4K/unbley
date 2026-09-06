@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, Bell, Moon, LayoutGrid, Store, User, Settings, Headphones, TrendingUp, Package, BarChart3, CheckCircle2, ChevronRight, ShoppingBag, ArrowUpRight, Edit, Menu, X, MessageSquare, ArrowLeft, Sparkles } from 'lucide-react';
+import { Search, Bell, Moon, LayoutGrid, Store, User, Settings, Headphones, TrendingUp, Package, BarChart3, CheckCircle2, ChevronRight, ShoppingBag, ArrowUpRight, Edit, Menu, X, MessageSquare, ArrowLeft, Sparkles, HelpCircle } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
@@ -8,6 +8,7 @@ import PageTransition from '../components/PageTransition';
 import { motion, AnimatePresence } from 'framer-motion';
 import SuccessModal from '../components/SuccessModal';
 import OnboardingModal from '../components/OnboardingModal';
+import DashboardTour from '../components/DashboardTour';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -18,6 +19,7 @@ export default function Dashboard() {
   const [signupModalData, setSignupModalData] = useState(null);
   const [showOnboardingModal, setShowOnboardingModal] = useState(false);
   const [activeOnboardingStep, setActiveOnboardingStep] = useState(null);
+  const [showDashboardTour, setShowDashboardTour] = useState(false);
   const location = useLocation();
 
   const [profileData, setProfileData] = useState({
@@ -132,6 +134,19 @@ export default function Dashboard() {
       }
     }
   }, [user, location.search]);
+
+  // Trigger interactive tutorial tour if user hasn't seen it yet and not blocked by modals
+  useEffect(() => {
+    if (!user || showSignupSuccessModal || showOnboardingModal) return;
+
+    const tourSeenKey = `unbley_dashboard_tour_seen_${user.id}`;
+    if (!localStorage.getItem(tourSeenKey)) {
+      const timer = setTimeout(() => {
+        setShowDashboardTour(true);
+      }, 700);
+      return () => clearTimeout(timer);
+    }
+  }, [user, showSignupSuccessModal, showOnboardingModal]);
 
   // ── Real-time: re-fetch dashboard whenever brand_profiles or products change ──
   useEffect(() => {
@@ -289,9 +304,30 @@ export default function Dashboard() {
             .dash-header { height: auto !important; padding: 24px 20px !important; flex-wrap: wrap; gap: 16px; justify-content: space-between; position: sticky; top: 0; background: #FFFFFF; z-index: 100; border-bottom: 1px solid #EAE3D9; }
             .dash-content { padding: 24px 20px !important; }
             .dash-search-bar { display: none !important; }
-            .dash-header-actions { width: 100%; justify-content: flex-end; }
-            .dash-header-actions a { width: 100%; }
-            .dash-header-actions a > div { justify-content: center; width: 100%; padding: 14px !important; }
+            .dash-header-actions { 
+              width: 100% !important; 
+              display: flex !important; 
+              flex-wrap: wrap !important; 
+              gap: 8px !important; 
+              align-items: stretch !important; 
+              justify-content: flex-start !important; 
+            }
+            .dash-header-actions button { 
+              flex: 1 1 calc(50% - 6px) !important; 
+              justify-content: center !important; 
+              padding: 10px 8px !important; 
+              font-size: 10px !important; 
+              text-align: center !important; 
+            }
+            .dash-header-actions a { 
+              width: 100% !important; 
+              flex-basis: 100% !important; 
+            }
+            .dash-header-actions a > div { 
+              justify-content: center !important; 
+              width: 100% !important; 
+              padding: 12px !important; 
+            }
             
             .dash-brand-header { flex-direction: column !important; align-items: flex-start !important; gap: 24px !important; }
             .dash-brand-info { flex-direction: column !important; align-items: flex-start !important; gap: 16px !important; }
@@ -329,10 +365,10 @@ export default function Dashboard() {
             <div style={{ fontFamily: 'Inter', fontSize: '9px', fontWeight: '700', letterSpacing: '0.1em', color: '#8D5B36', marginTop: '8px', textTransform: 'uppercase' }}>Digital Store</div>
           </div>
 
-          <div style={s.nav} className="dash-nav">
-            <div onClick={() => setActiveTab('overview')} style={s.navItem(activeTab === 'overview')}><LayoutGrid size={16} /> Overview</div>
-            <Link to="/profile" style={s.navItem(false)}><User size={16} /> Profile</Link>
-            <Link to="/edit" style={s.navItem(false)}><Edit size={16} /> Edit</Link>
+          <div id="tour-sidebar-nav" style={s.nav} className="dash-nav">
+            <div id="tour-nav-overview" onClick={() => setActiveTab('overview')} style={s.navItem(activeTab === 'overview')}><LayoutGrid size={16} /> Overview</div>
+            <Link id="tour-nav-profile" to="/profile" style={s.navItem(false)}><User size={16} /> Profile</Link>
+            <Link id="tour-nav-edit" to="/edit" style={s.navItem(false)}><Edit size={16} /> Edit</Link>
             {profileData.is_admin && (
               <div onClick={() => setActiveTab('support')} style={s.navItem(activeTab === 'support')}><MessageSquare size={16} /> Support</div>
             )}
@@ -359,6 +395,7 @@ export default function Dashboard() {
           <div style={s.header} className="dash-header">
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
               <button
+                id="tour-mobile-menu"
                 onClick={() => setIsSidebarOpen(true)}
                 style={{ background: 'none', border: 'none', color: '#221510', cursor: 'pointer' }}
                 className="mobile-only"
@@ -376,6 +413,31 @@ export default function Dashboard() {
             </div>
             <div style={s.headerActions} className="dash-header-actions">
               <button
+                id="tour-guide-trigger"
+                onClick={() => setShowDashboardTour(true)}
+                style={{
+                  backgroundColor: '#FFFFFF',
+                  color: '#6B584C',
+                  border: '1px solid #DFCFC2',
+                  padding: '9px 14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '11px',
+                  fontWeight: '700',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  letterSpacing: '0.04em'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#F7F2EC'; e.currentTarget.style.color = brandColor; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#FFFFFF'; e.currentTarget.style.color = '#6B584C'; }}
+                title="Take a quick tutorial tour of your dashboard"
+              >
+                <HelpCircle size={14} color="#8D5B36" /> TOUR GUIDE
+              </button>
+              <button
+                id="tour-launch-btn"
                 onClick={() => setShowOnboardingModal(true)}
                 style={{
                   backgroundColor: '#FFFFFF',
@@ -398,7 +460,7 @@ export default function Dashboard() {
               >
                 <Sparkles size={14} color={brandColor} /> LAUNCH CHECKLIST
               </button>
-              <Link to={`/shop-brand/${user?.id}`} style={{ textDecoration: 'none' }}>
+              <Link id="tour-storefront" to={`/shop-brand/${user?.id}`} style={{ textDecoration: 'none' }}>
                 <div style={{ ...s.premiumBadge, backgroundColor: brandColor, color: '#FFFFFF', padding: '10px 24px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', fontWeight: '800', border: 'none', borderRadius: '4px', boxShadow: '0 4px 12px rgba(106, 62, 31, 0.2)' }}>
                   <Store size={16} /> MANAGE STORE
                 </div>
@@ -411,7 +473,7 @@ export default function Dashboard() {
 
             {activeTab === 'overview' ? (
               <motion.div initial="hidden" animate="visible" variants={containerVariants}>
-                <motion.div variants={itemVariants} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: '1px solid #EAE3D9', paddingBottom: '40px' }} className="dash-brand-header">
+                <motion.div id="tour-brand-identity" variants={itemVariants} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: '1px solid #EAE3D9', paddingBottom: '40px' }} className="dash-brand-header">
                   <div style={{ display: 'flex', gap: '32px', alignItems: 'center' }} className="dash-brand-info">
                     <div style={{ width: '100px', height: '100px', border: '1px solid #EAE3D9', backgroundColor: '#FFFFFF', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                       {profileData.logo_url ? (
@@ -453,6 +515,7 @@ export default function Dashboard() {
                 <AnimatePresence>
                   {showProfileMeter && (
                     <motion.div
+                      id="tour-setup-meter"
                       variants={itemVariants}
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -645,7 +708,7 @@ export default function Dashboard() {
                 </AnimatePresence>
 
                 {/* Dynamic Real-Time Stats Grid */}
-                <div style={s.statsGrid} className="dash-stats-grid">
+                <div id="tour-stats-grid" style={s.statsGrid} className="dash-stats-grid">
                   <motion.div variants={itemVariants} style={s.card}>
                     <div style={s.cardHeader}>
                       <div style={{ border: '1px solid #EAE3D9', borderRadius: '4px', padding: '8px', backgroundColor: '#F7F2EC' }}>
@@ -690,7 +753,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* Bottom Ledger Grid */}
-                <div style={s.bottomGrid} className="dash-bottom-grid">
+                <div id="tour-orders-ledger" style={s.bottomGrid} className="dash-bottom-grid">
                   <motion.div variants={itemVariants} style={{ backgroundColor: '#FFFFFF', border: '1px solid #EAE3D9', borderRadius: '8px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '32px', borderBottom: '1px solid #EAE3D9' }}>
                       <div style={{ fontFamily: 'var(--font-heading)', fontSize: '22px', color: '#221510', fontWeight: '800', letterSpacing: '-0.02em' }}>Recent Orders</div>
@@ -766,6 +829,12 @@ export default function Dashboard() {
             }
             setShowOnboardingModal(false);
             setActiveOnboardingStep(null);
+            // Launch tutorial tour if not seen yet
+            if (user?.id && !localStorage.getItem(`unbley_dashboard_tour_seen_${user.id}`)) {
+              setTimeout(() => {
+                setShowDashboardTour(true);
+              }, 400);
+            }
           }}
           activeStep={activeOnboardingStep}
           onRefresh={fetchDashboardData}
@@ -775,6 +844,14 @@ export default function Dashboard() {
             store_active: profileData?.store_active || user?.user_metadata?.store_active
           }}
           storeId={user?.id}
+        />
+
+        {/* Stage 3: Interactive Dashboard Tutorial Tour */}
+        <DashboardTour
+          isActive={showDashboardTour}
+          onClose={() => setShowDashboardTour(false)}
+          userId={user?.id}
+          onSidebarToggle={(open) => setIsSidebarOpen(open)}
         />
       </div>
     </PageTransition>
