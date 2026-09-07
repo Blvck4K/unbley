@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../context/ToastContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import logoImg from '../assets/logogo.png';
 
 export default function Navbar() {
   const [search, setSearch] = useState('');
@@ -90,7 +91,8 @@ export default function Navbar() {
       <div className="container flex justify-between items-center" style={{ width: '100%', height: '100%' }}>
         <div className="flex items-center justify-between" style={{ width: isMobile ? '100%' : 'auto', gap: isMobile ? '0' : '32px' }}>
           <Link to="/" className="font-bold flex items-center gap-0" onClick={() => setIsMenuOpen(false)} style={{ fontSize: '30px', fontFamily: 'var(--font-heading)', fontWeight: '800', letterSpacing: '-0.03em', color: 'var(--primary)', textDecoration: 'none' }}>
-            <motion.div whileHover={{ scale: 1.05 }} transition={{ type: "spring", stiffness: 400, damping: 10 }} className="flex items-center" style={{ gap: '0px' }}>
+            <motion.div whileHover={{ scale: 1.05 }} transition={{ type: "spring", stiffness: 400, damping: 10 }} className="flex items-center" style={{ gap: '6px' }}>
+              <img src={logoImg} alt="Unbley Logo" style={{ width: '32px', height: '32px', objectFit: 'contain', display: 'block' }} />
               <span>Unbley.</span>
             </motion.div>
           </Link>

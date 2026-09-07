@@ -33,6 +33,7 @@ const AdminBlog = lazy(() => import('./pages/AdminBlog'));
 const FillBlog = lazy(() => import('./pages/FillBlog'));
 const About = lazy(() => import('./pages/About'));
 const Contact = lazy(() => import('./pages/Contact'));
+const Support = lazy(() => import('./pages/Support'));
 
 import ChatWidget from './components/ChatWidget';
 import FloatingWhatsApp from './components/FloatingWhatsApp';
@@ -80,6 +81,7 @@ function App() {
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                 <Route path="/edit" element={<ProtectedRoute><Edit /></ProtectedRoute>} />
+                <Route path="/support" element={<ProtectedRoute><Support /></ProtectedRoute>} />
                 <Route path="/activation" element={<ProtectedRoute><Activation /></ProtectedRoute>} />
                 <Route path="/finalize-activation" element={<ProtectedRoute><FinalizeActivation /></ProtectedRoute>} />
                 <Route path="/success" element={<ProtectedRoute><SuccessPage /></ProtectedRoute>} />

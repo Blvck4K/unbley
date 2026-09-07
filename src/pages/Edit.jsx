@@ -1,43 +1,58 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { LayoutGrid, User, Settings, Link as LinkIcon, Plus, Menu, X, Lock, CheckCircle2, HelpCircle } from 'lucide-react';
+import { 
+  Save, 
+  HelpCircle, 
+  Menu, 
+  Upload, 
+  Sparkles, 
+  Image as ImageIcon, 
+  CheckCircle2, 
+  ExternalLink,
+  Store,
+  Palette,
+  Truck,
+  Globe,
+  Plus
+} from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../context/ToastContext';
+import Sidebar from '../components/Sidebar';
 import PageTransition from '../components/PageTransition';
 import { motion } from 'framer-motion';
 import EditTour from '../components/EditTour';
 
-const FacebookIcon = ({ size = 14, color = "currentColor" }) => (
+const FacebookIcon = ({ size = 16, color = "currentColor" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke="none">
     <path d="M22.675 0H1.325C.593 0 0 .593 0 1.325v21.351C0 23.408.593 24 1.325 24H12.82v-9.294H9.692v-3.622h3.128V8.413c0-3.1 1.894-4.788 4.66-4.788 1.325 0 2.464.099 2.795.143v3.24l-1.918.001c-1.504 0-1.794.715-1.794 1.763v2.309h3.59l-.467 3.622h-3.123V24h6.116c.73 0 1.323-.593 1.323-1.325V1.325C24 .593 23.408 0 22.675 0z" />
   </svg>
 );
-const TikTokIcon = ({ size = 14, color = "currentColor" }) => (
+const TikTokIcon = ({ size = 16, color = "currentColor" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke="none">
     <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
   </svg>
 );
-const InstagramIcon = ({ size = 14, color = "currentColor" }) => (
+const InstagramIcon = ({ size = 16, color = "currentColor" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
   </svg>
 );
-const TwitterIcon = ({ size = 14, color = "currentColor" }) => (
+const TwitterIcon = ({ size = 16, color = "currentColor" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke="none">
     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
   </svg>
 );
 
 export default function Edit() {
-  const brandColor = '#6A3E1F';
   const { user, refreshUser } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  
   const [loading, setLoading] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [showEditTour, setShowEditTour] = useState(false);
+  const [saveStatus, setSaveStatus] = useState('idle'); // 'idle' | 'saving' | 'saved'
 
   // Refs for hidden file inputs
   const logoRef = useRef(null);
@@ -88,71 +103,50 @@ export default function Edit() {
     secondary: '#1A1A1A',
     accent: '#06acf8'
   });
-  const [saveStatus, setSaveStatus] = useState('idle'); // 'idle' | 'saving' | 'saved'
 
-  // Auto-trigger tour on first visit
+  // Calculate profile completion percentage
+  const calcProgress = () => {
+    const fields = [
+      formData.brand_name,
+      formData.owner_name,
+      formData.email_address,
+      formData.phone_number,
+      formData.brand_category,
+      formData.delivery_duration,
+      formData.brand_narrative,
+      formData.logo_url,
+      formData.banner_url,
+      formData.product_1_url
+    ];
+    const filled = fields.filter(f => Boolean(f && f !== 'Your Brand' && f !== 'Brand Owner')).length;
+    return Math.round((filled / fields.length) * 100);
+  };
+
+  const progress = calcProgress();
+
   useEffect(() => {
-    if (!user) return;
-    const tourSeenKey = `unbley_edit_tour_seen_${user.id}`;
-    if (!localStorage.getItem(tourSeenKey)) {
-      const timer = setTimeout(() => {
-        setShowEditTour(true);
-      }, 700);
-      return () => clearTimeout(timer);
-    }
-  }, [user]);
-
-  // ── Profile completion calculation ────────────────────────────────────────
-  const completionFields = [
-    { key: 'brand_name', label: 'Brand Name' },
-    { key: 'owner_name', label: 'Owner Name' },
-    { key: 'email_address', label: 'Email' },
-    { key: 'logo_url', label: 'Logo' },
-    { key: 'brand_narrative', label: 'Brand Story' },
-    { key: 'delivery_duration', label: 'Delivery Info' },
-    { key: 'phone_number', label: 'Phone' },
-    { key: 'bank_name', label: 'Bank' },
-    { key: 'instagram_url', label: 'Instagram' },
-    { key: 'product_1_url', label: 'Product Image' }
-  ];
-  const filledCount = completionFields.filter(f => !!formData[f.key]).length;
-  const completionPct = Math.round((filledCount / completionFields.length) * 100);
-  const showProgressBar = completionPct < 100;
-
-  // ── 1. Fetch profile on mount + real-time sync ──────────────────────────
-  useEffect(() => {
-    if (!user) return;
-
     async function fetchProfile() {
+      if (!user) return;
       try {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('brand_profiles')
           .select('*')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
 
-        let baseData = data;
-        if (!baseData) {
-          const md = user.user_metadata || {};
-          baseData = {
-            brand_name: md.full_name || '',
-            owner_name: md.full_name || '',
-            email_address: user.email || '',
-            phone_number: md.phone || '',
-            brand_category: md.category || ''
-          };
-        }
+        if (error) console.error('Error fetching profile:', error);
 
-        // Only apply draft if there is no DB data yet
+        let baseData = {};
         if (data) {
-          // DB data wins — clear any stale draft so modal saves reflect immediately
-          localStorage.removeItem(`unbley_edit_draft_${user.id}`);
+          baseData = Object.fromEntries(
+            Object.entries(data).filter(([_, v]) => v != null && v !== '')
+          );
         } else {
           const savedDraft = localStorage.getItem(`unbley_edit_draft_${user.id}`);
           if (savedDraft) {
             try {
               baseData = { ...baseData, ...JSON.parse(savedDraft) };
-            } catch (e) { /* ignore corrupt draft */ }
+            } catch (e) {}
           }
         }
 
@@ -169,12 +163,11 @@ export default function Edit() {
 
     fetchProfile();
 
-    // Real-time: whenever a popup saves to brand_profiles, re-fetch here too
     const channel = supabase
-      .channel(`edit_profile_sync_${user.id}`)
+      .channel(`edit_profile_sync_${user?.id}`)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'brand_profiles', filter: `id=eq.${user.id}` },
+        { event: '*', schema: 'public', table: 'brand_profiles', filter: `id=eq.${user?.id}` },
         (payload) => {
           if (payload.new) {
             const d = payload.new;
@@ -194,7 +187,7 @@ export default function Edit() {
     return () => { supabase.removeChannel(channel); };
   }, [user]);
 
-  // ── 2. Auto-save to Supabase as user types (debounced) ──────────────────
+  // Auto-save debounced
   const autoSave = useCallback(async (data) => {
     if (!user?.id || !data.brand_name) return;
     setSaveStatus('saving');
@@ -208,14 +201,12 @@ export default function Edit() {
         .upsert({ ...clean, id: user.id, updated_at: new Date().toISOString() }, { onConflict: 'id' });
       
       if (saveErr) {
-        console.warn('Auto-save warning:', saveErr.message);
         setSaveStatus('idle');
         return;
       }
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 2000);
     } catch (err) {
-      console.error('Auto-save error:', err.message);
       setSaveStatus('idle');
     }
   }, [user?.id]);
@@ -225,13 +216,6 @@ export default function Edit() {
     const timeout = setTimeout(() => autoSave(formData), 1500);
     return () => clearTimeout(timeout);
   }, [formData, user, autoSave]);
-
-  // ── 3. Resize listener ───────────────────────────────────────────────────
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -243,7 +227,6 @@ export default function Edit() {
     setFormData(prev => ({ ...prev, [`${colorName}_color`]: value }));
   };
 
-  // Generalized upload handler for Supabase storage
   const handleFileUpload = async (e, fieldName) => {
     if (!e.target.files || e.target.files.length === 0) return;
     const file = e.target.files[0];
@@ -256,36 +239,33 @@ export default function Edit() {
       const fileName = `${user.id}-${fieldName}-${Math.random()}.${fileExt}`;
       const filePath = `${user.id}/${fileName}`;
       
-      // Upload file directly to 'brand-assets' bucket
       const { error: uploadError } = await supabase.storage
         .from('brand-assets')
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
-      // Automatically retrieve public URL after success
       const { data } = supabase.storage
         .from('brand-assets')
         .getPublicUrl(filePath);
 
-      // Inject the newly generated Supabase public URL right into the local form rendering state
       setFormData(prev => ({ ...prev, [fieldName]: data.publicUrl }));
+      if (toast) toast.success("Image uploaded successfully!");
     } catch (error) {
       console.error('Error uploading image:', error.message);
-      alert('Error uploading image: ' + error.message);
+      if (toast) toast.error('Error uploading image: ' + error.message);
     } finally {
       setLoading(false);
     }
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setLoading(true);
     
     try {
       if (!user) throw new Error("Not authenticated");
       
-      // Exclude read-only admin/subaccount fields from the update payload
       const updatableFormData = { ...formData };
       delete updatableFormData.paystack_subaccount_code;
       delete updatableFormData.flutterwave_subaccount_code;
@@ -304,614 +284,719 @@ export default function Edit() {
         
       if (profileError) throw profileError;
       
-      const { error: authError } = await supabase.auth.updateUser({
+      await supabase.auth.updateUser({
         data: { profile_completed: true }
       });
       
-      if (authError) throw authError;
-      
-      // Clear draft on success
       localStorage.removeItem(`unbley_edit_draft_${user.id}`);
+      await refreshUser();
 
-      // Refresh the local auth context status to pick up any admin changes made in Supabase
-      const latestIsAdmin = await refreshUser();
-
-      toast.success("Profile updated successfully!");
-
-      // For admins, bypass activation and go straight to dashboard
-      if (latestIsAdmin) {
-        navigate('/dashboard');
-        return;
-      }
-
+      if (toast) toast.success("Store settings updated successfully!");
       navigate('/dashboard');
       
     } catch (err) {
       console.error(err);
-      toast.error(err.message || "Failed to update profile");
+      if (toast) toast.error(err.message || "Failed to update profile");
     } finally {
       setLoading(false);
     }
   };
 
-
-
-  const s = {
-    page: { backgroundColor: '#FBF9F5', color: '#221510', height: isMobile ? 'auto' : '100vh', minHeight: '100vh', display: 'flex', fontFamily: '"Inter", sans-serif', overflow: isMobile ? 'visible' : 'hidden' },
-    sidebar: { width: '280px', borderRight: '1px solid #EAE3D9', backgroundColor: '#FFFFFF', padding: '0', display: 'flex', flexDirection: 'column', flexShrink: 0 },
-    logoContainer: { padding: '60px 40px', display: 'flex', flexDirection: 'column' },
-    logo: { fontFamily: 'var(--font-heading)', fontSize: '20px', letterSpacing: '-0.02em', fontWeight: '800', color: brandColor, textTransform: 'none' },
-    nav: { padding: '0', flex: 1 },
-    navItem: (active) => ({
-      display: 'flex',
-      alignItems: 'center',
-      gap: '16px',
-      padding: '16px 40px',
-      color: active ? '#221510' : '#6B584C',
-      backgroundColor: active ? '#F7F2EC' : 'transparent',
-      borderLeft: active ? `3px solid ${brandColor}` : '3px solid transparent',
-      cursor: 'pointer',
-      fontSize: '12px',
-      fontWeight: active ? '600' : '400',
-      letterSpacing: '0.05em',
-      transition: 'all 0.2s',
-      textTransform: 'uppercase',
-      textDecoration: 'none'
-    }),
-    userProfile: { padding: '24px 40px', borderTop: '1px solid #EAE3D9', display: 'flex', alignItems: 'center', gap: '16px', backgroundColor: '#FFFFFF' },
-    userAvatar: { width: '40px', height: '40px', backgroundColor: '#EAE3D9', overflow: 'hidden', borderRadius: '50%' },
-
-    // Main Area
-    main: { flex: 1, display: 'flex', flexDirection: 'column', height: isMobile ? 'auto' : '100vh', overflowY: isMobile ? 'visible' : 'auto' },
-
-    // Custom Header for Edit Page
-    editHeader: { padding: '60px 80px 40px', borderBottom: '1px solid #EAE3D9', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', backgroundColor: '#FFFFFF' },
-    headerTitle: { fontFamily: 'var(--font-heading)', fontSize: '32px', color: '#221510', fontWeight: '800', letterSpacing: '-0.02em' },
-    headerSubtitle: { fontSize: '14px', color: '#6B584C', marginTop: '12px', maxWidth: '500px', lineHeight: '1.6' },
-    saveBtn: { backgroundColor: brandColor, color: '#FFFFFF', padding: '16px 32px', fontSize: '12px', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase', border: 'none', cursor: 'pointer', borderRadius: '4px', transition: 'background-color 0.2s' },
-
-    content: { padding: '60px 80px', display: 'flex', flexDirection: 'column', gap: '40px' },
-
-    // Layout Grid
-    twoColLayout: { display: 'grid', gridTemplateColumns: 'minmax(0, 1.8fr) minmax(0, 1fr)', gap: '40px' },
-
-    // Components
-    card: { backgroundColor: '#FFFFFF', border: '1px solid #EAE3D9', padding: '40px', borderRadius: '8px', boxShadow: '0 2px 8px rgba(34,21,16,0.03)' },
-    cardTitle: { fontFamily: 'var(--font-heading)', fontSize: '22px', color: '#221510', fontWeight: '800', letterSpacing: '-0.02em', marginBottom: '32px' },
-
-    bannerBox: { position: 'relative', height: '300px', backgroundColor: '#F7F2EC', borderRadius: '8px', overflow: 'hidden', marginBottom: '40px', display: 'flex', alignItems: 'flex-end', padding: '24px', backgroundImage: formData.banner_url ? `url(${formData.banner_url})` : 'linear-gradient(to right bottom, #F7F2EC, #EAE3D9)', backgroundSize: 'cover', backgroundPosition: 'center' },
-    bannerText: { position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '72px', fontWeight: 'bold', color: 'rgba(34,21,16,0.06)', letterSpacing: '0.1em', pointerEvents: 'none' },
-    bannerBtn: { backgroundColor: '#6A3E1F', border: 'none', color: '#FFF', padding: '10px 20px', fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', cursor: 'pointer', textTransform: 'uppercase', borderRadius: '4px' },
-    bannerInfo: { marginLeft: 'auto', fontSize: '10px', color: '#6B584C', letterSpacing: '0.1em', textTransform: 'uppercase', textShadow: '0 1px 4px rgba(255,255,255,0.8)' },
-
-    inputGroup: { marginBottom: '32px' },
-    label: { display: 'block', fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#6B584C', textTransform: 'uppercase', marginBottom: '16px' },
-    input: { width: '100%', backgroundColor: 'transparent', border: 'none', borderBottom: '1px solid #DFCFC2', padding: '8px 0', color: '#221510', fontSize: '16px', outline: 'none', transition: 'border-color 0.2s', '&:focus': { borderBottom: `1px solid ${brandColor}` } },
-    textarea: { width: '100%', backgroundColor: '#FDFBF7', border: '1px solid #DFCFC2', padding: '20px', color: '#221510', fontSize: '14px', outline: 'none', minHeight: '120px', resize: 'vertical', lineHeight: '1.6', borderRadius: '4px' },
-
-    logoPreview: { width: '120px', height: '120px', backgroundColor: '#F7F2EC', border: '1px solid #DFCFC2', margin: '0 auto 32px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '16px', overflow: 'hidden' },
-    logoInitial: { fontFamily: 'var(--font-heading)', fontSize: '48px', fontWeight: '800', color: '#6A3E1F' },
-    uploadBtn: { width: '100%', backgroundColor: '#FFFFFF', border: '1px solid #DFCFC2', color: '#6A3E1F', padding: '16px', fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', cursor: 'pointer', textTransform: 'uppercase', transition: 'all 0.2s', marginTop: '24px', borderRadius: '4px' },
-
-    socialRow: { display: 'flex', alignItems: 'center', gap: '16px', borderBottom: '1px solid #EAE3D9', paddingBottom: '16px', marginBottom: '24px' },
-    socialIcon: { color: '#6B584C' },
-    socialInputContainer: { flex: 1 },
-    socialNetworkLabel: { fontSize: '10px', color: '#8D5B36', marginBottom: '4px', textTransform: 'lowercase' },
-    socialInput: { width: '100%', background: 'transparent', border: 'none', color: '#221510', fontSize: '14px', outline: 'none' },
-
-    assistanceBox: { border: '1px solid #DFCFC2', backgroundColor: '#F7F2EC', padding: '32px', borderRadius: '8px' },
-    assistanceTitle: { fontSize: '10px', fontWeight: '700', color: brandColor, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '16px' },
-    assistanceText: { color: '#6B584C', fontSize: '12px', lineHeight: '1.6', marginBottom: '24px' },
-    assistanceLink: { color: '#6A3E1F', fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px' },
-
-    productGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginTop: '32px' },
-    productSquare: { aspectRatio: '1', backgroundColor: '#FDFBF7', border: '1px solid #DFCFC2', borderRadius: '8px', overflow: 'hidden', position: 'relative', cursor: 'pointer', transition: 'border-color 0.2s' },
-    productImage: { width: '100%', height: '100%', objectFit: 'cover', opacity: 1 },
-    productEmpty: { aspectRatio: '1', border: '1px dashed #DFCFC2', backgroundColor: '#FBF9F5', borderRadius: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', cursor: 'pointer', transition: 'border-color 0.2s' }
-  };
-
   return (
     <PageTransition>
-      <div style={s.page} className="edit-page">
-        <style>{`
-          @media (max-width: 768px) {
-            .edit-page { flex-direction: column !important; height: auto !important; min-height: 100vh; overflow: visible !important; }
-            .edit-sidebar { 
-              position: fixed !important; 
-              top: 0 !important; 
-              left: ${isSidebarOpen ? '0' : '-100%'} !important; 
-              width: 280px !important; 
-              height: 100vh !important; 
-              z-index: 1000 !important; 
-              background-color: #FFFFFF !important;
-              transition: left 0.3s ease !important;
-              box-shadow: 10px 0 30px rgba(34,21,16,0.1) !important;
-            }
-            .edit-overlay {
-              position: fixed !important;
-              top: 0 !important;
-              left: 0 !important;
-              right: 0 !important;
-              bottom: 0 !important;
-              background-color: rgba(34,21,16,0.4) !important;
-              z-index: 999 !important;
-              display: ${isSidebarOpen ? 'block' : 'none'} !important;
-            }
-            .edit-logo-container { padding: 24px !important; }
-            .edit-nav { display: flex; flex-direction: column !important; overflow-y: auto !important; }
-            .edit-nav a, .edit-nav div { border-left: 3px solid transparent !important; border-bottom: none !important; padding: 16px 40px !important; font-size: 14px !important; }
-            .edit-user-profile { display: flex !important; margin-top: auto; }
-            
-            .edit-header { padding: 24px !important; flex-direction: column; gap: 20px; position: sticky; top: 0; background: #FFFFFF; z-index: 100; border-bottom: 1px solid #EAE3D9; align-items: flex-start !important; }
-            .edit-header-title-box { order: 2; width: 100%; }
-            .edit-header h1 { font-size: 28px !important; margin-bottom: 8px !important; }
-            .edit-header p { font-size: 12px !important; margin-top: 4px !important; }
-            .edit-header-actions { width: 100% !important; display: flex !important; flex-wrap: wrap !important; gap: 8px !important; order: 3; }
-            .edit-header-actions button { flex: 1 1 calc(50% - 4px) !important; padding: 12px 8px !important; font-size: 10px !important; justify-content: center !important; text-align: center !important; }
-            .edit-progress-bar { padding: 12px 20px !important; }
-            .edit-menu-btn { order: 1; }
-            
-            .edit-content { padding: 20px !important; gap: 32px !important; }
-            .edit-two-col { grid-template-columns: 1fr !important; gap: 32px !important; }
-            
-            .edit-banner-box { padding: 32px 20px !important; flex-direction: column; align-items: center; justify-content: center; gap: 20px; height: auto !important; min-height: 240px; }
-            .edit-banner-text { font-size: 44px !important; opacity: 0.1 !important; transform: translate(-50%, -50%) !important; }
-            .edit-banner-info { margin-left: 0 !important; text-align: center; }
-            
-            .edit-card { padding: 24px 20px !important; }
-            .edit-card-title { font-size: 20px !important; margin-bottom: 24px !important; }
-            .edit-input-grid { grid-template-columns: 1fr !important; gap: 24px !important; margin-bottom: 24px !important; }
-            .edit-color-grid { grid-template-columns: 1fr !important; gap: 20px !important; }
-            
-            .edit-product-grid { grid-template-columns: 1fr 1fr !important; gap: 12px !important; }
-            .mobile-only { display: block !important; }
-          }
-          @media (min-width: 769px) {
-            .mobile-only { display: none !important; }
-          }
-        `}</style>
-
-        {/* Hidden File Inputs mapped to standard refs */}
+      <div className="unbley-app-layout">
+        
+        {/* Hidden inputs for uploads */}
         <input type="file" ref={logoRef} style={{ display: 'none' }} accept="image/*" onChange={(e) => handleFileUpload(e, 'logo_url')} />
         <input type="file" ref={bannerRef} style={{ display: 'none' }} accept="image/*" onChange={(e) => handleFileUpload(e, 'banner_url')} />
         <input type="file" ref={p1Ref} style={{ display: 'none' }} accept="image/*" onChange={(e) => handleFileUpload(e, 'product_1_url')} />
         <input type="file" ref={p2Ref} style={{ display: 'none' }} accept="image/*" onChange={(e) => handleFileUpload(e, 'product_2_url')} />
         <input type="file" ref={p3Ref} style={{ display: 'none' }} accept="image/*" onChange={(e) => handleFileUpload(e, 'product_3_url')} />
         <input type="file" ref={p4Ref} style={{ display: 'none' }} accept="image/*" onChange={(e) => handleFileUpload(e, 'product_4_url')} />
-        
-        {/* Mobile Sidebar Overlay */}
-        <div className="edit-overlay" onClick={() => setIsSidebarOpen(false)}></div>
 
-        {/* Sidebar */}
-        <div style={s.sidebar} className="edit-sidebar">
-          <div style={{ ...s.logoContainer, position: 'relative' }} className="edit-logo-container">
-            <button 
-              onClick={() => setIsSidebarOpen(false)}
-              style={{ position: 'absolute', top: '24px', right: '24px', background: 'none', border: 'none', color: '#666', cursor: 'pointer' }}
-              className="mobile-only"
-            >
-              <X size={24} />
-            </button>
-            <Link to="/" style={{ textDecoration: 'none' }}><div style={s.logo}>Unbley.</div></Link>
-            <div style={{ fontFamily: 'Inter', fontSize: '9px', fontWeight: '700', letterSpacing: '0.1em', color: '#666', marginTop: '8px', textTransform: 'uppercase' }}>Digital Store</div>
-          </div>
+        {/* Unified Collapsible Sidebar */}
+        <Sidebar 
+          profileData={formData} 
+          isSidebarOpen={isSidebarOpen} 
+          setIsSidebarOpen={setIsSidebarOpen} 
+        />
 
-          <div style={s.nav} className="edit-nav">
-            <Link to="/dashboard" style={s.navItem(false)}><LayoutGrid size={16} /> Overview</Link>
-            <Link to="/profile" style={s.navItem(false)}><User size={16} /> Profile</Link>
-            <Link to="/edit" style={s.navItem(true)}><Settings size={16} /> Edit</Link>
-          </div>
-
-          <div style={s.userProfile} className="edit-user-profile">
-            <div style={s.userAvatar}>
-              {formData.logo_url ? (
-                <img src={formData.logo_url} alt={formData.owner_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              ) : (
-                <span style={{ color: '#6A3E1F', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>{formData.owner_name?.charAt(0)?.toUpperCase() || 'U'}</span>
-              )}
-            </div>
-            <div>
-              <div style={{ fontSize: '12px', fontWeight: '700', color: '#221510', letterSpacing: '0.05em', textTransform: 'uppercase' }}>{formData.owner_name || 'User'}</div>
-              <div style={{ fontSize: '10px', color: '#6B584C', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: '4px' }}>Principal Curator</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main Content Form */}
-        <div style={s.main}>
-          <form onSubmit={handleSubmit}>
-            {/* Header Special for Edit Page */}
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              style={s.editHeader} 
-              className="edit-header"
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <button 
-                  id="tour-edit-mobile-menu"
-                  onClick={() => setIsSidebarOpen(true)}
-                  style={{ background: 'none', border: 'none', color: '#221510', cursor: 'pointer' }}
-                  className="mobile-only"
-                  type="button"
-                >
-                  <Menu size={24} />
-                </button>
-                <div className="edit-header-title-box">
-                  <h1 style={s.headerTitle}>Brand Profile</h1>
-                  <p style={s.headerSubtitle}>Curate your digital atelier. The narrative you build here defines the prestige of your collections.</p>
-                </div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }} className="edit-header-actions">
-                <button
-                  id="tour-edit-guide-trigger"
-                  type="button"
-                  onClick={() => setShowEditTour(true)}
-                  style={{
-                    backgroundColor: '#FFFFFF',
-                    color: '#6B584C',
-                    border: '1px solid #DFCFC2',
-                    padding: '14px 18px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    fontSize: '11px',
-                    fontWeight: '700',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    letterSpacing: '0.04em'
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#F7F2EC'; e.currentTarget.style.color = brandColor; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#FFFFFF'; e.currentTarget.style.color = '#6B584C'; }}
-                  title="Take a guided tour of the edit page"
-                >
-                  <HelpCircle size={14} color="#8D5B36" /> TOUR GUIDE
-                </button>
-                {saveStatus === 'saving' && <span style={{ fontSize: '11px', color: '#8D5B36', letterSpacing: '0.05em' }}>Saving…</span>}
-                {saveStatus === 'saved' && <span style={{ fontSize: '11px', color: '#15803D', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '4px' }}><CheckCircle2 size={13} /> Saved</span>}
-                <motion.button
-                  id="tour-edit-save-btn"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  type="submit"
-                  disabled={loading}
-                  style={{ ...s.saveBtn, opacity: loading ? 0.7 : 1 }}
-                  className="edit-save-btn"
-                >
-                  {loading ? 'SAVING...' : 'Save Changes'}
-                </motion.button>
-              </div>
-            </motion.div>
-
-            {/* Profile completion progress bar */}
-            {showProgressBar && (
-              <div id="tour-edit-progress" style={{ padding: '12px 80px', borderBottom: '1px solid #EAE3D9', backgroundColor: '#FFFBF8' }} className="edit-progress-bar">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#6A3E1F', textTransform: 'uppercase' }}>Profile Completion</span>
-                  <span style={{ fontSize: '10px', fontWeight: '700', color: '#6A3E1F' }}>{completionPct}%</span>
-                </div>
-                <div style={{ height: '4px', backgroundColor: '#EAE3D9', borderRadius: '99px', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${completionPct}%`, backgroundColor: '#6A3E1F', borderRadius: '99px', transition: 'width 0.5s ease' }} />
-                </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px' }}>
-                  {completionFields.map(f => (
-                    <span key={f.key} style={{ fontSize: '9px', fontWeight: '600', letterSpacing: '0.05em', textTransform: 'uppercase', padding: '2px 8px', borderRadius: '99px', backgroundColor: formData[f.key] ? 'rgba(106,62,31,0.1)' : '#F3F4F6', color: formData[f.key] ? '#6A3E1F' : '#9CA3AF', border: `1px solid ${formData[f.key] ? 'rgba(106,62,31,0.25)' : '#E5E7EB'}` }}>
-                      {formData[f.key] ? '✓ ' : ''}{f.label}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Form Content Area */}
-            <div style={s.content} className="edit-content">
-              <div style={s.twoColLayout} className="edit-two-col">
-
-                {/* Left Column: Core Identity */}
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.6 }}
-                >
-                  {/* Banner Upload */}
-                  <div id="tour-edit-banner" style={s.bannerBox} className="edit-banner-box">
-                    <div style={s.bannerText} className="edit-banner-text">BRAND</div>
-                    <button type="button" style={s.bannerBtn} onClick={() => bannerRef.current?.click()}>
-                      {loading ? 'UPLOADING...' : 'Change Banner'}
-                    </button>
-                    <div style={s.bannerInfo} className="edit-banner-info">Recommended: 2400x800px</div>
-                  </div>
-
-                  {/* Core Identity Form */}
-                  <div id="tour-edit-core-identity" style={s.card} className="edit-card">
-                    <h2 style={s.cardTitle}>Core Identity</h2>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px 48px', marginBottom: '40px' }} className="edit-input-grid">
-                      <div style={s.inputGroup}>
-                        <label style={s.label}>Brand Name</label>
-                        <input type="text" name="brand_name" value={formData.brand_name} onChange={handleChange} style={s.input} required />
-                      </div>
-                      <div style={s.inputGroup}>
-                        <label style={s.label}>Owner Name</label>
-                        <input type="text" name="owner_name" value={formData.owner_name} onChange={handleChange} style={s.input} required />
-                      </div>
-                      <div style={s.inputGroup}>
-                        <label style={s.label}>Email Address</label>
-                        <input type="email" name="email_address" value={formData.email_address} onChange={handleChange} style={s.input} required />
-                      </div>
-                      <div style={s.inputGroup}>
-                        <label style={s.label}>Phone Number</label>
-                        <input type="tel" name="phone_number" value={formData.phone_number} onChange={handleChange} style={s.input} />
-                      </div>
-                      <div style={s.inputGroup}>
-                        <label style={s.label}>Brand Category</label>
-                        <input type="text" name="brand_category" value={formData.brand_category} onChange={handleChange} style={s.input} />
-                      </div>
-                      <div style={s.inputGroup}>
-                        <label style={s.label}>Delivery Duration</label>
-                        <input type="text" name="delivery_duration" value={formData.delivery_duration} onChange={handleChange} style={s.input} />
-                      </div>
-                    </div>
-
-                    <div style={s.inputGroup}>
-                      <label style={s.label}>Brand Narrative</label>
-                      <textarea name="brand_narrative" value={formData.brand_narrative} onChange={handleChange} style={s.textarea} />
-                    </div>
-
-                    <div style={s.inputGroup}>
-                      <label style={s.label}>Manifesto</label>
-                      <textarea name="manifesto" value={formData.manifesto} onChange={handleChange} style={s.textarea} />
-                    </div>
-                  </div>
-
-                  {/* Geography Section */}
-                  <div style={{ ...s.card, marginTop: '40px' }} className="edit-card">
-                    <h2 style={s.cardTitle}>Geography & Location</h2>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px 48px', marginBottom: '32px' }} className="edit-input-grid">
-                      <div style={{ ...s.inputGroup, marginBottom: 0 }}>
-                        <label style={s.label}>Country</label>
-                        <input type="text" name="country" value={formData.country} onChange={handleChange} style={s.input} />
-                      </div>
-                      <div style={{ ...s.inputGroup, marginBottom: 0 }}>
-                        <label style={s.label}>State / Province</label>
-                        <input type="text" name="state_province" value={formData.state_province} onChange={handleChange} style={s.input} />
-                      </div>
-                      <div style={{ ...s.inputGroup, marginBottom: 0 }}>
-                        <label style={s.label}>City</label>
-                        <input type="text" name="city" value={formData.city} onChange={handleChange} style={s.input} />
-                      </div>
-                      <div style={{ ...s.inputGroup, marginBottom: 0 }}>
-                        <label style={s.label}>Postal Code</label>
-                        <input type="text" name="postal_code" value={formData.postal_code} onChange={handleChange} style={s.input} />
-                      </div>
-                    </div>
-
-                    <div style={s.inputGroup}>
-                      <label style={s.label}>Address Line 1</label>
-                      <input type="text" name="address_line_1" value={formData.address_line_1} onChange={handleChange} style={s.input} />
-                    </div>
-                    <div style={{ ...s.inputGroup, marginBottom: 0 }}>
-                      <label style={s.label}>Address Line 2 (Optional)</label>
-                      <input type="text" name="address_line_2" value={formData.address_line_2} onChange={handleChange} style={s.input} />
-                    </div>
-                  </div>
-
-                  {/* Brand Theme / Colors */}
-                  <div id="tour-edit-colors" style={{ ...s.card, marginTop: '40px' }} className="edit-card">
-                    <h2 style={s.cardTitle}>Brand Theme</h2>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }} className="edit-color-grid">
-                      <div style={s.inputGroup}>
-                        <label style={s.label}>Primary</label>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                          <input type="color" value={themeColors.primary} onChange={(e) => handleColorChange('primary', e.target.value)} style={{ width: '100%', height: '80px', padding: 0, border: '1px solid #DFCFC2', backgroundColor: 'transparent', cursor: 'pointer', borderRadius: '4px' }} />
-                          <div style={{ fontSize: '12px', color: '#221510', fontFamily: 'monospace' }}>{themeColors.primary}</div>
-                        </div>
-                      </div>
-                      <div style={s.inputGroup}>
-                        <label style={s.label}>Secondary</label>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                          <input type="color" value={themeColors.secondary} onChange={(e) => handleColorChange('secondary', e.target.value)} style={{ width: '100%', height: '80px', padding: 0, border: '1px solid #DFCFC2', backgroundColor: 'transparent', cursor: 'pointer', borderRadius: '4px' }} />
-                          <div style={{ fontSize: '12px', color: '#221510', fontFamily: 'monospace' }}>{themeColors.secondary}</div>
-                        </div>
-                      </div>
-                      <div style={s.inputGroup}>
-                        <label style={s.label}>Accent</label>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                          <input type="color" value={themeColors.accent} onChange={(e) => handleColorChange('accent', e.target.value)} style={{ width: '100%', height: '80px', padding: 0, border: '1px solid #DFCFC2', backgroundColor: 'transparent', cursor: 'pointer', borderRadius: '4px' }} />
-                          <div style={{ fontSize: '12px', color: '#221510', fontFamily: 'monospace' }}>{themeColors.accent}</div>
-                        </div>
-                      </div>
-                    </div>
-                    <p style={{ fontSize: '10px', color: '#6B584C', marginTop: '16px' }}>
-                      These colors define your storefront's character. Use them sparingly but with intent.
-                    </p>
-                  </div>
-
-                  {/* Personal Settlement Account */}
-                  <div style={{ ...s.card, marginTop: '40px' }} className="edit-card">
-                    <h2 style={s.cardTitle}>Personal Settlement Account</h2>
-                    <p style={{ fontSize: '12px', color: '#6B584C', marginBottom: '32px' }}>Backup account for manual payouts and internal reference.</p>
-                    
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px 48px' }} className="edit-input-grid">
-                      <div style={s.inputGroup}>
-                        <label style={s.label}>Bank Name</label>
-                        <input type="text" name="bank_name" value={formData.bank_name} onChange={handleChange} style={s.input} />
-                      </div>
-                      <div style={s.inputGroup}>
-                        <label style={s.label}>Account Number</label>
-                        <input type="text" name="account_number" value={formData.account_number} onChange={handleChange} style={s.input} />
-                      </div>
-                    </div>
-                    <div style={{ ...s.inputGroup, marginTop: '32px' }}>
-                      <label style={s.label}>Account Name</label>
-                      <input type="text" name="account_name" value={formData.account_name} onChange={handleChange} style={s.input} />
-                    </div>
-                  </div>
-                </motion.div>
-
-                {/* Right Column: Assets & Social */}
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.6, delay: 0.2 }}
-                  style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}
-                >
-                  {/* Logo Upload Box */}
-                  <div id="tour-edit-logo" style={s.card} className="edit-card">
-                    <label style={{ ...s.label, marginBottom: '40px' }}>Brand Logo</label>
-                    <div style={s.logoPreview}>
-                      {formData.logo_url ? (
-                        <img src={formData.logo_url} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      ) : (
-                        <span style={s.logoInitial}>{formData.brand_name?.charAt(0)?.toUpperCase() || 'U'}</span>
-                      )}
-                    </div>
-                    <p style={{ fontSize: '10px', color: '#6B584C', textAlign: 'center', lineHeight: '1.6', padding: '0 20px' }}>
-                      Upload a high-resolution SVG or PNG. 1:1 ratio required.
-                    </p>
-                    <button type="button" style={s.uploadBtn} onClick={() => logoRef.current?.click()}>
-                      {loading ? 'UPLOADING...' : 'Upload New Logo'}
-                    </button>
-                  </div>
-
-
-                  {/* Payout Configuration (Admin Managed) */}
-                  <div style={s.card} className="edit-card">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '32px' }}>
-                      <Lock size={14} color="#6B584C" />
-                      <label style={{ ...s.label, marginBottom: 0 }}>Payout Configuration</label>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                      <div style={s.inputGroup}>
-                        <div style={{ fontSize: '10px', color: '#6B584C', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Paystack Subaccount (Local)</div>
-                        <input 
-                          type="text" 
-                          value={formData.paystack_subaccount_code || 'Not Configured'} 
-                          style={{ ...s.input, backgroundColor: '#F7F2EC', border: '1px solid #DFCFC2', padding: '10px 14px', borderRadius: '4px', color: formData.paystack_subaccount_code ? '#221510' : '#8D5B36', cursor: 'not-allowed' }} 
-                          readOnly 
-                        />
-                      </div>
-
-                      <div style={s.inputGroup}>
-                        <div style={{ fontSize: '10px', color: '#6B584C', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Flutterwave Subaccount (International)</div>
-                        <input 
-                          type="text" 
-                          value={formData.flutterwave_subaccount_code || 'Not Configured'} 
-                          style={{ ...s.input, backgroundColor: '#F7F2EC', border: '1px solid #DFCFC2', padding: '10px 14px', borderRadius: '4px', color: formData.flutterwave_subaccount_code ? '#221510' : '#8D5B36', cursor: 'not-allowed' }} 
-                          readOnly 
-                        />
-                      </div>
-
-                      <p style={{ fontSize: '10px', color: '#6B584C', marginTop: '8px', lineHeight: '1.4' }}>
-                        These identifiers are managed by the platform administrator to ensure secure revenue routing. Contact support to update your payout destination.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Social Handles Box */}
-                  <div id="tour-edit-socials" style={s.card} className="edit-card">
-                    <label style={{ ...s.label, marginBottom: '32px' }}>Social Handles</label>
-
-                    <div style={s.socialRow}>
-                      <div style={s.socialIcon}><InstagramIcon /></div>
-                      <div style={s.socialInputContainer}>
-                        <div style={s.socialNetworkLabel}>instagram profile url</div>
-                        <input type="text" name="instagram_url" value={formData.instagram_url} onChange={handleChange} placeholder="https://instagram.com/unbley" style={s.socialInput} />
-                      </div>
-                    </div>
-
-                    <div style={s.socialRow}>
-                      <div style={s.socialIcon}><TwitterIcon /></div>
-                      <div style={s.socialInputContainer}>
-                        <div style={s.socialNetworkLabel}>x (twitter) profile url</div>
-                        <input type="text" name="twitter_url" value={formData.twitter_url} onChange={handleChange} placeholder="https://x.com/unbley" style={s.socialInput} />
-                      </div>
-                    </div>
-
-                    <div style={s.socialRow}>
-                      <div style={s.socialIcon}><FacebookIcon /></div>
-                      <div style={s.socialInputContainer}>
-                        <div style={s.socialNetworkLabel}>facebook page url</div>
-                        <input type="text" name="facebook_url" value={formData.facebook_url} onChange={handleChange} placeholder="https://facebook.com/unbley" style={s.socialInput} />
-                      </div>
-                    </div>
-
-                    <div style={s.socialRow}>
-                      <div style={s.socialIcon}><TikTokIcon /></div>
-                      <div style={s.socialInputContainer}>
-                        <div style={s.socialNetworkLabel}>tiktok profile url</div>
-                        <input type="text" name="tiktok_url" value={formData.tiktok_url} onChange={handleChange} placeholder="https://tiktok.com/@unbley" style={s.socialInput} />
-                      </div>
-                    </div>
-
-                    <div style={{ ...s.socialRow, borderBottom: 'none', paddingBottom: 0, marginBottom: 0 }}>
-                      <div style={s.socialIcon}><LinkIcon size={14} /></div>
-                      <div style={s.socialInputContainer}>
-                        <div style={s.socialNetworkLabel}>website</div>
-                        <input type="text" name="website_url" value={formData.website_url} onChange={handleChange} placeholder="www.unbley.com" style={s.socialInput} />
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              </div>
-
-              {/* Bottom Area: Product Showcase */}
-              <motion.div
-                id="tour-edit-showcase"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6 }}
+        {/* Main Workspace */}
+        <div className="unbley-main-content">
+          
+          {/* Top Header */}
+          <header className="unbley-top-header">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <button
+                onClick={() => setIsSidebarOpen(true)}
+                className="unbley-mobile-menu-btn"
+                title="Open menu"
               >
-                <div style={{ borderTop: '1px solid #EAE3D9', paddingTop: '40px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                  <div>
-                    <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '22px', color: '#221510', fontWeight: '800', letterSpacing: '-0.02em', marginBottom: '8px' }}>Product Showcase</h2>
-                    <p style={{ fontSize: '12px', color: '#6B584C' }}>Select 4 primary items for your landing gallery.</p>
+                <Menu size={18} />
+              </button>
+
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <h1 className="unbley-header-title">
+                    Store Settings & Customization
+                  </h1>
+                  {saveStatus === 'saving' && (
+                    <span style={{ fontSize: '11px', fontWeight: '800', color: '#8D5B36', letterSpacing: '0.05em' }}>
+                      Saving...
+                    </span>
+                  )}
+                  {saveStatus === 'saved' && (
+                    <span className="unbley-live-badge">
+                      <CheckCircle2 size={12} /> SAVED
+                    </span>
+                  )}
+                </div>
+                <p className="unbley-header-subtitle">
+                  Update your brand visuals, storefront copy, delivery settings, and inventory.
+                </p>
+              </div>
+            </div>
+
+            {/* Header Actions */}
+            <div className="unbley-header-actions">
+              <button
+                onClick={() => setShowEditTour(true)}
+                className="unbley-btn-white"
+              >
+                <HelpCircle size={14} />
+                <span>Tour Guide</span>
+              </button>
+
+              <button
+                id="tour-edit-save-btn"
+                onClick={handleSubmit}
+                disabled={loading}
+                className="unbley-btn-black"
+              >
+                <Save size={14} />
+                <span>{loading ? 'Saving...' : 'Save Changes'}</span>
+              </button>
+            </div>
+          </header>
+
+          {/* Edit Form Area */}
+          <main className="unbley-workspace-container">
+            
+            {/* Completion Meter Card */}
+            <div id="tour-edit-progress" className="unbley-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div className="unbley-icon-box-cream">
+                  <Sparkles size={18} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '15px', fontWeight: '800', color: '#111827', margin: 0 }}>
+                    Store Readiness Checklist ({progress}%)
+                  </h3>
+                  <p style={{ fontSize: '12px', color: '#6B7280', margin: '2px 0 0' }}>
+                    Complete all basic info to optimize conversion and buyer trust.
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ width: '260px', maxWidth: '100%' }}>
+                <div style={{ width: '100%', height: '8px', backgroundColor: '#F3F4F6', borderRadius: '9999px', overflow: 'hidden' }}>
+                  <div 
+                    style={{ 
+                      width: `${progress}%`, 
+                      height: '100%', 
+                      backgroundColor: '#16A34A', 
+                      borderRadius: '9999px', 
+                      transition: 'width 0.5s ease' 
+                    }} 
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Storefront Hero Banner Box */}
+            <div id="tour-edit-banner" className="unbley-card">
+              <div className="unbley-card-title-row">
+                <div>
+                  <span className="unbley-card-pretitle">
+                    Storefront Appearance
+                  </span>
+                  <h3 className="unbley-card-title">
+                    Hero Banner Image
+                  </h3>
+                </div>
+                <button
+                  onClick={() => bannerRef.current?.click()}
+                  className="unbley-btn-black"
+                  style={{ padding: '6px 14px' }}
+                >
+                  <Upload size={13} />
+                  <span>Upload Banner</span>
+                </button>
+              </div>
+
+              <div 
+                className="unbley-banner-dropzone"
+                style={{ backgroundImage: formData.banner_url ? `url(${formData.banner_url})` : 'none' }}
+                onClick={() => bannerRef.current?.click()}
+              >
+                {!formData.banner_url && (
+                  <div style={{ textAlign: 'center', color: '#8C827A', padding: '16px' }}>
+                    <ImageIcon size={32} style={{ margin: '0 auto 8px', opacity: 0.5 }} />
+                    <p style={{ fontSize: '13px', fontWeight: '700', margin: 0 }}>
+                      Click to upload brand hero banner (2400x800 recommended)
+                    </p>
+                  </div>
+                )}
+                {formData.banner_url && (
+                  <div className="unbley-dropzone-overlay">
+                    Change Banner
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 2-Column Grid: Core Details vs Logo & Colors */}
+            <div className="unbley-edit-grid">
+              
+              {/* Left Form Column */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                
+                {/* Core Brand Identity */}
+                <div id="tour-edit-core-identity" className="unbley-card">
+                  <div className="unbley-card-title-row">
+                    <div>
+                      <span className="unbley-card-pretitle">
+                        Brand Foundation
+                      </span>
+                      <h3 className="unbley-card-title">
+                        Core Identity & Contacts
+                      </h3>
+                    </div>
+                  </div>
+
+                  <div className="unbley-form-grid-2">
+                    <div className="unbley-form-group">
+                      <label className="unbley-form-label">
+                        Brand Name
+                      </label>
+                      <input 
+                        type="text" 
+                        name="brand_name"
+                        value={formData.brand_name}
+                        onChange={handleChange}
+                        placeholder="e.g. Zizzystores"
+                        className="unbley-form-input"
+                      />
+                    </div>
+
+                    <div className="unbley-form-group">
+                      <label className="unbley-form-label">
+                        Principal Director / Owner
+                      </label>
+                      <input 
+                        type="text" 
+                        name="owner_name"
+                        value={formData.owner_name}
+                        onChange={handleChange}
+                        placeholder="e.g. Big Z"
+                        className="unbley-form-input"
+                      />
+                    </div>
+
+                    <div className="unbley-form-group">
+                      <label className="unbley-form-label">
+                        Business Email
+                      </label>
+                      <input 
+                        type="email" 
+                        name="email_address"
+                        value={formData.email_address}
+                        onChange={handleChange}
+                        placeholder="business@example.com"
+                        className="unbley-form-input"
+                      />
+                    </div>
+
+                    <div className="unbley-form-group">
+                      <label className="unbley-form-label">
+                        WhatsApp / Phone Hotline
+                      </label>
+                      <input 
+                        type="text" 
+                        name="phone_number"
+                        value={formData.phone_number}
+                        onChange={handleChange}
+                        placeholder="e.g. 09153625566"
+                        className="unbley-form-input"
+                      />
+                    </div>
+
+                    <div className="unbley-form-group">
+                      <label className="unbley-form-label">
+                        Brand Category
+                      </label>
+                      <input 
+                        type="text" 
+                        name="brand_category"
+                        value={formData.brand_category}
+                        onChange={handleChange}
+                        placeholder="e.g. Streetwear & Fashion"
+                        className="unbley-form-input"
+                      />
+                    </div>
+
+                    <div id="tour-edit-delivery" className="unbley-form-group">
+                      <label className="unbley-form-label">
+                        Standard Delivery Duration
+                      </label>
+                      <input 
+                        type="text" 
+                        name="delivery_duration"
+                        value={formData.delivery_duration}
+                        onChange={handleChange}
+                        placeholder="e.g. 1-3 Business Days"
+                        className="unbley-form-input"
+                      />
+                    </div>
+
+                    <div className="unbley-form-group">
+                      <label className="unbley-form-label">
+                        Website / Storefront URL
+                      </label>
+                      <input 
+                        type="text" 
+                        name="website_url"
+                        value={formData.website_url}
+                        onChange={handleChange}
+                        placeholder="e.g. www.zizzystores.com"
+                        className="unbley-form-input"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="unbley-form-group" style={{ marginTop: '8px' }}>
+                    <label className="unbley-form-label">
+                      Brand Narrative & Bio
+                    </label>
+                    <textarea 
+                      name="brand_narrative"
+                      rows={3}
+                      value={formData.brand_narrative}
+                      onChange={handleChange}
+                      placeholder="Brief story highlighting your brand ethos and offering..."
+                      className="unbley-form-textarea"
+                    />
+                  </div>
+
+                  <div className="unbley-form-group" style={{ marginBottom: 0 }}>
+                    <label className="unbley-form-label">
+                      Brand Manifesto
+                    </label>
+                    <textarea 
+                      name="manifesto"
+                      rows={2}
+                      value={formData.manifesto}
+                      onChange={handleChange}
+                      placeholder="Our core guiding statement..."
+                      className="unbley-form-textarea"
+                    />
                   </div>
                 </div>
 
-                <div style={s.productGrid} className="edit-product-grid">
-                  {[1, 2, 3, 4].map(idx => {
-                    const field = `product_${idx}_url`;
-                    const ref = [null, p1Ref, p2Ref, p3Ref, p4Ref][idx];
-                    return (
-                      <motion.div 
-                        key={idx}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        style={formData[field] ? s.productSquare : s.productEmpty} 
-                        onClick={() => ref.current?.click()}
-                      >
-                        {formData[field] ? (
-                          <img src={formData[field]} alt={`Product ${idx}`} style={s.productImage} />
-                        ) : (
-                          <>
-                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#6A3E1F', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <Plus size={16} color="#FFFFFF" />
-                            </div>
-                            <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#6B584C', textTransform: 'uppercase' }}>Select Item</div>
-                          </>
-                        )}
-                      </motion.div>
-                    );
-                  })}
+                {/* Social Channels */}
+                <div id="tour-edit-socials" className="unbley-card">
+                  <div className="unbley-card-title-row">
+                    <div>
+                      <span className="unbley-card-pretitle">
+                        Social Presence
+                      </span>
+                      <h3 className="unbley-card-title">
+                        Social Links & Handles
+                      </h3>
+                    </div>
+                  </div>
+
+                  <div className="unbley-form-grid-2">
+                    <div className="unbley-social-input-row">
+                      <InstagramIcon size={18} color="#E1306C" />
+                      <input 
+                        type="text" 
+                        name="instagram_url"
+                        value={formData.instagram_url}
+                        onChange={handleChange}
+                        placeholder="Instagram URL"
+                      />
+                    </div>
+
+                    <div className="unbley-social-input-row">
+                      <TwitterIcon size={16} color="#18181B" />
+                      <input 
+                        type="text" 
+                        name="twitter_url"
+                        value={formData.twitter_url}
+                        onChange={handleChange}
+                        placeholder="X / Twitter URL"
+                      />
+                    </div>
+
+                    <div className="unbley-social-input-row">
+                      <TikTokIcon size={18} color="#18181B" />
+                      <input 
+                        type="text" 
+                        name="tiktok_url"
+                        value={formData.tiktok_url}
+                        onChange={handleChange}
+                        placeholder="TikTok URL"
+                      />
+                    </div>
+
+                    <div className="unbley-social-input-row">
+                      <FacebookIcon size={18} color="#1877F2" />
+                      <input 
+                        type="text" 
+                        name="facebook_url"
+                        value={formData.facebook_url}
+                        onChange={handleChange}
+                        placeholder="Facebook URL"
+                      />
+                    </div>
+                  </div>
                 </div>
-              </motion.div>
+
+                {/* Geography & Location */}
+                <div className="unbley-card">
+                  <div className="unbley-card-title-row">
+                    <div>
+                      <span className="unbley-card-pretitle">
+                        Shipping Origin
+                      </span>
+                      <h3 className="unbley-card-title">
+                        Geography &amp; Location
+                      </h3>
+                    </div>
+                  </div>
+
+                  <div className="unbley-form-grid-2">
+                    <div className="unbley-form-group">
+                      <label className="unbley-form-label">Country</label>
+                      <input 
+                        type="text" 
+                        name="country"
+                        value={formData.country}
+                        onChange={handleChange}
+                        placeholder="e.g. Nigeria"
+                        className="unbley-form-input"
+                      />
+                    </div>
+
+                    <div className="unbley-form-group">
+                      <label className="unbley-form-label">State / Province</label>
+                      <input 
+                        type="text" 
+                        name="state_province"
+                        value={formData.state_province}
+                        onChange={handleChange}
+                        placeholder="e.g. Lagos"
+                        className="unbley-form-input"
+                      />
+                    </div>
+
+                    <div className="unbley-form-group">
+                      <label className="unbley-form-label">City</label>
+                      <input 
+                        type="text" 
+                        name="city"
+                        value={formData.city}
+                        onChange={handleChange}
+                        placeholder="e.g. Ikeja"
+                        className="unbley-form-input"
+                      />
+                    </div>
+
+                    <div className="unbley-form-group">
+                      <label className="unbley-form-label">Postal Code</label>
+                      <input 
+                        type="text" 
+                        name="postal_code"
+                        value={formData.postal_code}
+                        onChange={handleChange}
+                        placeholder="e.g. 100001"
+                        className="unbley-form-input"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="unbley-form-group">
+                    <label className="unbley-form-label">Address Line 1</label>
+                    <input 
+                      type="text" 
+                      name="address_line_1"
+                      value={formData.address_line_1}
+                      onChange={handleChange}
+                      placeholder="Street number & name"
+                      className="unbley-form-input"
+                    />
+                  </div>
+
+                  <div className="unbley-form-group" style={{ marginBottom: 0 }}>
+                    <label className="unbley-form-label">Address Line 2 (Optional)</label>
+                    <input 
+                      type="text" 
+                      name="address_line_2"
+                      value={formData.address_line_2}
+                      onChange={handleChange}
+                      placeholder="Apartment, suite, unit, etc."
+                      className="unbley-form-input"
+                    />
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Right Column: Logo & Color Palette */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                
+                {/* Logo Upload Card */}
+                <div id="tour-edit-logo" className="unbley-card" style={{ textAlign: 'center' }}>
+                  <div style={{ marginBottom: '16px' }}>
+                    <span className="unbley-card-pretitle">
+                      Identity Glyph
+                    </span>
+                    <h3 className="unbley-card-title">
+                      Brand Logo
+                    </h3>
+                  </div>
+
+                  <div 
+                    onClick={() => logoRef.current?.click()}
+                    className="unbley-logo-dropzone"
+                  >
+                    {formData.logo_url ? (
+                      <img src={formData.logo_url} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <div style={{ textAlign: 'center', color: '#8C827A' }}>
+                        <ImageIcon size={28} style={{ margin: '0 auto 4px', opacity: 0.5 }} />
+                        <span style={{ fontSize: '11px', fontWeight: '700' }}>1:1 Square</span>
+                      </div>
+                    )}
+                    <div className="unbley-dropzone-overlay">
+                      Upload
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => logoRef.current?.click()}
+                    className="unbley-btn-white"
+                    style={{ width: '100%', justifyContent: 'center' }}
+                  >
+                    Change Logo
+                  </button>
+                </div>
+
+                {/* Color Palette Card */}
+                <div id="tour-edit-colors" className="unbley-card">
+                  <div style={{ marginBottom: '16px' }}>
+                    <span className="unbley-card-pretitle">
+                      Theme System
+                    </span>
+                    <h3 className="unbley-card-title">
+                      Brand Color Palette
+                    </h3>
+                  </div>
+
+                  <div>
+                    <div className="unbley-color-row">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{ width: '24px', height: '24px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)', backgroundColor: themeColors.primary }} />
+                        <span style={{ fontSize: '12px', fontWeight: '700', color: '#111827' }}>Primary Base</span>
+                      </div>
+                      <input 
+                        type="color" 
+                        value={themeColors.primary} 
+                        onChange={(e) => handleColorChange('primary', e.target.value)} 
+                        style={{ width: '28px', height: '28px', borderRadius: '6px', cursor: 'pointer', border: 'none', background: 'transparent' }}
+                      />
+                    </div>
+
+                    <div className="unbley-color-row">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{ width: '24px', height: '24px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)', backgroundColor: themeColors.secondary }} />
+                        <span style={{ fontSize: '12px', fontWeight: '700', color: '#111827' }}>Secondary Accent</span>
+                      </div>
+                      <input 
+                        type="color" 
+                        value={themeColors.secondary} 
+                        onChange={(e) => handleColorChange('secondary', e.target.value)} 
+                        style={{ width: '28px', height: '28px', borderRadius: '6px', cursor: 'pointer', border: 'none', background: 'transparent' }}
+                      />
+                    </div>
+
+                    <div className="unbley-color-row" style={{ marginBottom: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{ width: '24px', height: '24px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)', backgroundColor: themeColors.accent }} />
+                        <span style={{ fontSize: '12px', fontWeight: '700', color: '#111827' }}>Vibrant Highlight</span>
+                      </div>
+                      <input 
+                        type="color" 
+                        value={themeColors.accent} 
+                        onChange={(e) => handleColorChange('accent', e.target.value)} 
+                        style={{ width: '28px', height: '28px', borderRadius: '6px', cursor: 'pointer', border: 'none', background: 'transparent' }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
             </div>
-          </form>
+
+            {/* Featured Product Images Showcase */}
+            <div id="tour-edit-inventory" className="unbley-card">
+              <div className="unbley-card-title-row">
+                <div>
+                  <span className="unbley-card-pretitle">
+                    Visual Showcase
+                  </span>
+                  <h3 className="unbley-card-title">
+                    Featured Showcase Images (4 Slots)
+                  </h3>
+                </div>
+              </div>
+
+              <div className="unbley-showcase-grid">
+                {[
+                  { ref: p1Ref, field: 'product_1_url', label: 'Primary Feature' },
+                  { ref: p2Ref, field: 'product_2_url', label: 'Feature 2' },
+                  { ref: p3Ref, field: 'product_3_url', label: 'Feature 3' },
+                  { ref: p4Ref, field: 'product_4_url', label: 'Feature 4' },
+                ].map((slot, idx) => (
+                  <div 
+                    key={idx}
+                    onClick={() => slot.ref.current?.click()}
+                    className="unbley-showcase-slot"
+                  >
+                    {formData[slot.field] ? (
+                      <img src={formData[slot.field]} alt={slot.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <div style={{ textAlign: 'center', color: '#8C827A', padding: '12px' }}>
+                        <Plus size={22} style={{ margin: '0 auto 4px', opacity: 0.5 }} />
+                        <span style={{ fontSize: '11px', fontWeight: '700', display: 'block' }}>{slot.label}</span>
+                      </div>
+                    )}
+                    <div className="unbley-dropzone-overlay">
+                      Change Photo
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Personal Settlement Account */}
+            <div className="unbley-card">
+              <div className="unbley-card-title-row">
+                <div>
+                  <span className="unbley-card-pretitle">
+                    Financial Details
+                  </span>
+                  <h3 className="unbley-card-title">
+                    Personal Settlement Account
+                  </h3>
+                </div>
+              </div>
+              <p style={{ fontSize: '12px', color: '#6B7280', marginBottom: '20px', marginTop: '-8px' }}>
+                Backup account for manual payouts and internal reference.
+              </p>
+
+              <div className="unbley-form-grid-2">
+                <div className="unbley-form-group">
+                  <label className="unbley-form-label">Bank Name</label>
+                  <input 
+                    type="text" 
+                    name="bank_name"
+                    value={formData.bank_name}
+                    onChange={handleChange}
+                    placeholder="e.g. First Bank"
+                    className="unbley-form-input"
+                  />
+                </div>
+
+                <div className="unbley-form-group">
+                  <label className="unbley-form-label">Account Number</label>
+                  <input 
+                    type="text" 
+                    name="account_number"
+                    value={formData.account_number}
+                    onChange={handleChange}
+                    placeholder="10-digit account number"
+                    className="unbley-form-input"
+                  />
+                </div>
+              </div>
+
+              <div className="unbley-form-group" style={{ marginBottom: 0 }}>
+                <label className="unbley-form-label">Account Name</label>
+                <input 
+                  type="text" 
+                  name="account_name"
+                  value={formData.account_name}
+                  onChange={handleChange}
+                  placeholder="e.g. JOHN DOE"
+                  className="unbley-form-input"
+                />
+              </div>
+            </div>
+
+            {/* Payout Configuration — Read Only */}
+            <div className="unbley-tip-box">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                <span className="unbley-tip-header">🔒 Payout Configuration</span>
+              </div>
+              <p className="unbley-tip-body" style={{ marginBottom: '16px' }}>
+                These identifiers are managed by the platform administrator to ensure secure revenue routing. Contact support to update your payout destination.
+              </p>
+              <div className="unbley-form-grid-2">
+                <div className="unbley-form-group" style={{ marginBottom: 0 }}>
+                  <label className="unbley-form-label">Paystack Subaccount (Local)</label>
+                  <input 
+                    type="text" 
+                    value={formData.paystack_subaccount_code || 'Not Configured'} 
+                    readOnly
+                    className="unbley-form-input"
+                    style={{ 
+                      cursor: 'not-allowed', 
+                      color: formData.paystack_subaccount_code ? '#111827' : '#9CA3AF',
+                      backgroundColor: '#F3F4F6'
+                    }}
+                  />
+                </div>
+                <div className="unbley-form-group" style={{ marginBottom: 0 }}>
+                  <label className="unbley-form-label">Flutterwave Subaccount (International)</label>
+                  <input 
+                    type="text" 
+                    value={formData.flutterwave_subaccount_code || 'Not Configured'} 
+                    readOnly
+                    className="unbley-form-input"
+                    style={{ 
+                      cursor: 'not-allowed', 
+                      color: formData.flutterwave_subaccount_code ? '#111827' : '#9CA3AF',
+                      backgroundColor: '#F3F4F6'
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+
+          </main>
         </div>
 
-        {/* Interactive Tour Guide for Edit Page */}
-        <EditTour
-          isActive={showEditTour}
-          onClose={() => setShowEditTour(false)}
+        {/* Edit Tour */}
+        <EditTour 
+          isActive={showEditTour} 
+          onClose={() => setShowEditTour(false)} 
           userId={user?.id}
           onSidebarToggle={(open) => setIsSidebarOpen(open)}
         />
+
       </div>
     </PageTransition>
   );

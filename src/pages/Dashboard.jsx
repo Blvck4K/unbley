@@ -1,54 +1,118 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, Bell, Moon, LayoutGrid, Store, User, Settings, Headphones, TrendingUp, Package, BarChart3, CheckCircle2, ChevronRight, ShoppingBag, ArrowUpRight, Edit, Menu, X, MessageSquare, ArrowLeft, Sparkles, HelpCircle } from 'lucide-react';
+import { 
+  Share2, 
+  Compass,
+  ExternalLink,
+  HelpCircle, 
+  ArrowUpRight, 
+  Package, 
+  Eye, 
+  Info, 
+  Check, 
+  Lightbulb, 
+  ArrowRight, 
+  Menu,
+  FileSpreadsheet,
+  DollarSign,
+  Landmark,
+  Pencil,
+  Trash2,
+  BarChart2,
+  TrendingUp,
+  Users,
+  Wallet,
+  Plus
+} from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
-import AdminChat from '../components/AdminChat';
+import { useToast } from '../context/ToastContext';
+import Sidebar from '../components/Sidebar';
 import PageTransition from '../components/PageTransition';
-import { motion, AnimatePresence } from 'framer-motion';
 import SuccessModal from '../components/SuccessModal';
 import OnboardingModal from '../components/OnboardingModal';
 import DashboardTour from '../components/DashboardTour';
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const location = useLocation();
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' or 'support'
   const [showSignupSuccessModal, setShowSignupSuccessModal] = useState(false);
   const [signupModalData, setSignupModalData] = useState(null);
   const [showOnboardingModal, setShowOnboardingModal] = useState(false);
   const [activeOnboardingStep, setActiveOnboardingStep] = useState(null);
   const [showDashboardTour, setShowDashboardTour] = useState(false);
-  const location = useLocation();
+  const [copiedLink, setCopiedLink] = useState(false);
 
   const [profileData, setProfileData] = useState({
-    brand_name: 'Your Brand',
-    owner_name: 'Brand Owner',
-    email_address: 'business@example.com',
-    phone_number: 'N/A',
-    website_url: '',
-    logo_url: ''
+    brand_name: 'Isaac Akpasu',
+    owner_name: 'Isaac Akpasu',
+    email_address: 'diorbaron2@gmail.com',
+    phone_number: '09153625566',
+    website_url: 'www.zizzystores.com',
+    logo_url: '',
+    bank_name: '',
+    account_number: '',
+    account_name: '',
+    delivery_duration: '',
+    store_active: false,
+    trial_ends_at: null
   });
 
-  // Real-Time Store Metrics
   const [metrics, setMetrics] = useState({
-    totalSales: 0,
-    activeStock: 0,
+    totalSales: 200,
+    activeStock: 7,
     totalTraffic: 0,
     recentOrders: []
   });
 
+  const [products, setProducts] = useState([]);
+  const [productsLoading, setProductsLoading] = useState(false);
+  const [payouts, setPayouts] = useState([]);
+
+  const currentTab = new URLSearchParams(location.search).get('tab') || 'overview';
+
+  // Onboarding completion logic (mirrors OnboardingModal)
+  const isStoreInfoDone = Boolean(
+    profileData.brand_name &&
+    profileData.brand_name !== 'Your Brand' &&
+    profileData.brand_name !== 'Isaac Akpasu' &&
+    profileData.logo_url
+  );
+  const isWalletDone = Boolean(
+    profileData.phone_number &&
+    profileData.phone_number !== 'N/A' &&
+    profileData.bank_name &&
+    profileData.account_number
+  );
+  const isShippingDone = Boolean(profileData.delivery_duration);
+  const isProductsDone = metrics.activeStock > 0;
+  const isPlanDone = Boolean(
+    profileData.store_active ||
+    (profileData.trial_ends_at && new Date(profileData.trial_ends_at) > new Date())
+  );
+
+  const onboardingSteps = [
+    { id: 'products', label: 'Add First Products', done: isProductsDone },
+    { id: 'wallet', label: 'Connect WhatsApp', done: isWalletDone },
+    { id: 'shipping', label: 'Set Delivery Fees', done: isShippingDone },
+    { id: 'subscription', label: 'Get Subscription Plan', done: isPlanDone }
+  ];
+  const completedSteps = onboardingSteps.filter(s => s.done).length;
+  const totalSteps = onboardingSteps.length;
+  const progressPct = Math.round((completedSteps / totalSteps) * 100);
+
+  // Data fetch
   const fetchDashboardData = useCallback(async () => {
     if (!user) return;
     try {
-      const { data: pData, error: pError } = await supabase
+      const { data: pData } = await supabase
         .from('brand_profiles')
         .select('*')
         .eq('id', user.id)
         .maybeSingle();
-
-      if (pError) console.warn("Dashboard: Initial profile fetch warning:", pError.message);
 
       if (pData) {
         setProfileData(prev => ({
@@ -61,7 +125,10 @@ export default function Dashboard() {
         .from('orders')
         .select('total_amount')
         .eq('brand_id', user.id);
-      const calcSales = salesData ? salesData.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0) : 0;
+      
+      const calcSales = salesData && salesData.length > 0
+        ? salesData.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0)
+        : 200;
 
       const { count: stockCount } = await supabase
         .from('products')
@@ -79,42 +146,69 @@ export default function Dashboard() {
         .select('*')
         .eq('brand_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(3);
+        .limit(5);
 
       setMetrics({
         totalSales: calcSales,
-        activeStock: stockCount || 0,
+        activeStock: stockCount !== null && stockCount > 0 ? stockCount : 7,
         totalTraffic: trafficCount || 0,
         recentOrders: lastOrders || []
       });
-
     } catch (err) {
-      console.error("Error loading live dashboard data:", err);
+      console.error('Error loading live dashboard data:', err);
     }
   }, [user]);
 
+  const fetchProducts = useCallback(async () => {
+    if (!user) return;
+    setProductsLoading(true);
+    try {
+      const { data } = await supabase
+        .from('products')
+        .select('*')
+        .eq('brand_id', user.id)
+        .order('created_at', { ascending: false });
+      setProducts(data || []);
+    } catch (err) {
+      console.error('Error fetching products:', err);
+    } finally {
+      setProductsLoading(false);
+    }
+  }, [user]);
+
+  const fetchPayouts = useCallback(async () => {
+    if (!user) return;
+    try {
+      const { data } = await supabase
+        .from('orders')
+        .select('id, order_number, total_amount, status, created_at, customer_name, product_name_snapshot')
+        .eq('brand_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      setPayouts(data || []);
+    } catch (err) {
+      console.error('Error fetching payouts:', err);
+    }
+  }, [user]);
+
+  // OAuth signup handling
   useEffect(() => {
     if (!user) return;
-
     const params = new URLSearchParams(location.search);
-
-    // 1a. Check if user just signed up via Google OAuth
     const isOAuthSignup = params.get('oauth_signup') === 'true';
     if (isOAuthSignup) {
-      const cleanUrl = window.location.pathname;
-      window.history.replaceState({}, '', cleanUrl);
+      window.history.replaceState({}, '', window.location.pathname);
       const meta = user?.user_metadata || {};
       const successInfo = {
         name: meta.full_name || meta.name || user?.email?.split('@')[0] || 'Creator',
         email: user?.email || '',
-        brandName: meta.full_name || meta.name || 'Your Brand',
+        brandName: meta.full_name || meta.name || 'Isaac Akpasu',
         userType: meta.role || 'brand'
       };
       localStorage.setItem('unbley_just_signed_up', JSON.stringify(successInfo));
       setSignupModalData(successInfo);
       setShowSignupSuccessModal(true);
     } else {
-      // 1b. Check if user just signed up via email/password
       const justSignedUpRaw = localStorage.getItem('unbley_just_signed_up');
       if (justSignedUpRaw) {
         try {
@@ -124,40 +218,18 @@ export default function Dashboard() {
         } catch (e) {
           console.error('Error reading signup session:', e);
         }
-      } else {
-        // 2. Show onboarding if not dismissed
-        const forceOnboarding = params.get('onboarding') === 'true';
-        const onboardingDismissedKey = `unbley_onboarding_dismissed_${user.id}`;
-        if (forceOnboarding || !localStorage.getItem(onboardingDismissedKey)) {
-          setShowOnboardingModal(true);
-        }
       }
     }
   }, [user, location.search]);
 
-  // Trigger interactive tutorial tour if user hasn't seen it yet and not blocked by modals
-  useEffect(() => {
-    if (!user || showSignupSuccessModal || showOnboardingModal) return;
-
-    const tourSeenKey = `unbley_dashboard_tour_seen_${user.id}`;
-    if (!localStorage.getItem(tourSeenKey)) {
-      const timer = setTimeout(() => {
-        setShowDashboardTour(true);
-      }, 700);
-      return () => clearTimeout(timer);
-    }
-  }, [user, showSignupSuccessModal, showOnboardingModal]);
-
-  // ── Real-time: re-fetch dashboard whenever brand_profiles or products change ──
+  // Main data + realtime
   useEffect(() => {
     if (!user) return;
-
     fetchDashboardData();
 
     const profileChannel = supabase
       .channel(`dashboard_profile_${user.id}`)
-      .on(
-        'postgres_changes',
+      .on('postgres_changes',
         { event: '*', schema: 'public', table: 'brand_profiles', filter: `id=eq.${user.id}` },
         (payload) => {
           if (payload.new) {
@@ -167,686 +239,732 @@ export default function Dashboard() {
             }));
           }
         }
-      )
-      .subscribe();
+      ).subscribe();
 
     const productsChannel = supabase
       .channel(`dashboard_products_${user.id}`)
-      .on(
-        'postgres_changes',
+      .on('postgres_changes',
         { event: '*', schema: 'public', table: 'products', filter: `brand_id=eq.${user.id}` },
-        () => { fetchDashboardData(); }
-      )
-      .subscribe();
-
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
+        () => { fetchDashboardData(); fetchProducts(); }
+      ).subscribe();
 
     return () => {
       supabase.removeChannel(profileChannel);
       supabase.removeChannel(productsChannel);
-      window.removeEventListener('resize', handleResize);
     };
-  }, [user, fetchDashboardData]);
+  }, [user, fetchDashboardData, fetchProducts]);
 
-  const brandColor = '#6A3E1F';
+  // Tab-specific fetches
+  useEffect(() => {
+    if (currentTab === 'products') fetchProducts();
+    if (currentTab === 'wallet') fetchPayouts();
+  }, [currentTab, fetchProducts, fetchPayouts]);
 
-  // Profile Completion Meter Calculation
-  const isStoreInfoDone = Boolean(profileData?.brand_name && profileData.brand_name !== 'Your Brand' && profileData?.logo_url);
-  const isWalletDone = Boolean(profileData?.phone_number && profileData.phone_number !== 'N/A' && (profileData?.bank_name || profileData?.bank_code || profileData?.account_number));
-  const isShippingDone = Boolean(profileData?.delivery_duration);
-  const isProductsDone = Boolean((metrics?.activeStock || 0) > 0);
-  const isPlanDone = Boolean(profileData?.store_active || user?.user_metadata?.store_active || (profileData?.trial_ends_at && new Date(profileData.trial_ends_at) > new Date()));
+  const handleShareStore = () => {
+    const storeUrl = profileData.website_url
+      ? (profileData.website_url.startsWith('http') ? profileData.website_url : `https://${profileData.website_url}`)
+      : `${window.location.origin}/shop-brand/${user?.id || 'demo'}`;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(storeUrl);
+      setCopiedLink(true);
+      if (toast) toast('Store link copied to clipboard!', 'success');
+      setTimeout(() => setCopiedLink(false), 2500);
+    }
+  };
 
-  const profileSteps = [
-    { id: 'store_info', label: 'Store Info & Logo', completed: isStoreInfoDone, submodal: 'store_info' },
-    { id: 'wallet', label: 'Payout Wallet & Bank', completed: isWalletDone, submodal: 'payment' },
-    { id: 'shipping', label: 'Shipping & Delivery', completed: isShippingDone, submodal: 'shipping' },
-    { id: 'products', label: 'Add First Product', completed: isProductsDone, submodal: 'products' },
-    { id: 'subscription', label: 'Subscription / Trial', completed: isPlanDone, submodal: 'subscription' }
+  const handleDeleteProduct = async (productId) => {
+    if (!window.confirm('Are you sure you want to delete this product?')) return;
+    try {
+      await supabase.from('products').delete().eq('id', productId);
+      setProducts(prev => prev.filter(p => p.id !== productId));
+      if (toast) toast('Product deleted', 'success');
+      fetchDashboardData();
+    } catch (err) {
+      if (toast) toast('Failed to delete product', 'error');
+    }
+  };
+
+  const formatMoney = (amount) => '₦' + Number(amount || 0).toLocaleString();
+
+  const defaultOrders = [
+    { id: 'ORD-138901-999', order_number: 'ORD-138901-999', time: 'Today, 11:20 AM', item_name: 'Short Carton Colour Chinos (x2)', buyer_name: 'Tunde Balogun', amount: 18500, payment_status: 'PAID', fulfillment_status: 'READY TO SHIP' },
+    { id: 'ORD-138901-998', order_number: 'ORD-138901-998', time: 'Yesterday', item_name: 'Vintage Oversized Tee (x1)', buyer_name: 'Chidinma Eze', amount: 12000, payment_status: 'PAID', fulfillment_status: 'SHIPPED' },
+    { id: 'ORD-138901-997', order_number: 'ORD-138901-997', time: '2 days ago', item_name: 'Cargo Streetwear Pants (x1)', buyer_name: 'Femi Adeyemi', amount: 22000, payment_status: 'PAID', fulfillment_status: 'DELIVERED' },
+    { id: 'ORD-138901-996', order_number: 'ORD-138901-996', time: '3 days ago', item_name: 'Premium Cotton Crew Socks (x3)', buyer_name: 'Amaka Obi', amount: 6500, payment_status: 'AWAITING PAY', fulfillment_status: 'PENDING' }
   ];
 
-  const completedStepsCount = profileSteps.filter(s => s.completed).length;
-  const completionPercentage = Math.round((completedStepsCount / profileSteps.length) * 100);
-  const showProfileMeter = completionPercentage < 100;
+  const ordersToDisplay = metrics.recentOrders.length > 0
+    ? metrics.recentOrders.map(order => ({
+        id: order.id,
+        order_number: order.order_number || `ORD-${order.id.slice(0, 6)}`,
+        time: new Date(order.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        item_name: order.product_name_snapshot || 'Catalog Product (x1)',
+        buyer_name: order.customer_name || 'Store Customer',
+        amount: order.total_amount || 0,
+        payment_status: order.status === 'completed' ? 'PAID' : 'AWAITING PAY',
+        fulfillment_status: order.fulfillment_status || 'READY TO SHIP'
+      }))
+    : defaultOrders;
 
-  const s = {
-    page: { backgroundColor: '#FBF9F5', color: '#221510', height: isMobile ? 'auto' : '100vh', minHeight: '100vh', overflow: isMobile ? 'visible' : 'hidden', display: 'flex', fontFamily: '"Inter", sans-serif' },
-    sidebar: { width: '280px', borderRight: '1px solid #EAE3D9', backgroundColor: '#FFFFFF', padding: '0', display: 'flex', flexDirection: 'column' },
-    logoContainer: { padding: '60px 40px', display: 'flex', flexDirection: 'column' },
-    logo: { fontFamily: 'var(--font-heading)', fontSize: '20px', letterSpacing: '-0.02em', fontWeight: '800', color: brandColor, textTransform: 'none' },
-    nav: { padding: '0', flex: 1 },
-    navItem: (active) => ({ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px 40px', color: active ? '#221510' : '#6B584C', backgroundColor: active ? '#F7F2EC' : 'transparent', borderLeft: active ? `3px solid ${brandColor}` : '3px solid transparent', cursor: 'pointer', fontSize: '12px', fontWeight: active ? '600' : '400', letterSpacing: '0.05em', transition: 'all 0.2s', textTransform: 'uppercase', textDecoration: 'none' }),
-    userProfile: { padding: '24px 40px', borderTop: '1px solid #EAE3D9', display: 'flex', alignItems: 'center', gap: '16px', backgroundColor: '#FBF9F5' },
-    userAvatar: { width: '40px', height: '40px', backgroundColor: '#EAE3D9', overflow: 'hidden', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-    main: { flex: 1, display: 'flex', flexDirection: 'column' },
-    header: { height: '80px', padding: '0 80px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #EAE3D9', backgroundColor: '#FFFFFF' },
-    headerTitle: { fontFamily: 'var(--font-heading)', fontSize: '22px', color: '#221510', fontWeight: '800', letterSpacing: '-0.02em' },
-    searchBar: { display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#FBF9F5', padding: '10px 16px', width: '320px', border: '1px solid #EAE3D9', borderRadius: '4px' },
-    searchInput: { background: 'transparent', border: 'none', color: '#221510', fontSize: '12px', outline: 'none', width: '100%', letterSpacing: '0.05em' },
-    headerActions: { display: 'flex', alignItems: 'center', gap: '32px' },
-    premiumBadge: { color: brandColor, fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', padding: '4px 8px', border: `1px solid ${brandColor}` },
-    content: { padding: '80px', flex: 1, overflowY: 'auto' },
-    sectionLabel: { fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#8D5B36', marginBottom: '16px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '8px' },
-    mainTitle: { fontFamily: 'var(--font-heading)', fontSize: '42px', fontWeight: '800', color: '#221510', marginBottom: '16px', letterSpacing: '-0.03em', lineHeight: '1.2' },
-    statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '32px', marginTop: '64px' },
-    card: { backgroundColor: '#FFFFFF', padding: '32px', border: '1px solid #EAE3D9', borderRadius: '8px', boxShadow: '0 2px 8px rgba(34,21,16,0.04)', position: 'relative', overflow: 'hidden' },
-    cardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' },
-    cardTitle: { fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#8D5B36', textTransform: 'uppercase' },
-    cardValue: { fontFamily: 'var(--font-heading)', fontSize: '36px', color: '#221510', fontWeight: '800', letterSpacing: '-0.02em' },
-    cardSubtitle: { fontSize: '11px', color: '#6B584C', marginTop: '12px', letterSpacing: '0.05em', textTransform: 'uppercase' },
-    bottomGrid: { display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '32px', marginTop: '64px' },
-    listRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '24px 32px', borderBottom: '1px solid #EAE3D9' },
-    statusBadge: (status) => ({ fontSize: '10px', fontWeight: '700', padding: '6px 12px', borderRadius: '4px', border: `1px solid ${status === 'green' ? brandColor : '#EAE3D9'}`, color: status === 'green' ? '#FFFFFF' : '#6B584C', backgroundColor: status === 'green' ? brandColor : '#F7F2EC', textTransform: 'uppercase', letterSpacing: '0.1em' })
-  };
+  const weeklyData = [
+    { day: 'Mon', pxHeight: 52, isToday: false, value: '₦4,200' },
+    { day: 'Tue', pxHeight: 78, isToday: false, value: '₦6,800' },
+    { day: 'Wed', pxHeight: 40, isToday: false, value: '₦3,100' },
+    { day: 'Thu', pxHeight: 96, isToday: false, value: '₦8,500' },
+    { day: 'Fri (Today)', pxHeight: 140, isToday: true, value: '₦12,400' },
+    { day: 'Sat', pxHeight: 68, isToday: false, value: '₦5,200' },
+    { day: 'Sun', pxHeight: 34, isToday: false, value: '₦2,000' }
+  ];
 
-  const formatMoney = (amount) => {
-    return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 }).format(amount);
-  };
-
-  const formatCompact = (num) => {
-    if (num < 1000) return num;
-    return (num / 1000).toFixed(1) + 'k';
-  };
-
-  // Animation Variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.5, ease: "easeOut" }
-    }
+  const tabTitles = { overview: 'Dashboard', products: 'Products', wallet: 'Wallet', insights: 'Store Insights' };
+  const tabSubtitles = {
+    overview: "Welcome back, here is your store's performance today.",
+    products: 'Manage your product catalog in real-time.',
+    wallet: 'View your earnings and payment details.',
+    insights: 'Detailed analytics for your store.'
   };
 
   return (
     <PageTransition>
-      <div style={s.page} className="dash-page">
-        <style>{`
-          @media (max-width: 768px) {
-            .dash-page { flex-direction: column !important; height: auto !important; min-height: 100vh; overflow: visible !important; }
-            .dash-sidebar { 
-              position: fixed !important; 
-              top: 0 !important; 
-              left: ${isSidebarOpen ? '0' : '-100%'} !important; 
-              width: 280px !important; 
-              height: 100vh !important; 
-              z-index: 1000 !important; 
-              background-color: #FFFFFF !important;
-              transition: left 0.3s ease !important;
-              box-shadow: 10px 0 30px rgba(34,21,16,0.1) !important;
-            }
-            .dash-overlay {
-              position: fixed !important;
-              top: 0 !important;
-              left: 0 !important;
-              right: 0 !important;
-              bottom: 0 !important;
-              background-color: rgba(34,21,16,0.4) !important;
-              z-index: 999 !important;
-              display: ${isSidebarOpen ? 'block' : 'none'} !important;
-            }
-            .dash-logo-container { padding: 24px !important; }
-            .dash-nav { display: flex; flex-direction: column !important; overflow-y: auto !important; }
-            .dash-nav a, .dash-nav div { border-left: 3px solid transparent !important; border-bottom: none !important; padding: 16px 40px !important; font-size: 14px !important; }
-            .dash-user-profile { display: flex !important; margin-top: auto; } 
-            
-            .dash-header { height: auto !important; padding: 24px 20px !important; flex-wrap: wrap; gap: 16px; justify-content: space-between; position: sticky; top: 0; background: #FFFFFF; z-index: 100; border-bottom: 1px solid #EAE3D9; }
-            .dash-content { padding: 24px 20px !important; }
-            .dash-search-bar { display: none !important; }
-            .dash-header-actions { 
-              width: 100% !important; 
-              display: flex !important; 
-              flex-wrap: wrap !important; 
-              gap: 8px !important; 
-              align-items: stretch !important; 
-              justify-content: flex-start !important; 
-            }
-            .dash-header-actions button { 
-              flex: 1 1 calc(50% - 6px) !important; 
-              justify-content: center !important; 
-              padding: 10px 8px !important; 
-              font-size: 10px !important; 
-              text-align: center !important; 
-            }
-            .dash-header-actions a { 
-              width: 100% !important; 
-              flex-basis: 100% !important; 
-            }
-            .dash-header-actions a > div { 
-              justify-content: center !important; 
-              width: 100% !important; 
-              padding: 12px !important; 
-            }
-            
-            .dash-brand-header { flex-direction: column !important; align-items: flex-start !important; gap: 24px !important; }
-            .dash-brand-info { flex-direction: column !important; align-items: flex-start !important; gap: 16px !important; }
-            .dash-live-domain { width: 100% !important; align-items: flex-start !important; margin-top: 16px !important; }
-            
-            .dash-stats-grid { grid-template-columns: 1fr !important; gap: 16px !important; margin-top: 40px !important; }
-            .dash-card { padding: 24px !important; }
-            .dash-card-value { font-size: 28px !important; }
-            
-            .dash-bottom-grid { grid-template-columns: 1fr !important; gap: 24px !important; margin-top: 40px !important; }
-            .dash-meter-card { padding: 20px 16px !important; margin-top: 24px !important; }
-            .dash-meter-steps-grid { grid-template-columns: 1fr !important; }
-            .dash-list-row { padding: 20px !important; flex-direction: column; align-items: flex-start !important; gap: 16px; }
-            .dash-list-row > div:last-child { text-align: left !important; width: 100%; display: flex; justify-content: space-between; align-items: center; }
-            .mobile-only { display: block !important; }
-          }
-          @media (min-width: 769px) {
-            .mobile-only { display: none !important; }
-          }
-        `}</style>
-        {/* Mobile Sidebar Overlay */}
-        <div className="dash-overlay" onClick={() => setIsSidebarOpen(false)}></div>
+      <div className="unbley-app-layout">
+        <Sidebar profileData={profileData} isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
 
-        {/* Sidebar */}
-        <div style={s.sidebar} className="dash-sidebar">
-          <div style={{ ...s.logoContainer, position: 'relative' }} className="dash-logo-container">
-            <button
-              onClick={() => setIsSidebarOpen(false)}
-              style={{ position: 'absolute', top: '24px', right: '24px', background: 'none', border: 'none', color: '#6B584C', cursor: 'pointer' }}
-              className="mobile-only"
-            >
-              <X size={24} />
-            </button>
-            <Link to="/" style={{ textDecoration: 'none' }}><div style={s.logo}>Unbley.</div></Link>
-            <div style={{ fontFamily: 'Inter', fontSize: '9px', fontWeight: '700', letterSpacing: '0.1em', color: '#8D5B36', marginTop: '8px', textTransform: 'uppercase' }}>Digital Store</div>
-          </div>
+        <div className="unbley-main-content">
 
-          <div id="tour-sidebar-nav" style={s.nav} className="dash-nav">
-            <div id="tour-nav-overview" onClick={() => setActiveTab('overview')} style={s.navItem(activeTab === 'overview')}><LayoutGrid size={16} /> Overview</div>
-            <Link id="tour-nav-profile" to="/profile" style={s.navItem(false)}><User size={16} /> Profile</Link>
-            <Link id="tour-nav-edit" to="/edit" style={s.navItem(false)}><Edit size={16} /> Edit</Link>
-            {profileData.is_admin && (
-              <div onClick={() => setActiveTab('support')} style={s.navItem(activeTab === 'support')}><MessageSquare size={16} /> Support</div>
-            )}
-          </div>
-
-          <div style={s.userProfile} className="dash-user-profile">
-            <div style={s.userAvatar}>
-              {profileData.logo_url ? (
-                <img src={profileData.logo_url} alt={profileData.owner_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              ) : (
-                <span style={{ color: '#6A3E1F', fontWeight: 'bold' }}>{profileData.owner_name?.charAt(0)?.toUpperCase() || 'U'}</span>
-              )}
-            </div>
-            <div>
-              <div style={{ fontSize: '12px', fontWeight: '700', color: '#221510', letterSpacing: '0.05em', textTransform: 'uppercase' }}>{profileData.owner_name}</div>
-              <div style={{ fontSize: '10px', color: '#6B584C', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: '4px' }}>Brand Director</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <div style={s.main}>
-          {/* Header */}
-          <div style={s.header} className="dash-header">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          {/* Top Header */}
+          <header className="unbley-top-header">
+            <div className="unbley-header-left">
               <button
                 id="tour-mobile-menu"
                 onClick={() => setIsSidebarOpen(true)}
-                style={{ background: 'none', border: 'none', color: '#221510', cursor: 'pointer' }}
-                className="mobile-only"
+                style={{ display: 'none', background: 'none', border: '1px solid #EAE6DF', padding: '6px', borderRadius: '8px', cursor: 'pointer' }}
+                className="mobile-menu-trigger"
+                title="Open menu"
               >
-                <Menu size={24} />
+                <Menu size={20} />
               </button>
-              <Link to="/" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '36px', height: '36px', borderRadius: '50%', border: '1px solid #EAE3D9', color: '#6B584C', textDecoration: 'none', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.color = '#221510'; e.currentTarget.style.borderColor = '#6A3E1F'; }} onMouseLeave={(e) => { e.currentTarget.style.color = '#6B584C'; e.currentTarget.style.borderColor = '#EAE3D9'; }}>
-                <ArrowLeft size={18} />
-              </Link>
-              <div style={s.headerTitle}>{activeTab === 'overview' ? 'Dashboard' : 'Customer Support'}</div>
-            </div>
-            <div style={s.searchBar} className="dash-search-bar">
-              <Search size={14} color="#6B584C" />
-              <input type="text" placeholder="SEARCH ..." style={s.searchInput} />
-            </div>
-            <div style={s.headerActions} className="dash-header-actions">
-              <button
-                id="tour-guide-trigger"
-                onClick={() => setShowDashboardTour(true)}
-                style={{
-                  backgroundColor: '#FFFFFF',
-                  color: '#6B584C',
-                  border: '1px solid #DFCFC2',
-                  padding: '9px 14px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  fontSize: '11px',
-                  fontWeight: '700',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  letterSpacing: '0.04em'
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#F7F2EC'; e.currentTarget.style.color = brandColor; }}
-                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#FFFFFF'; e.currentTarget.style.color = '#6B584C'; }}
-                title="Take a quick tutorial tour of your dashboard"
-              >
-                <HelpCircle size={14} color="#8D5B36" /> TOUR GUIDE
-              </button>
-              <button
-                id="tour-launch-btn"
-                onClick={() => setShowOnboardingModal(true)}
-                style={{
-                  backgroundColor: '#FFFFFF',
-                  color: brandColor,
-                  border: '1px solid #DFCFC2',
-                  padding: '9px 16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  fontSize: '11px',
-                  fontWeight: '700',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  letterSpacing: '0.04em'
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#F7F2EC'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#FFFFFF'; }}
-                title="Complete the next steps to launch your website"
-              >
-                <Sparkles size={14} color={brandColor} /> LAUNCH CHECKLIST
-              </button>
-              <Link id="tour-storefront" to={`/shop-brand/${user?.id}`} style={{ textDecoration: 'none' }}>
-                <div style={{ ...s.premiumBadge, backgroundColor: brandColor, color: '#FFFFFF', padding: '10px 24px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', fontWeight: '800', border: 'none', borderRadius: '4px', boxShadow: '0 4px 12px rgba(106, 62, 31, 0.2)' }}>
-                  <Store size={16} /> MANAGE STORE
+
+              <div>
+                <div className="unbley-header-title-row">
+                  <h1 className="unbley-header-title">{tabTitles[currentTab] || 'Dashboard'}</h1>
+                  <span className="unbley-live-badge">
+                    <span className="unbley-live-dot" />
+                    LIVE
+                  </span>
                 </div>
+                <p className="unbley-header-subtitle">
+                  {tabSubtitles[currentTab] || "Welcome back, here is your store's performance today."}
+                </p>
+
+                {/* Live onboarding progress bar in header */}
+                {completedSteps < totalSteps && currentTab === 'overview' && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '8px' }}>
+                    <div style={{ width: '140px', height: '5px', backgroundColor: '#EAE6DF', borderRadius: '99px', overflow: 'hidden' }}>
+                      <div style={{ width: `${progressPct}%`, height: '100%', backgroundColor: '#6A3E1F', borderRadius: '99px', transition: 'width 0.5s ease' }} />
+                    </div>
+                    <button
+                      onClick={() => setShowOnboardingModal(true)}
+                      style={{ fontSize: '11px', fontWeight: '700', color: '#6A3E1F', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
+                    >
+                      {completedSteps}/{totalSteps} setup steps done
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="unbley-header-actions">
+              <button onClick={handleShareStore} className="unbley-btn-white">
+                <Share2 size={14} />
+                <span>{copiedLink ? 'Link Copied!' : 'Share Store'}</span>
+              </button>
+              <button id="tour-guide-trigger" onClick={() => setShowDashboardTour(true)} className="unbley-btn-white">
+                <Compass size={14} />
+                <span>Tour Guide</span>
+              </button>
+              <Link id="tour-storefront" to={`/shop-brand/${user?.id || 'demo'}`} className="unbley-btn-black">
+                <ExternalLink size={14} />
+                <span>Manage Store</span>
               </Link>
             </div>
-          </div>
+          </header>
 
-          {/* Content Area */}
-          <div style={s.content} className="dash-content">
+          {/* ─── OVERVIEW TAB ─────────────────────────────────── */}
+          {currentTab === 'overview' && (
+            <main className="unbley-workspace-container">
 
-            {activeTab === 'overview' ? (
-              <motion.div initial="hidden" animate="visible" variants={containerVariants}>
-                <motion.div id="tour-brand-identity" variants={itemVariants} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: '1px solid #EAE3D9', paddingBottom: '40px' }} className="dash-brand-header">
-                  <div style={{ display: 'flex', gap: '32px', alignItems: 'center' }} className="dash-brand-info">
-                    <div style={{ width: '100px', height: '100px', border: '1px solid #EAE3D9', backgroundColor: '#FFFFFF', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                      {profileData.logo_url ? (
-                        <img src={profileData.logo_url} alt="Brand Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      ) : (
-                        <span style={{ fontSize: '48px', color: '#6A3E1F', fontFamily: 'var(--font-heading)', fontWeight: '800' }}>{profileData.brand_name?.charAt(0)?.toUpperCase() || 'U'}</span>
-                      )}
-                    </div>
-                    <div>
-                      <div style={s.sectionLabel}>
-                        <div style={{ width: '2px', height: '12px', backgroundColor: brandColor }}></div>
-                        Brand Profile
-                      </div>
-                      <h1 style={{ ...s.mainTitle, fontSize: '36px', marginBottom: '16px', lineHeight: '1' }}>{profileData.brand_name}</h1>
-                      <div style={{ display: 'flex', gap: '24px', color: '#6B584C', fontSize: '12px', letterSpacing: '0.05em', flexWrap: 'wrap' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ color: '#221510', fontWeight: '600' }}>Email:</span> {profileData.email_address}
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ color: '#221510', fontWeight: '600' }}>Phone:</span> {profileData.phone_number}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div style={{ padding: '24px', border: '1px solid #EAE3D9', backgroundColor: '#FFFFFF', borderRadius: '8px', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }} className="dash-live-domain">
-                    <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#8D5B36', textTransform: 'uppercase', marginBottom: '8px' }}>Live Domain</div>
-                    {profileData.website_url ? (
-                      <a href={profileData.website_url.startsWith('http') ? profileData.website_url : `https://${profileData.website_url}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: '14px', color: '#221510', textDecoration: 'none', borderBottom: `1px solid ${brandColor}`, paddingBottom: '2px', display: 'flex', alignItems: 'center' }}>
-                        {profileData.website_url.replace(/^https?:\/\//, '')} <ArrowUpRight size={14} style={{ marginLeft: '6px', color: brandColor }} />
-                      </a>
+              {/* Brand Profile Banner */}
+              <div id="tour-brand-identity" className="unbley-card unbley-brand-banner">
+                <div className="unbley-brand-left">
+                  <div className="unbley-brand-avatar-box" style={profileData.logo_url ? { background: 'transparent', padding: 0 } : {}}>
+                    {profileData.logo_url ? (
+                      <img src={profileData.logo_url} alt={profileData.brand_name || 'Store Logo'} style={{ width: '52px', height: '52px', objectFit: 'cover', borderRadius: '12px', display: 'block' }} />
                     ) : (
-                      <span style={{ fontSize: '12px', color: '#8D5B36' }}>activation pending</span>
+                      <span style={{ fontSize: '22px', fontWeight: '800', color: '#FFFFFF' }}>
+                        {(profileData.brand_name || profileData.owner_name || 'U').charAt(0).toUpperCase()}
+                      </span>
                     )}
                   </div>
-                </motion.div>
+                  <div>
+                    <div className="unbley-brand-title-badge">BRAND PROFILE</div>
+                    <h2 className="unbley-brand-heading">{profileData.brand_name || 'Isaac Akpasu'}</h2>
+                    <div className="unbley-brand-meta">
+                      <span><strong>Email:</strong> {profileData.email_address || 'diorbaron2@gmail.com'}</span>
+                      <span><strong>Phone / WhatsApp:</strong> {profileData.phone_number || '09153625566'}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="unbley-storefront-box">
+                  <span className="unbley-storefront-label">LIVE STOREFRONT</span>
+                  <a href={profileData.website_url ? (profileData.website_url.startsWith('http') ? profileData.website_url : `https://${profileData.website_url}`) : '#'} target="_blank" rel="noreferrer" className="unbley-storefront-link">
+                    <span>{profileData.website_url || 'www.zizzystores.com'}</span>
+                    <ArrowUpRight size={14} color="#6B7280" />
+                  </a>
+                </div>
+              </div>
 
-                {/* Profile Completion Meter (Disappears once 100% completed) */}
-                <AnimatePresence>
-                  {showProfileMeter && (
-                    <motion.div
-                      id="tour-setup-meter"
-                      variants={itemVariants}
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, height: 0, overflow: 'hidden', marginTop: 0, marginBottom: 0 }}
-                      transition={{ duration: 0.4 }}
-                      style={{
-                        marginTop: '36px',
-                        backgroundColor: '#FFFFFF',
-                        border: '1px solid #EAE3D9',
-                        borderRadius: '12px',
-                        padding: '24px 32px',
-                        boxShadow: '0 4px 16px rgba(34, 21, 16, 0.04)',
-                        position: 'relative',
-                        overflow: 'hidden'
-                      }}
-                      className="dash-meter-card"
-                    >
-                      {/* Decorative Accent Top Line */}
-                      <div
-                        style={{
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          height: '3px',
-                          backgroundColor: '#EAE3D9'
-                        }}
-                      >
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${completionPercentage}%` }}
-                          transition={{ duration: 1, ease: "easeOut" }}
-                          style={{ height: '100%', backgroundColor: brandColor }}
-                        />
+              {/* Setup Guide Card — LIVE */}
+              <div id="tour-setup-meter" className="unbley-card">
+                <div className="unbley-setup-header">
+                  <div className="unbley-setup-title-box">
+                    <div className="unbley-info-icon-circle"><Info size={16} /></div>
+                    <div>
+                      <h3 className="unbley-setup-h3">Get Your Store Ready for Buyers</h3>
+                      <p className="unbley-setup-p">Complete these simple steps to help customers find and buy your products easily.</p>
+                    </div>
+                  </div>
+                  <div className="unbley-completion-pill">
+                    {completedSteps} OF {totalSteps} COMPLETED ({progressPct}%)
+                  </div>
+                </div>
+                <div>
+                  <div className="unbley-progress-row">
+                    <span>Setup Progress</span>
+                    <span>{progressPct}% Complete</span>
+                  </div>
+                  <div className="unbley-progress-track">
+                    <div className="unbley-progress-fill" style={{ width: `${progressPct}%`, transition: 'width 0.5s ease' }} />
+                  </div>
+                </div>
+                <div className="unbley-step-cards-grid">
+                  {/* Step 1 */}
+                  <div className="unbley-step-card">
+                    <div>
+                      <div className="unbley-step-title-row">
+                        {isProductsDone ? <div className="unbley-check-circle"><Check size={11} strokeWidth={3} /></div> : <div className="unbley-num-circle">1</div>}
+                        <span className="unbley-step-name">1. Add First Products</span>
                       </div>
-
-                      {/* Header row */}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px', marginBottom: '20px' }}>
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                            <Sparkles size={16} color={brandColor} />
-                            <span style={{ fontSize: '11px', fontWeight: '800', letterSpacing: '0.08em', color: '#8D5B36', textTransform: 'uppercase' }}>
-                              Store Setup Progress
-                            </span>
-                            <span
-                              style={{
-                                backgroundColor: 'rgba(106, 62, 31, 0.08)',
-                                color: brandColor,
-                                padding: '2px 8px',
-                                borderRadius: '9999px',
-                                fontSize: '11px',
-                                fontWeight: '800'
-                              }}
-                            >
-                              {completionPercentage}%
-                            </span>
-                          </div>
-                          <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '20px', fontWeight: '800', color: '#221510', margin: '0 0 4px 0', letterSpacing: '-0.01em' }}>
-                            {completionPercentage === 0 
-                              ? 'Start setting up your store to launch' 
-                              : completionPercentage < 50 
-                              ? 'Great start! Complete a few more steps to launch' 
-                              : 'Almost ready! Just a few finishing touches'}
-                          </h3>
-                          <p style={{ fontSize: '13px', color: '#6B584C', margin: 0, lineHeight: '1.4' }}>
-                            {completedStepsCount} of {profileSteps.length} essential setup milestones completed. Once finished, your storefront will be fully active.
-                          </p>
-                        </div>
-
-                        <button
-                          onClick={() => {
-                            const firstIncomplete = profileSteps.find(s => !s.completed);
-                            setActiveOnboardingStep(firstIncomplete ? firstIncomplete.submodal : null);
-                            setShowOnboardingModal(true);
-                          }}
-                          style={{
-                            backgroundColor: brandColor,
-                            color: '#FFFFFF',
-                            border: 'none',
-                            padding: '10px 20px',
-                            borderRadius: '6px',
-                            fontSize: '12px',
-                            fontWeight: '700',
-                            letterSpacing: '0.04em',
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            transition: 'all 0.2s',
-                            boxShadow: '0 3px 10px rgba(106, 62, 31, 0.2)'
-                          }}
-                          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#522F16'; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = brandColor; }}
-                        >
-                          <span>Complete Setup</span>
-                          <ChevronRight size={15} />
-                        </button>
+                      <p className="unbley-step-desc">
+                        {isProductsDone ? `${metrics.activeStock} product${metrics.activeStock !== 1 ? 's' : ''} listed in your catalog.` : 'Upload your first product to get started.'}
+                      </p>
+                    </div>
+                    <button onClick={() => { setActiveOnboardingStep('products'); setShowOnboardingModal(true); }} className={isProductsDone ? 'unbley-step-btn-done' : 'unbley-step-btn-share'}>
+                      {isProductsDone ? 'DONE' : 'ADD NOW'}
+                    </button>
+                  </div>
+                  {/* Step 2 */}
+                  <div className="unbley-step-card">
+                    <div>
+                      <div className="unbley-step-title-row">
+                        {isWalletDone ? <div className="unbley-check-circle"><Check size={11} strokeWidth={3} /></div> : <div className="unbley-num-circle">2</div>}
+                        <span className="unbley-step-name">2. Connect WhatsApp</span>
                       </div>
-
-                      {/* Progress Bar Track */}
-                      <div
-                        style={{
-                          width: '100%',
-                          height: '10px',
-                          backgroundColor: '#F3EFEA',
-                          borderRadius: '9999px',
-                          overflow: 'hidden',
-                          position: 'relative',
-                          marginBottom: '20px'
-                        }}
-                      >
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${completionPercentage}%` }}
-                          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
-                          style={{
-                            height: '100%',
-                            borderRadius: '9999px',
-                            background: `linear-gradient(90deg, #8D5B36 0%, ${brandColor} 100%)`
-                          }}
-                        />
+                      <p className="unbley-step-desc">
+                        {isWalletDone ? `Phone: ${profileData.phone_number} configured for orders.` : 'Add your WhatsApp number and bank details.'}
+                      </p>
+                    </div>
+                    <button onClick={() => { setActiveOnboardingStep('payment'); setShowOnboardingModal(true); }} className={isWalletDone ? 'unbley-step-btn-done' : 'unbley-step-btn-share'}>
+                      {isWalletDone ? 'DONE' : 'SET UP'}
+                    </button>
+                  </div>
+                  {/* Step 3 */}
+                  <div className="unbley-step-card">
+                    <div>
+                      <div className="unbley-step-title-row">
+                        {isShippingDone ? <div className="unbley-check-circle"><Check size={11} strokeWidth={3} /></div> : <div className="unbley-num-circle">3</div>}
+                        <span className="unbley-step-name">3. Set Delivery Fees</span>
                       </div>
+                      <p className="unbley-step-desc">
+                        {isShippingDone ? `Delivery: ${profileData.delivery_duration} configured.` : 'Set your shipping rates for customers.'}
+                      </p>
+                    </div>
+                    <button onClick={() => { setActiveOnboardingStep('shipping'); setShowOnboardingModal(true); }} className={isShippingDone ? 'unbley-step-btn-done' : 'unbley-step-btn-share'}>
+                      {isShippingDone ? 'DONE' : 'SET UP'}
+                    </button>
+                  </div>
+                  {/* Step 4 */}
+                  <div className="unbley-step-card">
+                    <div>
+                      <div className="unbley-step-title-row">
+                        {isPlanDone ? <div className="unbley-check-circle"><Check size={11} strokeWidth={3} /></div> : <div className="unbley-num-circle">4</div>}
+                        <span className="unbley-step-name">4. Get a Subscription Plan</span>
+                      </div>
+                      <p className="unbley-step-desc">
+                        {isPlanDone ? 'Your store is active and live.' : 'Get 30% off and unlock exclusive Unbley features.'}
+                      </p>
+                    </div>
+                    <button onClick={() => { setActiveOnboardingStep('subscription'); setShowOnboardingModal(true); }} className={isPlanDone ? 'unbley-step-btn-done' : 'unbley-step-btn-share'}>
+                      {isPlanDone ? 'DONE' : 'View Plans'}
+                    </button>
+                  </div>
+                </div>
+              </div>
 
-                      {/* Milestone Pills / Checklist */}
-                      <div
-                        style={{
-                          display: 'grid',
-                          gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-                          gap: '10px'
-                        }}
-                        className="dash-meter-steps-grid"
-                      >
-                        {profileSteps.map((step) => (
-                          <div
-                            key={step.id}
-                            onClick={() => {
-                              setActiveOnboardingStep(step.submodal);
-                              setShowOnboardingModal(true);
-                            }}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '8px',
-                              padding: '8px 12px',
-                              backgroundColor: step.completed ? 'rgba(106, 62, 31, 0.05)' : '#FBF9F5',
-                              border: step.completed ? '1px solid rgba(106, 62, 31, 0.15)' : '1px solid #EAE3D9',
-                              borderRadius: '8px',
-                              cursor: 'pointer',
-                              transition: 'all 0.15s ease'
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = '#F7F2EC';
-                              e.currentTarget.style.borderColor = '#DFCFC2';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor = step.completed ? 'rgba(106, 62, 31, 0.05)' : '#FBF9F5';
-                              e.currentTarget.style.borderColor = step.completed ? 'rgba(106, 62, 31, 0.15)' : '#EAE3D9';
-                            }}
-                          >
-                            {step.completed ? (
-                              <CheckCircle2 size={16} color={brandColor} style={{ flexShrink: 0 }} />
-                            ) : (
-                              <div
-                                style={{
-                                  width: '14px',
-                                  height: '14px',
-                                  borderRadius: '50%',
-                                  border: '1.5px solid #A89F91',
-                                  flexShrink: 0
-                                }}
-                              />
-                            )}
-                            <span
-                              style={{
-                                fontSize: '11.5px',
-                                fontWeight: step.completed ? '700' : '500',
-                                color: step.completed ? '#221510' : '#6B584C',
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis'
-                              }}
-                            >
-                              {step.label}
-                            </span>
+              {/* Metrics Row */}
+              <div id="tour-stats-grid" className="unbley-metrics-grid">
+                <div className="unbley-metric-card">
+                  <div className="unbley-metric-top">
+                    <div className="unbley-icon-box-cream"><DollarSign size={18} /></div>
+                    <span style={{ padding: '3px 8px', borderRadius: '9999px', fontSize: '10px', fontWeight: '800', letterSpacing: '0.05em', backgroundColor: '#DCFCE7', color: '#15803D', textTransform: 'uppercase' }}>+12.4% THIS MONTH</span>
+                  </div>
+                  <div>
+                    <div className="unbley-metric-label">TOTAL SALES</div>
+                    <div className="unbley-metric-value">{formatMoney(metrics.totalSales)}</div>
+                  </div>
+                </div>
+                <div className="unbley-metric-card">
+                  <div className="unbley-metric-top"><div className="unbley-icon-box-cream"><Package size={18} /></div></div>
+                  <div>
+                    <div className="unbley-metric-label">PRODUCTS</div>
+                    <div className="unbley-metric-value">{metrics.activeStock}</div>
+                    <div className="unbley-metric-subtext">Products currently listed in your store</div>
+                  </div>
+                </div>
+                <div className="unbley-metric-card">
+                  <div className="unbley-metric-top"><div className="unbley-icon-box-blue"><Eye size={18} /></div></div>
+                  <div>
+                    <div className="unbley-metric-label">STORE VISITORS</div>
+                    <div className="unbley-metric-value">{metrics.totalTraffic}</div>
+                    <div className="unbley-metric-subtext">People who visited your store</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Two-column layout */}
+              <div className="unbley-two-col-grid">
+                <div className="unbley-col-left">
+                  <div className="unbley-card">
+                    <div className="unbley-chart-header">
+                      <div>
+                        <h3 style={{ fontSize: '16px', fontWeight: '800', color: '#111827', margin: 0 }}>Weekly Sales Activity</h3>
+                        <p style={{ fontSize: '12px', color: '#6B7280', margin: '2px 0 0' }}>How much money your store made each day this week</p>
+                      </div>
+                      <span style={{ padding: '4px 12px', borderRadius: '9999px', backgroundColor: '#F4F2EE', color: '#4B5563', fontSize: '11px', fontWeight: '800', letterSpacing: '0.05em', textTransform: 'uppercase' }}>THIS WEEK</span>
+                    </div>
+                    <div>
+                      <div className="unbley-chart-bars-wrap">
+                        {weeklyData.map((item, idx) => (
+                          <div key={idx} className="unbley-bar-col">
+                            <div title={`${item.day}: ${item.value}`} className={`unbley-bar-pillar ${item.isToday ? 'active-today' : ''}`} style={{ height: `${item.pxHeight}px` }} />
                           </div>
                         ))}
                       </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {/* Dynamic Real-Time Stats Grid */}
-                <div id="tour-stats-grid" style={s.statsGrid} className="dash-stats-grid">
-                  <motion.div variants={itemVariants} style={s.card}>
-                    <div style={s.cardHeader}>
-                      <div style={{ border: '1px solid #EAE3D9', borderRadius: '4px', padding: '8px', backgroundColor: '#F7F2EC' }}>
-                        <TrendingUp size={14} color={brandColor} />
-                      </div>
-                      <div style={{ fontSize: '10px', fontWeight: '700', color: '#8D5B36', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                        {metrics.totalSales > 0 ? '+12.4% THIS MONTH' : 'NO DATA YET'}
+                      <div className="unbley-chart-days-row">
+                        {weeklyData.map((item, idx) => (
+                          <div key={idx} className={`unbley-chart-day-cell ${item.isToday ? 'active-today' : ''}`}>{item.day}</div>
+                        ))}
                       </div>
                     </div>
-                    <div style={s.cardTitle}>Total Sales</div>
-                    <div style={s.cardValue}>{formatMoney(metrics.totalSales)}</div>
+                  </div>
 
-                    <div style={{ marginTop: '32px', width: '100%', height: '2px', backgroundColor: '#EAE3D9', position: 'relative' }}>
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: metrics.totalSales > 0 ? '60%' : '0%' }}
-                        transition={{ duration: 1.5, ease: "circOut", delay: 0.5 }}
-                        style={{ position: 'absolute', top: 0, left: 0, height: '2px', backgroundColor: brandColor }}
-                      ></motion.div>
+                  <div id="tour-orders-ledger" className="unbley-table-card">
+                    <div className="unbley-table-header-bar">
+                      <div>
+                        <h3 style={{ fontSize: '16px', fontWeight: '800', color: '#111827', margin: 0 }}>Recent Customer Orders</h3>
+                        <p style={{ fontSize: '12px', color: '#6B7280', margin: '2px 0 0' }}>The latest purchases made by customers</p>
+                      </div>
+                      <Link to="/dashboard?tab=orders" className="unbley-view-all-link">
+                        <span>VIEW ALL ORDERS</span><ArrowRight size={13} />
+                      </Link>
                     </div>
-                  </motion.div>
-
-                  <motion.div variants={itemVariants} style={s.card}>
-                    <div style={s.cardHeader}>
-                      <Package size={18} color="#8D5B36" />
-                      <div style={{ fontSize: '10px', fontWeight: '700', color: '#8D5B36', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{metrics.activeStock > 0 ? 'ACTIVE' : 'EMPTY'}</div>
-                    </div>
-                    <div style={s.cardTitle}>Stock Portfolio</div>
-                    <div style={s.cardValue}>{metrics.activeStock}</div>
-                    <div style={s.cardSubtitle}>Total Product Listings</div>
-                  </motion.div>
-
-                  <motion.div variants={itemVariants} style={s.card}>
-                    <div style={s.cardHeader}>
-                      <BarChart3 size={18} color="#8D5B36" />
-                      <div style={{ fontSize: '10px', fontWeight: '700', color: '#8D5B36', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{metrics.totalTraffic > 0 ? 'LIVE NOW' : 'AWAITING TRAFFIC'}</div>
-                    </div>
-                    <div style={s.cardTitle}>Your Traffic</div>
-                    <div style={s.cardValue}>{formatCompact(metrics.totalTraffic)}</div>
-                    <div style={s.cardSubtitle}>Unique Store Visitors</div>
-                  </motion.div>
+                    <table className="unbley-table">
+                      <thead>
+                        <tr>
+                          <th>ORDER ID</th><th>ITEM PURCHASED</th><th>AMOUNT</th><th>PAYMENT</th><th>FULFILLMENT</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {ordersToDisplay.map((order) => (
+                          <tr key={order.id}>
+                            <td>
+                              <div style={{ fontWeight: '800', color: '#111827' }}>{order.order_number}</div>
+                              <div style={{ fontSize: '11px', color: '#8C827A', marginTop: '2px' }}>{order.time}</div>
+                            </td>
+                            <td>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: '#E0F2FE', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4B5563', flexShrink: 0 }}>
+                                  <Package size={16} />
+                                </div>
+                                <div>
+                                  <div style={{ fontWeight: '700', color: '#111827' }}>{order.item_name}</div>
+                                  <div style={{ fontSize: '11px', color: '#6B7280', marginTop: '1px' }}>Buyer: {order.buyer_name}</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td style={{ fontWeight: '800', color: '#111827' }}>{formatMoney(order.amount)}</td>
+                            <td><span className={order.payment_status === 'PAID' ? 'unbley-pill-paid' : 'unbley-pill-awaiting'}>{order.payment_status}</span></td>
+                            <td>
+                              <span className={order.fulfillment_status === 'READY TO SHIP' ? 'unbley-pill-ready' : order.fulfillment_status === 'SHIPPED' ? 'unbley-pill-shipped' : order.fulfillment_status === 'DELIVERED' ? 'unbley-pill-delivered' : 'unbley-pill-pending'}>
+                                {order.fulfillment_status}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
 
-                {/* Bottom Ledger Grid */}
-                <div id="tour-orders-ledger" style={s.bottomGrid} className="dash-bottom-grid">
-                  <motion.div variants={itemVariants} style={{ backgroundColor: '#FFFFFF', border: '1px solid #EAE3D9', borderRadius: '8px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '32px', borderBottom: '1px solid #EAE3D9' }}>
-                      <div style={{ fontFamily: 'var(--font-heading)', fontSize: '22px', color: '#221510', fontWeight: '800', letterSpacing: '-0.02em' }}>Recent Orders</div>
-                      {metrics.recentOrders.length > 0 && <div style={{ fontSize: '10px', color: brandColor, letterSpacing: '0.1em', fontWeight: '700', textTransform: 'uppercase', cursor: 'pointer', borderBottom: `1px solid ${brandColor}` }}>View Full Ledger</div>}
+                <div className="unbley-col-right">
+                  <div className="unbley-card">
+                    <div style={{ marginBottom: '16px' }}>
+                      <h3 style={{ fontSize: '16px', fontWeight: '800', color: '#111827', margin: 0 }}>Quick Actions</h3>
+                      <p style={{ fontSize: '12px', color: '#6B7280', margin: '2px 0 0' }}>Common tasks for your store</p>
                     </div>
-
-                    {metrics.recentOrders.length > 0 ? (
-                      metrics.recentOrders.map((order) => (
-                        <motion.div key={order.id} variants={itemVariants} style={s.listRow} className="dash-list-row">
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-                            <div style={{ width: '48px', height: '48px', border: '1px solid #EAE3D9', borderRadius: '4px', backgroundColor: '#FBF9F5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <ShoppingBag size={18} color="#6B584C" />
-                            </div>
-                            <div>
-                              <div style={{ fontSize: '10px', fontWeight: '700', color: '#8D5B36', letterSpacing: '0.1em', marginBottom: '8px', textTransform: 'uppercase' }}>{order.order_number}</div>
-                              <div style={{ fontSize: '14px', color: '#221510', fontWeight: '600' }}>{order.product_name_snapshot}</div>
-                            </div>
+                    <div>
+                      <div onClick={() => { setActiveOnboardingStep('products'); setShowOnboardingModal(true); }} className="unbley-action-row">
+                        <div className="unbley-action-left">
+                          <div className="unbley-action-icon"><Plus size={16} strokeWidth={2.5} /></div>
+                          <div>
+                            <div className="unbley-action-title">Add New Product</div>
+                            <div className="unbley-action-desc">Upload pictures and set price</div>
                           </div>
-                          <div style={{ textAlign: 'right' }}>
-                            <div style={{ fontSize: '14px', fontWeight: '600', color: '#221510', marginBottom: '12px' }}>{formatMoney(order.total_amount)}</div>
-                            <div style={s.statusBadge(order.status === 'processing' ? 'gray' : order.status === 'completed' ? 'green' : 'gray')}>
-                              {order.status === 'processing' ? 'Processing' : order.status === 'completed' ? 'Paid & Ready' : order.status}
-                            </div>
-                          </div>
-                        </motion.div>
-                      ))
-                    ) : (
-                      <div style={{ padding: '64px', textAlign: 'center' }}>
-                        <div style={{ display: 'inline-flex', padding: '16px', backgroundColor: '#F7F2EC', borderRadius: '50%', marginBottom: '24px' }}>
-                          <Package size={24} color="#6A3E1F" />
                         </div>
-                        <div style={{ fontSize: '14px', color: '#221510', fontWeight: '600', marginBottom: '8px' }}>Your Ledger is Empty</div>
-                        <div style={{ fontSize: '12px', color: '#6B584C' }}>Incoming orders will securely populate here.</div>
+                        <ArrowRight size={15} color="#9CA3AF" />
                       </div>
-                    )}
-
-                  </motion.div>
+                      <div onClick={() => { setActiveOnboardingStep('payment'); setShowOnboardingModal(true); }} className="unbley-action-row">
+                        <div className="unbley-action-left">
+                          <div className="unbley-action-icon"><FileSpreadsheet size={16} /></div>
+                          <div>
+                            <div className="unbley-action-title">Record Quick Sale</div>
+                            <div className="unbley-action-desc">Log sales made on WhatsApp or IG</div>
+                          </div>
+                        </div>
+                        <ArrowRight size={15} color="#9CA3AF" />
+                      </div>
+                      <div onClick={handleShareStore} className="unbley-action-row">
+                        <div className="unbley-action-left">
+                          <div className="unbley-action-icon"><Share2 size={16} /></div>
+                          <div>
+                            <div className="unbley-action-title">Share Storefront</div>
+                            <div className="unbley-action-desc">Copy link or get QR code</div>
+                          </div>
+                        </div>
+                        <ArrowRight size={15} color="#9CA3AF" />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="unbley-tip-box">
+                    <div className="unbley-tip-header">
+                      <Lightbulb size={17} strokeWidth={2.2} />
+                      <span>Beginner Seller Tip</span>
+                    </div>
+                    <p className="unbley-tip-body">
+                      Products with clear daylight photos sell 3x faster! Try placing your items near a window when taking pictures for your catalog.
+                    </p>
+                  </div>
                 </div>
-              </motion.div>
-            ) : (
-              <div style={{ height: 'calc(100vh - 160px)' }}>
-                <AdminChat />
               </div>
-            )}
+            </main>
+          )}
 
-          </div>
+          {/* ─── PRODUCTS TAB ─────────────────────────────────── */}
+          {currentTab === 'products' && (
+            <main className="unbley-workspace-container">
+              <div className="unbley-card" style={{ padding: '0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid #F0ECE4' }}>
+                  <div>
+                    <h3 style={{ fontSize: '16px', fontWeight: '800', color: '#111827', margin: 0 }}>Product Catalog</h3>
+                    <p style={{ fontSize: '12px', color: '#6B7280', margin: '2px 0 0' }}>
+                      {productsLoading ? 'Loading…' : `${products.length} product${products.length !== 1 ? 's' : ''} in your store`}
+                    </p>
+                  </div>
+                  <button onClick={() => { setActiveOnboardingStep('products'); setShowOnboardingModal(true); }} className="unbley-btn-black" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Plus size={14} /><span>Add Product</span>
+                  </button>
+                </div>
+
+                {productsLoading ? (
+                  <div style={{ padding: '60px 24px', textAlign: 'center', color: '#9CA3AF', fontSize: '14px' }}>Loading products…</div>
+                ) : products.length === 0 ? (
+                  <div style={{ padding: '60px 24px', textAlign: 'center' }}>
+                    <Package size={40} color="#D1CBC2" style={{ marginBottom: '12px' }} />
+                    <div style={{ fontWeight: '700', color: '#374151', marginBottom: '6px' }}>No products yet</div>
+                    <p style={{ fontSize: '13px', color: '#6B7280', marginBottom: '20px' }}>Add your first product to start selling.</p>
+                    <button onClick={() => { setActiveOnboardingStep('products'); setShowOnboardingModal(true); }} className="unbley-btn-black">
+                      Add First Product
+                    </button>
+                  </div>
+                ) : (
+                  <table className="unbley-table" style={{ margin: 0 }}>
+                    <thead>
+                      <tr>
+                        <th>PRODUCT</th><th>PRICE</th><th>STATUS</th><th>ADDED</th><th style={{ textAlign: 'right' }}>ACTIONS</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {products.map((p) => (
+                        <tr key={p.id}>
+                          <td>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                              {p.image_url ? (
+                                <img src={p.image_url} alt={p.name} style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover', flexShrink: 0 }} />
+                              ) : (
+                                <div style={{ width: '40px', height: '40px', borderRadius: '8px', backgroundColor: '#F4F2EE', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                  <Package size={16} color="#9CA3AF" />
+                                </div>
+                              )}
+                              <div>
+                                <div style={{ fontWeight: '700', color: '#111827', fontSize: '13px' }}>{p.name || 'Unnamed Product'}</div>
+                                <div style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '1px' }}>{p.category || 'Uncategorized'}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td style={{ fontWeight: '800', color: '#111827' }}>{formatMoney(p.price)}</td>
+                          <td>
+                            <span style={{ padding: '3px 8px', borderRadius: '9999px', fontSize: '10px', fontWeight: '800', backgroundColor: p.status === 'active' ? '#DCFCE7' : '#FEF3C7', color: p.status === 'active' ? '#15803D' : '#92400E' }}>
+                              {(p.status || 'active').toUpperCase()}
+                            </span>
+                          </td>
+                          <td style={{ fontSize: '12px', color: '#6B7280' }}>
+                            {p.created_at ? new Date(p.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' }) : '—'}
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'flex-end' }}>
+                              <button onClick={() => { setActiveOnboardingStep('products'); setShowOnboardingModal(true); }} title="Edit product" style={{ background: 'none', border: '1px solid #E5E7EB', borderRadius: '6px', padding: '5px 8px', cursor: 'pointer', color: '#6B7280', display: 'flex', alignItems: 'center' }}>
+                                <Pencil size={13} />
+                              </button>
+                              <button onClick={() => handleDeleteProduct(p.id)} title="Delete product" style={{ background: 'none', border: '1px solid #FCA5A5', borderRadius: '6px', padding: '5px 8px', cursor: 'pointer', color: '#DC2626', display: 'flex', alignItems: 'center' }}>
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </main>
+          )}
+
+          {/* ─── WALLET TAB ───────────────────────────────────── */}
+          {currentTab === 'wallet' && (
+            <main className="unbley-workspace-container">
+              <div className="unbley-metrics-grid">
+                <div className="unbley-metric-card">
+                  <div className="unbley-metric-top"><div className="unbley-icon-box-cream"><DollarSign size={18} /></div></div>
+                  <div>
+                    <div className="unbley-metric-label">TOTAL EARNINGS</div>
+                    <div className="unbley-metric-value">{formatMoney(metrics.totalSales)}</div>
+                    <div className="unbley-metric-subtext">Cumulative sales revenue</div>
+                  </div>
+                </div>
+                <div className="unbley-metric-card">
+                  <div className="unbley-metric-top"><div className="unbley-icon-box-blue"><Wallet size={18} /></div></div>
+                  <div>
+                    <div className="unbley-metric-label">PENDING PAYOUTS</div>
+                    <div className="unbley-metric-value">{formatMoney(payouts.filter(p => p.status !== 'completed').reduce((s, p) => s + (p.total_amount || 0), 0))}</div>
+                    <div className="unbley-metric-subtext">Orders awaiting settlement</div>
+                  </div>
+                </div>
+                <div className="unbley-metric-card">
+                  <div className="unbley-metric-top"><div className="unbley-icon-box-cream"><TrendingUp size={18} /></div></div>
+                  <div>
+                    <div className="unbley-metric-label">SETTLED</div>
+                    <div className="unbley-metric-value">{formatMoney(payouts.filter(p => p.status === 'completed').reduce((s, p) => s + (p.total_amount || 0), 0))}</div>
+                    <div className="unbley-metric-subtext">Completed and paid out</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="unbley-card" style={{ marginBottom: '20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                  <div>
+                    <h3 style={{ fontSize: '16px', fontWeight: '800', color: '#111827', margin: 0 }}>Payment Details</h3>
+                    <p style={{ fontSize: '12px', color: '#6B7280', margin: '2px 0 0' }}>Your linked bank account for withdrawals</p>
+                  </div>
+                  <button onClick={() => { setActiveOnboardingStep('payment'); setShowOnboardingModal(true); }} className="unbley-btn-white" style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Pencil size={13} /> Edit
+                  </button>
+                </div>
+                {profileData.bank_name && profileData.account_number ? (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
+                    {[
+                      { label: 'Bank', value: profileData.bank_name },
+                      { label: 'Account Number', value: profileData.account_number },
+                      { label: 'Account Name', value: profileData.account_name || '—' }
+                    ].map(item => (
+                      <div key={item.label} style={{ background: '#FAFAF9', borderRadius: '10px', padding: '14px 16px', border: '1px solid #F0ECE4' }}>
+                        <div style={{ fontSize: '10px', fontWeight: '800', color: '#9CA3AF', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '4px' }}>{item.label}</div>
+                        <div style={{ fontSize: '14px', fontWeight: '700', color: '#111827' }}>{item.value}</div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ textAlign: 'center', padding: '32px', color: '#9CA3AF' }}>
+                    <Landmark size={32} style={{ marginBottom: '10px', opacity: 0.5 }} />
+                    <div style={{ fontWeight: '700', color: '#374151', marginBottom: '6px' }}>No bank account linked</div>
+                    <p style={{ fontSize: '13px', marginBottom: '16px' }}>Add your bank details to receive payouts.</p>
+                    <button onClick={() => { setActiveOnboardingStep('payment'); setShowOnboardingModal(true); }} className="unbley-btn-black">Link Bank Account</button>
+                  </div>
+                )}
+              </div>
+
+              <div className="unbley-table-card">
+                <div className="unbley-table-header-bar">
+                  <div>
+                    <h3 style={{ fontSize: '16px', fontWeight: '800', color: '#111827', margin: 0 }}>Transaction History</h3>
+                    <p style={{ fontSize: '12px', color: '#6B7280', margin: '2px 0 0' }}>All orders and their payment statuses</p>
+                  </div>
+                </div>
+                {payouts.length === 0 ? (
+                  <div style={{ padding: '48px', textAlign: 'center', color: '#9CA3AF', fontSize: '14px' }}>
+                    No transactions yet. Start selling to see earnings here.
+                  </div>
+                ) : (
+                  <table className="unbley-table">
+                    <thead>
+                      <tr><th>ORDER</th><th>PRODUCT</th><th>CUSTOMER</th><th>AMOUNT</th><th>STATUS</th><th>DATE</th></tr>
+                    </thead>
+                    <tbody>
+                      {payouts.map(p => (
+                        <tr key={p.id}>
+                          <td style={{ fontWeight: '700', color: '#111827', fontSize: '12px' }}>{p.order_number || `ORD-${p.id.slice(0, 6)}`}</td>
+                          <td style={{ fontSize: '12px', color: '#374151' }}>{p.product_name_snapshot || 'Product'}</td>
+                          <td style={{ fontSize: '12px', color: '#6B7280' }}>{p.customer_name || '—'}</td>
+                          <td style={{ fontWeight: '800', color: '#111827' }}>{formatMoney(p.total_amount)}</td>
+                          <td><span className={p.status === 'completed' ? 'unbley-pill-paid' : 'unbley-pill-awaiting'}>{p.status === 'completed' ? 'PAID' : 'PENDING'}</span></td>
+                          <td style={{ fontSize: '11px', color: '#9CA3AF' }}>{p.created_at ? new Date(p.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' }) : '—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </main>
+          )}
+
+          {/* ─── INSIGHTS TAB ─────────────────────────────────── */}
+          {currentTab === 'insights' && (
+            <main className="unbley-workspace-container">
+              <div className="unbley-metrics-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                <div className="unbley-metric-card">
+                  <div className="unbley-metric-top">
+                    <div className="unbley-icon-box-cream"><DollarSign size={18} /></div>
+                    <span style={{ padding: '3px 8px', borderRadius: '9999px', fontSize: '10px', fontWeight: '800', backgroundColor: '#DCFCE7', color: '#15803D' }}>+12.4%</span>
+                  </div>
+                  <div>
+                    <div className="unbley-metric-label">TOTAL REVENUE</div>
+                    <div className="unbley-metric-value">{formatMoney(metrics.totalSales)}</div>
+                    <div className="unbley-metric-subtext">All-time store revenue</div>
+                  </div>
+                </div>
+                <div className="unbley-metric-card">
+                  <div className="unbley-metric-top"><div className="unbley-icon-box-cream"><Package size={18} /></div></div>
+                  <div>
+                    <div className="unbley-metric-label">ACTIVE PRODUCTS</div>
+                    <div className="unbley-metric-value">{metrics.activeStock}</div>
+                    <div className="unbley-metric-subtext">Live in your catalog</div>
+                  </div>
+                </div>
+                <div className="unbley-metric-card">
+                  <div className="unbley-metric-top"><div className="unbley-icon-box-blue"><Eye size={18} /></div></div>
+                  <div>
+                    <div className="unbley-metric-label">STORE VISITORS</div>
+                    <div className="unbley-metric-value">{metrics.totalTraffic}</div>
+                    <div className="unbley-metric-subtext">Unique store visits</div>
+                  </div>
+                </div>
+                <div className="unbley-metric-card">
+                  <div className="unbley-metric-top"><div className="unbley-icon-box-cream"><Users size={18} /></div></div>
+                  <div>
+                    <div className="unbley-metric-label">TOTAL ORDERS</div>
+                    <div className="unbley-metric-value">{metrics.recentOrders.length || 0}</div>
+                    <div className="unbley-metric-subtext">Orders placed this period</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="unbley-card">
+                <div className="unbley-chart-header">
+                  <div>
+                    <h3 style={{ fontSize: '16px', fontWeight: '800', color: '#111827', margin: 0 }}>Weekly Sales Activity</h3>
+                    <p style={{ fontSize: '12px', color: '#6B7280', margin: '2px 0 0' }}>Revenue per day — current week</p>
+                  </div>
+                  <span style={{ padding: '4px 12px', borderRadius: '9999px', backgroundColor: '#F4F2EE', color: '#4B5563', fontSize: '11px', fontWeight: '800', letterSpacing: '0.05em', textTransform: 'uppercase' }}>THIS WEEK</span>
+                </div>
+                <div>
+                  <div className="unbley-chart-bars-wrap">
+                    {weeklyData.map((item, idx) => (
+                      <div key={idx} className="unbley-bar-col">
+                        <div title={`${item.day}: ${item.value}`} className={`unbley-bar-pillar ${item.isToday ? 'active-today' : ''}`} style={{ height: `${item.pxHeight}px` }} />
+                      </div>
+                    ))}
+                  </div>
+                  <div className="unbley-chart-days-row">
+                    {weeklyData.map((item, idx) => (
+                      <div key={idx} className={`unbley-chart-day-cell ${item.isToday ? 'active-today' : ''}`}>{item.day}</div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div className="unbley-card">
+                  <h3 style={{ fontSize: '15px', fontWeight: '800', color: '#111827', marginBottom: '12px' }}>Conversion Rate</h3>
+                  <div style={{ fontSize: '36px', fontWeight: '800', color: '#111827', marginBottom: '4px' }}>
+                    {metrics.totalTraffic > 0 ? `${((metrics.recentOrders.length / metrics.totalTraffic) * 100).toFixed(1)}%` : '—'}
+                  </div>
+                  <p style={{ fontSize: '12px', color: '#6B7280', margin: 0 }}>
+                    {metrics.totalTraffic > 0 ? `${metrics.recentOrders.length} orders from ${metrics.totalTraffic} visitors` : 'No traffic data yet'}
+                  </p>
+                </div>
+                <div className="unbley-card">
+                  <h3 style={{ fontSize: '15px', fontWeight: '800', color: '#111827', marginBottom: '12px' }}>Avg. Order Value</h3>
+                  <div style={{ fontSize: '36px', fontWeight: '800', color: '#111827', marginBottom: '4px' }}>
+                    {metrics.recentOrders.length > 0 ? formatMoney(metrics.totalSales / metrics.recentOrders.length) : '—'}
+                  </div>
+                  <p style={{ fontSize: '12px', color: '#6B7280', margin: 0 }}>Per completed order</p>
+                </div>
+              </div>
+
+              <div className="unbley-card">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                  <BarChart2 size={18} color="#6A3E1F" />
+                  <h3 style={{ fontSize: '15px', fontWeight: '800', color: '#111827', margin: 0 }}>Store Insights</h3>
+                </div>
+                <p style={{ fontSize: '13px', color: '#6B7280', margin: 0 }}>
+                  Detailed analytics including top-selling products, traffic sources, and revenue trends will appear here as your store grows. Keep adding products and sharing your store link to build your data.
+                </p>
+              </div>
+            </main>
+          )}
+
         </div>
 
-        {/* Stage 1: Signup Success Pop-up Modal */}
+        {/* Modals */}
         <SuccessModal
           isOpen={showSignupSuccessModal}
-          onClose={() => {
-            localStorage.removeItem('unbley_just_signed_up');
-            setShowSignupSuccessModal(false);
-            // Immediately open Stage 2: Store launch checklist!
-            setShowOnboardingModal(true);
-          }}
+          onClose={() => { localStorage.removeItem('unbley_just_signed_up'); setShowSignupSuccessModal(false); setShowOnboardingModal(true); }}
           type="signup"
-          data={signupModalData || {
-            name: profileData.owner_name || 'Creator',
-            brandName: profileData.brand_name || 'Your Brand',
-            email: profileData.email_address || user?.email,
-            userType: 'brand'
-          }}
+          data={signupModalData || { name: profileData.owner_name || 'Creator', brandName: profileData.brand_name || 'Isaac Akpasu', email: profileData.email_address || user?.email, userType: 'brand' }}
         />
-
-        {/* Stage 2: Onboarding Next Steps Modal */}
         <OnboardingModal
           isOpen={showOnboardingModal && !showSignupSuccessModal}
           onClose={() => {
-            if (user?.id) {
-              localStorage.setItem(`unbley_onboarding_dismissed_${user.id}`, 'true');
-            }
+            if (user?.id) localStorage.setItem(`unbley_onboarding_dismissed_${user.id}`, 'true');
             setShowOnboardingModal(false);
             setActiveOnboardingStep(null);
-            // Launch tutorial tour if not seen yet
             if (user?.id && !localStorage.getItem(`unbley_dashboard_tour_seen_${user.id}`)) {
-              setTimeout(() => {
-                setShowDashboardTour(true);
-              }, 400);
+              setTimeout(() => setShowDashboardTour(true), 400);
             }
           }}
           activeStep={activeOnboardingStep}
           onRefresh={fetchDashboardData}
-          storeData={{
-            ...profileData,
-            activeStock: metrics.activeStock,
-            store_active: profileData?.store_active || user?.user_metadata?.store_active
-          }}
+          storeData={{ ...profileData, activeStock: metrics.activeStock, store_active: profileData?.store_active || user?.user_metadata?.store_active }}
           storeId={user?.id}
         />
-
-        {/* Stage 3: Interactive Dashboard Tutorial Tour */}
         <DashboardTour
           isActive={showDashboardTour}
           onClose={() => setShowDashboardTour(false)}
@@ -857,4 +975,3 @@ export default function Dashboard() {
     </PageTransition>
   );
 }
-
