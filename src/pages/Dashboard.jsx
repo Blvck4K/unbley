@@ -32,6 +32,7 @@ import PageTransition from '../components/PageTransition';
 import SuccessModal from '../components/SuccessModal';
 import OnboardingModal from '../components/OnboardingModal';
 import DashboardTour from '../components/DashboardTour';
+import ProductsModal from '../components/onboarding/ProductsModal';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -45,6 +46,8 @@ export default function Dashboard() {
   const [activeOnboardingStep, setActiveOnboardingStep] = useState(null);
   const [showDashboardTour, setShowDashboardTour] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [showEditProductModal, setShowEditProductModal] = useState(false);
 
   const [profileData, setProfileData] = useState({
     brand_name: 'Isaac Akpasu',
@@ -356,8 +359,8 @@ export default function Dashboard() {
                   {tabSubtitles[currentTab] || "Welcome back, here is your store's performance today."}
                 </p>
 
-                {/* Live onboarding progress bar in header */}
-                {completedSteps < totalSteps && currentTab === 'overview' && (
+                {/* Live onboarding progress bar in header — hidden once 100% */}
+                {progressPct < 100 && completedSteps < totalSteps && currentTab === 'overview' && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '8px' }}>
                     <div style={{ width: '140px', height: '5px', backgroundColor: '#EAE6DF', borderRadius: '99px', overflow: 'hidden' }}>
                       <div style={{ width: `${progressPct}%`, height: '100%', backgroundColor: '#6A3E1F', borderRadius: '99px', transition: 'width 0.5s ease' }} />
@@ -423,92 +426,94 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Setup Guide Card — LIVE */}
-              <div id="tour-setup-meter" className="unbley-card">
-                <div className="unbley-setup-header">
-                  <div className="unbley-setup-title-box">
-                    <div className="unbley-info-icon-circle"><Info size={16} /></div>
-                    <div>
-                      <h3 className="unbley-setup-h3">Get Your Store Ready for Buyers</h3>
-                      <p className="unbley-setup-p">Complete these simple steps to help customers find and buy your products easily.</p>
+              {/* Setup Guide Card — hidden once 100% complete */}
+              {progressPct < 100 && (
+                <div id="tour-setup-meter" className="unbley-card">
+                  <div className="unbley-setup-header">
+                    <div className="unbley-setup-title-box">
+                      <div className="unbley-info-icon-circle"><Info size={16} /></div>
+                      <div>
+                        <h3 className="unbley-setup-h3">Get Your Store Ready for Buyers</h3>
+                        <p className="unbley-setup-p">Complete these simple steps to help customers find and buy your products easily.</p>
+                      </div>
+                    </div>
+                    <div className="unbley-completion-pill">
+                      {completedSteps} OF {totalSteps} COMPLETED ({progressPct}%)
                     </div>
                   </div>
-                  <div className="unbley-completion-pill">
-                    {completedSteps} OF {totalSteps} COMPLETED ({progressPct}%)
+                  <div>
+                    <div className="unbley-progress-row">
+                      <span>Setup Progress</span>
+                      <span>{progressPct}% Complete</span>
+                    </div>
+                    <div className="unbley-progress-track">
+                      <div className="unbley-progress-fill" style={{ width: `${progressPct}%`, transition: 'width 0.5s ease' }} />
+                    </div>
+                  </div>
+                  <div className="unbley-step-cards-grid">
+                    {/* Step 1 */}
+                    <div className="unbley-step-card">
+                      <div>
+                        <div className="unbley-step-title-row">
+                          {isProductsDone ? <div className="unbley-check-circle"><Check size={11} strokeWidth={3} /></div> : <div className="unbley-num-circle">1</div>}
+                          <span className="unbley-step-name">1. Add First Products</span>
+                        </div>
+                        <p className="unbley-step-desc">
+                          {isProductsDone ? `${metrics.activeStock} product${metrics.activeStock !== 1 ? 's' : ''} listed in your catalog.` : 'Upload your first product to get started.'}
+                        </p>
+                      </div>
+                      <button onClick={() => { setActiveOnboardingStep('products'); setShowOnboardingModal(true); }} className={isProductsDone ? 'unbley-step-btn-done' : 'unbley-step-btn-share'}>
+                        {isProductsDone ? 'DONE' : 'ADD NOW'}
+                      </button>
+                    </div>
+                    {/* Step 2 */}
+                    <div className="unbley-step-card">
+                      <div>
+                        <div className="unbley-step-title-row">
+                          {isWalletDone ? <div className="unbley-check-circle"><Check size={11} strokeWidth={3} /></div> : <div className="unbley-num-circle">2</div>}
+                          <span className="unbley-step-name">2. Connect WhatsApp</span>
+                        </div>
+                        <p className="unbley-step-desc">
+                          {isWalletDone ? `Phone: ${profileData.phone_number} configured for orders.` : 'Add your WhatsApp number and bank details.'}
+                        </p>
+                      </div>
+                      <button onClick={() => { setActiveOnboardingStep('payment'); setShowOnboardingModal(true); }} className={isWalletDone ? 'unbley-step-btn-done' : 'unbley-step-btn-share'}>
+                        {isWalletDone ? 'DONE' : 'SET UP'}
+                      </button>
+                    </div>
+                    {/* Step 3 */}
+                    <div className="unbley-step-card">
+                      <div>
+                        <div className="unbley-step-title-row">
+                          {isShippingDone ? <div className="unbley-check-circle"><Check size={11} strokeWidth={3} /></div> : <div className="unbley-num-circle">3</div>}
+                          <span className="unbley-step-name">3. Set Delivery Fees</span>
+                        </div>
+                        <p className="unbley-step-desc">
+                          {isShippingDone ? `Delivery: ${profileData.delivery_duration} configured.` : 'Set your shipping rates for customers.'}
+                        </p>
+                      </div>
+                      <button onClick={() => { setActiveOnboardingStep('shipping'); setShowOnboardingModal(true); }} className={isShippingDone ? 'unbley-step-btn-done' : 'unbley-step-btn-share'}>
+                        {isShippingDone ? 'DONE' : 'SET UP'}
+                      </button>
+                    </div>
+                    {/* Step 4 */}
+                    <div className="unbley-step-card">
+                      <div>
+                        <div className="unbley-step-title-row">
+                          {isPlanDone ? <div className="unbley-check-circle"><Check size={11} strokeWidth={3} /></div> : <div className="unbley-num-circle">4</div>}
+                          <span className="unbley-step-name">4. Get a Subscription Plan</span>
+                        </div>
+                        <p className="unbley-step-desc">
+                          {isPlanDone ? 'Your store is active and live.' : 'Get 30% off and unlock exclusive Unbley features.'}
+                        </p>
+                      </div>
+                      <button onClick={() => { setActiveOnboardingStep('subscription'); setShowOnboardingModal(true); }} className={isPlanDone ? 'unbley-step-btn-done' : 'unbley-step-btn-share'}>
+                        {isPlanDone ? 'DONE' : 'View Plans'}
+                      </button>
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <div className="unbley-progress-row">
-                    <span>Setup Progress</span>
-                    <span>{progressPct}% Complete</span>
-                  </div>
-                  <div className="unbley-progress-track">
-                    <div className="unbley-progress-fill" style={{ width: `${progressPct}%`, transition: 'width 0.5s ease' }} />
-                  </div>
-                </div>
-                <div className="unbley-step-cards-grid">
-                  {/* Step 1 */}
-                  <div className="unbley-step-card">
-                    <div>
-                      <div className="unbley-step-title-row">
-                        {isProductsDone ? <div className="unbley-check-circle"><Check size={11} strokeWidth={3} /></div> : <div className="unbley-num-circle">1</div>}
-                        <span className="unbley-step-name">1. Add First Products</span>
-                      </div>
-                      <p className="unbley-step-desc">
-                        {isProductsDone ? `${metrics.activeStock} product${metrics.activeStock !== 1 ? 's' : ''} listed in your catalog.` : 'Upload your first product to get started.'}
-                      </p>
-                    </div>
-                    <button onClick={() => { setActiveOnboardingStep('products'); setShowOnboardingModal(true); }} className={isProductsDone ? 'unbley-step-btn-done' : 'unbley-step-btn-share'}>
-                      {isProductsDone ? 'DONE' : 'ADD NOW'}
-                    </button>
-                  </div>
-                  {/* Step 2 */}
-                  <div className="unbley-step-card">
-                    <div>
-                      <div className="unbley-step-title-row">
-                        {isWalletDone ? <div className="unbley-check-circle"><Check size={11} strokeWidth={3} /></div> : <div className="unbley-num-circle">2</div>}
-                        <span className="unbley-step-name">2. Connect WhatsApp</span>
-                      </div>
-                      <p className="unbley-step-desc">
-                        {isWalletDone ? `Phone: ${profileData.phone_number} configured for orders.` : 'Add your WhatsApp number and bank details.'}
-                      </p>
-                    </div>
-                    <button onClick={() => { setActiveOnboardingStep('payment'); setShowOnboardingModal(true); }} className={isWalletDone ? 'unbley-step-btn-done' : 'unbley-step-btn-share'}>
-                      {isWalletDone ? 'DONE' : 'SET UP'}
-                    </button>
-                  </div>
-                  {/* Step 3 */}
-                  <div className="unbley-step-card">
-                    <div>
-                      <div className="unbley-step-title-row">
-                        {isShippingDone ? <div className="unbley-check-circle"><Check size={11} strokeWidth={3} /></div> : <div className="unbley-num-circle">3</div>}
-                        <span className="unbley-step-name">3. Set Delivery Fees</span>
-                      </div>
-                      <p className="unbley-step-desc">
-                        {isShippingDone ? `Delivery: ${profileData.delivery_duration} configured.` : 'Set your shipping rates for customers.'}
-                      </p>
-                    </div>
-                    <button onClick={() => { setActiveOnboardingStep('shipping'); setShowOnboardingModal(true); }} className={isShippingDone ? 'unbley-step-btn-done' : 'unbley-step-btn-share'}>
-                      {isShippingDone ? 'DONE' : 'SET UP'}
-                    </button>
-                  </div>
-                  {/* Step 4 */}
-                  <div className="unbley-step-card">
-                    <div>
-                      <div className="unbley-step-title-row">
-                        {isPlanDone ? <div className="unbley-check-circle"><Check size={11} strokeWidth={3} /></div> : <div className="unbley-num-circle">4</div>}
-                        <span className="unbley-step-name">4. Get a Subscription Plan</span>
-                      </div>
-                      <p className="unbley-step-desc">
-                        {isPlanDone ? 'Your store is active and live.' : 'Get 30% off and unlock exclusive Unbley features.'}
-                      </p>
-                    </div>
-                    <button onClick={() => { setActiveOnboardingStep('subscription'); setShowOnboardingModal(true); }} className={isPlanDone ? 'unbley-step-btn-done' : 'unbley-step-btn-share'}>
-                      {isPlanDone ? 'DONE' : 'View Plans'}
-                    </button>
-                  </div>
-                </div>
-              </div>
+              )}
 
               {/* Metrics Row */}
               <div id="tour-stats-grid" className="unbley-metrics-grid">
@@ -543,7 +548,7 @@ export default function Dashboard() {
               {/* Two-column layout */}
               <div className="unbley-two-col-grid">
                 <div className="unbley-col-left">
-                  <div className="unbley-card">
+                  <div id="tour-weekly-chart" className="unbley-card">
                     <div className="unbley-chart-header">
                       <div>
                         <h3 style={{ fontSize: '16px', fontWeight: '800', color: '#111827', margin: 0 }}>Weekly Sales Activity</h3>
@@ -616,7 +621,7 @@ export default function Dashboard() {
                 </div>
 
                 <div className="unbley-col-right">
-                  <div className="unbley-card">
+                  <div id="tour-quick-actions" className="unbley-card">
                     <div style={{ marginBottom: '16px' }}>
                       <h3 style={{ fontSize: '16px', fontWeight: '800', color: '#111827', margin: 0 }}>Quick Actions</h3>
                       <p style={{ fontSize: '12px', color: '#6B7280', margin: '2px 0 0' }}>Common tasks for your store</p>
@@ -715,7 +720,7 @@ export default function Dashboard() {
                                 </div>
                               )}
                               <div>
-                                <div style={{ fontWeight: '700', color: '#111827', fontSize: '13px' }}>{p.name || 'Unnamed Product'}</div>
+                                <div style={{ fontWeight: '700', color: '#111827', fontSize: '13px' }}>{p.title || p.name || 'Unnamed Product'}</div>
                                 <div style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '1px' }}>{p.category || 'Uncategorized'}</div>
                               </div>
                             </div>
@@ -731,7 +736,14 @@ export default function Dashboard() {
                           </td>
                           <td>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'flex-end' }}>
-                              <button onClick={() => { setActiveOnboardingStep('products'); setShowOnboardingModal(true); }} title="Edit product" style={{ background: 'none', border: '1px solid #E5E7EB', borderRadius: '6px', padding: '5px 8px', cursor: 'pointer', color: '#6B7280', display: 'flex', alignItems: 'center' }}>
+                              <button
+                                onClick={() => {
+                                  setEditingProduct(p);
+                                  setShowEditProductModal(true);
+                                }}
+                                title="Edit product"
+                                style={{ background: 'none', border: '1px solid #E5E7EB', borderRadius: '6px', padding: '5px 8px', cursor: 'pointer', color: '#6B7280', display: 'flex', alignItems: 'center' }}
+                              >
                                 <Pencil size={13} />
                               </button>
                               <button onClick={() => handleDeleteProduct(p.id)} title="Delete product" style={{ background: 'none', border: '1px solid #FCA5A5', borderRadius: '6px', padding: '5px 8px', cursor: 'pointer', color: '#DC2626', display: 'flex', alignItems: 'center' }}>
@@ -970,6 +982,19 @@ export default function Dashboard() {
           onClose={() => setShowDashboardTour(false)}
           userId={user?.id}
           onSidebarToggle={(open) => setIsSidebarOpen(open)}
+          isStoreComplete={progressPct >= 100}
+        />
+        <ProductsModal
+          isOpen={showEditProductModal}
+          editProduct={editingProduct}
+          onClose={() => {
+            setShowEditProductModal(false);
+            setEditingProduct(null);
+          }}
+          onComplete={() => {
+            fetchProducts();
+            fetchDashboardData();
+          }}
         />
       </div>
     </PageTransition>

@@ -1,22 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Tag, AlertCircle, Upload } from 'lucide-react';
+import { X, Tag, AlertCircle, Upload, Pencil } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 
-export default function ProductsModal({ isOpen = false, onClose, onComplete }) {
+export default function ProductsModal({ isOpen = false, onClose, onComplete, editProduct = null }) {
   const { user } = useAuth();
+  const isEditMode = Boolean(editProduct);
+
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [error, setError] = useState(null);
   const fileInputRef = React.useRef(null);
-  const [formData, setFormData] = useState({
-    title: '',
-    price: '',
-    description: '',
-    image_url: ''
-  });
+
+  const emptyForm = { title: '', price: '', description: '', image_url: '' };
+
+  const [formData, setFormData] = useState(emptyForm);
+
+  // When editProduct changes (modal opened for a specific product), pre-fill the form
+  useEffect(() => {
+    if (editProduct) {
+      setFormData({
+        title: editProduct.title || editProduct.name || '',
+        price: editProduct.price !== undefined ? String(editProduct.price) : '',
+        description: editProduct.description || '',
+        image_url: editProduct.image_url || ''
+      });
+      setError(null);
+    } else {
+      setFormData(emptyForm);
+      setError(null);
+    }
+  }, [editProduct, isOpen]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -57,13 +73,11 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete }) {
         .from('brand-assets')
         .getPublicUrl(`products/${fileName}`);
 
-      // Update image URL without submitting form! User can now enter description and click Add Product themselves
       setFormData(prev => ({ ...prev, image_url: data.publicUrl }));
     } catch (err) {
       setError(err.message || 'Failed to upload image. Please try again.');
     } finally {
       setUploadingImage(false);
-      // Reset input value so same file could be selected again if needed
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -91,33 +105,42 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete }) {
 
     setLoading(true);
     try {
-      const { error: insertError } = await supabase
-        .from('products')
-        .insert([
-          {
-            brand_id: user.id,
+      if (isEditMode) {
+        // UPDATE existing product
+        const { error: updateError } = await supabase
+          .from('products')
+          .update({
             title: formData.title.trim(),
             price: parseFloat(formData.price) || 0,
             description: formData.description?.trim() || '',
-            image_url: formData.image_url || '',
-            status: 'active'
-          }
-        ]);
+            image_url: formData.image_url || ''
+          })
+          .eq('id', editProduct.id)
+          .eq('brand_id', user.id);
 
-      if (insertError) throw insertError;
+        if (updateError) throw updateError;
+      } else {
+        // INSERT new product
+        const { error: insertError } = await supabase
+          .from('products')
+          .insert([
+            {
+              brand_id: user.id,
+              title: formData.title.trim(),
+              price: parseFloat(formData.price) || 0,
+              description: formData.description?.trim() || '',
+              image_url: formData.image_url || '',
+              status: 'active'
+            }
+          ]);
 
-      // Reset form on success
-      setFormData({
-        title: '',
-        price: '',
-        description: '',
-        image_url: ''
-      });
+        if (insertError) throw insertError;
+      }
 
       onComplete?.();
       handleClose();
     } catch (err) {
-      setError(err.message || 'Failed to add product. Please try again.');
+      setError(err.message || `Failed to ${isEditMode ? 'update' : 'add'} product. Please try again.`);
     } finally {
       setLoading(false);
     }
@@ -125,16 +148,22 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete }) {
 
   const handleClose = () => {
     setError(null);
-    setFormData({
-      title: '',
-      price: '',
-      description: '',
-      image_url: ''
-    });
+    setFormData(emptyForm);
     onClose?.();
   };
 
   if (!isOpen) return null;
+
+  const inputStyle = {
+    width: '100%',
+    padding: '11px 14px',
+    border: '1px solid #D1D5DB',
+    borderRadius: '8px',
+    fontSize: '13.5px',
+    fontFamily: 'inherit',
+    boxSizing: 'border-box',
+    transition: 'all 0.15s ease'
+  };
 
   const modalContent = (
     <AnimatePresence>
@@ -197,15 +226,13 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete }) {
                 alignItems: 'center',
                 gap: '10px'
               }}>
-                <Tag size={22} color="#6A3E1F" />
-                Add New Product
+                {isEditMode ? <Pencil size={22} color="#6A3E1F" /> : <Tag size={22} color="#6A3E1F" />}
+                {isEditMode ? 'Edit Product' : 'Add New Product'}
               </h2>
-              <p style={{
-                fontSize: '13px',
-                color: '#6B7280',
-                margin: 0
-              }}>
-                Enter your product details, upload photos, write your description and submit.
+              <p style={{ fontSize: '13px', color: '#6B7280', margin: 0 }}>
+                {isEditMode
+                  ? 'Update your product details below and save when done.'
+                  : 'Enter your product details, upload photos, write your description and submit.'}
               </p>
             </div>
             <button
@@ -225,14 +252,8 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete }) {
                 flexShrink: 0,
                 transition: 'all 0.15s ease'
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#F3F4F6';
-                e.currentTarget.style.color = '#111827';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#F9FAFB';
-                e.currentTarget.style.color = '#6B7280';
-              }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#F3F4F6'; e.currentTarget.style.color = '#111827'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#F9FAFB'; e.currentTarget.style.color = '#6B7280'; }}
             >
               <X size={18} />
             </button>
@@ -252,21 +273,13 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete }) {
                 gap: '10px'
               }}>
                 <AlertCircle size={18} color="#DC2626" style={{ flexShrink: 0, marginTop: '2px' }} />
-                <p style={{
-                  fontSize: '13px',
-                  color: '#991B1B',
-                  margin: 0,
-                  fontWeight: '500'
-                }}>
-                  {error}
-                </p>
+                <p style={{ fontSize: '13px', color: '#991B1B', margin: 0, fontWeight: '500' }}>{error}</p>
               </div>
             )}
 
             <form
               onSubmit={handleSubmit}
               onKeyDown={(e) => {
-                // Prevent accidental form submission when pressing enter in single-line inputs
                 if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
                   e.preventDefault();
                 }
@@ -276,13 +289,7 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete }) {
               {/* Product Name & Price Row */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 140px', gap: '14px' }}>
                 <div>
-                  <label style={{
-                    display: 'block',
-                    fontSize: '13px',
-                    fontWeight: '600',
-                    color: '#111827',
-                    marginBottom: '6px'
-                  }}>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#111827', marginBottom: '6px' }}>
                     Product Name *
                   </label>
                   <input
@@ -292,35 +299,14 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete }) {
                     onChange={handleInputChange}
                     placeholder="e.g., Signature Trench Coat"
                     required
-                    style={{
-                      width: '100%',
-                      padding: '11px 14px',
-                      border: '1px solid #D1D5DB',
-                      borderRadius: '8px',
-                      fontSize: '13.5px',
-                      fontFamily: 'inherit',
-                      boxSizing: 'border-box',
-                      transition: 'all 0.15s ease'
-                    }}
-                    onFocus={(e) => {
-                      e.target.style.borderColor = '#6A3E1F';
-                      e.target.style.boxShadow = '0 0 0 3px rgba(106, 62, 31, 0.1)';
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.borderColor = '#D1D5DB';
-                      e.target.style.boxShadow = 'none';
-                    }}
+                    style={inputStyle}
+                    onFocus={(e) => { e.target.style.borderColor = '#6A3E1F'; e.target.style.boxShadow = '0 0 0 3px rgba(106, 62, 31, 0.1)'; }}
+                    onBlur={(e) => { e.target.style.borderColor = '#D1D5DB'; e.target.style.boxShadow = 'none'; }}
                   />
                 </div>
 
                 <div>
-                  <label style={{
-                    display: 'block',
-                    fontSize: '13px',
-                    fontWeight: '600',
-                    color: '#111827',
-                    marginBottom: '6px'
-                  }}>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#111827', marginBottom: '6px' }}>
                     Price (₦) *
                   </label>
                   <input
@@ -332,24 +318,9 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete }) {
                     step="any"
                     min="0"
                     required
-                    style={{
-                      width: '100%',
-                      padding: '11px 14px',
-                      border: '1px solid #D1D5DB',
-                      borderRadius: '8px',
-                      fontSize: '13.5px',
-                      fontFamily: 'inherit',
-                      boxSizing: 'border-box',
-                      transition: 'all 0.15s ease'
-                    }}
-                    onFocus={(e) => {
-                      e.target.style.borderColor = '#6A3E1F';
-                      e.target.style.boxShadow = '0 0 0 3px rgba(106, 62, 31, 0.1)';
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.borderColor = '#D1D5DB';
-                      e.target.style.boxShadow = 'none';
-                    }}
+                    style={inputStyle}
+                    onFocus={(e) => { e.target.style.borderColor = '#6A3E1F'; e.target.style.boxShadow = '0 0 0 3px rgba(106, 62, 31, 0.1)'; }}
+                    onBlur={(e) => { e.target.style.borderColor = '#D1D5DB'; e.target.style.boxShadow = 'none'; }}
                   />
                 </div>
               </div>
@@ -370,15 +341,7 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete }) {
                     <button
                       type="button"
                       onClick={handleRemoveImage}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#DC2626',
-                        fontSize: '12px',
-                        cursor: 'pointer',
-                        padding: '0',
-                        fontWeight: '600'
-                      }}
+                      style={{ background: 'none', border: 'none', color: '#DC2626', fontSize: '12px', cursor: 'pointer', padding: '0', fontWeight: '600' }}
                     >
                       Remove Image
                     </button>
@@ -407,18 +370,11 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete }) {
                     <img
                       src={formData.image_url}
                       alt="Product Preview"
-                      style={{
-                        width: '64px',
-                        height: '64px',
-                        objectFit: 'cover',
-                        borderRadius: '8px',
-                        border: '1px solid #E5E7EB',
-                        backgroundColor: '#FFFFFF'
-                      }}
+                      style={{ width: '64px', height: '64px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #E5E7EB', backgroundColor: '#FFFFFF' }}
                     />
                     <div style={{ flex: 1 }}>
                       <p style={{ margin: '0 0 4px 0', fontSize: '13px', fontWeight: '700', color: '#111827' }}>
-                        Image Uploaded Successfully
+                        {isEditMode ? 'Current Product Image' : 'Image Uploaded Successfully'}
                       </p>
                       <p style={{ margin: 0, fontSize: '12px', color: '#6B7280' }}>
                         Ready for display on your storefront
@@ -443,11 +399,7 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete }) {
                   </div>
                 ) : (
                   <div
-                    onClick={() => {
-                      if (!uploadingImage) {
-                        fileInputRef.current?.click();
-                      }
-                    }}
+                    onClick={() => { if (!uploadingImage) fileInputRef.current?.click(); }}
                     style={{
                       border: '2px dashed #D1D5DB',
                       borderRadius: '10px',
@@ -457,46 +409,23 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete }) {
                       backgroundColor: uploadingImage ? '#F9FAFB' : '#FAFAF9',
                       transition: 'all 0.15s ease'
                     }}
-                    onMouseEnter={(e) => {
-                      if (!uploadingImage) {
-                        e.currentTarget.style.borderColor = '#6A3E1F';
-                        e.currentTarget.style.backgroundColor = '#FFFBF8';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!uploadingImage) {
-                        e.currentTarget.style.borderColor = '#D1D5DB';
-                        e.currentTarget.style.backgroundColor = '#FAFAF9';
-                      }
-                    }}
+                    onMouseEnter={(e) => { if (!uploadingImage) { e.currentTarget.style.borderColor = '#6A3E1F'; e.currentTarget.style.backgroundColor = '#FFFBF8'; } }}
+                    onMouseLeave={(e) => { if (!uploadingImage) { e.currentTarget.style.borderColor = '#D1D5DB'; e.currentTarget.style.backgroundColor = '#FAFAF9'; } }}
                   >
                     {uploadingImage ? (
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                        <div style={{
-                          width: '24px',
-                          height: '24px',
-                          border: '3px solid #E5E7EB',
-                          borderTopColor: '#6A3E1F',
-                          borderRadius: '50%',
-                          animation: 'spin 1s linear infinite'
-                        }} />
+                        <div style={{ width: '24px', height: '24px', border: '3px solid #E5E7EB', borderTopColor: '#6A3E1F', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
                         <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
-                        <p style={{ fontSize: '13px', fontWeight: '600', color: '#111827', margin: 0 }}>
-                          Uploading image to storage...
-                        </p>
-                        <p style={{ fontSize: '12px', color: '#6B7280', margin: 0 }}>
-                          Your form will remain intact.
-                        </p>
+                        <p style={{ fontSize: '13px', fontWeight: '600', color: '#111827', margin: 0 }}>Uploading image to storage...</p>
+                        <p style={{ fontSize: '12px', color: '#6B7280', margin: 0 }}>Your form will remain intact.</p>
                       </div>
                     ) : (
                       <>
                         <Upload size={24} color="#6B7280" style={{ margin: '0 auto 8px' }} />
                         <p style={{ fontSize: '13px', fontWeight: '600', color: '#111827', margin: '4px 0 2px' }}>
-                          Click to upload product image
+                          {isEditMode ? 'Click to replace product image' : 'Click to upload product image'}
                         </p>
-                        <p style={{ fontSize: '12px', color: '#6B7280', margin: 0 }}>
-                          PNG, JPG, or WEBP up to 5MB
-                        </p>
+                        <p style={{ fontSize: '12px', color: '#6B7280', margin: 0 }}>PNG, JPG, or WEBP up to 5MB</p>
                       </>
                     )}
                   </div>
@@ -505,13 +434,7 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete }) {
 
               {/* Product Description */}
               <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '13px',
-                  fontWeight: '600',
-                  color: '#111827',
-                  marginBottom: '6px'
-                }}>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#111827', marginBottom: '6px' }}>
                   Product Description
                 </label>
                 <textarea
@@ -532,14 +455,8 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete }) {
                     resize: 'vertical',
                     transition: 'all 0.15s ease'
                   }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = '#6A3E1F';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(106, 62, 31, 0.1)';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = '#D1D5DB';
-                    e.target.style.boxShadow = 'none';
-                  }}
+                  onFocus={(e) => { e.target.style.borderColor = '#6A3E1F'; e.target.style.boxShadow = '0 0 0 3px rgba(106, 62, 31, 0.1)'; }}
+                  onBlur={(e) => { e.target.style.borderColor = '#D1D5DB'; e.target.style.boxShadow = 'none'; }}
                 />
               </div>
 
@@ -560,12 +477,8 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete }) {
                     cursor: 'pointer',
                     transition: 'all 0.15s ease'
                   }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#E5E7EB';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = '#F3F4F6';
-                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#E5E7EB'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#F3F4F6'; }}
                 >
                   Cancel
                 </button>
@@ -585,18 +498,14 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete }) {
                     transition: 'all 0.15s ease',
                     boxShadow: '0 2px 8px rgba(106, 62, 31, 0.2)'
                   }}
-                  onMouseEnter={(e) => {
-                    if (!loading && !uploadingImage && formData.title?.trim() && formData.price) {
-                      e.currentTarget.style.backgroundColor = '#5a3219';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!loading && !uploadingImage && formData.title?.trim() && formData.price) {
-                      e.currentTarget.style.backgroundColor = '#6A3E1F';
-                    }
-                  }}
+                  onMouseEnter={(e) => { if (!loading && !uploadingImage && formData.title?.trim() && formData.price) e.currentTarget.style.backgroundColor = '#5a3219'; }}
+                  onMouseLeave={(e) => { if (!loading && !uploadingImage && formData.title?.trim() && formData.price) e.currentTarget.style.backgroundColor = '#6A3E1F'; }}
                 >
-                  {loading ? 'Adding Product...' : uploadingImage ? 'Uploading Image...' : 'Add Product'}
+                  {loading
+                    ? (isEditMode ? 'Saving Changes...' : 'Adding Product...')
+                    : uploadingImage
+                    ? 'Uploading Image...'
+                    : (isEditMode ? 'Save Changes' : 'Add Product')}
                 </button>
               </div>
             </form>

@@ -1,19 +1,21 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ChevronRight, ChevronLeft, Check, Sparkles, Store, TrendingUp, Package, Edit as EditIcon, Compass, LayoutGrid, User, Settings } from 'lucide-react';
+import { X, ChevronRight, ChevronLeft, Check, Sparkles, Store, TrendingUp, Package, Edit as EditIcon, Compass, LayoutGrid, User, Settings, BarChart2, Zap } from 'lucide-react';
 
 export default function DashboardTour({
   isActive = false,
   onClose,
   userId = 'default',
-  onSidebarToggle
+  onSidebarToggle,
+  isStoreComplete = false
 }) {
   const [currentStep, setCurrentStep] = useState(0);
   const [targetRect, setTargetRect] = useState(null);
   const [placement, setPlacement] = useState('bottom');
 
-  const tourSteps = [
+  // Base steps always shown
+  const baseSteps = [
     {
       id: 'tour-nav-overview',
       fallbackId: 'tour-mobile-menu',
@@ -49,19 +51,25 @@ export default function DashboardTour({
       isSidebar: false,
       preferredPlacement: 'bottom'
     },
-    {
-      id: 'tour-setup-meter',
-      fallbackId: 'tour-launch-btn',
-      title: 'Store Setup Checklist',
-      description: 'Follow these milestones to launch: upload your logo, set payout bank details, configure shipping, add products, and activate your store.',
-      icon: Sparkles,
-      isSidebar: false,
-      preferredPlacement: 'bottom'
-    },
+  ];
+
+  // Step shown only when store setup is NOT yet complete
+  const setupStep = {
+    id: 'tour-setup-meter',
+    fallbackId: 'tour-launch-btn',
+    title: 'Store Setup Checklist',
+    description: 'Follow these milestones to launch: upload your logo, set payout bank details, configure shipping, add products, and activate your store.',
+    icon: Sparkles,
+    isSidebar: false,
+    preferredPlacement: 'bottom'
+  };
+
+  // Steps shown after the setup card (always visible)
+  const postSetupSteps = [
     {
       id: 'tour-brand-identity',
       title: 'Brand Profile & Domain',
-      description: 'Your brand name, primary contact details, and custom store link are displayed here so you always have direct access.',
+      description: 'Your brand name, primary contact details, and custom store link are always visible here so you have quick access.',
       icon: Compass,
       isSidebar: false,
       preferredPlacement: 'bottom'
@@ -75,14 +83,35 @@ export default function DashboardTour({
       preferredPlacement: 'top'
     },
     {
+      id: 'tour-weekly-chart',
+      title: 'Weekly Sales Activity Chart',
+      description: 'See a day-by-day breakdown of how much revenue your store generated this week. Hover over any bar to see the exact amount.',
+      icon: BarChart2,
+      isSidebar: false,
+      preferredPlacement: 'top'
+    },
+    {
       id: 'tour-orders-ledger',
       title: 'Recent Orders & Ledger',
       description: 'All customer purchases appear here in real time. Track order status, payment verification, and fulfill shipments easily.',
       icon: Package,
       isSidebar: false,
       preferredPlacement: 'top'
-    }
+    },
+    {
+      id: 'tour-quick-actions',
+      title: 'Quick Actions Panel',
+      description: 'Jump straight into adding products, recording a sale, or sharing your storefront link — all from this handy shortcuts panel.',
+      icon: Zap,
+      isSidebar: false,
+      preferredPlacement: 'top'
+    },
   ];
+
+  // Build tour dynamically based on store completion status
+  const tourSteps = isStoreComplete
+    ? [...baseSteps, ...postSetupSteps]
+    : [...baseSteps, setupStep, ...postSetupSteps];
 
   const currentTour = tourSteps[currentStep];
 
