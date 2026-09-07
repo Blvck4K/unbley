@@ -16,5 +16,21 @@ export default function ProtectedRoute({ children }) {
     return <Navigate to="/dashboard" replace />;
   }
 
+  const hasActiveSubscription = Boolean(
+    user?.store_active &&
+    user?.plan_ends_at &&
+    new Date(user.plan_ends_at) > new Date()
+  );
+  const hasActiveTrial = Boolean(
+    user?.store_active &&
+    user?.trial_ends_at &&
+    new Date(user.trial_ends_at) > new Date()
+  );
+  const isActivationRoute = location.pathname === '/activation' || location.pathname === '/finalize-activation';
+
+  if (!isAdmin && !hasActiveSubscription && !hasActiveTrial && !isActivationRoute) {
+    return <Navigate to="/activation" replace />;
+  }
+
   return children;
 }

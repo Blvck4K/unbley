@@ -5,6 +5,7 @@ import { supabase, signInWithGoogle } from '../lib/supabase';
 import PageTransition from '../components/PageTransition';
 import { motion, AnimatePresence } from 'framer-motion';
 import SuccessModal from '../components/SuccessModal';
+import logoImg from '../assets/logogo.png';
 
 export default function Auth() {
   const [authMode, setAuthMode] = useState('signup'); // 'signin' | 'signup'
@@ -104,19 +105,19 @@ export default function Auth() {
   const brandColor = '#6A3E1F';
 
   const s = {
-    page: { backgroundColor: '#FFFFFF', color: '#221510', minHeight: '100vh', display: 'flex', fontFamily: '"Inter", sans-serif' },
-    sidebar: { width: '280px', borderRight: '1px solid #EAE3D9', backgroundColor: '#FBF9F5', padding: '60px 40px', display: 'flex', flexDirection: 'column' },
-    main: { flex: 1, padding: '80px', display: 'flex', justifyContent: 'center' },
-    content: { maxWidth: '580px', width: '100%' },
-    title: { fontFamily: 'var(--font-heading)', fontSize: '42px', fontWeight: '800', color: '#221510', marginBottom: '16px', letterSpacing: '-0.03em' },
-    subtitle: { color: '#6B584C', fontSize: '14px', lineHeight: '1.6', marginBottom: '64px' },
-    sectionLabel: { fontSize: '11px', fontWeight: '700', letterSpacing: '0.1em', color: brandColor, marginTop: '48px', marginBottom: '32px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '8px' },
-    inputGroup: { marginBottom: '32px' },
+    page: { backgroundColor: '#FAF9F6', color: '#111827', minHeight: '100vh', display: 'flex', fontFamily: '"Inter", sans-serif' },
+    sidebar: { width: '280px', borderRight: '1px solid #EAE6DF', backgroundColor: '#FFFFFF', padding: '48px 32px', display: 'flex', flexDirection: 'column' },
+    main: { flex: 1, padding: '48px 56px', display: 'flex', justifyContent: 'center', backgroundColor: '#FAF9F6' },
+    content: { maxWidth: '620px', width: '100%' },
+    title: { fontFamily: 'var(--font-heading)', fontSize: '36px', fontWeight: '800', color: '#111827', marginBottom: '12px', letterSpacing: '-0.02em' },
+    subtitle: { color: '#6B7280', fontSize: '13px', lineHeight: '1.6', marginBottom: '48px' },
+    sectionLabel: { fontSize: '10px', fontWeight: '800', letterSpacing: '0.1em', color: '#9A7252', marginTop: '36px', marginBottom: '24px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '8px' },
+    inputGroup: { marginBottom: '24px' },
     label: { display: 'block', fontSize: '10px', fontWeight: '700', letterSpacing: '0.08em', color: '#6B584C', textTransform: 'uppercase', marginBottom: '12px' },
-    input: { width: '100%', backgroundColor: 'transparent', border: 'none', borderBottom: '1px solid #DFCFC2', padding: '4px 0 16px', color: '#221510', fontSize: '14px', outline: 'none', transition: 'border-color 0.2s', '&:focus': { borderBottom: `1px solid ${brandColor}` } },
-    button: { width: '100%', padding: '16px', backgroundColor: brandColor, color: '#FFFFFF', fontSize: '12px', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase', border: 'none', cursor: 'pointer', marginTop: '48px', borderRadius: '4px', transition: 'background-color 0.2s' },
-    toggleGroup: { display: 'flex', gap: '32px', marginBottom: '64px', borderBottom: '1px solid #EAE3D9' },
-    toggleButton: (isActive) => ({ padding: '12px 0', border: 'none', background: 'transparent', color: isActive ? '#221510' : '#8D5B36', fontSize: '12px', fontWeight: '600', letterSpacing: '0.05em', textTransform: 'uppercase', borderBottom: isActive ? `2px solid ${brandColor}` : '2px solid transparent', cursor: 'pointer', marginBottom: '-1px', transition: 'all 0.2s' })
+    input: { width: '100%', backgroundColor: '#FAFAF9', border: '1px solid #EAE6DF', borderRadius: '8px', padding: '12px 14px', color: '#111827', fontSize: '13px', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.2s, box-shadow 0.2s' },
+    button: { width: '100%', padding: '14px 16px', backgroundColor: '#111827', color: '#FFFFFF', fontSize: '12px', fontWeight: '800', letterSpacing: '0.08em', textTransform: 'uppercase', border: 'none', cursor: 'pointer', marginTop: '32px', borderRadius: '8px', transition: 'background-color 0.2s' },
+    toggleGroup: { display: 'flex', gap: '28px', marginBottom: '24px', borderBottom: '1px solid #EAE6DF' },
+    toggleButton: (isActive) => ({ padding: '11px 0', border: 'none', background: 'transparent', color: isActive ? '#111827' : '#9A7252', fontSize: '11px', fontWeight: '800', letterSpacing: '0.05em', textTransform: 'uppercase', borderBottom: isActive ? `2px solid ${brandColor}` : '2px solid transparent', cursor: 'pointer', marginBottom: '-1px', transition: 'all 0.2s' })
   };
 
   return (
@@ -160,6 +161,15 @@ export default function Auth() {
             .auth-quote-box { display: none !important; }
             .auth-mobile-header { display: flex !important; }
             .auth-mobile-logo { display: none !important; }
+            .auth-form-card { padding: 28px 22px !important; }
+          }
+
+          .auth-form-card {
+            background: #FFFFFF;
+            border: 1px solid #EAE6DF;
+            border-radius: 12px;
+            padding: 36px 40px;
+            box-shadow: 0 8px 24px rgba(34, 21, 16, 0.06);
           }
         `}</style>
 
@@ -177,8 +187,11 @@ export default function Auth() {
             </Link>
           </div>
 
-          <div style={{ fontFamily: 'var(--font-heading)', fontSize: '24px', letterSpacing: '-0.02em', fontWeight: '800', color: brandColor, marginBottom: '60px', textTransform: 'none' }}>
-            Unbley.
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '60px' }}>
+            <img src={logoImg} alt="Unbley logo" style={{ width: '40px', height: '40px', objectFit: 'contain' }} />
+            <span style={{ fontFamily: 'var(--font-heading)', fontSize: '24px', letterSpacing: '-0.02em', fontWeight: '800', color: brandColor, textTransform: 'none' }}>
+              Unbley.
+            </span>
           </div>
 
           <div style={{ flex: 1 }}>
@@ -222,7 +235,7 @@ export default function Auth() {
               <button type="button" style={s.toggleButton(authMode === 'signup')} onClick={() => setAuthMode('signup')}>GAIN ACCESS</button>
             </div>
 
-            <form onSubmit={handleAuth}>
+            <form onSubmit={handleAuth} className="auth-form-card">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={authMode}

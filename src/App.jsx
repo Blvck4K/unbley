@@ -31,6 +31,7 @@ const AllBlog = lazy(() => import('./pages/AllBlog'));
 const Blog = lazy(() => import('./pages/Blog'));
 const AdminBlog = lazy(() => import('./pages/AdminBlog'));
 const FillBlog = lazy(() => import('./pages/FillBlog'));
+const AdminPayments = lazy(() => import('./pages/AdminPayments'));
 const About = lazy(() => import('./pages/About'));
 const Contact = lazy(() => import('./pages/Contact'));
 const Support = lazy(() => import('./pages/Support'));
@@ -79,6 +80,7 @@ function App() {
                 <Route path="/shopify-alternative" element={<ShopifyAlternative />} />
                 <Route path="/affordable-ecommerce-platform" element={<AffordableEcommerce />} />
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                <Route path="/admin/payments" element={<ProtectedRoute><AdminPayments /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                 <Route path="/edit" element={<ProtectedRoute><Edit /></ProtectedRoute>} />
                 <Route path="/support" element={<ProtectedRoute><Support /></ProtectedRoute>} />

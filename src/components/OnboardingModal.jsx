@@ -25,7 +25,7 @@ export default function OnboardingModal({ isOpen = true, onClose, storeData = {}
     try {
       const { data } = await supabase
         .from('brand_profiles')
-        .select('brand_name, logo_url, phone_number, bank_name, account_number, account_name, bank_code, delivery_duration, store_active, is_active, trial_ends_at, country, address_line_1')
+        .select('brand_name, logo_url, phone_number, bank_name, account_number, account_name, bank_code, delivery_duration, store_active, is_active, country, address_line_1')
         .eq('id', user.id)
         .single();
       if (data) {
@@ -41,7 +41,7 @@ export default function OnboardingModal({ isOpen = true, onClose, storeData = {}
           country: data.country || '',
           address_line_1: data.address_line_1 || '',
           store_active: data.store_active || data.is_active || false,
-          trial_ends_at: data.trial_ends_at || null
+          trial_ends_at: user?.user_metadata?.trial_ends_at || null
         });
       }
       const { count } = await supabase

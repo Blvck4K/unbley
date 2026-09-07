@@ -7,7 +7,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 
 export default function SubscriptionPlanModal({ isOpen = false, onClose, onComplete }) {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -98,29 +98,17 @@ export default function SubscriptionPlanModal({ isOpen = false, onClose, onCompl
         updated_at: new Date().toISOString()
       };
 
-      // 1. Attempt upsert with all extended trial fields
-      let { error: dbErr } = await supabase
+      const { error: dbErr } = await supabase
         .from('brand_profiles')
-        .upsert({
-          ...basePayload,
-          trial_ends_at: trialEndsAt,
-          last_transaction_id: trialRef
-        }, { onConflict: 'id' });
+        .upsert(basePayload, { onConflict: 'id' });
 
-      // 2. Fallback: If last_transaction_id or trial_ends_at do not exist in DB schema
-      if (dbErr) {
-        console.warn("Extended trial columns missing in DB, activating store with core fields:", dbErr.message);
-        const fallbackRes = await supabase
-          .from('brand_profiles')
-          .upsert(basePayload, { onConflict: 'id' });
-
-        if (fallbackRes.error) throw fallbackRes.error;
-      }
+      if (dbErr) throw dbErr;
 
       // 3. Update auth metadata so UI immediately treats store as active
       await supabase.auth.updateUser({
-        data: { store_active: true, trial_ends_at: trialEndsAt }
+        data: { store_active: true, trial_ends_at: trialEndsAt, trial_used: true }
       });
+      await refreshUser?.();
 
       onComplete?.();
       handleClose();

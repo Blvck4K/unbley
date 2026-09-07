@@ -5,6 +5,8 @@ import { createPortal } from 'react-dom';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 
+const createEmptyForm = () => ({ title: '', price: '', description: '', image_urls: ['', '', '', '', ''] });
+
 export default function ProductsModal({ isOpen = false, onClose, onComplete, editProduct = null }) {
   const { user } = useAuth();
   const isEditMode = Boolean(editProduct);
@@ -12,24 +14,29 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete, edi
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [error, setError] = useState(null);
-  const fileInputRef = React.useRef(null);
+  const fileInputRefs = React.useRef(Array(5).fill(null).map(() => React.createRef()));
 
-  const emptyForm = { title: '', price: '', description: '', image_url: '' };
-
-  const [formData, setFormData] = useState(emptyForm);
+  const [formData, setFormData] = useState(createEmptyForm);
 
   // When editProduct changes (modal opened for a specific product), pre-fill the form
   useEffect(() => {
     if (editProduct) {
+      const imageUrlsArray = ['', '', '', '', ''];
+      if (editProduct.image_url) {
+        const urls = editProduct.image_url.split(',').map(url => url.trim()).filter(url => url);
+        urls.forEach((url, idx) => {
+          if (idx < 5) imageUrlsArray[idx] = url;
+        });
+      }
       setFormData({
         title: editProduct.title || editProduct.name || '',
         price: editProduct.price !== undefined ? String(editProduct.price) : '',
         description: editProduct.description || '',
-        image_url: editProduct.image_url || ''
+        image_urls: imageUrlsArray
       });
       setError(null);
     } else {
-      setFormData(emptyForm);
+      setFormData(createEmptyForm());
       setError(null);
     }
   }, [editProduct, isOpen]);
@@ -40,7 +47,7 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete, edi
     setError(null);
   };
 
-  const handleImageUpload = async (e) => {
+  const handleImageUpload = async (e, slotIndex) => {
     e.preventDefault();
     e.stopPropagation();
     const file = e.target.files?.[0];
@@ -61,7 +68,7 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete, edi
 
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}-product-${Date.now()}.${fileExt}`;
+      const fileName = `${user.id}-product-${Date.now()}-${slotIndex}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('brand-assets')
@@ -73,21 +80,29 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete, edi
         .from('brand-assets')
         .getPublicUrl(`products/${fileName}`);
 
-      setFormData(prev => ({ ...prev, image_url: data.publicUrl }));
+      setFormData(prev => {
+        const newUrls = [...prev.image_urls];
+        newUrls[slotIndex] = data.publicUrl;
+        return { ...prev, image_urls: newUrls };
+      });
     } catch (err) {
       setError(err.message || 'Failed to upload image. Please try again.');
     } finally {
       setUploadingImage(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+      if (fileInputRefs.current[slotIndex]) {
+        fileInputRefs.current[slotIndex].value = '';
       }
     }
   };
 
-  const handleRemoveImage = (e) => {
+  const handleRemoveImage = (e, slotIndex) => {
     e.preventDefault();
     e.stopPropagation();
-    setFormData(prev => ({ ...prev, image_url: '' }));
+    setFormData(prev => {
+      const newUrls = [...prev.image_urls];
+      newUrls[slotIndex] = '';
+      return { ...prev, image_urls: newUrls };
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -105,6 +120,9 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete, edi
 
     setLoading(true);
     try {
+      // Join image URLs - first is cover, rest are comma-separated extras
+      const image_url = formData.image_urls.filter(url => url).join(',');
+
       if (isEditMode) {
         // UPDATE existing product
         const { error: updateError } = await supabase
@@ -113,7 +131,7 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete, edi
             title: formData.title.trim(),
             price: parseFloat(formData.price) || 0,
             description: formData.description?.trim() || '',
-            image_url: formData.image_url || ''
+            image_url: image_url
           })
           .eq('id', editProduct.id)
           .eq('brand_id', user.id);
@@ -129,7 +147,7 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete, edi
               title: formData.title.trim(),
               price: parseFloat(formData.price) || 0,
               description: formData.description?.trim() || '',
-              image_url: formData.image_url || '',
+              image_url: image_url,
               status: 'active'
             }
           ]);
@@ -148,7 +166,7 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete, edi
 
   const handleClose = () => {
     setError(null);
-    setFormData(emptyForm);
+    setFormData(createEmptyForm());
     onClose?.();
   };
 
@@ -325,111 +343,141 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete, edi
                 </div>
               </div>
 
-              {/* Product Image Section */}
+              {/* Product Images Grid */}
               <div>
-                <label style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  fontSize: '13px',
-                  fontWeight: '600',
-                  color: '#111827',
-                  marginBottom: '8px'
-                }}>
-                  <span>Product Image</span>
-                  {formData.image_url && (
-                    <button
-                      type="button"
-                      onClick={handleRemoveImage}
-                      style={{ background: 'none', border: 'none', color: '#DC2626', fontSize: '12px', cursor: 'pointer', padding: '0', fontWeight: '600' }}
-                    >
-                      Remove Image
-                    </button>
-                  )}
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#111827', marginBottom: '8px' }}>
+                  Product Images (up to 5)
                 </label>
-
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/png, image/jpeg, image/webp"
-                  onChange={handleImageUpload}
-                  style={{ display: 'none' }}
-                  id="product-photo-upload-input"
-                />
-
-                {formData.image_url ? (
-                  <div style={{
-                    border: '1px solid #EAE3D9',
-                    borderRadius: '10px',
-                    padding: '12px 16px',
-                    backgroundColor: '#FAFAF9',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '16px'
-                  }}>
-                    <img
-                      src={formData.image_url}
-                      alt="Product Preview"
-                      style={{ width: '64px', height: '64px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #E5E7EB', backgroundColor: '#FFFFFF' }}
-                    />
-                    <div style={{ flex: 1 }}>
-                      <p style={{ margin: '0 0 4px 0', fontSize: '13px', fontWeight: '700', color: '#111827' }}>
-                        {isEditMode ? 'Current Product Image' : 'Image Uploaded Successfully'}
-                      </p>
-                      <p style={{ margin: 0, fontSize: '12px', color: '#6B7280' }}>
-                        Ready for display on your storefront
-                      </p>
+                <p style={{ fontSize: '12px', color: '#6B7280', margin: '0 0 12px 0' }}>First image will be the cover photo</p>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px' }}>
+                  {formData.image_urls.map((imageUrl, idx) => (
+                    <div key={idx}>
+                      <input
+                        ref={el => fileInputRefs.current[idx] = el}
+                        type="file"
+                        accept="image/png, image/jpeg, image/webp"
+                        onChange={(e) => handleImageUpload(e, idx)}
+                        style={{ display: 'none' }}
+                      />
+                      
+                      {imageUrl ? (
+                        <div
+                          style={{
+                            position: 'relative',
+                            width: '100%',
+                            paddingBottom: '100%',
+                            backgroundColor: '#FAFAF9',
+                            borderRadius: '10px',
+                            border: '1px solid #EAE3D9',
+                            overflow: 'hidden',
+                            cursor: 'pointer'
+                          }}
+                          onClick={() => fileInputRefs.current[idx]?.click()}
+                        >
+                          <img
+                            src={imageUrl}
+                            alt={`Product ${idx + 1}`}
+                            style={{
+                              position: 'absolute',
+                              top: 0,
+                              left: 0,
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover'
+                            }}
+                          />
+                          <div
+                            style={{
+                              position: 'absolute',
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              bottom: 0,
+                              backgroundColor: 'rgba(0,0,0,0)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              opacity: 0,
+                              transition: 'opacity 0.2s',
+                              cursor: 'pointer'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+                            onMouseLeave={(e) => e.currentTarget.style.opacity = '0'}
+                            className="image-overlay"
+                          >
+                            <div style={{ backgroundColor: 'rgba(0,0,0,0.7)', padding: '8px', borderRadius: '6px', textAlign: 'center', color: 'white', fontSize: '11px', fontWeight: '600' }}>
+                              Click to change
+                            </div>
+                          </div>
+                          {idx === 0 && (
+                            <div style={{
+                              position: 'absolute',
+                              top: '4px',
+                              right: '4px',
+                              backgroundColor: '#6A3E1F',
+                              color: 'white',
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                              fontSize: '10px',
+                              fontWeight: '700'
+                            }}>
+                              COVER
+                            </div>
+                          )}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveImage(e, idx);
+                            }}
+                            style={{
+                              position: 'absolute',
+                              bottom: '4px',
+                              left: '4px',
+                              backgroundColor: 'rgba(220, 38, 38, 0.9)',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              padding: '4px 8px',
+                              fontSize: '10px',
+                              fontWeight: '600',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ) : (
+                        <div
+                          onClick={() => fileInputRefs.current[idx]?.click()}
+                          style={{
+                            position: 'relative',
+                            width: '100%',
+                            paddingBottom: '100%',
+                            backgroundColor: '#FAFAF9',
+                            border: '2px dashed #D1D5DB',
+                            borderRadius: '10px',
+                            cursor: uploadingImage ? 'wait' : 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'all 0.15s ease'
+                          }}
+                          onMouseEnter={(e) => { if (!uploadingImage) { e.currentTarget.style.borderColor = '#6A3E1F'; e.currentTarget.style.backgroundColor = '#FFFBF8'; } }}
+                          onMouseLeave={(e) => { if (!uploadingImage) { e.currentTarget.style.borderColor = '#D1D5DB'; e.currentTarget.style.backgroundColor = '#FAFAF9'; } }}
+                        >
+                          <div style={{ position: 'absolute', textAlign: 'center' }}>
+                            <Upload size={16} color="#9CA3AF" style={{ margin: '0 auto 4px' }} />
+                            <div style={{ fontSize: '10px', fontWeight: '600', color: '#6B7280' }}>
+                              {idx === 0 ? 'Cover' : `Image ${idx + 1}`}
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      style={{
-                        padding: '7px 12px',
-                        backgroundColor: '#FFFFFF',
-                        border: '1px solid #D1D5DB',
-                        borderRadius: '6px',
-                        fontSize: '12px',
-                        fontWeight: '600',
-                        color: '#374151',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      Change
-                    </button>
-                  </div>
-                ) : (
-                  <div
-                    onClick={() => { if (!uploadingImage) fileInputRef.current?.click(); }}
-                    style={{
-                      border: '2px dashed #D1D5DB',
-                      borderRadius: '10px',
-                      padding: '24px 20px',
-                      textAlign: 'center',
-                      cursor: uploadingImage ? 'wait' : 'pointer',
-                      backgroundColor: uploadingImage ? '#F9FAFB' : '#FAFAF9',
-                      transition: 'all 0.15s ease'
-                    }}
-                    onMouseEnter={(e) => { if (!uploadingImage) { e.currentTarget.style.borderColor = '#6A3E1F'; e.currentTarget.style.backgroundColor = '#FFFBF8'; } }}
-                    onMouseLeave={(e) => { if (!uploadingImage) { e.currentTarget.style.borderColor = '#D1D5DB'; e.currentTarget.style.backgroundColor = '#FAFAF9'; } }}
-                  >
-                    {uploadingImage ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                        <div style={{ width: '24px', height: '24px', border: '3px solid #E5E7EB', borderTopColor: '#6A3E1F', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-                        <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
-                        <p style={{ fontSize: '13px', fontWeight: '600', color: '#111827', margin: 0 }}>Uploading image to storage...</p>
-                        <p style={{ fontSize: '12px', color: '#6B7280', margin: 0 }}>Your form will remain intact.</p>
-                      </div>
-                    ) : (
-                      <>
-                        <Upload size={24} color="#6B7280" style={{ margin: '0 auto 8px' }} />
-                        <p style={{ fontSize: '13px', fontWeight: '600', color: '#111827', margin: '4px 0 2px' }}>
-                          {isEditMode ? 'Click to replace product image' : 'Click to upload product image'}
-                        </p>
-                        <p style={{ fontSize: '12px', color: '#6B7280', margin: 0 }}>PNG, JPG, or WEBP up to 5MB</p>
-                      </>
-                    )}
-                  </div>
-                )}
+                  ))}
+                </div>
               </div>
 
               {/* Product Description */}

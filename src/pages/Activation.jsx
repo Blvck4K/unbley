@@ -206,12 +206,14 @@ export const ACTIVATION_CONFIG = {
 };
 
 export default function Activation() {
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const navigate = useNavigate();
 
   // State condition to toggle pop-up visibility and active interval
   const [isOpen, setIsOpen] = useState(ACTIVATION_CONFIG.conditions.autoOpenOnLoad);
   const [activeInterval, setActiveInterval] = useState(ACTIVATION_CONFIG.conditions.defaultInterval);
+  const trialAvailable = !user?.trial_used && !user?.trial_ends_at;
+  const visiblePlans = ACTIVATION_CONFIG.plans.filter(plan => plan.id !== 'free-trial' || trialAvailable);
 
   // Handle plan selection -> forwards plan details to finalize activation
   const handleSelectPlan = (plan) => {
@@ -311,6 +313,10 @@ export default function Activation() {
             position: relative;
             max-height: 94vh;
             overflow-y: auto;
+          }
+
+          .act-popup-card-compact {
+            max-width: 850px;
           }
 
           /* Top Header Banner */
@@ -745,7 +751,7 @@ export default function Activation() {
               transition={{ duration: 0.25 }}
             >
               <motion.div
-                className="act-popup-card"
+                className={`act-popup-card ${visiblePlans.length === 2 ? 'act-popup-card-compact' : ''}`}
                 initial={{ opacity: 0, scale: 0.95, y: 15 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 15 }}
@@ -808,7 +814,7 @@ export default function Activation() {
                     ))}
                   </div>
 
-                  {ACTIVATION_CONFIG.conditions.showTrialButton && (
+                  {ACTIVATION_CONFIG.conditions.showTrialButton && trialAvailable && (
                     <button
                       onClick={() => {
                         const trialPlan = ACTIVATION_CONFIG.plans.find(p => p.id === 'free-trial') || ACTIVATION_CONFIG.plans[0];
@@ -822,8 +828,13 @@ export default function Activation() {
                 </div>
 
                 {/* Landscape Cards Grid */}
-                <div className="act-cards-grid">
-                  {ACTIVATION_CONFIG.plans.map((plan) => {
+                <div
+                  className="act-cards-grid"
+                  style={{
+                    gridTemplateColumns: `repeat(${Math.min(visiblePlans.length, 3)}, minmax(0, 1fr))`
+                  }}
+                >
+                  {visiblePlans.map((plan) => {
                     const pricing = plan.pricing?.[activeInterval]
                       || plan.pricing?.monthly
                       || plan.pricing?.yearly

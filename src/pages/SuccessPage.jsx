@@ -71,13 +71,13 @@ export default function SuccessPage() {
         try {
           const { data } = await supabase
             .from('brand_profiles')
-            .select('last_transaction_id, brand_name, email_address, store_active')
+            .select('brand_name, email_address, store_active')
             .eq('id', user.id)
             .maybeSingle();
 
           if (data) {
-            const hasTx = !!data.last_transaction_id;
-            const isTrialTx = hasTx && data.last_transaction_id.startsWith('trial_');
+            const hasTx = Boolean(rawState.reference);
+            const isTrialTx = rawState.reference?.startsWith('trial_');
             
             setRealState(prev => {
               const inferredType = prev.type !== 'signup' && prev.type !== 'first_dashboard'
@@ -87,7 +87,7 @@ export default function SuccessPage() {
               return {
                 ...prev,
                 type: inferredType,
-                reference: data.last_transaction_id || prev.reference,
+                reference: prev.reference,
                 brandName: data.brand_name || prev.brandName,
                 email: data.email_address || prev.email
               };

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { motion } from 'framer-motion';
 import { 
   Share2, 
   Compass,
@@ -21,7 +22,8 @@ import {
   TrendingUp,
   Users,
   Wallet,
-  Plus
+  Plus,
+  AlertCircle
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
@@ -74,16 +76,16 @@ export default function Dashboard() {
   const [products, setProducts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(false);
   const [payouts, setPayouts] = useState([]);
+  const [withdrawalRequests, setWithdrawalRequests] = useState([]);
+  const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
+  const [withdrawalAmount, setWithdrawalAmount] = useState('');
+  const [withdrawalLoading, setWithdrawalLoading] = useState(false);
+  const [withdrawalError, setWithdrawalError] = useState(null);
+  const [availableBalance, setAvailableBalance] = useState(0);
 
   const currentTab = new URLSearchParams(location.search).get('tab') || 'overview';
 
   // Onboarding completion logic (mirrors OnboardingModal)
-  const isStoreInfoDone = Boolean(
-    profileData.brand_name &&
-    profileData.brand_name !== 'Your Brand' &&
-    profileData.brand_name !== 'Isaac Akpasu' &&
-    profileData.logo_url
-  );
   const isWalletDone = Boolean(
     profileData.phone_number &&
     profileData.phone_number !== 'N/A' &&
@@ -194,7 +196,35 @@ export default function Dashboard() {
     }
   }, [user]);
 
-  // OAuth signup handling
+  const fetchWithdrawalRequests = useCallback(async () => {
+    if (!user) return;
+    try {
+      const { data } = await supabase
+        .from('withdrawal_requests')
+        .select('*')
+        .eq('brand_id', user.id)
+        .order('created_at', { ascending: false });
+      setWithdrawalRequests(data || []);
+    } catch (err) {
+      // Table may not exist yet, gracefully handle
+      console.error('Error fetching withdrawal requests:', err);
+    }
+  }, [user]);
+
+  const fetchAvailableBalance = useCallback(async () => {
+    if (!user) return;
+    const [{ data: orderData }, { data: requestData }] = await Promise.all([
+      supabase.from('orders').select('total_amount, status').eq('brand_id', user.id),
+      supabase.from('withdrawal_requests').select('amount, status').eq('brand_id', user.id)
+    ]);
+    const completedSales = (orderData || [])
+      .filter(order => order.status === 'completed')
+      .reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0);
+    const reservedWithdrawals = (requestData || [])
+      .filter(request => request.status === 'pending' || request.status === 'approved')
+      .reduce((sum, request) => sum + (Number(request.amount) || 0), 0);
+    setAvailableBalance(Math.max(0, completedSales - reservedWithdrawals));
+  }, [user]);
   useEffect(() => {
     if (!user) return;
     const params = new URLSearchParams(location.search);
@@ -260,8 +290,28 @@ export default function Dashboard() {
   // Tab-specific fetches
   useEffect(() => {
     if (currentTab === 'products') fetchProducts();
-    if (currentTab === 'wallet') fetchPayouts();
-  }, [currentTab, fetchProducts, fetchPayouts]);
+    if (currentTab === 'wallet') {
+      fetchPayouts();
+      fetchWithdrawalRequests();
+      fetchAvailableBalance();
+    }
+  }, [currentTab, fetchProducts, fetchPayouts, fetchWithdrawalRequests, fetchAvailableBalance]);
+
+  useEffect(() => {
+    if (!user || currentTab !== 'wallet') return undefined;
+
+    const withdrawalChannel = supabase
+      .channel(`dashboard_withdrawals_${user.id}`)
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'withdrawal_requests', filter: `brand_id=eq.${user.id}` },
+        () => { fetchWithdrawalRequests(); fetchAvailableBalance(); }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(withdrawalChannel);
+    };
+  }, [user, currentTab, fetchWithdrawalRequests, fetchAvailableBalance]);
 
   const handleShareStore = () => {
     const storeUrl = profileData.website_url
@@ -270,7 +320,7 @@ export default function Dashboard() {
     if (navigator.clipboard) {
       navigator.clipboard.writeText(storeUrl);
       setCopiedLink(true);
-      if (toast) toast('Store link copied to clipboard!', 'success');
+      toast?.success('Store link copied to clipboard!');
       setTimeout(() => setCopiedLink(false), 2500);
     }
   };
@@ -280,10 +330,54 @@ export default function Dashboard() {
     try {
       await supabase.from('products').delete().eq('id', productId);
       setProducts(prev => prev.filter(p => p.id !== productId));
-      if (toast) toast('Product deleted', 'success');
+      toast?.success('Product deleted');
       fetchDashboardData();
+    } catch {
+      toast?.error('Failed to delete product');
+    }
+  };
+
+  const handleRequestWithdrawal = async () => {
+    const amount = parseFloat(withdrawalAmount);
+    if (!amount || amount <= 0) {
+      setWithdrawalError('Please enter a valid amount');
+      return;
+    }
+    if (amount > availableBalance) {
+      setWithdrawalError(`Amount exceeds your available balance of ${formatMoney(availableBalance)}`);
+      return;
+    }
+
+    setWithdrawalLoading(true);
+    setWithdrawalError(null);
+
+    try {
+      const { error } = await supabase
+        .from('withdrawal_requests')
+        .insert([
+          {
+            brand_id: user.id,
+            brand_name: profileData.brand_name || 'Unknown Brand',
+            amount: amount,
+            bank_name: profileData.bank_name || '',
+            account_number: profileData.account_number || '',
+            account_name: profileData.account_name || '',
+            status: 'pending'
+          }
+        ]);
+
+      if (error) throw error;
+
+      toast?.success('Withdrawal request submitted successfully!');
+      setWithdrawalAmount('');
+      setShowWithdrawalModal(false);
+      fetchWithdrawalRequests();
+      fetchAvailableBalance();
     } catch (err) {
-      if (toast) toast('Failed to delete product', 'error');
+      console.error('Error requesting withdrawal:', err);
+      setWithdrawalError(err.message || 'Failed to submit withdrawal request');
+    } finally {
+      setWithdrawalLoading(false);
     }
   };
 
@@ -854,6 +948,76 @@ export default function Dashboard() {
                   </table>
                 )}
               </div>
+
+              {/* Withdrawal Requests Section */}
+              <div className="unbley-table-card">
+                <div className="unbley-table-header-bar">
+                  <div>
+                    <h3 style={{ fontSize: '16px', fontWeight: '800', color: '#111827', margin: 0 }}>Your Withdrawal Requests</h3>
+                    <p style={{ fontSize: '12px', color: '#6B7280', margin: '2px 0 0' }}>Request and track your payouts</p>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      setWithdrawalError(null);
+                      setWithdrawalAmount('');
+                      setShowWithdrawalModal(true);
+                    }}
+                    className="unbley-btn-black"
+                    style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    <Plus size={14} /> Request Withdrawal
+                  </button>
+                </div>
+                {withdrawalRequests.length === 0 ? (
+                  <div style={{ padding: '48px', textAlign: 'center', color: '#9CA3AF', fontSize: '14px' }}>
+                    No withdrawal requests yet. Request a withdrawal when you're ready to cash out.
+                  </div>
+                ) : (
+                  <table className="unbley-table">
+                    <thead>
+                      <tr><th>AMOUNT</th><th>BANK NAME</th><th>ACCOUNT</th><th>STATUS</th><th>DATE REQUESTED</th></tr>
+                    </thead>
+                    <tbody>
+                      {withdrawalRequests.map(req => {
+                        const statusColors = {
+                          pending: { bg: '#FEF3C7', color: '#92400E', label: 'PENDING' },
+                          approved: { bg: '#DBEAFE', color: '#1E40AF', label: 'APPROVED' },
+                          paid_out: { bg: '#DCFCE7', color: '#15803D', label: 'PAID OUT' }
+                        };
+                        const statusStyle = statusColors[req.status] || statusColors.pending;
+                        return (
+                          <tr key={req.id}>
+                            <td style={{ fontWeight: '800', color: '#111827' }}>{formatMoney(req.amount)}</td>
+                            <td style={{ fontSize: '12px', color: '#374151' }}>{req.bank_name || '—'}</td>
+                            <td style={{ fontSize: '12px', color: '#6B7280' }}>
+                              <div>{req.account_number}</div>
+                              <div style={{ fontSize: '11px', marginTop: '2px' }}>{req.account_name}</div>
+                            </td>
+                            <td>
+                              <span style={{
+                                backgroundColor: statusStyle.bg,
+                                color: statusStyle.color,
+                                padding: '4px 10px',
+                                borderRadius: '6px',
+                                fontSize: '11px',
+                                fontWeight: '700'
+                              }}>
+                                {statusStyle.label}
+                              </span>
+                            </td>
+                            <td style={{ fontSize: '11px', color: '#9CA3AF' }}>
+                              {req.created_at 
+                                ? new Date(req.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })
+                                : '—'
+                              }
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </div>
             </main>
           )}
 
@@ -996,6 +1160,170 @@ export default function Dashboard() {
             fetchDashboardData();
           }}
         />
+
+        {/* Withdrawal Request Modal */}
+        {showWithdrawalModal && (
+          <div style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000000,
+            padding: '20px'
+          }}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 16 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              style={{
+                backgroundColor: '#FFFFFF',
+                borderRadius: '16px',
+                border: '1px solid #EAE3D9',
+                boxShadow: '0 20px 50px rgba(34, 21, 16, 0.2)',
+                maxWidth: '420px',
+                width: '100%',
+                padding: '28px',
+                fontFamily: '"Inter", sans-serif'
+              }}
+            >
+              <div style={{ marginBottom: '20px' }}>
+                <h2 style={{
+                  fontSize: '20px',
+                  fontWeight: '800',
+                  color: '#111827',
+                  margin: '0 0 6px 0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px'
+                }}>
+                  <DollarSign size={22} color="#6A3E1F" />
+                  Request Withdrawal
+                </h2>
+                <p style={{ fontSize: '13px', color: '#6B7280', margin: 0 }}>
+                  Submit a withdrawal request to transfer your earnings to your linked bank account
+                </p>
+              </div>
+
+              {withdrawalError && (
+                <div style={{
+                  backgroundColor: '#FEE2E2',
+                  border: '1px solid #FCA5A5',
+                  borderRadius: '8px',
+                  padding: '12px 14px',
+                  marginBottom: '16px',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '10px'
+                }}>
+                  <AlertCircle size={18} color="#DC2626" style={{ flexShrink: 0, marginTop: '2px' }} />
+                  <p style={{ fontSize: '13px', color: '#991B1B', margin: 0, fontWeight: '500' }}>{withdrawalError}</p>
+                </div>
+              )}
+
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{
+                  display: 'block',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  color: '#111827',
+                  marginBottom: '8px'
+                }}>
+                  Amount (₦) *
+                </label>
+                <input
+                  type="number"
+                  value={withdrawalAmount}
+                  onChange={(e) => {
+                    setWithdrawalAmount(e.target.value);
+                    setWithdrawalError(null);
+                  }}
+                  placeholder="Enter amount"
+                  step="any"
+                  min="0"
+                  style={{
+                    width: '100%',
+                    padding: '11px 14px',
+                    border: '1px solid #D1D5DB',
+                    borderRadius: '8px',
+                    fontSize: '13.5px',
+                    fontFamily: 'inherit',
+                    boxSizing: 'border-box',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onFocus={(e) => { e.target.style.borderColor = '#6A3E1F'; e.target.style.boxShadow = '0 0 0 3px rgba(106, 62, 31, 0.1)'; }}
+                  onBlur={(e) => { e.target.style.borderColor = '#D1D5DB'; e.target.style.boxShadow = 'none'; }}
+                />
+                <p style={{ fontSize: '11px', color: '#6B7280', margin: '6px 0 0 0' }}>
+                  Total available: {formatMoney(availableBalance)}
+                </p>
+              </div>
+
+              {!profileData.bank_name || !profileData.account_number ? (
+                <div style={{
+                  backgroundColor: '#FFFBF8',
+                  border: '1px solid #EAE3D9',
+                  borderRadius: '8px',
+                  padding: '12px 14px',
+                  marginBottom: '16px'
+                }}>
+                  <p style={{ fontSize: '12px', color: '#92400E', margin: 0, fontWeight: '600' }}>
+                    ⚠️ Your bank account details are not set up. Please add your bank information first.
+                  </p>
+                </div>
+              ) : null}
+
+              <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowWithdrawalModal(false)}
+                  style={{
+                    flex: 1,
+                    padding: '11px',
+                    backgroundColor: '#F3F4F6',
+                    border: '1px solid #D1D5DB',
+                    borderRadius: '8px',
+                    fontSize: '13px',
+                    fontWeight: '600',
+                    color: '#374151',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#E5E7EB'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#F3F4F6'; }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRequestWithdrawal}
+                  disabled={withdrawalLoading || !profileData.bank_name || !profileData.account_number || !withdrawalAmount || Number(withdrawalAmount) > availableBalance}
+                  style={{
+                    flex: 2,
+                    padding: '11px 20px',
+                    backgroundColor: withdrawalLoading || !profileData.bank_name || !profileData.account_number || !withdrawalAmount || Number(withdrawalAmount) > availableBalance ? '#D1D5DB' : '#6A3E1F',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '13.5px',
+                    fontWeight: '700',
+                    color: '#FFFFFF',
+                    cursor: withdrawalLoading || !profileData.bank_name || !profileData.account_number || !withdrawalAmount || Number(withdrawalAmount) > availableBalance ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.15s ease',
+                    boxShadow: '0 2px 8px rgba(106, 62, 31, 0.2)'
+                  }}
+                  onMouseEnter={(e) => { if (!withdrawalLoading && profileData.bank_name && profileData.account_number && withdrawalAmount && Number(withdrawalAmount) <= availableBalance) e.currentTarget.style.backgroundColor = '#5a3219'; }}
+                  onMouseLeave={(e) => { if (!withdrawalLoading && profileData.bank_name && profileData.account_number && withdrawalAmount && Number(withdrawalAmount) <= availableBalance) e.currentTarget.style.backgroundColor = '#6A3E1F'; }}
+                >
+                  {withdrawalLoading ? 'Submitting...' : 'Submit Request'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
       </div>
     </PageTransition>
   );

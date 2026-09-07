@@ -13,7 +13,8 @@ import {
   ChevronRight, 
   X,
   ExternalLink,
-  LogOut
+  LogOut,
+  CreditCard
 } from 'lucide-react';
 import logoImg from '../assets/logogo.png';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -23,9 +24,10 @@ import { supabase } from '../lib/supabase';
 export default function Sidebar({ profileData, isSidebarOpen, setIsSidebarOpen }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut, user, isAdmin } = useAuth();
+  const { signOut, isAdmin, user } = useAuth();
   const sidebarRef = useRef(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [pendingPaymentCount, setPendingPaymentCount] = useState(0);
   
   // Persist collapsed state
   const [isCollapsed, setIsCollapsed] = useState(() => {
@@ -72,7 +74,6 @@ export default function Sidebar({ profileData, isSidebarOpen, setIsSidebarOpen }
     if (setIsSidebarOpen) {
       setIsSidebarOpen(false);
     }
-    setShowProfileMenu(false);
   }, [location.pathname, location.search, setIsSidebarOpen]);
 
   useEffect(() => {
@@ -88,28 +89,48 @@ export default function Sidebar({ profileData, isSidebarOpen, setIsSidebarOpen }
   const ownerName = profileData?.owner_name || profileData?.brand_name || 'Isaac Akpasu';
   const firstInitial = (ownerName || 'U').charAt(0).toUpperCase();
   const brandLogo = profileData?.logo_url || null;
+  const hasActivePlan = Boolean(
+    user?.store_active &&
+    user?.plan_id &&
+    user?.plan_ends_at &&
+    new Date(user.plan_ends_at) > new Date()
+  );
 
   // Fetch unread concierge messages count (admin only)
   useEffect(() => {
     if (!isAdmin) return;
 
-    const fetchUnread = async () => {
-      const { count } = await supabase
+    const fetchAdminNotifications = async () => {
+      const [supportResult, paymentResult] = await Promise.all([
+        supabase
         .from('concierge_messages')
         .select('*', { count: 'exact', head: true })
         .eq('sender', 'user')
-        .is('read_at', null);
-      setUnreadCount(count ?? 0);
+        .is('read_at', null),
+        supabase
+          .from('withdrawal_requests')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'pending')
+      ]);
+      if (paymentResult.error) {
+        console.warn('[Sidebar] Unable to load pending payment notifications:', paymentResult.error.message);
+      }
+      setUnreadCount(supportResult.count ?? 0);
+      setPendingPaymentCount(paymentResult.count ?? 0);
     };
 
-    fetchUnread();
+    fetchAdminNotifications();
 
     // Realtime: catches new INSERT messages
     const channel = supabase
       .channel('admin_concierge_unread')
       .on('postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'concierge_messages' },
-        () => fetchUnread()
+        () => fetchAdminNotifications()
+      )
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'withdrawal_requests' },
+        () => fetchAdminNotifications()
       ).subscribe();
 
     // Optimistic clear: Support page dispatches this the moment a thread opens.
@@ -119,19 +140,19 @@ export default function Sidebar({ profileData, isSidebarOpen, setIsSidebarOpen }
       const zeroNow = e?.detail?.zeroAll;
       if (zeroNow) setUnreadCount(0);
       // Background sync after a short delay to let the DB UPDATE settle
-      setTimeout(fetchUnread, 500);
+      setTimeout(fetchAdminNotifications, 500);
     };
     window.addEventListener('unbley:messages-read', onMessagesRead);
 
-    const onVisible = () => { if (document.visibilityState === 'visible') fetchUnread(); };
+    const onVisible = () => { if (document.visibilityState === 'visible') fetchAdminNotifications(); };
     document.addEventListener('visibilitychange', onVisible);
-    window.addEventListener('focus', fetchUnread);
+    window.addEventListener('focus', fetchAdminNotifications);
 
     return () => {
       supabase.removeChannel(channel);
       window.removeEventListener('unbley:messages-read', onMessagesRead);
       document.removeEventListener('visibilitychange', onVisible);
-      window.removeEventListener('focus', fetchUnread);
+      window.removeEventListener('focus', fetchAdminNotifications);
     };
   }, [isAdmin]);
 
@@ -310,6 +331,18 @@ export default function Sidebar({ profileData, isSidebarOpen, setIsSidebarOpen }
                 {!isExpanded && <span className="sidebar-tooltip">Wallet</span>}
               </Link>
 
+              {!hasActivePlan && (
+                <Link 
+                  to="/activation" 
+                  className={`unbley-nav-item ${isActive('/activation') ? 'active' : ''} ${!isExpanded ? 'has-tooltip' : ''}`}
+                  style={{ justifyContent: isExpanded ? 'flex-start' : 'center' }}
+                >
+                  <CreditCard size={18} strokeWidth={isActive('/activation') ? 2.2 : 1.8} />
+                  <span className="sidebar-label">Unbley Plans</span>
+                  {!isExpanded && <span className="sidebar-tooltip">Unbley Plans</span>}
+                </Link>
+              )}
+
               <Link 
                 to="/dashboard?tab=insights" 
                 className={`unbley-nav-item ${isActive('/dashboard?tab=insights') ? 'active' : ''} ${!isExpanded ? 'has-tooltip' : ''}`}
@@ -333,10 +366,10 @@ export default function Sidebar({ profileData, isSidebarOpen, setIsSidebarOpen }
             </div>
           </div>
 
-          {/* Section 2: HELP */}
+          {/* Section 2: HELP & SUPPORT */}
           <div>
             {isExpanded ? (
-              <div className="unbley-nav-group-title">HELP</div>
+              <div className="unbley-nav-group-title">HELP & SUPPORT</div>
             ) : (
               <div className="unbley-nav-divider" />
             )}
@@ -348,36 +381,39 @@ export default function Sidebar({ profileData, isSidebarOpen, setIsSidebarOpen }
                 style={{ justifyContent: isExpanded ? 'flex-start' : 'center' }}
               >
                 <HelpCircle size={18} strokeWidth={isActive('/contact') ? 2.2 : 1.8} />
-                <span className="sidebar-label">F&Q</span>
-                {!isExpanded && <span className="sidebar-tooltip">F&Q</span>}
+                <span className="sidebar-label">FAQ</span>
+                {!isExpanded && <span className="sidebar-tooltip">FAQ</span>}
               </Link>
 
               {isAdmin && (
-                <Link 
-                  to="/support" 
-                  className={`unbley-nav-item ${isActive('/support') ? 'active' : ''} ${!isExpanded ? 'has-tooltip' : ''}`}
-                  style={{ justifyContent: isExpanded ? 'flex-start' : 'center', position: 'relative' }}
-                >
-                  <Headphones size={18} strokeWidth={isActive('/support') ? 2.2 : 1.8} />
-                  <span className="sidebar-label" style={{ flex: 1 }}>Contact Support</span>
-                  {unreadCount > 0 && (
-                    <span style={{
-                      background: '#DC2626',
-                      color: '#fff',
-                      borderRadius: '9999px',
-                      fontSize: '9px',
-                      fontWeight: '800',
-                      padding: '1px 5px',
-                      minWidth: '16px',
-                      textAlign: 'center',
-                      lineHeight: '16px',
-                      flexShrink: 0
-                    }}>
-                      {unreadCount > 99 ? '99+' : unreadCount}
-                    </span>
-                  )}
-                  {!isExpanded && <span className="sidebar-tooltip">Contact Support{unreadCount > 0 ? ` (${unreadCount})` : ''}</span>}
-                </Link>
+                <>
+                  <Link 
+                    to="/support" 
+                    className={`unbley-nav-item ${isActive('/support') ? 'active' : ''} ${!isExpanded ? 'has-tooltip' : ''}`}
+                    style={{ justifyContent: isExpanded ? 'flex-start' : 'center', position: 'relative' }}
+                  >
+                    <Headphones size={18} strokeWidth={isActive('/support') ? 2.2 : 1.8} />
+                    <span className="sidebar-label" style={{ flex: 1 }}>Admin</span>
+                    {(unreadCount + pendingPaymentCount) > 0 && (
+                      <span style={{
+                        background: '#DC2626',
+                        color: '#fff',
+                        borderRadius: '9999px',
+                        fontSize: '9px',
+                        fontWeight: '800',
+                        padding: '1px 5px',
+                        minWidth: '16px',
+                        textAlign: 'center',
+                        lineHeight: '16px',
+                        flexShrink: 0
+                      }}>
+                        {(unreadCount + pendingPaymentCount) > 99 ? '99+' : unreadCount + pendingPaymentCount}
+                      </span>
+                    )}
+                    {!isExpanded && <span className="sidebar-tooltip">Admin{(unreadCount + pendingPaymentCount) > 0 ? ` (${unreadCount + pendingPaymentCount})` : ''}</span>}
+                  </Link>
+
+                </>
               )}
             </div>
           </div>

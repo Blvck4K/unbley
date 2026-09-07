@@ -14,6 +14,9 @@ const ChatWidget = () => {
     const [unreadCount, setUnreadCount] = useState(0);
     const scrollRef = useRef(null);
     const isOpenRef = useRef(isOpen);
+    const dragStateRef = useRef(null);
+    const draggedRef = useRef(false);
+    const [floatingPosition, setFloatingPosition] = useState(null);
 
     useEffect(() => {
         isOpenRef.current = isOpen;
@@ -146,8 +149,48 @@ _Reply to this message with 'Reply: <your message>' to send back to the user._
     };
 
     const toggleOpen = () => {
+        if (draggedRef.current) {
+            draggedRef.current = false;
+            return;
+        }
         if (!isOpen) setUnreadCount(0);
         setIsOpen(!isOpen);
+    };
+
+    const handleFloatingPointerDown = (event) => {
+        if (window.innerWidth > 768) return;
+        const element = event.currentTarget;
+        const bounds = element.parentElement.getBoundingClientRect();
+        dragStateRef.current = {
+            startX: event.clientX,
+            startY: event.clientY,
+            left: bounds.left,
+            top: bounds.top,
+            moved: false
+        };
+        element.setPointerCapture?.(event.pointerId);
+    };
+
+    const handleFloatingPointerMove = (event) => {
+        const drag = dragStateRef.current;
+        if (!drag) return;
+        const deltaX = event.clientX - drag.startX;
+        const deltaY = event.clientY - drag.startY;
+        if (Math.abs(deltaX) > 4 || Math.abs(deltaY) > 4) {
+            drag.moved = true;
+            draggedRef.current = true;
+        }
+        if (!drag.moved) return;
+
+        const size = 56;
+        const padding = 8;
+        const left = Math.max(padding, Math.min(window.innerWidth - size - padding, drag.left + deltaX));
+        const top = Math.max(padding, Math.min(window.innerHeight - size - padding, drag.top + deltaY));
+        setFloatingPosition({ left, top });
+    };
+
+    const handleFloatingPointerUp = () => {
+        dragStateRef.current = null;
     };
 
     // Styling constants
@@ -157,7 +200,12 @@ _Reply to this message with 'Reply: <your message>' to send back to the user._
     const borderColor = '#EAE3D9';
 
     return (
-        <div style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 10000, fontFamily: '"Inter", sans-serif' }}>
+        <div style={{
+            position: 'fixed',
+            ...(floatingPosition ? { left: floatingPosition.left, top: floatingPosition.top } : { bottom: '24px', right: '24px' }),
+            zIndex: 10000,
+            fontFamily: '"Inter", sans-serif'
+        }}>
             {/* Chat Window */}
             {isOpen && (
                 <div style={{
@@ -293,6 +341,10 @@ _Reply to this message with 'Reply: <your message>' to send back to the user._
             {/* Floating Icon */}
             <button
                 onClick={toggleOpen}
+                onPointerDown={handleFloatingPointerDown}
+                onPointerMove={handleFloatingPointerMove}
+                onPointerUp={handleFloatingPointerUp}
+                onPointerCancel={handleFloatingPointerUp}
                 style={{
                     width: '56px',
                     height: '56px',
@@ -305,6 +357,7 @@ _Reply to this message with 'Reply: <your message>' to send back to the user._
                     border: 'none',
                     cursor: 'pointer',
                     position: 'relative',
+                    touchAction: 'none',
                     transition: 'transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
                 }}
                 onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}

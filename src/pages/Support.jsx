@@ -6,17 +6,20 @@ import {
   Search,
   ChevronLeft,
   User,
-  Headphones
+  Headphones,
+  CreditCard
 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import PageTransition from '../components/PageTransition';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
 import { useToast } from '../context/ToastContext';
+import { Link, useLocation } from 'react-router-dom';
 
 export default function Support() {
   const { user, isAdmin } = useAuth();
   const { toast } = useToast();
+  const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const [profileData, setProfileData] = useState({ brand_name: '', owner_name: '', logo_url: '' });
@@ -107,7 +110,7 @@ export default function Support() {
     try {
       await supabase.from('concierge_messages').insert([{ user_email: activeEmail, sender: 'admin', message: text, created_at: new Date().toISOString() }]);
       if (toast) toast('Reply sent', 'success');
-    } catch (err) {
+    } catch {
       if (toast) toast('Failed to send reply', 'error');
     } finally {
       setSending(false);
@@ -132,6 +135,74 @@ export default function Support() {
     <PageTransition>
       <div className="unbley-app-layout">
         <Sidebar profileData={profileData} isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
+        <aside className="unbley-secondary-admin-nav" style={{
+          width: '190px',
+          minWidth: '190px',
+          height: '100vh',
+          position: 'sticky',
+          top: 0,
+          backgroundColor: '#FAFAF9',
+          borderRight: '1px solid #EAE6DF',
+          padding: '88px 12px 20px',
+          boxSizing: 'border-box'
+        }}>
+          <div style={{ padding: '0 10px 10px', fontSize: '10px', fontWeight: '800', letterSpacing: '0.1em', color: '#9A7252' }}>
+            ADMIN TOOLS
+          </div>
+          <Link
+            to="/support"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '11px 10px',
+              borderRadius: '8px',
+              color: '#111827',
+              backgroundColor: location.pathname === '/support' ? '#F0ECE4' : 'transparent',
+              textDecoration: 'none',
+              fontSize: '12px',
+              fontWeight: '700'
+            }}
+          >
+            <MessageSquare size={17} />
+            <span style={{ flex: 1 }}>Support Chat</span>
+            {conversations.reduce((total, conversation) => total + conversation.unread, 0) > 0 && (
+              <span style={{
+                background: '#DC2626',
+                color: '#FFFFFF',
+                borderRadius: '9999px',
+                minWidth: '18px',
+                padding: '2px 5px',
+                textAlign: 'center',
+                fontSize: '10px',
+                fontWeight: '800'
+              }}>
+                {conversations.reduce((total, conversation) => total + conversation.unread, 0) > 99
+                  ? '99+'
+                  : conversations.reduce((total, conversation) => total + conversation.unread, 0)}
+              </span>
+            )}
+          </Link>
+          <Link
+            to="/admin/payments"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '11px 10px',
+              marginTop: '4px',
+              borderRadius: '8px',
+              color: '#111827',
+              backgroundColor: location.pathname === '/admin/payments' ? '#F0ECE4' : 'transparent',
+              textDecoration: 'none',
+              fontSize: '12px',
+              fontWeight: '700'
+            }}
+          >
+            <CreditCard size={17} />
+            Payments
+          </Link>
+        </aside>
         <div className="unbley-main-content">
           <header className="unbley-top-header">
             <div className="unbley-header-left">
@@ -170,7 +241,7 @@ export default function Support() {
                   </div>
                 ) : (
                   filteredConversations.map(convo => (
-                    <button key={convo.email} onClick={() => setActiveEmail(convo.email)} style={{ width: '100%', textAlign: 'left', padding: '14px 16px', borderBottom: '1px solid #F9F8F6', background: activeEmail === convo.email ? '#F4F2EE' : 'transparent', border: 'none', borderBottom: '1px solid #F9F8F6', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px', transition: 'background 0.15s' }}>
+                    <button key={convo.email} onClick={() => setActiveEmail(convo.email)} style={{ width: '100%', textAlign: 'left', padding: '14px 16px', background: activeEmail === convo.email ? '#F4F2EE' : 'transparent', border: 'none', borderBottom: '1px solid #F9F8F6', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px', transition: 'background 0.15s' }}>
                       <div style={{ width: '38px', height: '38px', minWidth: '38px', borderRadius: '50%', backgroundColor: '#6A3E1F', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: '800', flexShrink: 0 }}>
                         {convo.email.charAt(0).toUpperCase()}
                       </div>

@@ -8,7 +8,7 @@ import { motion } from 'framer-motion';
 import PageTransition from '../components/PageTransition';
 
 export default function FinalizeActivation() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -18,6 +18,15 @@ export default function FinalizeActivation() {
   const selectedAmount = location.state?.amount !== undefined ? location.state.amount : 30000;
   const selectedUsdAmount = location.state?.usdAmount !== undefined ? location.state.usdAmount : 30;
   const isFreeTrial = selectedAmount === 0 || selectedPlanId === 'free-trial';
+
+  const planEndsAt = new Date();
+  if (isFreeTrial) {
+    planEndsAt.setDate(planEndsAt.getDate() + 14);
+  } else if (location.state?.interval === 'yearly') {
+    planEndsAt.setFullYear(planEndsAt.getFullYear() + 1);
+  } else {
+    planEndsAt.setMonth(planEndsAt.getMonth() + 1);
+  }
 
   const [processing, setProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -35,8 +44,7 @@ export default function FinalizeActivation() {
           email_address: user?.email || '',
           brand_name: user?.user_metadata?.brand_name || user?.user_metadata?.full_name || 'Your Brand',
           owner_name: user?.user_metadata?.full_name || user?.user_metadata?.name || '',
-          store_active: true, 
-          last_transaction_id: transaction.reference,
+          store_active: true,
           updated_at: new Date().toISOString() 
         }, { onConflict: 'id' });
         
@@ -51,7 +59,7 @@ export default function FinalizeActivation() {
             email_address: user?.email || '',
             brand_name: user?.user_metadata?.brand_name || user?.user_metadata?.full_name || 'Your Brand',
             owner_name: user?.user_metadata?.full_name || user?.user_metadata?.name || '',
-            store_active: true, 
+            store_active: true,
             updated_at: new Date().toISOString() 
           }, { onConflict: 'id' });
       }
@@ -60,10 +68,13 @@ export default function FinalizeActivation() {
 
       // 2. Refresh the local Auth Session immediately
       const { error: authError } = await supabase.auth.updateUser({
-        data: { store_active: true }
+        data: {
+          store_active: true,
+        }
       });
       
       if (authError) throw authError;
+      await refreshUser?.();
 
       // 3. Complete! Navigate to Success Page
       const finalAmount = isFreeTrial ? 0 : (paymentMethod === 'paystack' ? selectedAmount : selectedUsdAmount);

@@ -8,22 +8,26 @@ export const AuthProvider = ({ children }) => {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch is_admin status
+  // Fetch fields that exist before the optional subscription migration is applied.
   const refreshProfileStatus = useCallback(async (baseUser) => {
     if (!baseUser) return null;
     try {
-      const { data: profile, error } = await supabase
+      const { data: profile } = await supabase
         .from('brand_profiles')
-        .select('is_admin')
+        .select('is_admin, store_active')
         .eq('id', baseUser.id)
-        .single();
-      
-      if (error) {
-        console.warn("AuthContext: Profile fetch failed (this is expected if columns are missing):", error.message);
-      }
+        .maybeSingle();
       
       const adminStatus = !!profile?.is_admin;
-      setUser(prev => prev ? { ...prev, is_admin: adminStatus } : null);
+      setUser(prev => prev ? {
+        ...prev,
+        is_admin: adminStatus,
+        store_active: profile?.store_active ?? Boolean(baseUser.user_metadata?.store_active),
+        plan_id: baseUser.user_metadata?.plan_id || null,
+        plan_ends_at: baseUser.user_metadata?.plan_ends_at || null,
+        trial_ends_at: baseUser.user_metadata?.trial_ends_at || null,
+        trial_used: Boolean(baseUser.user_metadata?.trial_used)
+      } : null);
       return adminStatus;
     } catch (err) {
       console.warn("AuthContext: Profile fetch error:", err.message);
