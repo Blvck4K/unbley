@@ -130,7 +130,7 @@ export default function AdminPayments() {
 
   return (
     <PageTransition>
-      <div className="unbley-app-layout">
+      <div className="unbley-app-layout admin-payments-page">
         <Sidebar profileData={{}} isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
         <aside className="unbley-secondary-admin-nav" style={{
           width: '190px',
@@ -200,7 +200,7 @@ export default function AdminPayments() {
           </Link>
         </aside>
 
-        <div className="unbley-main-content">
+        <div className="unbley-main-content admin-main-content">
           {/* Top Header */}
           <header className="unbley-top-header">
             <div className="unbley-header-left">

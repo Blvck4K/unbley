@@ -39,6 +39,7 @@ const Support = lazy(() => import('./pages/Support'));
 import ChatWidget from './components/ChatWidget';
 import FloatingWhatsApp from './components/FloatingWhatsApp';
 import OAuthRedirectHandler from './components/OAuthRedirectHandler';
+import Menu from './pages/Menu.jsx';
 
 // Loading Component
 const PageLoader = () => (
@@ -80,6 +81,7 @@ function App() {
                 <Route path="/shopify-alternative" element={<ShopifyAlternative />} />
                 <Route path="/affordable-ecommerce-platform" element={<AffordableEcommerce />} />
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                <Route path="/menu" element={<ProtectedRoute><Menu /></ProtectedRoute>} />
                 <Route path="/admin/payments" element={<ProtectedRoute><AdminPayments /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                 <Route path="/edit" element={<ProtectedRoute><Edit /></ProtectedRoute>} />

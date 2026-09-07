@@ -23,7 +23,10 @@ import {
   Users,
   Wallet,
   Plus,
-  AlertCircle
+  AlertCircle,
+  Crown,
+  Gem,
+  Sparkles
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
@@ -42,6 +45,7 @@ export default function Dashboard() {
   const location = useLocation();
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [currentTime, setCurrentTime] = useState(() => Date.now());
   const [showSignupSuccessModal, setShowSignupSuccessModal] = useState(false);
   const [signupModalData, setSignupModalData] = useState(null);
   const [showOnboardingModal, setShowOnboardingModal] = useState(false);
@@ -65,6 +69,7 @@ export default function Dashboard() {
     store_active: false,
     trial_ends_at: null
   });
+  const [profileDataLoaded, setProfileDataLoaded] = useState(false);
 
   const [metrics, setMetrics] = useState({
     totalSales: 200,
@@ -82,6 +87,11 @@ export default function Dashboard() {
   const [withdrawalLoading, setWithdrawalLoading] = useState(false);
   const [withdrawalError, setWithdrawalError] = useState(null);
   const [availableBalance, setAvailableBalance] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(Date.now()), 60000);
+    return () => clearInterval(timer);
+  }, []);
 
   const currentTab = new URLSearchParams(location.search).get('tab') || 'overview';
 
@@ -109,6 +119,34 @@ export default function Dashboard() {
   const totalSteps = onboardingSteps.length;
   const progressPct = Math.round((completedSteps / totalSteps) * 100);
 
+  const hasActivePlan = Boolean(
+    user?.store_active &&
+    user?.plan_id &&
+    user?.plan_ends_at &&
+    new Date(user.plan_ends_at) > new Date(currentTime)
+  );
+  const isActiveTrial = Boolean(
+    user?.store_active &&
+    user?.trial_ends_at &&
+    new Date(user.trial_ends_at) > new Date(currentTime)
+  );
+  const dashboardPlanName = user?.plan_id === 'business'
+    ? 'Business'
+    : user?.plan_id === 'starter'
+      ? 'Starter'
+      : isActiveTrial
+        ? 'Free Trial'
+        : null;
+  const dashboardPlanEndsAt = hasActivePlan ? user.plan_ends_at : user?.trial_ends_at;
+  const dashboardDaysLeft = dashboardPlanEndsAt
+    ? Math.max(0, Math.ceil((new Date(dashboardPlanEndsAt).getTime() - currentTime) / 86400000))
+    : 0;
+  const dashboardPlanIsYearly = hasActivePlan && user?.plan_interval === 'yearly';
+  const dashboardPlanAccent = dashboardPlanIsYearly ? '#B8862C' : '#7C8795';
+  const dashboardPlanSurface = user?.plan_id === 'business' ? '#FFF8ED' : '#F5F7FA';
+  const dashboardPlanBorder = user?.plan_id === 'business' ? '#E8C98A' : '#CBD5E1';
+  const DashboardPlanIcon = user?.plan_id === 'business' ? Crown : isActiveTrial ? Sparkles : Gem;
+
   // Data fetch
   const fetchDashboardData = useCallback(async () => {
     if (!user) return;
@@ -118,6 +156,8 @@ export default function Dashboard() {
         .select('*')
         .eq('id', user.id)
         .maybeSingle();
+
+      setProfileDataLoaded(true);
 
       if (pData) {
         setProfileData(prev => ({
@@ -258,6 +298,7 @@ export default function Dashboard() {
   // Main data + realtime
   useEffect(() => {
     if (!user) return;
+    setProfileDataLoaded(false);
     fetchDashboardData();
 
     const profileChannel = supabase
@@ -454,7 +495,7 @@ export default function Dashboard() {
                 </p>
 
                 {/* Live onboarding progress bar in header — hidden once 100% */}
-                {progressPct < 100 && completedSteps < totalSteps && currentTab === 'overview' && (
+                {profileDataLoaded && progressPct < 100 && completedSteps < totalSteps && currentTab === 'overview' && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '8px' }}>
                     <div style={{ width: '140px', height: '5px', backgroundColor: '#EAE6DF', borderRadius: '99px', overflow: 'hidden' }}>
                       <div style={{ width: `${progressPct}%`, height: '100%', backgroundColor: '#6A3E1F', borderRadius: '99px', transition: 'width 0.5s ease' }} />
@@ -520,8 +561,55 @@ export default function Dashboard() {
                 </div>
               </div>
 
+              {dashboardPlanName && (
+                <div
+                  className="unbley-card"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '18px',
+                    padding: '18px 22px',
+                    background: dashboardPlanSurface,
+                    border: `1px solid ${dashboardPlanBorder}`
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '13px', minWidth: 0 }}>
+                    <div style={{
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '12px',
+                      display: 'grid',
+                      placeItems: 'center',
+                      flexShrink: 0,
+                      background: '#FFFFFF',
+                      border: `1px solid ${dashboardPlanAccent}55`,
+                      color: dashboardPlanAccent
+                    }}>
+                      <DashboardPlanIcon size={20} strokeWidth={2.2} />
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: '10px', fontWeight: '800', letterSpacing: '0.1em', color: dashboardPlanAccent, textTransform: 'uppercase', marginBottom: '5px' }}>
+                        Your current plan
+                      </div>
+                      <div style={{ fontSize: '16px', fontWeight: '800', color: '#221510' }}>
+                        Unbley {dashboardPlanName}
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    <div style={{ fontSize: '22px', lineHeight: 1, fontWeight: '800', color: '#221510' }}>
+                      {dashboardDaysLeft}
+                    </div>
+                    <div style={{ fontSize: '10px', color: '#6B7280', fontWeight: '700', marginTop: '5px' }}>
+                      {dashboardDaysLeft === 1 ? 'day' : 'days'} left{hasActivePlan ? ` · ${dashboardPlanIsYearly ? 'Yearly' : 'Monthly'}` : ''}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Setup Guide Card — hidden once 100% complete */}
-              {progressPct < 100 && (
+              {profileDataLoaded && progressPct < 100 && (
                 <div id="tour-setup-meter" className="unbley-card">
                   <div className="unbley-setup-header">
                     <div className="unbley-setup-title-box">
@@ -770,8 +858,8 @@ export default function Dashboard() {
           {/* ─── PRODUCTS TAB ─────────────────────────────────── */}
           {currentTab === 'products' && (
             <main className="unbley-workspace-container">
-              <div className="unbley-card" style={{ padding: '0' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid #F0ECE4' }}>
+              <div className="unbley-card unbley-product-catalog-card" style={{ padding: '0' }}>
+                <div className="unbley-product-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid #F0ECE4' }}>
                   <div>
                     <h3 style={{ fontSize: '16px', fontWeight: '800', color: '#111827', margin: 0 }}>Product Catalog</h3>
                     <p style={{ fontSize: '12px', color: '#6B7280', margin: '2px 0 0' }}>
@@ -795,7 +883,7 @@ export default function Dashboard() {
                     </button>
                   </div>
                 ) : (
-                  <table className="unbley-table" style={{ margin: 0 }}>
+                  <table className="unbley-table unbley-product-table" style={{ margin: 0 }}>
                     <thead>
                       <tr>
                         <th>PRODUCT</th><th>PRICE</th><th>STATUS</th><th>ADDED</th><th style={{ textAlign: 'right' }}>ACTIONS</th>
@@ -804,7 +892,7 @@ export default function Dashboard() {
                     <tbody>
                       {products.map((p) => (
                         <tr key={p.id}>
-                          <td>
+                          <td data-label="PRODUCT">
                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                               {p.image_url ? (
                                 <img src={p.image_url} alt={p.name} style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover', flexShrink: 0 }} />
@@ -819,16 +907,16 @@ export default function Dashboard() {
                               </div>
                             </div>
                           </td>
-                          <td style={{ fontWeight: '800', color: '#111827' }}>{formatMoney(p.price)}</td>
-                          <td>
+                          <td data-label="PRICE" style={{ fontWeight: '800', color: '#111827' }}>{formatMoney(p.price)}</td>
+                          <td data-label="STATUS">
                             <span style={{ padding: '3px 8px', borderRadius: '9999px', fontSize: '10px', fontWeight: '800', backgroundColor: p.status === 'active' ? '#DCFCE7' : '#FEF3C7', color: p.status === 'active' ? '#15803D' : '#92400E' }}>
                               {(p.status || 'active').toUpperCase()}
                             </span>
                           </td>
-                          <td style={{ fontSize: '12px', color: '#6B7280' }}>
+                          <td data-label="ADDED" style={{ fontSize: '12px', color: '#6B7280' }}>
                             {p.created_at ? new Date(p.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' }) : '—'}
                           </td>
-                          <td>
+                          <td data-label="ACTIONS">
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'flex-end' }}>
                               <button
                                 onClick={() => {

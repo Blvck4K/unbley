@@ -14,7 +14,8 @@ import {
   X,
   ExternalLink,
   LogOut,
-  CreditCard
+  CreditCard,
+  Menu as MenuIcon
 } from 'lucide-react';
 import logoImg from '../assets/logogo.png';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -144,15 +145,9 @@ export default function Sidebar({ profileData, isSidebarOpen, setIsSidebarOpen }
     };
     window.addEventListener('unbley:messages-read', onMessagesRead);
 
-    const onVisible = () => { if (document.visibilityState === 'visible') fetchAdminNotifications(); };
-    document.addEventListener('visibilitychange', onVisible);
-    window.addEventListener('focus', fetchAdminNotifications);
-
     return () => {
       supabase.removeChannel(channel);
       window.removeEventListener('unbley:messages-read', onMessagesRead);
-      document.removeEventListener('visibilitychange', onVisible);
-      window.removeEventListener('focus', fetchAdminNotifications);
     };
   }, [isAdmin]);
 
@@ -292,7 +287,7 @@ export default function Sidebar({ profileData, isSidebarOpen, setIsSidebarOpen }
               <Link 
                 id="tour-nav-overview"
                 to="/dashboard" 
-                className={`unbley-nav-item ${isActive('/dashboard') ? 'active' : ''} ${!isExpanded ? 'has-tooltip' : ''}`}
+                className={`unbley-nav-item mobile-primary-nav ${isActive('/dashboard') ? 'active' : ''} ${!isExpanded ? 'has-tooltip' : ''}`}
                 style={{ justifyContent: isExpanded ? 'flex-start' : 'center' }}
               >
                 <LayoutGrid size={18} strokeWidth={isActive('/dashboard') ? 2.2 : 1.8} />
@@ -303,7 +298,7 @@ export default function Sidebar({ profileData, isSidebarOpen, setIsSidebarOpen }
               <Link 
                 id="tour-nav-profile"
                 to="/profile" 
-                className={`unbley-nav-item ${isActive('/profile') ? 'active' : ''} ${!isExpanded ? 'has-tooltip' : ''}`}
+                className={`unbley-nav-item mobile-primary-nav ${isActive('/profile') ? 'active' : ''} ${!isExpanded ? 'has-tooltip' : ''}`}
                 style={{ justifyContent: isExpanded ? 'flex-start' : 'center' }}
               >
                 <Tag size={18} strokeWidth={isActive('/profile') ? 2.2 : 1.8} />
@@ -313,7 +308,7 @@ export default function Sidebar({ profileData, isSidebarOpen, setIsSidebarOpen }
 
               <Link 
                 to="/dashboard?tab=products" 
-                className={`unbley-nav-item ${isActive('/dashboard?tab=products') ? 'active' : ''} ${!isExpanded ? 'has-tooltip' : ''}`}
+                className={`unbley-nav-item mobile-primary-nav ${isActive('/dashboard?tab=products') ? 'active' : ''} ${!isExpanded ? 'has-tooltip' : ''}`}
                 style={{ justifyContent: isExpanded ? 'flex-start' : 'center' }}
               >
                 <FileText size={18} strokeWidth={isActive('/dashboard?tab=products') ? 2.2 : 1.8} />
@@ -323,7 +318,7 @@ export default function Sidebar({ profileData, isSidebarOpen, setIsSidebarOpen }
 
               <Link 
                 to="/dashboard?tab=wallet" 
-                className={`unbley-nav-item ${isActive('/dashboard?tab=wallet') ? 'active' : ''} ${!isExpanded ? 'has-tooltip' : ''}`}
+                className={`unbley-nav-item mobile-primary-nav ${isActive('/dashboard?tab=wallet') ? 'active' : ''} ${!isExpanded ? 'has-tooltip' : ''}`}
                 style={{ justifyContent: isExpanded ? 'flex-start' : 'center' }}
               >
                 <Wallet size={18} strokeWidth={isActive('/dashboard?tab=wallet') ? 2.2 : 1.8} />
@@ -334,7 +329,7 @@ export default function Sidebar({ profileData, isSidebarOpen, setIsSidebarOpen }
               {!hasActivePlan && (
                 <Link 
                   to="/activation" 
-                  className={`unbley-nav-item ${isActive('/activation') ? 'active' : ''} ${!isExpanded ? 'has-tooltip' : ''}`}
+                  className={`unbley-nav-item mobile-overflow-nav ${isActive('/activation') ? 'active' : ''} ${!isExpanded ? 'has-tooltip' : ''}`}
                   style={{ justifyContent: isExpanded ? 'flex-start' : 'center' }}
                 >
                   <CreditCard size={18} strokeWidth={isActive('/activation') ? 2.2 : 1.8} />
@@ -345,7 +340,7 @@ export default function Sidebar({ profileData, isSidebarOpen, setIsSidebarOpen }
 
               <Link 
                 to="/dashboard?tab=insights" 
-                className={`unbley-nav-item ${isActive('/dashboard?tab=insights') ? 'active' : ''} ${!isExpanded ? 'has-tooltip' : ''}`}
+                className={`unbley-nav-item mobile-overflow-nav ${isActive('/dashboard?tab=insights') ? 'active' : ''} ${!isExpanded ? 'has-tooltip' : ''}`}
                 style={{ justifyContent: isExpanded ? 'flex-start' : 'center' }}
               >
                 <BarChart2 size={18} strokeWidth={isActive('/dashboard?tab=insights') ? 2.2 : 1.8} />
@@ -356,7 +351,7 @@ export default function Sidebar({ profileData, isSidebarOpen, setIsSidebarOpen }
               <Link 
                 id="tour-nav-edit"
                 to="/edit" 
-                className={`unbley-nav-item ${isActive('/edit') ? 'active' : ''} ${!isExpanded ? 'has-tooltip' : ''}`}
+                className={`unbley-nav-item mobile-overflow-nav ${isActive('/edit') ? 'active' : ''} ${!isExpanded ? 'has-tooltip' : ''}`}
                 style={{ justifyContent: isExpanded ? 'flex-start' : 'center' }}
               >
                 <Sliders size={18} strokeWidth={isActive('/edit') ? 2.2 : 1.8} />
@@ -377,7 +372,7 @@ export default function Sidebar({ profileData, isSidebarOpen, setIsSidebarOpen }
             <div>
               <Link 
                 to="/contact" 
-                className={`unbley-nav-item ${isActive('/contact') ? 'active' : ''} ${!isExpanded ? 'has-tooltip' : ''}`}
+                className={`unbley-nav-item mobile-overflow-nav ${isActive('/contact') ? 'active' : ''} ${!isExpanded ? 'has-tooltip' : ''}`}
                 style={{ justifyContent: isExpanded ? 'flex-start' : 'center' }}
               >
                 <HelpCircle size={18} strokeWidth={isActive('/contact') ? 2.2 : 1.8} />
@@ -389,7 +384,7 @@ export default function Sidebar({ profileData, isSidebarOpen, setIsSidebarOpen }
                 <>
                   <Link 
                     to="/support" 
-                    className={`unbley-nav-item ${isActive('/support') ? 'active' : ''} ${!isExpanded ? 'has-tooltip' : ''}`}
+                    className={`unbley-nav-item mobile-overflow-nav ${isActive('/support') ? 'active' : ''} ${!isExpanded ? 'has-tooltip' : ''}`}
                     style={{ justifyContent: isExpanded ? 'flex-start' : 'center', position: 'relative' }}
                   >
                     <Headphones size={18} strokeWidth={isActive('/support') ? 2.2 : 1.8} />
@@ -418,6 +413,14 @@ export default function Sidebar({ profileData, isSidebarOpen, setIsSidebarOpen }
             </div>
           </div>
 
+          <Link
+            to="/menu"
+            className={`unbley-nav-item mobile-menu-link ${isActive('/menu') ? 'active' : ''}`}
+            aria-label="Open menu"
+          >
+            <MenuIcon size={18} />
+            <span className="sidebar-label">Menu</span>
+          </Link>
         </div>
 
         {/* Expand button shown at bottom when truly collapsed + not hovering */}

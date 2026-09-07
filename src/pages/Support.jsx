@@ -133,7 +133,7 @@ export default function Support() {
 
   return (
     <PageTransition>
-      <div className="unbley-app-layout">
+      <div className="unbley-app-layout admin-support-page">
         <Sidebar profileData={profileData} isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
         <aside className="unbley-secondary-admin-nav" style={{
           width: '190px',
@@ -203,7 +203,7 @@ export default function Support() {
             Payments
           </Link>
         </aside>
-        <div className="unbley-main-content">
+        <div className="unbley-main-content admin-main-content">
           <header className="unbley-top-header">
             <div className="unbley-header-left">
               <button onClick={() => setIsSidebarOpen(true)} className="unbley-mobile-menu-btn mobile-menu-trigger" title="Open menu"><Menu size={18} /></button>
@@ -222,10 +222,10 @@ export default function Support() {
             </div>
           </header>
 
-          <main style={{ display: 'flex', height: 'calc(100vh - 73px)', overflow: 'hidden' }}>
+          <main className={`admin-support-workspace ${activeEmail ? 'chat-open' : ''}`} style={{ display: 'flex', height: 'calc(100vh - 73px)', overflow: 'hidden' }}>
 
             {/* Left: Conversation List */}
-            <div style={{ width: '320px', minWidth: '320px', borderRight: '1px solid #F0ECE4', display: 'flex', flexDirection: 'column', backgroundColor: '#FFFFFF', overflow: 'hidden' }}>
+            <div className="admin-conversation-list" style={{ width: '320px', minWidth: '320px', borderRight: '1px solid #F0ECE4', display: 'flex', flexDirection: 'column', backgroundColor: '#FFFFFF', overflow: 'hidden' }}>
               <div style={{ padding: '14px 16px', borderBottom: '1px solid #F0ECE4' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#F9F8F6', borderRadius: '10px', padding: '8px 12px', border: '1px solid #EAE6DF' }}>
                   <Search size={14} color="#9CA3AF" />
@@ -264,7 +264,7 @@ export default function Support() {
             </div>
 
             {/* Right: Chat Thread */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', backgroundColor: '#FAFAF9' }}>
+            <div className="admin-chat-thread" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', backgroundColor: '#FAFAF9' }}>
               {!activeEmail ? (
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#9CA3AF' }}>
                   <Headphones size={48} style={{ marginBottom: '14px', opacity: 0.3 }} />

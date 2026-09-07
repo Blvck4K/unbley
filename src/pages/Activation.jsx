@@ -20,6 +20,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import PageTransition from '../components/PageTransition';
+import Sidebar from '../components/Sidebar';
 import { useAuth } from '../hooks/useAuth';
 
 // =========================================================================================
@@ -206,14 +207,29 @@ export const ACTIVATION_CONFIG = {
 };
 
 export default function Activation() {
-  const { signOut, user } = useAuth();
+  const { signOut, user, profileReady, isAdmin } = useAuth();
   const navigate = useNavigate();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // State condition to toggle pop-up visibility and active interval
-  const [isOpen, setIsOpen] = useState(ACTIVATION_CONFIG.conditions.autoOpenOnLoad);
+  const [isOpen, setIsOpen] = useState(true);
   const [activeInterval, setActiveInterval] = useState(ACTIVATION_CONFIG.conditions.defaultInterval);
   const trialAvailable = !user?.trial_used && !user?.trial_ends_at;
-  const visiblePlans = ACTIVATION_CONFIG.plans.filter(plan => plan.id !== 'free-trial' || trialAvailable);
+  const isOnActiveTrial = Boolean(
+    user?.store_active &&
+    user?.trial_ends_at &&
+    new Date(user.trial_ends_at) > new Date()
+  );
+  const trialPlanVisible = trialAvailable || isOnActiveTrial;
+  const visiblePlans = ACTIVATION_CONFIG.plans.filter(plan => plan.id !== 'free-trial' || trialPlanVisible);
+
+  const hasActivePaidPlan = Boolean(
+    user?.store_active &&
+    user?.plan_id &&
+    user?.plan_ends_at &&
+    new Date(user.plan_ends_at) > new Date()
+  );
+  const shouldShowPlans = profileReady && (isAdmin || !hasActivePaidPlan);
 
   // Handle plan selection -> forwards plan details to finalize activation
   const handleSelectPlan = (plan) => {
@@ -248,7 +264,18 @@ export default function Activation() {
 
   return (
     <PageTransition>
-      <div className="act-wrapper">
+      <div className={isOnActiveTrial ? 'unbley-app-layout' : undefined}>
+        {isOnActiveTrial && (
+          <Sidebar
+            profileData={{
+              owner_name: user?.user_metadata?.owner_name || user?.email?.split('@')[0] || 'Store Owner'
+            }}
+            isSidebarOpen={isSidebarOpen}
+            setIsSidebarOpen={setIsSidebarOpen}
+          />
+        )}
+        <div className={isOnActiveTrial ? 'unbley-main-content' : undefined}>
+          <div className="act-wrapper">
         <style>{`
           .act-wrapper {
             position: relative;
@@ -742,7 +769,7 @@ export default function Activation() {
 
         {/* 2. Landscape Pop-up Modal (Condition: isOpen && showAsPopup) */}
         <AnimatePresence>
-          {isOpen && ACTIVATION_CONFIG.conditions.showAsPopup && (
+          {shouldShowPlans && isOpen && ACTIVATION_CONFIG.conditions.showAsPopup && (
             <motion.div
               className="act-popup-overlay"
               initial={{ opacity: 0 }}
@@ -911,12 +938,16 @@ export default function Activation() {
                         {/* Select Plan Button */}
                         <button
                           onClick={() => handleSelectPlan(plan)}
+                          disabled={plan.id === 'free-trial' && isOnActiveTrial}
                           className="act-select-btn"
                           style={{
-                            backgroundColor: plan.theme?.buttonBg || 'var(--primary, #6A3E1F)'
+                            backgroundColor: plan.id === 'free-trial' && isOnActiveTrial
+                              ? '#D1D5DB'
+                              : (plan.theme?.buttonBg || 'var(--primary, #6A3E1F)'),
+                            cursor: plan.id === 'free-trial' && isOnActiveTrial ? 'default' : 'pointer'
                           }}
                         >
-                          {plan.buttonText}
+                          {plan.id === 'free-trial' && isOnActiveTrial ? 'Current Trial' : plan.buttonText}
                         </button>
                       </div>
                     );
@@ -940,6 +971,8 @@ export default function Activation() {
             <ArrowUpRight size={15} />
           </motion.div>
         )}
+          </div>
+        </div>
       </div>
     </PageTransition>
   );
