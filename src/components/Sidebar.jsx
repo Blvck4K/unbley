@@ -420,12 +420,35 @@ export default function Sidebar({ profileData, isSidebarOpen, setIsSidebarOpen }
           >
             <MenuIcon size={18} />
             <span className="sidebar-label">Menu</span>
+            {(unreadCount + pendingPaymentCount) > 0 && (
+              <span
+                aria-label={`${unreadCount + pendingPaymentCount} admin notifications`}
+                style={{
+                  position: 'absolute',
+                  top: '3px',
+                  right: 'calc(50% - 20px)',
+                  minWidth: '16px',
+                  height: '16px',
+                  padding: '0 4px',
+                  borderRadius: '9999px',
+                  background: '#DC2626',
+                  color: '#FFFFFF',
+                  fontSize: '9px',
+                  fontWeight: '800',
+                  lineHeight: '16px',
+                  textAlign: 'center',
+                  boxSizing: 'border-box'
+                }}
+              >
+                {(unreadCount + pendingPaymentCount) > 99 ? '99+' : unreadCount + pendingPaymentCount}
+              </span>
+            )}
           </Link>
         </div>
 
         {/* Expand button shown at bottom when truly collapsed + not hovering */}
         {isCollapsed && !isHoverExpanded && (
-          <div style={{ display: 'flex', justifyContent: 'center', paddingBottom: '12px' }}>
+          <div className="unbley-sidebar-expand-control" style={{ display: 'flex', justifyContent: 'center', paddingBottom: '12px' }}>
             <button
               onClick={toggleCollapse}
               title="Expand sidebar"

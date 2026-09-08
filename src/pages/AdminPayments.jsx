@@ -19,6 +19,7 @@ export default function AdminPayments() {
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [withdrawalRequests, setWithdrawalRequests] = useState([]);
+  const [unreadSupportCount, setUnreadSupportCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [selectedTab, setSelectedTab] = useState('all');
   const [actionInProgress, setActionInProgress] = useState(null);
@@ -73,6 +74,18 @@ export default function AdminPayments() {
       supabase.removeChannel(channel);
     };
   }, [fetchWithdrawalRequests]);
+
+  useEffect(() => {
+    const fetchUnreadSupport = async () => {
+      const { count } = await supabase
+        .from('concierge_messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('sender', 'user')
+        .is('read_at', null);
+      setUnreadSupportCount(count ?? 0);
+    };
+    fetchUnreadSupport();
+  }, []);
 
   const updateStatus = async (requestId, newStatus) => {
     setActionInProgress(requestId);
@@ -132,74 +145,6 @@ export default function AdminPayments() {
     <PageTransition>
       <div className="unbley-app-layout admin-payments-page">
         <Sidebar profileData={{}} isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
-        <aside className="unbley-secondary-admin-nav" style={{
-          width: '190px',
-          minWidth: '190px',
-          height: '100vh',
-          position: 'sticky',
-          top: 0,
-          backgroundColor: '#FAFAF9',
-          borderRight: '1px solid #EAE6DF',
-          padding: '88px 12px 20px',
-          boxSizing: 'border-box'
-        }}>
-          <div style={{ padding: '0 10px 10px', fontSize: '10px', fontWeight: '800', letterSpacing: '0.1em', color: '#9A7252' }}>
-            ADMIN TOOLS
-          </div>
-          <Link
-            to="/support"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              padding: '11px 10px',
-              borderRadius: '8px',
-              color: '#111827',
-              textDecoration: 'none',
-              fontSize: '12px',
-              fontWeight: '700'
-            }}
-          >
-            <MessageSquare size={17} />
-            Support Chat
-          </Link>
-          <Link
-            to="/admin/payments"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              padding: '11px 10px',
-              marginTop: '4px',
-              borderRadius: '8px',
-              color: '#111827',
-              backgroundColor: '#F0ECE4',
-              textDecoration: 'none',
-              fontSize: '12px',
-              fontWeight: '700'
-            }}
-          >
-            <CreditCard size={17} />
-            <span style={{ flex: 1 }}>Payments</span>
-            {withdrawalRequests.filter(request => request.status === 'pending').length > 0 && (
-              <span style={{
-                background: '#DC2626',
-                color: '#FFFFFF',
-                borderRadius: '9999px',
-                minWidth: '18px',
-                padding: '2px 5px',
-                textAlign: 'center',
-                fontSize: '10px',
-                fontWeight: '800'
-              }}>
-                {withdrawalRequests.filter(request => request.status === 'pending').length > 99
-                  ? '99+'
-                  : withdrawalRequests.filter(request => request.status === 'pending').length}
-              </span>
-            )}
-          </Link>
-        </aside>
-
         <div className="unbley-main-content admin-main-content">
           {/* Top Header */}
           <header className="unbley-top-header">
@@ -223,6 +168,29 @@ export default function AdminPayments() {
               </Link>
             </div>
           </header>
+
+          <nav className="support-admin-switcher" aria-label="Admin tools">
+            <Link to="/support">
+              <MessageSquare size={16} />
+              <span>Support Chat</span>
+              {unreadSupportCount > 0 && (
+                <span className="support-admin-switcher-badge">
+                  {unreadSupportCount > 99 ? '99+' : unreadSupportCount}
+                </span>
+              )}
+            </Link>
+            <Link to="/admin/payments" className="active">
+              <CreditCard size={16} />
+              <span>Payments</span>
+              {withdrawalRequests.filter(request => request.status === 'pending').length > 0 && (
+                <span className="support-admin-switcher-badge">
+                  {withdrawalRequests.filter(request => request.status === 'pending').length > 99
+                    ? '99+'
+                    : withdrawalRequests.filter(request => request.status === 'pending').length}
+                </span>
+              )}
+            </Link>
+          </nav>
 
           {/* Main Content */}
           <main className="unbley-workspace-container">

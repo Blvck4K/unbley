@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Send, 
   Menu,
-  MessageSquare,
+  MessageSquare, //nice
   Search,
   ChevronLeft,
   User,
@@ -25,6 +25,7 @@ export default function Support() {
   const [profileData, setProfileData] = useState({ brand_name: '', owner_name: '', logo_url: '' });
 
   const [conversations, setConversations] = useState([]);
+  const [pendingPaymentCount, setPendingPaymentCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeEmail, setActiveEmail] = useState(null);
   const [threadMessages, setThreadMessages] = useState([]);
@@ -63,6 +64,18 @@ export default function Support() {
       .subscribe();
     return () => supabase.removeChannel(channel);
   }, [isAdmin, fetchConversations]);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    const fetchPendingPayments = async () => {
+      const { count } = await supabase
+        .from('withdrawal_requests')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending');
+      setPendingPaymentCount(count ?? 0);
+    };
+    fetchPendingPayments();
+  }, [isAdmin]);
 
   const fetchThread = useCallback(async (email) => {
     if (!email) return;
@@ -135,74 +148,6 @@ export default function Support() {
     <PageTransition>
       <div className="unbley-app-layout admin-support-page">
         <Sidebar profileData={profileData} isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
-        <aside className="unbley-secondary-admin-nav" style={{
-          width: '190px',
-          minWidth: '190px',
-          height: '100vh',
-          position: 'sticky',
-          top: 0,
-          backgroundColor: '#FAFAF9',
-          borderRight: '1px solid #EAE6DF',
-          padding: '88px 12px 20px',
-          boxSizing: 'border-box'
-        }}>
-          <div style={{ padding: '0 10px 10px', fontSize: '10px', fontWeight: '800', letterSpacing: '0.1em', color: '#9A7252' }}>
-            ADMIN TOOLS
-          </div>
-          <Link
-            to="/support"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              padding: '11px 10px',
-              borderRadius: '8px',
-              color: '#111827',
-              backgroundColor: location.pathname === '/support' ? '#F0ECE4' : 'transparent',
-              textDecoration: 'none',
-              fontSize: '12px',
-              fontWeight: '700'
-            }}
-          >
-            <MessageSquare size={17} />
-            <span style={{ flex: 1 }}>Support Chat</span>
-            {conversations.reduce((total, conversation) => total + conversation.unread, 0) > 0 && (
-              <span style={{
-                background: '#DC2626',
-                color: '#FFFFFF',
-                borderRadius: '9999px',
-                minWidth: '18px',
-                padding: '2px 5px',
-                textAlign: 'center',
-                fontSize: '10px',
-                fontWeight: '800'
-              }}>
-                {conversations.reduce((total, conversation) => total + conversation.unread, 0) > 99
-                  ? '99+'
-                  : conversations.reduce((total, conversation) => total + conversation.unread, 0)}
-              </span>
-            )}
-          </Link>
-          <Link
-            to="/admin/payments"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              padding: '11px 10px',
-              marginTop: '4px',
-              borderRadius: '8px',
-              color: '#111827',
-              backgroundColor: location.pathname === '/admin/payments' ? '#F0ECE4' : 'transparent',
-              textDecoration: 'none',
-              fontSize: '12px',
-              fontWeight: '700'
-            }}
-          >
-            <CreditCard size={17} />
-            Payments
-          </Link>
-        </aside>
         <div className="unbley-main-content admin-main-content">
           <header className="unbley-top-header">
             <div className="unbley-header-left">
@@ -222,7 +167,36 @@ export default function Support() {
             </div>
           </header>
 
-          <main className={`admin-support-workspace ${activeEmail ? 'chat-open' : ''}`} style={{ display: 'flex', height: 'calc(100vh - 73px)', overflow: 'hidden' }}>
+          <nav className="support-admin-switcher" aria-label="Admin tools">
+            <Link
+              to="/support"
+              className={location.pathname === '/support' ? 'active' : ''}
+            >
+              <MessageSquare size={16} />
+              <span>Support Chat</span>
+              {conversations.reduce((total, conversation) => total + conversation.unread, 0) > 0 && (
+                <span className="support-admin-switcher-badge">
+                  {conversations.reduce((total, conversation) => total + conversation.unread, 0) > 99
+                    ? '99+'
+                    : conversations.reduce((total, conversation) => total + conversation.unread, 0)}
+                </span>
+              )}
+            </Link>
+            <Link
+              to="/admin/payments"
+              className={location.pathname === '/admin/payments' ? 'active' : ''}
+            >
+              <CreditCard size={16} />
+              <span>Payments</span>
+              {pendingPaymentCount > 0 && (
+                <span className="support-admin-switcher-badge">
+                  {pendingPaymentCount > 99 ? '99+' : pendingPaymentCount}
+                </span>
+              )}
+            </Link>
+          </nav>
+
+          <main className={`admin-support-workspace ${activeEmail ? 'chat-open' : ''}`} style={{ display: 'flex', height: 'calc(100vh - 125px)', overflow: 'hidden' }}>
 
             {/* Left: Conversation List */}
             <div className="admin-conversation-list" style={{ width: '320px', minWidth: '320px', borderRight: '1px solid #F0ECE4', display: 'flex', flexDirection: 'column', backgroundColor: '#FFFFFF', overflow: 'hidden' }}>
