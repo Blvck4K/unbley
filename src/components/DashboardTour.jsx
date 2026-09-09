@@ -225,7 +225,17 @@ export default function DashboardTour({
     return () => clearTimeout(timer);
   }, [currentStep, isActive, currentTour, updatePosition]);
 
-  const handleNext = () => {
+  const handleComplete = useCallback(() => {
+    if (onSidebarToggle) {
+      onSidebarToggle(false);
+    }
+    if (userId) {
+      localStorage.setItem(`unbley_dashboard_tour_seen_${userId}`, 'true');
+    }
+    onClose?.();
+  }, [onClose, onSidebarToggle, userId]);
+
+  const handleNext = useCallback(() => {
     if (onMobileMenuAdvance) {
       onMobileMenuAdvance(currentStep + 1);
       return;
@@ -235,23 +245,13 @@ export default function DashboardTour({
     } else {
       handleComplete();
     }
-  };
+  }, [currentStep, handleComplete, onMobileMenuAdvance, tourSteps.length]);
 
-  const handlePrev = () => {
+  const handlePrev = useCallback(() => {
     if (currentStep > 0) {
       setCurrentStep(prev => prev - 1);
     }
-  };
-
-  const handleComplete = () => {
-    if (onSidebarToggle) {
-      onSidebarToggle(false);
-    }
-    if (userId) {
-      localStorage.setItem(`unbley_dashboard_tour_seen_${userId}`, 'true');
-    }
-    onClose?.();
-  };
+  }, [currentStep]);
 
   // Resize and keyboard listeners
   useEffect(() => {

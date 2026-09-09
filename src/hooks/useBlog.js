@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 
 export const useBlog = (options = {}) => {
@@ -7,7 +7,7 @@ export const useBlog = (options = {}) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     try {
       setLoading(true);
       let query = supabase
@@ -30,7 +30,7 @@ export const useBlog = (options = {}) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [limit, status]);
 
   useEffect(() => {
     fetchPosts();
@@ -43,7 +43,7 @@ export const useBlog = (options = {}) => {
         { event: '*', schema: 'public', table: 'blog_posts' },
         (payload) => {
           console.log('Realtime change received:', payload);
-          // Refresh data on any change for simplicity, 
+          // Refresh data on any change for simplicity,
           // or manually update states for better performance.
           fetchPosts();
         }
@@ -53,7 +53,7 @@ export const useBlog = (options = {}) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [status, limit]);
+  }, [fetchPosts]);
 
   return { posts, loading, error, refresh: fetchPosts };
 };

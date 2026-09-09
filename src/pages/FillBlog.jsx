@@ -107,6 +107,29 @@ export default function FillBlog() {
   const [uploading, setUploading] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
   const [newTag, setNewTag] = useState('');
+  const [autoSaveStatus, setAutoSaveStatus] = useState('Not saved yet');
+
+  const draftStorageKey = `unbley_fillblog_draft_${user?.id || 'guest'}_${editId || 'new'}`;
+
+  const hydrateDraft = (draft) => {
+    if (!draft) return;
+    if (draft.title !== undefined) setTitle(draft.title || '');
+    if (draft.slug !== undefined) setSlug(draft.slug || '');
+    if (draft.content !== undefined) setContent(draft.content || '');
+    if (draft.excerpt !== undefined) setExcerpt(draft.excerpt || '');
+    if (draft.meta_description !== undefined) setMetaDescription(draft.meta_description || '');
+    if (draft.meta_title !== undefined) setMetaTitle(draft.meta_title || '');
+    if (draft.meta_keywords !== undefined) setMetaKeywords(draft.meta_keywords || '');
+    if (draft.category !== undefined) setCategory(draft.category || 'Editorial');
+    if (draft.tags !== undefined) setTags(Array.isArray(draft.tags) && draft.tags.length ? draft.tags : ['History', 'Curation']);
+    if (draft.cover_image_url !== undefined) setCoverImageUrl(draft.cover_image_url || '');
+    if (draft.author_name !== undefined) setAuthorName(draft.author_name || 'Julian Vane');
+    if (draft.published_at !== undefined && draft.published_at) setPublishedAt(draft.published_at);
+
+    if (draft.updatedAt) {
+      setAutoSaveStatus(`Restored auto-saved draft at ${new Date(draft.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
+    }
+  };
 
   // Full Tiptap setup
   const editor = useEditor({
@@ -157,6 +180,15 @@ export default function FillBlog() {
 
   // Load post for editing
   useEffect(() => {
+    const savedDraft = (() => {
+      try {
+        const storedDraft = localStorage.getItem(draftStorageKey);
+        return storedDraft ? JSON.parse(storedDraft) : null;
+      } catch {
+        return null;
+      }
+    })();
+
     if (editId) {
       const fetchPost = async () => {
         const { data, error } = await supabase
@@ -167,19 +199,26 @@ export default function FillBlog() {
 
         if (error) throw error;
         if (data) {
-          setTitle(data.title);
-          setSlug(data.slug || '');
-          setContent(data.content || '');
-          setExcerpt(data.excerpt || '');
-          setMetaDescription(data.meta_description || '');
-          setMetaTitle(data.meta_title || '');
-          setMetaKeywords(data.meta_keywords || '');
-          setCategory(data.category || 'Editorial');
-          setTags(data.tags || []);
-          setCoverImageUrl(data.cover_image_url || '');
-          setAuthorName(data.author_name || 'Julian Vane');
-          if (data.created_at) {
-            setPublishedAt(new Date(data.created_at).toISOString().split('T')[0]);
+          const latestDbUpdate = data.updated_at || data.created_at;
+          const shouldUseSavedDraft = savedDraft && savedDraft.editId === editId && savedDraft.updatedAt && latestDbUpdate && new Date(savedDraft.updatedAt).getTime() > new Date(latestDbUpdate).getTime();
+
+          if (shouldUseSavedDraft) {
+            hydrateDraft(savedDraft);
+          } else {
+            setTitle(data.title);
+            setSlug(data.slug || '');
+            setContent(data.content || '');
+            setExcerpt(data.excerpt || '');
+            setMetaDescription(data.meta_description || '');
+            setMetaTitle(data.meta_title || '');
+            setMetaKeywords(data.meta_keywords || '');
+            setCategory(data.category || 'Editorial');
+            setTags(data.tags || ['History', 'Curation']);
+            setCoverImageUrl(data.cover_image_url || '');
+            setAuthorName(data.author_name || 'Julian Vane');
+            if (data.created_at) {
+              setPublishedAt(new Date(data.created_at).toISOString().split('T')[0]);
+            }
           }
           setDataLoaded(true);
         }
@@ -189,8 +228,41 @@ export default function FillBlog() {
         toast.error(`Could not load post: ${error.message}`);
         navigate('/admin-blog');
       });
+    } else if (savedDraft) {
+      hydrateDraft(savedDraft);
+      setDataLoaded(true);
     }
-  }, [editId, navigate, toast]);
+  }, [draftStorageKey, editId, navigate, toast]);
+
+  useEffect(() => {
+    if (!dataLoaded && !editId) return;
+
+    const hasAnyContent = Boolean(
+      title || slug || content || excerpt || metaDescription || metaTitle || coverImageUrl || category || tags.length
+    );
+
+    if (!hasAnyContent) return;
+
+    const draftPayload = {
+      editId: editId || null,
+      title,
+      slug,
+      content,
+      excerpt,
+      meta_description: metaDescription,
+      meta_title: metaTitle,
+      meta_keywords: metaKeywords,
+      category,
+      tags,
+      cover_image_url: coverImageUrl,
+      author_name: authorName,
+      published_at: publishedAt,
+      updatedAt: new Date().toISOString()
+    };
+
+    localStorage.setItem(draftStorageKey, JSON.stringify(draftPayload));
+    setAutoSaveStatus(`Auto-saved at ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
+  }, [draftStorageKey, title, slug, content, excerpt, metaDescription, metaTitle, metaKeywords, category, tags, coverImageUrl, authorName, publishedAt, editId, dataLoaded]);
 
   const handleSave = async (isPublishing = false) => {
     if (!title) return toast.error("Title is required");
@@ -217,6 +289,9 @@ export default function FillBlog() {
         const { error } = await supabase.from('blog_posts').insert([postData]);
         if (error) throw error;
       }
+
+      localStorage.removeItem(draftStorageKey);
+      setAutoSaveStatus('Saved to server');
       toast.success(isPublishing ? "Post Published!" : "Draft Saved!");
       navigate('/admin-blog');
     } catch (err) {
@@ -476,9 +551,12 @@ export default function FillBlog() {
           </div>
 
           <aside className="content-area-aside">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '40px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '12px' }}>
               <button onClick={() => handleSave(false)} disabled={isSaving} style={{ padding: '12px', fontWeight: 700, background: 'none', border: '1px solid #DFCFC2', borderRadius: '8px', cursor: 'pointer', color: '#6A3E1F' }}>SAVE DRAFT</button>
               <button onClick={() => handleSave(true)} disabled={isSaving} style={{ padding: '12px', fontWeight: 700, backgroundColor: '#6A3E1F', color: '#FFF', borderRadius: '8px', border: 'none', cursor: 'pointer', boxShadow: '0 4px 12px rgba(106,62,31,0.2)' }}>PUBLISH POST</button>
+            </div>
+            <div style={{ fontSize: '11px', color: '#6B584C', marginBottom: '28px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+              {autoSaveStatus}
             </div>
 
             <div style={{ backgroundColor: '#F7F2EC', padding: '24px', borderRadius: '12px', border: '1px solid #DFCFC2', marginBottom: '32px' }}>

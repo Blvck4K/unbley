@@ -142,21 +142,7 @@ export default function EditTour({
     return () => clearTimeout(timer);
   }, [currentStep, isActive, currentTour, updatePosition]);
 
-  const handleNext = () => {
-    if (currentStep < tourSteps.length - 1) {
-      setCurrentStep(prev => prev + 1);
-    } else {
-      handleComplete();
-    }
-  };
-
-  const handlePrev = () => {
-    if (currentStep > 0) {
-      setCurrentStep(prev => prev - 1);
-    }
-  };
-
-  const handleComplete = () => {
+  const handleComplete = useCallback(() => {
     if (onSidebarToggle) {
       onSidebarToggle(false);
     }
@@ -164,7 +150,21 @@ export default function EditTour({
       localStorage.setItem(`unbley_edit_tour_seen_${userId}`, 'true');
     }
     onClose?.();
-  };
+  }, [onClose, onSidebarToggle, userId]);
+
+  const handleNext = useCallback(() => {
+    if (currentStep < tourSteps.length - 1) {
+      setCurrentStep(prev => prev + 1);
+    } else {
+      handleComplete();
+    }
+  }, [currentStep, handleComplete, tourSteps.length]);
+
+  const handlePrev = useCallback(() => {
+    if (currentStep > 0) {
+      setCurrentStep(prev => prev - 1);
+    }
+  }, [currentStep]);
 
   useEffect(() => {
     if (!isActive) return;
