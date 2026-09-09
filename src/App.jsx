@@ -8,40 +8,56 @@ import ScrollToTop from './components/ScrollToTop';
 import StoreDomainResolver from './components/StoreDomainResolver';
 
 // Lazy load pages
-const Home = lazy(() => import('./pages/Home'));
-const Auth = lazy(() => import('./pages/Auth'));
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const Profile = lazy(() => import('./pages/Profile'));
-const Edit = lazy(() => import('./pages/Edit'));
-const Activation = lazy(() => import('./pages/Activation'));
-const Storefront = lazy(() => import('./pages/Storefront'));
-const ExploreBrand = lazy(() => import('./pages/ExploreBrand'));
-const FinalizeActivation = lazy(() => import('./pages/FinalizeActivation'));
-const SuccessPage = lazy(() => import('./pages/SuccessPage'));
-const CheckoutSuccess = lazy(() => import('./pages/CheckoutSuccess'));
-const ShopBrand = lazy(() => import('./pages/ShopBrand'));
-const Cart = lazy(() => import('./pages/Cart'));
-const Checkout = lazy(() => import('./pages/Checkout'));
-const ProductDetail = lazy(() => import('./pages/ProductDetail'));
-const SellDigitalGoods = lazy(() => import('./pages/SellDigitalGoods'));
-const CreatorPlatform = lazy(() => import('./pages/CreatorPlatform'));
-const CreateOnlineStore = lazy(() => import('./pages/CreateOnlineStore'));
-const ShopifyAlternative = lazy(() => import('./pages/ShopifyAlternative'));
-const AffordableEcommerce = lazy(() => import('./pages/AffordableEcommerce'));
-const AllBlog = lazy(() => import('./pages/AllBlog'));
-const Blog = lazy(() => import('./pages/Blog'));
-const AdminBlog = lazy(() => import('./pages/AdminBlog'));
-const FillBlog = lazy(() => import('./pages/FillBlog'));
-const AdminPayments = lazy(() => import('./pages/AdminPayments'));
-const AdminStoreOwners = lazy(() => import('./pages/AdminStoreOwners'));
-const About = lazy(() => import('./pages/About'));
-const Contact = lazy(() => import('./pages/Contact'));
-const Support = lazy(() => import('./pages/Support'));
+const Home = lazyWithRetry(() => import('./pages/Home'));
+const Auth = lazyWithRetry(() => import('./pages/Auth'));
+const Dashboard = lazyWithRetry(() => import('./pages/Dashboard'));
+const Profile = lazyWithRetry(() => import('./pages/Profile'));
+const Edit = lazyWithRetry(() => import('./pages/Edit'));
+const Activation = lazyWithRetry(() => import('./pages/Activation'));
+const Storefront = lazyWithRetry(() => import('./pages/Storefront'));
+const ExploreBrand = lazyWithRetry(() => import('./pages/ExploreBrand'));
+const FinalizeActivation = lazyWithRetry(() => import('./pages/FinalizeActivation'));
+const SuccessPage = lazyWithRetry(() => import('./pages/SuccessPage'));
+const CheckoutSuccess = lazyWithRetry(() => import('./pages/CheckoutSuccess'));
+const ShopBrand = lazyWithRetry(() => import('./pages/ShopBrand'));
+const Cart = lazyWithRetry(() => import('./pages/Cart'));
+const Checkout = lazyWithRetry(() => import('./pages/Checkout'));
+const ProductDetail = lazyWithRetry(() => import('./pages/ProductDetail'));
+const SellDigitalGoods = lazyWithRetry(() => import('./pages/SellDigitalGoods'));
+const CreatorPlatform = lazyWithRetry(() => import('./pages/CreatorPlatform'));
+const CreateOnlineStore = lazyWithRetry(() => import('./pages/CreateOnlineStore'));
+const ShopifyAlternative = lazyWithRetry(() => import('./pages/ShopifyAlternative'));
+const AffordableEcommerce = lazyWithRetry(() => import('./pages/AffordableEcommerce'));
+const AllBlog = lazyWithRetry(() => import('./pages/AllBlog'));
+const Blog = lazyWithRetry(() => import('./pages/Blog'));
+const AdminBlog = lazyWithRetry(() => import('./pages/AdminBlog'));
+const FillBlog = lazyWithRetry(() => import('./pages/FillBlog'));
+const AdminPayments = lazyWithRetry(() => import('./pages/AdminPayments'));
+const AdminStoreOwners = lazyWithRetry(() => import('./pages/AdminStoreOwners'));
+const About = lazyWithRetry(() => import('./pages/About'));
+const Contact = lazyWithRetry(() => import('./pages/Contact'));
+const Support = lazyWithRetry(() => import('./pages/Support'));
 
 import ChatWidget from './components/ChatWidget';
 import FloatingWhatsApp from './components/FloatingWhatsApp';
 import OAuthRedirectHandler from './components/OAuthRedirectHandler';
 import Menu from './pages/Menu.jsx';
+
+const lazyWithRetry = (importer) => lazy(async () => {
+  const reloadKey = 'unbley:stale-chunk-reload';
+
+  try {
+    const module = await importer();
+    sessionStorage.removeItem(reloadKey);
+    return module;
+  } catch (error) {
+    if (!sessionStorage.getItem(reloadKey)) {
+      sessionStorage.setItem(reloadKey, '1');
+      window.location.reload();
+    }
+    throw error;
+  }
+});
 
 // Loading Component
 const PageLoader = () => (
