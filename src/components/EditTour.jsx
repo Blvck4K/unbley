@@ -190,7 +190,8 @@ export default function EditTour({
 
   const IconComponent = currentTour?.icon || Sparkles;
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  const tooltipWidth = isMobile ? Math.min(340, window.innerWidth - 32) : 360;
+  const mobileViewportPadding = 12;
+  const tooltipWidth = isMobile ? Math.min(340, window.innerWidth - (mobileViewportPadding * 2)) : 360;
 
   let tooltipStyle = {};
 
@@ -198,20 +199,22 @@ export default function EditTour({
     const padding = 14;
 
     if (isMobile) {
-      const left = 16;
+      const left = mobileViewportPadding;
       if (placement === 'top') {
-        const top = Math.max(16, targetRect.top - 240);
         tooltipStyle = {
-          top: `${top}px`,
+          bottom: `${Math.max(mobileViewportPadding, window.innerHeight - targetRect.top + padding)}px`,
           left: `${left}px`,
-          width: `${tooltipWidth}px`
+          width: `${tooltipWidth}px`,
+          maxHeight: `${Math.max(120, targetRect.top - padding - mobileViewportPadding)}px`,
+          overflowY: 'auto'
         };
       } else {
-        const top = Math.min(window.innerHeight - 280, targetRect.bottom + padding);
         tooltipStyle = {
-          top: `${Math.max(16, top)}px`,
+          top: `${Math.max(mobileViewportPadding, targetRect.bottom + padding)}px`,
           left: `${left}px`,
-          width: `${tooltipWidth}px`
+          width: `${tooltipWidth}px`,
+          maxHeight: `${Math.max(120, window.innerHeight - targetRect.bottom - padding - mobileViewportPadding)}px`,
+          overflowY: 'auto'
         };
       }
     } else {
@@ -252,7 +255,9 @@ export default function EditTour({
 
         tooltipStyle = {
           top: `${top}px`,
-          left: `${Math.min(left, window.innerWidth - tooltipWidth - 16)}px`,
+          ...(left + tooltipWidth + 12 <= window.innerWidth
+            ? { left: `${Math.max(12, left)}px` }
+            : { right: '12px' }),
           width: `${tooltipWidth}px`
         };
       }
@@ -262,7 +267,11 @@ export default function EditTour({
       top: '50%',
       left: '50%',
       transform: 'translate(-50%, -50%)',
-      width: `${tooltipWidth}px`
+      width: `${tooltipWidth}px`,
+      ...(isMobile && {
+        maxHeight: 'calc(100dvh - 24px)',
+        overflowY: 'auto'
+      })
     };
   }
 
@@ -350,9 +359,11 @@ export default function EditTour({
             borderRadius: '16px',
             border: '1px solid #EAE3D9',
             boxShadow: '0 20px 40px rgba(34, 21, 16, 0.24)',
-            padding: '20px 22px',
+            padding: isMobile ? '14px 16px' : '20px 22px',
             zIndex: 1000002,
-            boxSizing: 'border-box'
+            boxSizing: 'border-box',
+            maxWidth: 'calc(100vw - 24px)',
+            ...(!isMobile && { overflowY: 'visible' })
           }}
           onClick={(e) => e.stopPropagation()}
         >
@@ -410,10 +421,10 @@ export default function EditTour({
           <h4
             style={{
               fontFamily: 'var(--font-heading)',
-              fontSize: '16px',
+              fontSize: isMobile ? '15px' : '16px',
               fontWeight: '800',
               color: '#221510',
-              margin: '0 0 6px 0',
+              margin: '0 0 5px 0',
               letterSpacing: '-0.01em'
             }}
           >
@@ -422,16 +433,16 @@ export default function EditTour({
 
           <p
             style={{
-              fontSize: '12.5px',
-              lineHeight: '1.5',
+              fontSize: isMobile ? '12px' : '12.5px',
+              lineHeight: isMobile ? '1.4' : '1.5',
               color: '#6B584C',
-              margin: '0 0 18px 0'
+              margin: isMobile ? '0 0 12px 0' : '0 0 18px 0'
             }}
           >
             {currentTour.description}
           </p>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '14px', borderTop: '1px solid #F3EFEA' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: isMobile ? '10px' : '14px', borderTop: '1px solid #F3EFEA' }}>
             <div style={{ display: 'flex', gap: '5px' }}>
               {tourSteps.map((_, idx) => (
                 <div

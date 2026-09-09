@@ -436,6 +436,7 @@ export default function Sidebar({ profileData, isSidebarOpen, setIsSidebarOpen }
           </div>
 
           <Link
+            id="tour-mobile-menu"
             to="/menu"
             className={`unbley-nav-item mobile-menu-link ${isActive('/menu') ? 'active' : ''}`}
             aria-label="Open menu"

@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { BarChart2, CreditCard, HelpCircle, Headphones, Sliders, Users, ArrowLeft, ChevronRight, Menu as MenuIcon } from 'lucide-react';
-import { Link, Navigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import PageTransition from '../components/PageTransition';
+import DashboardTour from '../components/DashboardTour';
 
 const menuItems = [
   { to: '/dashboard?tab=insights', label: 'Store Insights', description: 'Review traffic and performance', icon: BarChart2, tone: 'blue' },
@@ -13,7 +14,12 @@ const menuItems = [
 
 export default function Menu() {
   const { user, isAdmin } = useAuth();
+  const navigate = useNavigate();
   const [isMobile, setIsMobile] = useState(null);
+  const [tourStep, setTourStep] = useState(() => {
+    const savedStep = sessionStorage.getItem('unbley_mobile_tour_resume_step');
+    return savedStep === null ? null : Number(savedStep);
+  });
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(max-width: 768px)');
@@ -49,7 +55,12 @@ export default function Menu() {
 
         <section className="mobile-menu-list" aria-label="More store tools">
           {visibleItems.map(({ to, label, description, icon, tone }) => (
-            <Link key={to} to={to} className="mobile-menu-item">
+            <Link
+              key={to}
+              id={to === '/edit' ? 'tour-menu-store-settings' : undefined}
+              to={to}
+              className="mobile-menu-item"
+            >
               <span className={`mobile-menu-icon ${tone}`}>{React.createElement(icon, { size: 19 })}</span>
               <span className="mobile-menu-copy">
                 <strong>{label}</strong>
@@ -80,6 +91,27 @@ export default function Menu() {
             </>
           )}
         </section>
+        <DashboardTour
+          isActive={tourStep !== null}
+          initialStep={tourStep ?? 0}
+          userId={user?.id}
+          isStoreComplete={false}
+          onClose={() => {
+            sessionStorage.removeItem('unbley_mobile_tour_resume_step');
+            setTourStep(null);
+          }}
+          onMobileMenuAdvance={(nextStep) => {
+            if (nextStep >= 4) {
+              sessionStorage.removeItem('unbley_mobile_tour_resume_step');
+              setTourStep(null);
+              navigate('/dashboard');
+              return;
+            }
+            sessionStorage.setItem('unbley_mobile_tour_resume_step', String(nextStep));
+            setTourStep(null);
+            navigate('/dashboard');
+          }}
+        />
       </main>
     </PageTransition>
   );

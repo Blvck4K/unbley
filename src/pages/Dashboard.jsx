@@ -28,7 +28,7 @@ import {
   Gem,
   Sparkles
 } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../context/ToastContext';
@@ -39,10 +39,15 @@ import OnboardingModal from '../components/OnboardingModal';
 import DashboardTour from '../components/DashboardTour';
 import ProductsModal from '../components/onboarding/ProductsModal';
 
+const PAGE_SIZE = 25;
+const REVENUE_STATUSES = ['paid', 'completed', 'processing', 'shipped', 'delivered'];
+const PENDING_SETTLEMENT_STATUSES = ['paid', 'processing', 'shipped', 'delivered'];
+
 export default function Dashboard() {
   const { user, session } = useAuth();
   const { toast } = useToast();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState(() => Date.now());
@@ -51,11 +56,22 @@ export default function Dashboard() {
   const [showOnboardingModal, setShowOnboardingModal] = useState(false);
   const [activeOnboardingStep, setActiveOnboardingStep] = useState(null);
   const [showDashboardTour, setShowDashboardTour] = useState(false);
+  const [dashboardTourStartStep, setDashboardTourStartStep] = useState(0);
   const [showWelcomeOnboarding, setShowWelcomeOnboarding] = useState(false);
   const [welcomeOnboardingStep, setWelcomeOnboardingStep] = useState(0);
   const [copiedLink, setCopiedLink] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [showEditProductModal, setShowEditProductModal] = useState(false);
+
+  useEffect(() => {
+    const savedStep = sessionStorage.getItem('unbley_mobile_tour_resume_step');
+    if (savedStep !== null) {
+      sessionStorage.removeItem('unbley_mobile_tour_resume_step');
+      const parsedStep = Number(savedStep);
+      setDashboardTourStartStep(Number.isInteger(parsedStep) && parsedStep >= 0 ? parsedStep : 0);
+      setShowDashboardTour(true);
+    }
+  }, []);
 
   const brandPrimary = '#6A3E1F';
   const brandSoft = '#F6EFEA';
@@ -99,6 +115,14 @@ export default function Dashboard() {
   const [withdrawalLoading, setWithdrawalLoading] = useState(false);
   const [withdrawalError, setWithdrawalError] = useState(null);
   const [availableBalance, setAvailableBalance] = useState(0);
+  const [dashboardError, setDashboardError] = useState('');
+  const [productsError, setProductsError] = useState('');
+  const [ordersError, setOrdersError] = useState('');
+  const [walletError, setWalletError] = useState('');
+  const [productsPage, setProductsPage] = useState(0);
+  const [ordersPage, setOrdersPage] = useState(0);
+  const [productsTotal, setProductsTotal] = useState(0);
+  const [ordersTotal, setOrdersTotal] = useState(0);
   const isMountedRef = useRef(true);
   const dashboardRequestRef = useRef(0);
   const productsRequestRef = useRef(0);
@@ -232,6 +256,7 @@ export default function Dashboard() {
   const fetchDashboardData = useCallback(async () => {
     if (!user) return;
     const requestId = ++dashboardRequestRef.current;
+    setDashboardError('');
 
     const fallbackProfile = {
       brand_name: user?.user_metadata?.brand_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Your Brand',
@@ -251,11 +276,13 @@ export default function Dashboard() {
     };
 
     try {
-      const { data: pData } = await supabase
+      const { data: pData, error: profileError } = await supabase
         .from('brand_profiles')
         .select('*')
         .eq('id', user.id)
         .maybeSingle();
+
+      if (profileError) throw new Error(`Could not load your store profile: ${profileError.message}`);
 
       if (!isMountedRef.current || requestId !== dashboardRequestRef.current) return;
 
@@ -267,10 +294,12 @@ export default function Dashboard() {
         ...(pData ? Object.fromEntries(Object.entries(pData).filter(([_, v]) => v != null && v !== '')) : {})
       }));
 
-      const { data: salesData } = await supabase
+      const { data: salesData, error: salesError } = await supabase
         .from('orders')
         .select('total_amount')
-        .eq('brand_id', user.id);
+        .eq('brand_id', user.id)
+        .in('status', REVENUE_STATUSES);
+      if (salesError) throw new Error(`Could not load sales totals: ${salesError.message}`);
       
       const calcSales = salesData && salesData.length > 0
         ? salesData.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0)
@@ -279,11 +308,13 @@ export default function Dashboard() {
       const weekStart = new Date();
       weekStart.setHours(0, 0, 0, 0);
       weekStart.setDate(weekStart.getDate() - 6);
-      const { data: weeklyOrders } = await supabase
+      const { data: weeklyOrders, error: weeklyOrdersError } = await supabase
         .from('orders')
         .select('total_amount, created_at, status')
         .eq('brand_id', user.id)
+        .in('status', [...REVENUE_STATUSES, 'cancelled'])
         .gte('created_at', weekStart.toISOString());
+      if (weeklyOrdersError) throw new Error(`Could not load weekly sales: ${weeklyOrdersError.message}`);
       const paidStatuses = new Set(['paid', 'completed', 'processing', 'shipped', 'delivered']);
       const weeklyTotals = Array.from({ length: 7 }, (_, index) => {
         const day = new Date(weekStart);
@@ -299,23 +330,27 @@ export default function Dashboard() {
       });
       const maxWeeklyTotal = Math.max(...weeklyTotals.map(item => item.total), 0);
 
-      const { count: stockCount } = await supabase
+      const { count: stockCount, error: stockError } = await supabase
         .from('products')
         .select('*', { count: 'exact', head: true })
         .eq('brand_id', user.id)
+        .in('status', [...REVENUE_STATUSES, 'cancelled'])
         .eq('status', 'active');
+      if (stockError) throw new Error(`Could not load product totals: ${stockError.message}`);
 
-      const { count: trafficCount } = await supabase
+      const { count: trafficCount, error: trafficError } = await supabase
         .from('store_traffic')
         .select('*', { count: 'exact', head: true })
         .eq('brand_id', user.id);
+      if (trafficError) throw new Error(`Could not load traffic totals: ${trafficError.message}`);
 
-      const { data: lastOrders } = await supabase
+      const { data: lastOrders, error: recentOrdersError } = await supabase
         .from('orders')
         .select('*')
         .eq('brand_id', user.id)
         .order('created_at', { ascending: false })
         .limit(5);
+      if (recentOrdersError) throw new Error(`Could not load recent orders: ${recentOrdersError.message}`);
 
       if (!isMountedRef.current || requestId !== dashboardRequestRef.current) return;
 
@@ -333,6 +368,7 @@ export default function Dashboard() {
       });
     } catch (err) {
       console.error('Error loading live dashboard data:', err);
+      if (isMountedRef.current && requestId === dashboardRequestRef.current) setDashboardError(err.message || 'Could not load dashboard data.');
     }
   }, [user]);
 
@@ -340,43 +376,53 @@ export default function Dashboard() {
     if (!user) return;
     const requestId = ++productsRequestRef.current;
     setProductsLoading(true);
+    setProductsError('');
     try {
-      const { data, error } = await supabase
+      const from = productsPage * PAGE_SIZE;
+      const { data, error, count } = await supabase
         .from('products')
-        .select('*')
+        .select('*', { count: 'exact' })
         .eq('brand_id', user.id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range(from, from + PAGE_SIZE - 1);
       if (error) throw error;
       if (!isMountedRef.current || requestId !== productsRequestRef.current) return;
       setProducts(data || []);
+      setProductsTotal(count || 0);
     } catch (err) {
       console.error('Error fetching products:', err);
+      if (isMountedRef.current && requestId === productsRequestRef.current) setProductsError(err.message || 'Could not load products.');
     } finally {
       if (isMountedRef.current && requestId === productsRequestRef.current) setProductsLoading(false);
     }
-  }, [user]);
+  }, [user, productsPage]);
 
   const fetchAllOrders = useCallback(async () => {
     if (!user) return;
     const requestId = ++ordersRequestRef.current;
     setOrdersLoading(true);
+    setOrdersError('');
     try {
-      const { data, error } = await supabase
+      const from = ordersPage * PAGE_SIZE;
+      const { data, error, count } = await supabase
         .from('orders')
-        .select('*')
+        .select('*', { count: 'exact' })
         .eq('brand_id', user.id)
         .in('status', ['paid', 'completed', 'processing', 'shipped', 'delivered', 'cancelled'])
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range(from, from + PAGE_SIZE - 1);
       if (error) throw error;
       if (!isMountedRef.current || requestId !== ordersRequestRef.current) return;
       setAllOrders(data || []);
+      setOrdersTotal(count || 0);
     } catch (err) {
       console.error('Error fetching orders:', err);
+      if (isMountedRef.current && requestId === ordersRequestRef.current) setOrdersError(err.message || 'Could not load orders.');
       toast?.error('Could not load orders');
     } finally {
       if (isMountedRef.current && requestId === ordersRequestRef.current) setOrdersLoading(false);
     }
-  }, [user, toast]);
+  }, [user, toast, ordersPage]);
 
   const scheduleDashboardRefresh = useCallback(() => {
     if (dashboardRefreshTimerRef.current) clearTimeout(dashboardRefreshTimerRef.current);
@@ -442,39 +488,51 @@ export default function Dashboard() {
   const fetchPayouts = useCallback(async () => {
     if (!user) return;
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('orders')
         .select('id, order_number, total_amount, status, created_at, customer_name, product_name_snapshot')
         .eq('brand_id', user.id)
         .order('created_at', { ascending: false })
         .limit(20);
+      if (error) throw error;
       setPayouts(data || []);
+      setWalletError('');
     } catch (err) {
       console.error('Error fetching payouts:', err);
+      setWalletError(err.message || 'Could not load payout data.');
     }
   }, [user]);
 
   const fetchWithdrawalRequests = useCallback(async () => {
     if (!user) return;
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('withdrawal_requests')
         .select('*')
         .eq('brand_id', user.id)
         .order('created_at', { ascending: false });
+      if (error) throw error;
       setWithdrawalRequests(data || []);
+      setWalletError('');
     } catch (err) {
       // Table may not exist yet, gracefully handle
       console.error('Error fetching withdrawal requests:', err);
+      setWalletError(err.message || 'Could not load withdrawal requests.');
     }
   }, [user]);
 
   const fetchAvailableBalance = useCallback(async () => {
     if (!user) return;
-    const [{ data: orderData }, { data: requestData }] = await Promise.all([
+    const [{ data: orderData, error: orderError }, { data: requestData, error: requestError }] = await Promise.all([
       supabase.from('orders').select('total_amount, status').eq('brand_id', user.id),
       supabase.from('withdrawal_requests').select('amount, status').eq('brand_id', user.id)
     ]);
+    if (orderError || requestError) {
+      const error = orderError || requestError;
+      console.error('Error calculating available balance:', error);
+      setWalletError(error.message || 'Could not calculate available balance.');
+      return;
+    }
     const completedSales = (orderData || [])
       .filter(order => order.status === 'completed')
       .reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0);
@@ -482,6 +540,7 @@ export default function Dashboard() {
       .filter(request => request.status === 'pending' || request.status === 'approved')
       .reduce((sum, request) => sum + (Number(request.amount) || 0), 0);
     setAvailableBalance(Math.max(0, completedSales - reservedWithdrawals));
+    setWalletError('');
   }, [user]);
   useEffect(() => {
     if (!user) return;
@@ -891,11 +950,17 @@ export default function Dashboard() {
 
         <div className="unbley-main-content">
 
+          {(dashboardError || (currentTab === 'products' && productsError) || (currentTab === 'orders' && ordersError) || (currentTab === 'wallet' && walletError)) && (
+            <div role="alert" style={{ margin: '16px 24px 0', padding: '12px 16px', border: '1px solid #F3B4B4', borderRadius: '8px', background: '#FFF5F5', color: '#991B1B', fontSize: '13px' }}>
+              {dashboardError || productsError || ordersError || walletError}
+            </div>
+          )}
+
           {/* Top Header */}
           <header className="unbley-top-header">
             <div className="unbley-header-left">
               <button
-                id="tour-mobile-menu"
+                id="tour-mobile-menu-trigger"
                 onClick={() => setIsSidebarOpen(true)}
                 style={{ display: 'none', background: 'none', border: '1px solid #EAE6DF', padding: '6px', borderRadius: '8px', cursor: 'pointer' }}
                 className="mobile-menu-trigger"
@@ -1336,7 +1401,7 @@ export default function Dashboard() {
                     <h3 style={{ fontSize: '16px', fontWeight: '800', color: '#111827', margin: 0 }}>All Paid Orders</h3>
                     <p style={{ fontSize: '12px', color: '#6B7280', margin: '2px 0 0' }}>Update fulfillment as each order moves to the customer.</p>
                   </div>
-                  <span style={{ fontSize: '11px', fontWeight: '800', color: '#6B7280' }}>{allOrders.length} order{allOrders.length === 1 ? '' : 's'}</span>
+                  <span style={{ fontSize: '11px', fontWeight: '800', color: '#6B7280' }}>{ordersTotal} order{ordersTotal === 1 ? '' : 's'}</span>
                 </div>
                 {ordersLoading ? (
                   <div style={{ padding: '60px 24px', textAlign: 'center', color: '#9CA3AF' }}>Loading orders...</div>
@@ -1412,6 +1477,13 @@ export default function Dashboard() {
                     </tbody>
                   </table>
                 )}
+                {ordersTotal > PAGE_SIZE && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 18px', borderTop: '1px solid #F0ECE4' }}>
+                    <button type="button" onClick={() => setOrdersPage((page) => Math.max(0, page - 1))} disabled={ordersPage === 0 || ordersLoading} className="unbley-btn-white">Previous</button>
+                    <span style={{ fontSize: '12px', color: '#6B7280' }}>Page {ordersPage + 1} of {Math.ceil(ordersTotal / PAGE_SIZE)}</span>
+                    <button type="button" onClick={() => setOrdersPage((page) => page + 1)} disabled={(ordersPage + 1) * PAGE_SIZE >= ordersTotal || ordersLoading} className="unbley-btn-white">Next</button>
+                  </div>
+                )}
               </div>
             </main>
           )}
@@ -1424,7 +1496,7 @@ export default function Dashboard() {
                   <div>
                     <h3 style={{ fontSize: '16px', fontWeight: '800', color: '#111827', margin: 0 }}>Product Catalog</h3>
                     <p style={{ fontSize: '12px', color: '#6B7280', margin: '2px 0 0' }}>
-                      {productsLoading ? 'Loading…' : `${products.length} product${products.length !== 1 ? 's' : ''} in your store`}
+                      {productsLoading ? 'Loading…' : `${productsTotal} product${productsTotal !== 1 ? 's' : ''} in your store`}
                     </p>
                   </div>
                   <button onClick={() => { setActiveOnboardingStep('products'); setShowOnboardingModal(true); }} className="unbley-btn-black" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -1499,6 +1571,13 @@ export default function Dashboard() {
                     </tbody>
                   </table>
                 )}
+                {productsTotal > PAGE_SIZE && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 18px', borderTop: '1px solid #F0ECE4' }}>
+                    <button type="button" onClick={() => setProductsPage((page) => Math.max(0, page - 1))} disabled={productsPage === 0 || productsLoading} className="unbley-btn-white">Previous</button>
+                    <span style={{ fontSize: '12px', color: '#6B7280' }}>Page {productsPage + 1} of {Math.ceil(productsTotal / PAGE_SIZE)}</span>
+                    <button type="button" onClick={() => setProductsPage((page) => page + 1)} disabled={(productsPage + 1) * PAGE_SIZE >= productsTotal || productsLoading} className="unbley-btn-white">Next</button>
+                  </div>
+                )}
               </div>
             </main>
           )}
@@ -1518,15 +1597,15 @@ export default function Dashboard() {
                 <div className="unbley-metric-card">
                   <div className="unbley-metric-top"><div className="unbley-icon-box-blue"><Wallet size={18} /></div></div>
                   <div>
-                    <div className="unbley-metric-label">PENDING PAYOUTS</div>
-                    <div className="unbley-metric-value">{formatMoney(payouts.filter(p => p.status !== 'completed').reduce((s, p) => s + (p.total_amount || 0), 0))}</div>
-                    <div className="unbley-metric-subtext">Orders awaiting settlement</div>
+                    <div className="unbley-metric-label">PENDING SETTLEMENT</div>
+                    <div className="unbley-metric-value">{formatMoney(payouts.filter(p => PENDING_SETTLEMENT_STATUSES.includes(p.status)).reduce((s, p) => s + (p.total_amount || 0), 0))}</div>
+                    <div className="unbley-metric-subtext">Paid orders not yet completed</div>
                   </div>
                 </div>
                 <div className="unbley-metric-card">
                   <div className="unbley-metric-top"><div className="unbley-icon-box-cream"><TrendingUp size={18} /></div></div>
                   <div>
-                    <div className="unbley-metric-label">SETTLED</div>
+                    <div className="unbley-metric-label">COMPLETED SALES</div>
                     <div className="unbley-metric-value">{formatMoney(payouts.filter(p => p.status === 'completed').reduce((s, p) => s + (p.total_amount || 0), 0))}</div>
                     <div className="unbley-metric-subtext">Completed and paid out</div>
                   </div>
@@ -2003,9 +2082,15 @@ export default function Dashboard() {
 
         <DashboardTour
           isActive={showDashboardTour}
+          initialStep={dashboardTourStartStep}
           onClose={() => setShowDashboardTour(false)}
           userId={user?.id}
           onSidebarToggle={(open) => setIsSidebarOpen(open)}
+          onMobileMenuOpen={(step) => {
+            sessionStorage.setItem('unbley_mobile_tour_resume_step', String(step));
+            setShowDashboardTour(false);
+            navigate('/menu');
+          }}
           isStoreComplete={progressPct >= 100}
         />
         <ProductsModal

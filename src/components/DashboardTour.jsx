@@ -8,9 +8,14 @@ export default function DashboardTour({
   onClose,
   userId = 'default',
   onSidebarToggle,
-  isStoreComplete = false
+  isStoreComplete = false,
+  initialStep = 0,
+  onMobileMenuOpen,
+  onMobileMenuAdvance
 }) {
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(() => (
+    Number.isInteger(initialStep) && initialStep >= 0 ? initialStep : 0
+  ));
   const [targetRect, setTargetRect] = useState(null);
   const [placement, setPlacement] = useState('bottom');
 
@@ -36,9 +41,9 @@ export default function DashboardTour({
     },
     {
       id: 'tour-nav-edit',
-      fallbackId: 'tour-mobile-menu',
+      mobileMenuTarget: 'tour-menu-store-settings',
       title: 'Store Customizer (Edit)',
-      description: 'This is where you shape your storefront: update your logo, banner, colors, brand story, product highlights, and social links so your website feels polished and professional.',
+      description: 'On mobile, open Menu and choose Store Settings to shape your storefront: update your logo, banner, colors, brand story, product highlights, and social links.',
       icon: Settings,
       isSidebar: true,
       preferredPlacement: 'right'
@@ -121,7 +126,7 @@ export default function DashboardTour({
 
     const isMobile = window.innerWidth < 768;
     if (isMobile && onSidebarToggle) {
-      if (currentTour.isSidebar) {
+      if (currentTour.isSidebar && !currentTour.mobileId) {
         onSidebarToggle(true);
       } else {
         onSidebarToggle(false);
@@ -132,7 +137,16 @@ export default function DashboardTour({
   const updatePosition = useCallback(() => {
     if (!isActive || !currentTour) return;
 
-    let el = document.getElementById(currentTour.id);
+    const isMobile = window.innerWidth < 768;
+    const targetId = isMobile && currentTour.mobileId ? currentTour.mobileId : currentTour.id;
+    let el = document.getElementById(targetId);
+    if (isMobile && currentTour.mobileMenuTarget) {
+      el = document.getElementById(currentTour.mobileMenuTarget);
+      if (!el && onMobileMenuOpen) {
+        onMobileMenuOpen(currentStep);
+        return;
+      }
+    }
     if (!el && currentTour.fallbackId) {
       el = document.getElementById(currentTour.fallbackId);
     }
@@ -183,7 +197,7 @@ export default function DashboardTour({
     // Centered fallback if element is missing or not rendered
     setTargetRect(null);
     setPlacement('center');
-  }, [isActive, currentTour]);
+  }, [currentStep, isActive, currentTour, onMobileMenuOpen]);
 
   // Scroll target into view and refresh coordinates
   useEffect(() => {
@@ -191,6 +205,11 @@ export default function DashboardTour({
 
     const isMobile = window.innerWidth < 768;
     let el = document.getElementById(currentTour.id);
+    if (isMobile && currentTour.mobileMenuTarget) {
+      el = document.getElementById(currentTour.mobileMenuTarget);
+    } else if (isMobile && currentTour.mobileId) {
+      el = document.getElementById(currentTour.mobileId);
+    }
     if (!el && currentTour.fallbackId) {
       el = document.getElementById(currentTour.fallbackId);
     }
@@ -207,6 +226,10 @@ export default function DashboardTour({
   }, [currentStep, isActive, currentTour, updatePosition]);
 
   const handleNext = () => {
+    if (onMobileMenuAdvance) {
+      onMobileMenuAdvance(currentStep + 1);
+      return;
+    }
     if (currentStep < tourSteps.length - 1) {
       setCurrentStep(prev => prev + 1);
     } else {
@@ -255,7 +278,8 @@ export default function DashboardTour({
 
   const IconComponent = currentTour?.icon || Sparkles;
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  const tooltipWidth = isMobile ? Math.min(340, window.innerWidth - 32) : 360;
+  const mobileViewportPadding = 12;
+  const tooltipWidth = isMobile ? Math.min(340, window.innerWidth - (mobileViewportPadding * 2)) : 360;
 
   let tooltipStyle = {};
 
@@ -263,21 +287,23 @@ export default function DashboardTour({
     const padding = 14;
 
     if (isMobile) {
-      // Mobile positioning: center horizontally within screen padding
-      const left = 16;
+      // Keep the card within the viewport; long steps scroll inside the card.
+      const left = mobileViewportPadding;
       if (placement === 'top') {
-        const top = Math.max(16, targetRect.top - 240);
         tooltipStyle = {
-          top: `${top}px`,
+          bottom: `${Math.max(mobileViewportPadding, window.innerHeight - targetRect.top + padding)}px`,
           left: `${left}px`,
-          width: `${tooltipWidth}px`
+          width: `${tooltipWidth}px`,
+          maxHeight: `${Math.max(120, targetRect.top - padding - mobileViewportPadding)}px`,
+          overflowY: 'auto'
         };
       } else {
-        const top = Math.min(window.innerHeight - 280, targetRect.bottom + padding);
         tooltipStyle = {
-          top: `${Math.max(16, top)}px`,
+          top: `${Math.max(mobileViewportPadding, targetRect.bottom + padding)}px`,
           left: `${left}px`,
-          width: `${tooltipWidth}px`
+          width: `${tooltipWidth}px`,
+          maxHeight: `${Math.max(120, window.innerHeight - targetRect.bottom - padding - mobileViewportPadding)}px`,
+          overflowY: 'auto'
         };
       }
     } else {
@@ -309,7 +335,9 @@ export default function DashboardTour({
 
         tooltipStyle = {
           top: `${top}px`,
-          left: `${Math.min(left, window.innerWidth - tooltipWidth - 16)}px`,
+          ...(left + tooltipWidth + 12 <= window.innerWidth
+            ? { left: `${Math.max(12, left)}px` }
+            : { right: '12px' }),
           width: `${tooltipWidth}px`
         };
       }
@@ -319,7 +347,11 @@ export default function DashboardTour({
       top: '50%',
       left: '50%',
       transform: 'translate(-50%, -50%)',
-      width: `${tooltipWidth}px`
+      width: `${tooltipWidth}px`,
+      ...(isMobile && {
+        maxHeight: 'calc(100dvh - 24px)',
+        overflowY: 'auto'
+      })
     };
   }
 
@@ -411,9 +443,11 @@ export default function DashboardTour({
             borderRadius: '16px',
             border: '1px solid #EAE3D9',
             boxShadow: '0 20px 40px rgba(34, 21, 16, 0.24)',
-            padding: '20px 22px',
+            padding: isMobile ? '14px 16px' : '20px 22px',
             zIndex: 1000002,
-            boxSizing: 'border-box'
+            boxSizing: 'border-box',
+            maxWidth: 'calc(100vw - 24px)',
+            ...(!isMobile && { overflowY: 'visible' })
           }}
           onClick={(e) => e.stopPropagation()}
         >
@@ -473,10 +507,10 @@ export default function DashboardTour({
           <h4
             style={{
               fontFamily: 'var(--font-heading)',
-              fontSize: '16px',
+              fontSize: isMobile ? '15px' : '16px',
               fontWeight: '800',
               color: '#221510',
-              margin: '0 0 6px 0',
+              margin: '0 0 5px 0',
               letterSpacing: '-0.01em'
             }}
           >
@@ -485,17 +519,17 @@ export default function DashboardTour({
 
           <p
             style={{
-              fontSize: '12.5px',
-              lineHeight: '1.5',
+              fontSize: isMobile ? '12px' : '12.5px',
+              lineHeight: isMobile ? '1.4' : '1.5',
               color: '#6B584C',
-              margin: '0 0 18px 0'
+              margin: isMobile ? '0 0 12px 0' : '0 0 18px 0'
             }}
           >
             {currentTour.description}
           </p>
 
           {/* Progress Indicators & Navigation Buttons */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '14px', borderTop: '1px solid #F3EFEA' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: isMobile ? '10px' : '14px', borderTop: '1px solid #F3EFEA' }}>
             {/* Step Dots */}
             <div style={{ display: 'flex', gap: '5px' }}>
               {tourSteps.map((_, idx) => (
