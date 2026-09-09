@@ -1,18 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Lock, ArrowLeft, ArrowRight, ShieldCheck, CreditCard, Banknote, Smartphone, CheckCircle2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { ShoppingCart, Lock, ArrowLeft, ArrowRight, ShieldCheck, CreditCard, Banknote, Smartphone, CheckCircle2, AlertCircle, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import PaystackPop from '@paystack/inline-js';
 import { useToast } from '../context/ToastContext';
 import { isDarkColor, getContrastColor, getMutedColor, getBorderColor } from '../lib/colors';
 import PageTransition from '../components/PageTransition';
+import StoreAttribution from '../components/StoreAttribution';
+import { nigeriaLocations, nigeriaStates } from '../lib/nigeriaLocations';
 import { motion } from 'framer-motion';
 
 export default function Checkout() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const [cartItems] = useState(() => {
+  const [cartItems, setCartItems] = useState(() => {
     try {
       const stored = localStorage.getItem('cart');
       return stored ? JSON.parse(stored) : [];
@@ -20,6 +22,10 @@ export default function Checkout() {
       return [];
     }
   });
+  const initialCartItemsRef = useRef(cartItems);
+  const [cartValidationError, setCartValidationError] = useState('');
+  const [cartValidated, setCartValidated] = useState(false);
+  const paymentHandledRef = useRef(false);
 
   const [brand, setBrand] = useState(null);
 
@@ -33,6 +39,53 @@ export default function Checkout() {
     fetchBrand();
   }, [cartItems]);
 
+  useEffect(() => {
+    const validateCart = async () => {
+      const initialCartItems = initialCartItemsRef.current;
+      if (initialCartItems.length === 0) {
+        setCartValidated(true);
+        return;
+      }
+
+      const brandId = initialCartItems[0]?.brand_id;
+      const productIds = [...new Set(initialCartItems.map(item => item?.id).filter(Boolean))];
+      if (!brandId || productIds.length !== initialCartItems.length) {
+        setCartValidationError('This cart is missing product information. Return to the store and add the items again.');
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('products')
+        .select('id, title, price, image_url, status, brand_id')
+        .eq('brand_id', brandId)
+        .in('id', productIds);
+
+      if (error) {
+        setCartValidationError('We could not verify the products in your cart. Please try again.');
+        return;
+      }
+
+      const productsById = new Map((data || []).map(product => [product.id, product]));
+      const normalizedItems = initialCartItems.map(item => {
+        const product = productsById.get(item.id);
+        const quantity = Number(item.qty);
+        if (!product || product.status !== 'active' || !Number.isInteger(quantity) || quantity < 1 || quantity > 99) return null;
+        return { ...item, name: product.title, price: Number(product.price), image: product.image_url || item.image, qty: quantity };
+      });
+
+      if (normalizedItems.some(item => !item)) {
+        setCartValidationError('One or more items in your cart are no longer available. Please return to the store and refresh your cart.');
+        return;
+      }
+
+      setCartItems(normalizedItems);
+      setCartValidationError('');
+      setCartValidated(true);
+    };
+
+    validateCart();
+  }, []);
+
   const bgMain = brand?.primary_color || '#FAFAFA';
   const isDark = isDarkColor(bgMain);
   const accentColor = brand?.accent_color || '#6A3E1F';
@@ -44,7 +97,8 @@ export default function Checkout() {
   const inputBg = isDark ? 'rgba(255,255,255,0.06)' : '#FFFFFF';
 
   const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.qty), 0);
-  const total = subtotal;
+  const shippingFee = Math.max(0, Number(brand?.local_shipping || brand?.shipping_fee || 0));
+  const total = subtotal + shippingFee;
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -52,12 +106,13 @@ export default function Checkout() {
     email: '',
     phone: '',
     address: '',
+    state: '',
     city: '',
-    zip: '',
   });
 
   const [errors, setErrors] = useState({});
   const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentError, setPaymentError] = useState('');
   const hasPaystack = Boolean(import.meta.env.VITE_PAYSTACK_PUBLIC_KEY);
   const hasFlutterwave = Boolean(import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY);
   const [paymentMethod, setPaymentMethod] = useState(() => {
@@ -68,61 +123,71 @@ export default function Checkout() {
 
   const formatCurrency = (amount) => `₦${amount.toLocaleString()}`;
 
+  const showPaymentFailure = (reason) => {
+    setIsProcessing(false);
+    paymentHandledRef.current = false;
+    setPaymentError(reason || 'We could not complete your payment. Please try again.');
+  };
+
 
   const onSuccess = async (transaction) => {
+    if (paymentHandledRef.current) return;
+    paymentHandledRef.current = true;
     setIsProcessing(true);
     
     const brandId = cartItems[0]?.brand_id;
     if (!brandId) {
       console.error("No brand_id found in cart items.");
-      localStorage.removeItem('cart');
-      navigate('/checkout-success', { state: { order: null, warning: "System Error: Missing brand context." } });
+      showPaymentFailure('This checkout is missing its store information. Your cart is still saved. Please return to the cart and try again.');
       return;
     }
 
-    const orderData = {
-      brand_id: brandId,
-      brand_name: brand?.brand_name || 'Digital Atelier',
-      order_number: `ORD-${(new Date()).getTime().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`,
-      total_amount: Number(total) || 0,
-      status: 'paid',
-      product_name_snapshot: cartItems.map(item => `${item.qty}x ${item.name}${item.size ? ` (${item.size})` : ''}${item.color ? ` [${item.color}]` : ''}`).join(', '),
-      customer_name: `${formData.firstName} ${formData.lastName}`.replace(/[^a-zA-Z0-9 ]/g, ''),
-      customer_email: formData.email,
-      customer_phone: formData.phone.replace(/[^0-9+]/g, ''),
-      customer_address: `${formData.address}, ${formData.city}, ${formData.zip}`.replace(/[^a-zA-Z0-9, ]/g, ''),
-      customer_city: formData.city.replace(/[^a-zA-Z0-9 ]/g, ''),
-      customer_zip: formData.zip.replace(/[^a-zA-Z0-9 ]/g, ''),
-      items: cartItems,
-      transaction_id: transaction.reference,
-      payment_method: paymentMethod
-    };
+    const transactionReference = transaction?.reference || transaction?.trxref || transaction?.transaction_id || transaction?.tx_ref;
+    if (!transactionReference) {
+      showPaymentFailure('The payment provider did not return a transaction reference. Your cart is still saved.');
+      return;
+    }
 
     try {
-      // 1. Save to Supabase
-      const { error: dbError } = await supabase.from('orders').insert([orderData]);
-      if (dbError) throw dbError;
+      const customerDetails = {
+        ...formData,
+        address: [formData.address, formData.city, formData.state].filter(Boolean).join(', ')
+      };
+      const response = await fetch('/api/payments/confirm-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          brandId,
+          provider: paymentMethod,
+          transactionReference,
+          items: cartItems,
+          customer: customerDetails
+        })
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload.order) {
+        throw new Error(`${payload.error || 'Payment was verified, but the order could not be confirmed.'} Reference: ${transactionReference}`);
+      }
 
-      // 2. Send Telegram Notification
-      await sendTelegramNotification(orderData);
+      const orderData = {
+        ...payload.order,
+        brand_name: brand?.brand_name || 'Digital Atelier',
+        items: payload.order.items || cartItems
+      };
 
-      // 3. Clear Cart & Navigate
-      setIsProcessing(false);
+      // The order is confirmed independently of optional notifications.
       localStorage.removeItem('cart');
+      window.dispatchEvent(new Event('cartUpdated'));
+      setIsProcessing(false);
       navigate('/checkout-success', { state: { order: orderData } });
+
+      // A notification outage must never make a paid order look unsuccessful.
+      sendTelegramNotification(orderData).catch((notificationError) => {
+        console.warn('Order notification failed after successful checkout:', notificationError);
+      });
     } catch (err) {
       console.error("Critical Post-Checkout failure:", err);
-      // Even if DB or Telegram fails, we should still clear cart and show success since payment is done
-      localStorage.removeItem('cart');
-      const errorMsg = err.message || "Unknown error";
-      const hint = errorMsg.includes('permission') ? "Database security blocked the save. Check RLS." : "Check network or credentials.";
-      
-      navigate('/checkout-success', { 
-        state: { 
-          order: orderData, 
-          warning: `System Error: ${errorMsg}. (${hint})` 
-        } 
-      });
+      showPaymentFailure(err.message || 'Payment was received, but the order could not be confirmed. Your cart is still saved.');
     }
   };
 
@@ -180,12 +245,17 @@ View in Dashboard.
   };
 
   const onClose = () => {
-    setIsProcessing(false);
+    if (paymentHandledRef.current) return;
+    showPaymentFailure('The payment window was closed or the payment was cancelled. Your cart is still saved.');
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+      ...(name === 'state' ? { city: '' } : {})
+    }));
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -197,6 +267,12 @@ View in Dashboard.
       navigate('/store');
       return;
     }
+    if (!cartValidated) {
+      toast.error(cartValidationError || 'Please wait while we verify your cart.');
+      return;
+    }
+
+    paymentHandledRef.current = false;
 
     // Validation
     const newErrors = {};
@@ -213,6 +289,7 @@ View in Dashboard.
       newErrors.phone = 'Please enter a valid phone number';
     }
     if (!formData.address.trim()) newErrors.address = 'Street address is required';
+    if (!formData.state.trim()) newErrors.state = 'State is required';
     if (!formData.city.trim()) newErrors.city = 'City is required';
 
     if (Object.keys(newErrors).length > 0) {
@@ -236,8 +313,7 @@ View in Dashboard.
   const handlePaystack = () => {
     const paystackKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY;
     if (!paystackKey) {
-      toast.error("Paystack is currently unavailable. Please select Flutterwave or contact support.");
-      setIsProcessing(false);
+      showPaymentFailure('Paystack is currently unavailable. Please select Flutterwave or contact support.');
       return;
     }
 
@@ -255,22 +331,19 @@ View in Dashboard.
       });
     } catch (error) {
       console.error("Paystack initialization failed:", error);
-      toast.error("Failed to initialize Paystack gateway. Please try again or use Flutterwave.");
-      setIsProcessing(false);
+      showPaymentFailure(error.message || 'Failed to initialize Paystack. Please try again or use Flutterwave.');
     }
   };
 
   const handleFlutterwave = () => {
     const flwKey = import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY;
     if (!flwKey) {
-      toast.error("Payment configuration is missing. Please contact support.");
-      setIsProcessing(false);
+      showPaymentFailure('Flutterwave payment configuration is missing. Please contact support.');
       return;
     }
 
     if (typeof window.FlutterwaveCheckout !== 'function') {
-      toast.error("Flutterwave checkout is loading or blocked by your browser. Please disable ad-blockers and try again.");
-      setIsProcessing(false);
+      showPaymentFailure('Flutterwave checkout is still loading or was blocked by your browser. Please try again or disable your ad blocker.');
       return;
     }
 
@@ -306,8 +379,7 @@ View in Dashboard.
       });
     } catch (error) {
       console.error("Flutterwave initialization failed:", error);
-      toast.error("Failed to launch Flutterwave checkout. Please try again.");
-      setIsProcessing(false);
+      showPaymentFailure(error.message || 'Failed to launch Flutterwave. Please try again.');
     }
   };
 
@@ -344,6 +416,7 @@ View in Dashboard.
     inputGroupFull: { display: 'flex', flexDirection: 'column', gap: '8px', gridColumn: '1 / -1' },
     label: { fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase', color: textColor },
     input: { backgroundColor: inputBg, border: `1px solid ${borderColor}`, padding: '16px', fontSize: '14px', color: textColor, borderRadius: '4px', outline: 'none', transition: 'border-color 0.2s, background-color 0.2s', width: '100%' },
+    select: { backgroundColor: inputBg, border: `1px solid ${borderColor}`, padding: '16px', paddingRight: '40px', fontSize: '14px', color: textColor, borderRadius: '4px', outline: 'none', transition: 'border-color 0.2s, background-color 0.2s', width: '100%', cursor: 'pointer', colorScheme: isDark ? 'dark' : 'light' },
     errorText: { color: dangerColor, fontSize: '11px', marginTop: '4px' },
 
     actionsCol: { display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '32px' },
@@ -396,6 +469,12 @@ View in Dashboard.
       backgroundColor: errors[fieldName] ? '#FFF5F5' : inputBg
     };
   };
+
+  const getSelectStyle = (fieldName) => ({
+    ...s.select,
+    borderColor: errors[fieldName] ? '#D83A3A' : borderColor,
+    backgroundColor: errors[fieldName] ? '#FFF5F5' : inputBg
+  });
 
   if (cartItems.length === 0) {
     return (
@@ -515,19 +594,26 @@ View in Dashboard.
               
               <div style={s.inputGroupFull} className={errors.address ? 'has-error' : ''}>
                 <label style={s.label}>Address *</label>
-                <input type="text" name="address" value={formData.address} onChange={handleInputChange} style={getInputStyle('address')} autoComplete="street-address" />
+                <textarea name="address" value={formData.address} onChange={handleInputChange} style={{ ...getInputStyle('address'), minHeight: '112px', resize: 'vertical', fontFamily: 'inherit' }} placeholder="House number, street, area" autoComplete="street-address" />
                 {errors.address && <div style={s.errorText}>{errors.address}</div>}
               </div>
               
+              <div style={s.inputGroup} className={errors.state ? 'has-error' : ''}>
+                <label style={s.label}>State *</label>
+                <select name="state" value={formData.state} onChange={handleInputChange} style={getSelectStyle('state')} autoComplete="address-level1">
+                  <option value="" style={{ color: '#111827', backgroundColor: '#FFFFFF' }}>Select a state</option>
+                  {nigeriaStates.map(state => <option key={state} value={state} style={{ color: '#111827', backgroundColor: '#FFFFFF' }}>{state}</option>)}
+                </select>
+                {errors.state && <div style={s.errorText}>{errors.state}</div>}
+              </div>
+
               <div style={s.inputGroup} className={errors.city ? 'has-error' : ''}>
                 <label style={s.label}>City *</label>
-                <input type="text" name="city" value={formData.city} onChange={handleInputChange} style={getInputStyle('city')} autoComplete="address-level2" />
+                <select name="city" value={formData.city} onChange={handleInputChange} style={{ ...getSelectStyle('city'), color: formData.city ? textColor : mutedColor, opacity: formData.state ? 1 : 0.65 }} autoComplete="address-level2" disabled={!formData.state}>
+                  <option value="" style={{ color: '#111827', backgroundColor: '#FFFFFF' }}>{formData.state ? 'Select a city' : 'Select a state first'}</option>
+                  {(nigeriaLocations[formData.state] || []).map(city => <option key={city} value={city} style={{ color: '#111827', backgroundColor: '#FFFFFF' }}>{city}</option>)}
+                </select>
                 {errors.city && <div style={s.errorText}>{errors.city}</div>}
-              </div>
-              
-              <div style={s.inputGroup}>
-                <label style={s.label}>Postal / Zip Code</label>
-                <input type="text" name="zip" value={formData.zip} onChange={handleInputChange} style={s.input} autoComplete="postal-code" />
               </div>
             </div>
 
@@ -644,6 +730,10 @@ View in Dashboard.
                 <span>Subtotal</span>
                 <span style={s.summaryRowValue}>{formatCurrency(subtotal)}</span>
               </div>
+              <div style={s.summaryRow}>
+                <span>Shipping</span>
+                <span style={s.summaryRowValue}>{shippingFee > 0 ? formatCurrency(shippingFee) : 'Free'}</span>
+              </div>
               
               <div style={s.summaryRow}>
                 <span>Shipping</span>
@@ -693,7 +783,37 @@ View in Dashboard.
         </div>
         
         <div style={s.copyright}>© {new Date().getFullYear()} {brand ? brand.brand_name : 'Digital Atelier'}. All rights reserved.</div>
+        <StoreAttribution color={mutedColor} />
       </div>
+
+      {paymentError && (
+        <div
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="payment-error-title"
+          style={{ position: 'fixed', inset: 0, zIndex: 12000, backgroundColor: 'rgba(0,0,0,0.58)', backdropFilter: 'blur(5px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
+        >
+          <div style={{ position: 'relative', width: '100%', maxWidth: '440px', backgroundColor: secondaryBg, color: textColor, border: `1px solid ${borderColor}`, borderRadius: '8px', padding: '32px', boxShadow: '0 24px 60px rgba(0,0,0,0.3)', textAlign: 'center' }}>
+            <button
+              type="button"
+              aria-label="Close payment error"
+              onClick={() => setPaymentError('')}
+              style={{ position: 'absolute', top: '14px', right: '14px', border: 'none', background: 'transparent', color: mutedColor, cursor: 'pointer', padding: '4px' }}
+            >
+              <X size={18} />
+            </button>
+            <div style={{ width: '52px', height: '52px', borderRadius: '50%', backgroundColor: 'rgba(216,58,58,0.12)', color: dangerColor, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px' }}>
+              <AlertCircle size={28} />
+            </div>
+            <h2 id="payment-error-title" style={{ fontSize: '22px', fontWeight: '700', margin: '0 0 12px', color: textColor }}>Payment failed</h2>
+            <p style={{ fontSize: '14px', lineHeight: '1.6', color: mutedColor, margin: '0 0 24px', overflowWrap: 'anywhere' }}>{paymentError}</p>
+            <div style={{ display: 'flex', gap: '12px', flexDirection: 'column' }}>
+              <button type="button" onClick={() => setPaymentError('')} style={{ ...s.continueBtn, padding: '14px 20px' }}>Try Payment Again</button>
+              <button type="button" onClick={() => navigate('/cart')} style={{ ...s.backBtn, marginTop: 0 }}>Return to Cart</button>
+            </div>
+          </div>
+        </div>
+      )}
       </div>
     </PageTransition>
   );

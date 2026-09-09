@@ -3,6 +3,7 @@ import {
   LayoutGrid, 
   Tag, 
   FileText, 
+  ShoppingBag,
   Wallet,
   BarChart2, 
   Sliders, 
@@ -15,6 +16,7 @@ import {
   ExternalLink,
   LogOut,
   CreditCard,
+  Users,
   Menu as MenuIcon
 } from 'lucide-react';
 import logoImg from '../assets/logogo.png';
@@ -316,9 +318,19 @@ export default function Sidebar({ profileData, isSidebarOpen, setIsSidebarOpen }
                 {!isExpanded && <span className="sidebar-tooltip">Products</span>}
               </Link>
 
+              <Link
+                to="/dashboard?tab=orders"
+                className={`unbley-nav-item mobile-primary-nav ${isActive('/dashboard?tab=orders') ? 'active' : ''} ${!isExpanded ? 'has-tooltip' : ''}`}
+                style={{ justifyContent: isExpanded ? 'flex-start' : 'center' }}
+              >
+                <ShoppingBag size={18} strokeWidth={isActive('/dashboard?tab=orders') ? 2.2 : 1.8} />
+                <span className="sidebar-label">Orders</span>
+                {!isExpanded && <span className="sidebar-tooltip">Orders</span>}
+              </Link>
+
               <Link 
                 to="/dashboard?tab=wallet" 
-                className={`unbley-nav-item mobile-primary-nav ${isActive('/dashboard?tab=wallet') ? 'active' : ''} ${!isExpanded ? 'has-tooltip' : ''}`}
+                className={`unbley-nav-item mobile-primary-nav mobile-wallet ${isActive('/dashboard?tab=wallet') ? 'active' : ''} ${!isExpanded ? 'has-tooltip' : ''}`}
                 style={{ justifyContent: isExpanded ? 'flex-start' : 'center' }}
               >
                 <Wallet size={18} strokeWidth={isActive('/dashboard?tab=wallet') ? 2.2 : 1.8} />
@@ -406,6 +418,16 @@ export default function Sidebar({ profileData, isSidebarOpen, setIsSidebarOpen }
                       </span>
                     )}
                     {!isExpanded && <span className="sidebar-tooltip">Admin{(unreadCount + pendingPaymentCount) > 0 ? ` (${unreadCount + pendingPaymentCount})` : ''}</span>}
+                  </Link>
+
+                  <Link
+                    to="/admin/store-owners"
+                    className={`unbley-nav-item mobile-overflow-nav ${isActive('/admin/store-owners') ? 'active' : ''} ${!isExpanded ? 'has-tooltip' : ''}`}
+                    style={{ justifyContent: isExpanded ? 'flex-start' : 'center' }}
+                  >
+                    <Users size={18} strokeWidth={isActive('/admin/store-owners') ? 2.2 : 1.8} />
+                    <span className="sidebar-label">Store Owners</span>
+                    {!isExpanded && <span className="sidebar-tooltip">Store Owners</span>}
                   </Link>
 
                 </>

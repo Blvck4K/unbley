@@ -7,6 +7,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../context/ToastContext';
 import { isDarkColor, getContrastColor, getMutedColor, getBorderColor } from '../lib/colors';
 import PageTransition from '../components/PageTransition';
+import StoreAttribution from '../components/StoreAttribution';
 
 const useWindowWidth = () => {
   const [width, setWidth] = useState(window.innerWidth);
@@ -95,14 +96,12 @@ export default function ShopBrand({ customId }) {
         let brandData, brandError;
 
         if (id) {
-          // Fetch specific Brand Profile by ID
           ({ data: brandData, error: brandError } = await supabase
             .from('brand_profiles')
             .select('*')
             .eq('id', id)
             .maybeSingle());
         } else if (slug) {
-          // Fetch specific Brand Profile by Slug (case-insensitive)
           ({ data: brandData, error: brandError } = await supabase
             .from('brand_profiles')
             .select('*')
@@ -110,21 +109,41 @@ export default function ShopBrand({ customId }) {
             .maybeSingle());
         }
 
+        const fallbackBrand = {
+          id: user?.id || id || slug || 'active-brand',
+          brand_name: user?.user_metadata?.brand_name || user?.user_metadata?.full_name || 'Your Brand',
+          owner_name: user?.user_metadata?.full_name || 'Brand Owner',
+          email_address: user?.email || '',
+          phone_number: user?.user_metadata?.phone_number || '',
+          website_url: user?.user_metadata?.website_url || '',
+          logo_url: user?.user_metadata?.logo_url || '',
+          banner_url: user?.user_metadata?.banner_url || '',
+          primary_color: '#0A0A0A',
+          secondary_color: '#1A1A1A',
+          accent_color: '#06acf8',
+          brand_narrative: 'A premium brand operating through Unbley with a clean storefront and customer-first experience.',
+          manifesto: 'Built for trust, fast delivery, and consistent customer experience.'
+        };
+
+        const resolvedBrand = brandData || (user ? fallbackBrand : null);
         if (brandError) throw brandError;
-        if (!brandData) throw new Error("Brand not found.");
-        
-        setBrand(brandData);
+        if (!resolvedBrand) throw new Error("Brand not found.");
 
-        // Fetch associated live Products
-        const { data: productsData, error: productsError } = await supabase
-          .from('products')
-          .select('*')
-          .eq('brand_id', brandData.id)
-          .order('created_at', { ascending: false });
+        setBrand(resolvedBrand);
 
-        if (productsError) throw productsError;
-        setProducts(productsData || []);
-        
+        const targetBrandId = resolvedBrand.id || user?.id;
+        if (targetBrandId) {
+          const { data: productsData, error: productsError } = await supabase
+            .from('products')
+            .select('*')
+            .eq('brand_id', targetBrandId)
+            .order('created_at', { ascending: false });
+
+          if (productsError) throw productsError;
+          setProducts(productsData || []);
+        } else {
+          setProducts([]);
+        }
       } catch (err) {
         console.error("Error fetching store data:", err);
         setError(err.message);
@@ -439,6 +458,14 @@ export default function ShopBrand({ customId }) {
     footerLogo: { fontFamily: fontConfig.heading, fontSize: '18px', fontWeight: '700', color: accentColor, marginBottom: '24px' },
     footerDesc: { fontSize: '12px', color: mutedColor, lineHeight: '1.6' },
 
+    infoSection: { display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, minmax(0, 1fr))', gap: isMobile ? '20px' : '24px', marginTop: '32px', marginBottom: '8px' },
+    infoCard: { backgroundColor: secondaryColor, border: `1px solid ${borderColor}`, borderRadius: '16px', padding: isMobile ? '20px 18px' : '22px 20px', boxShadow: '0 10px 30px rgba(0,0,0,0.04)' },
+    infoBadge: { display: 'inline-flex', alignItems: 'center', backgroundColor: 'rgba(6, 172, 248, 0.08)', color: accentColor, fontSize: '10px', fontWeight: '800', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '6px 10px', borderRadius: '999px', marginBottom: '12px' },
+    infoTitle: { fontFamily: fontConfig.heading, fontSize: '22px', margin: '0 0 10px', color: textColor },
+    infoText: { fontSize: '13px', lineHeight: '1.7', color: mutedColor, margin: 0 },
+    contactList: { display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '8px' },
+    contactLink: { fontSize: '13px', color: textColor, textDecoration: 'none', wordBreak: 'break-word' },
+
     footerMenus: { display: 'flex', flexWrap: 'wrap', gap: isMobile ? '48px' : '80px' },
     footerCol: { display: 'flex', flexDirection: 'column', gap: '16px' },
     footerColTitle: { fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: textColor, textTransform: 'uppercase', marginBottom: '8px' },
@@ -527,8 +554,8 @@ export default function ShopBrand({ customId }) {
         {isOwner && (
           <div style={s.ownerBar}>
             <div>
-              <div style={{ fontSize: '14px', fontWeight: 'bold', color: accentColor, marginBottom: '4px' }}>Owner Environment Active</div>
-              <div style={{ fontSize: '12px', color: '#CCC' }}>You are viewing your own storefront. You can instantly modify your digital inventory.</div>
+              <strong style={{ display: 'block', fontSize: '12px', color: textColor }}>Store Owner Mode</strong>
+              <span style={{ display: 'block', marginTop: '4px', fontSize: '10px', color: mutedColor }}>Manage your storefront and products</span>
             </div>
             <button onClick={() => { setEditingProductId(null); setNewProduct({ title: '', price: '', description: '', tag: '', sizes: '', colors: '', imageFile: null, imagePreview: null, additionalImages: [] }); setIsAddModalOpen(true); }} style={{ backgroundColor: accentColor, color: accentTextColor, padding: '12px 24px', border: 'none', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Plus size={16} /> Add Product
@@ -618,6 +645,43 @@ export default function ShopBrand({ customId }) {
             ))}
           </div>
         )}
+
+        <div style={s.infoSection}>
+          <div style={s.infoCard}>
+            <div style={s.infoBadge}>Refund Policy</div>
+            <h3 style={s.infoTitle}>Simple and fair returns</h3>
+            <p style={s.infoText}>
+              We offer support for damaged, incorrect, or missing items reported within 7 days of delivery. We’ll review your order and make a quick resolution to keep your shopping experience smooth and trustworthy.
+            </p>
+          </div>
+
+          <div style={s.infoCard}>
+            <div style={s.infoBadge}>Shipping Policy</div>
+            <h3 style={s.infoTitle}>Fast, reliable delivery</h3>
+            <p style={s.infoText}>
+              Orders are usually processed within 24–72 hours and shipped with trusted delivery partners. Delivery timelines and fees are shown clearly at checkout so customers know exactly what to expect.
+            </p>
+          </div>
+
+          <div style={s.infoCard}>
+            <div style={s.infoBadge}>Contact</div>
+            <h3 style={s.infoTitle}>We’re here to help</h3>
+            <div style={s.contactList}>
+              {brand?.phone_number && (
+                <a href={`tel:${brand.phone_number}`} style={s.contactLink}>{brand.phone_number}</a>
+              )}
+              {brand?.email_address && (
+                <a href={`mailto:${brand.email_address}`} style={s.contactLink}>{brand.email_address}</a>
+              )}
+              {brand?.website_url && (
+                <a href={brand.website_url.startsWith('http') ? brand.website_url : `https://${brand.website_url}`} target="_blank" rel="noreferrer" style={s.contactLink}>{brand.website_url}</a>
+              )}
+              {!brand?.phone_number && !brand?.email_address && !brand?.website_url && (
+                <span style={s.contactLink}>Customer support details will appear here.</span>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Footer */}
@@ -648,7 +712,8 @@ export default function ShopBrand({ customId }) {
         </div>
         
         <div style={s.footerBottom}>
-          <div style={s.copyright}>© {new Date().getFullYear()} {brand.brand_name || 'BRAND'}. Secured by Unbley Infrastructural Core.</div>
+          <div style={s.copyright}>© {new Date().getFullYear()} {brand.brand_name || 'BRAND'}.</div>
+          <StoreAttribution color={mutedColor} />
         </div>
       </div>
 

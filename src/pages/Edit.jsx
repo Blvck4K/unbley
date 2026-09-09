@@ -91,6 +91,8 @@ export default function Edit() {
     facebook_url: '',
     tiktok_url: '',
     website_url: '',
+    unbley_domain: '',
+    custom_domain: '',
     bank_name: '',
     account_number: '',
     account_name: '',
@@ -146,7 +148,9 @@ export default function Edit() {
           if (savedDraft) {
             try {
               baseData = { ...baseData, ...JSON.parse(savedDraft) };
-            } catch (e) {}
+            } catch {
+              console.warn('Could not restore the saved edit draft.');
+            }
           }
         }
 
@@ -206,7 +210,7 @@ export default function Edit() {
       }
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 2000);
-    } catch (err) {
+    } catch {
       setSaveStatus('idle');
     }
   }, [user?.id]);
@@ -600,6 +604,41 @@ export default function Edit() {
                       placeholder="Our core guiding statement..."
                       className="unbley-form-textarea"
                     />
+                  </div>
+                </div>
+
+                {/* Store Domains */}
+                <div id="tour-edit-domains" className="unbley-card">
+                  <div className="unbley-card-title-row">
+                    <div>
+                      <span className="unbley-card-pretitle">Store Address</span>
+                      <h3 className="unbley-card-title">Your Store Domains</h3>
+                    </div>
+                    <Globe size={20} color="#8D5B36" />
+                  </div>
+
+                  <div className="unbley-form-group">
+                    <label className="unbley-form-label">Your Unbley Store URL</label>
+                    <div className="unbley-domain-readonly">
+                      <Globe size={16} />
+                      <a href={formData.unbley_domain ? `https://${formData.unbley_domain}` : '#'} target="_blank" rel="noreferrer">
+                        {formData.unbley_domain || 'Your store URL will appear after setup'}
+                      </a>
+                      {formData.unbley_domain && <ExternalLink size={14} />}
+                    </div>
+                  </div>
+
+                  <div className="unbley-form-group" style={{ marginBottom: 0 }}>
+                    <label className="unbley-form-label">Custom Domain</label>
+                    <input
+                      type="text"
+                      name="custom_domain"
+                      value={formData.custom_domain}
+                      onChange={handleChange}
+                      placeholder="e.g. shop.yourbrand.com"
+                      className="unbley-form-input"
+                    />
+                    <p className="unbley-domain-help">Point your custom domain to this deployment after saving. Your Unbley URL will keep working as a backup.</p>
                   </div>
                 </div>
 

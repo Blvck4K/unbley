@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Truck, AlertCircle } from 'lucide-react';
 import { createPortal } from 'react-dom';
@@ -11,6 +11,7 @@ export default function ShippingModal({ isOpen = false, onClose, onComplete }) {
   const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     delivery_duration: '',
+    shipping_fee: '',
     local_shipping: '',
     international_shipping: '',
     shipping_description: '',
@@ -39,6 +40,7 @@ export default function ShippingModal({ isOpen = false, onClose, onComplete }) {
           setFormData(prev => ({
             ...prev,
             delivery_duration: data.delivery_duration || '',
+            shipping_fee: data.shipping_fee !== null && data.shipping_fee !== undefined ? String(data.shipping_fee) : '',
             shipping_description: data.shipping_description || '',
             country: data.country || '',
             state_province: data.state_province || '',
@@ -68,6 +70,11 @@ export default function ShippingModal({ isOpen = false, onClose, onComplete }) {
       setError('Please specify delivery duration');
       return;
     }
+    const shippingFee = Number(formData.shipping_fee || 0);
+    if (!Number.isFinite(shippingFee) || shippingFee < 0) {
+      setError('Shipping fee must be zero or a positive amount');
+      return;
+    }
 
     setLoading(true);
     try {
@@ -77,6 +84,7 @@ export default function ShippingModal({ isOpen = false, onClose, onComplete }) {
         brand_name: user.user_metadata?.brand_name || user.user_metadata?.full_name || 'Your Brand',
         owner_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
         delivery_duration: formData.delivery_duration,
+        shipping_fee: shippingFee,
         country: formData.country || '',
         state_province: formData.state_province || '',
         city: formData.city || '',
@@ -346,6 +354,23 @@ export default function ShippingModal({ isOpen = false, onClose, onComplete }) {
                   />
                 </div>
               )}
+
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#111827', marginBottom: '6px' }}>
+                  Shipping Fee (NGN)
+                </label>
+                <input
+                  type="number"
+                  name="shipping_fee"
+                  min="0"
+                  step="0.01"
+                  value={formData.shipping_fee}
+                  onChange={handleInputChange}
+                  placeholder="0 for free delivery"
+                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit', boxSizing: 'border-box' }}
+                />
+                <p style={{ fontSize: '11px', color: '#6B7280', margin: '6px 0 0' }}>This fee is added to every customer checkout.</p>
+              </div>
 
               {/* Shipping Methods Info */}
               <div style={{

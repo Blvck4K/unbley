@@ -2,6 +2,7 @@ import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { CheckCircle2, Download, ArrowLeft, ShieldCheck, Mail, Phone, MapPin, Package } from 'lucide-react';
 import PageTransition from '../components/PageTransition';
+import StoreAttribution from '../components/StoreAttribution';
 import { motion } from 'framer-motion';
 
 export default function CheckoutSuccess() {
@@ -99,13 +100,26 @@ Your order is being processed.
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
             {/* Order Details */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #EAE3D9', padding: '24px 32px', borderRadius: '16px', boxShadow: '0 4px 20px rgba(34,21,16,0.03)' }}>
+                <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#221510', marginBottom: '16px' }}>Order Status</h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                  <span style={{ background: '#DCFCE7', color: '#15803D', borderRadius: '999px', padding: '7px 12px', fontSize: '11px', fontWeight: '800', textTransform: 'uppercase' }}>
+                    {String(order.fulfillment_status || order.status || 'paid').toUpperCase()}
+                  </span>
+                  {order.delivery_duration && <span style={{ color: '#6B584C', fontSize: '13px' }}>Estimated delivery: {order.delivery_duration}</span>}
+                </div>
+                <p style={{ color: '#6B584C', fontSize: '13px', lineHeight: '1.5', margin: '12px 0 0' }}>Keep this order number to track updates from the store.</p>
+              </div>
               <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #EAE3D9', padding: '32px', borderRadius: '16px', boxShadow: '0 4px 20px rgba(34,21,16,0.03)' }}>
                 <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#221510', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Package size={18} color={brandColor} /> Order Summary
                 </h3>
                 {order.items.map((item, idx) => (
                   <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', fontSize: '14px' }}>
-                    <span style={{ color: '#6B584C' }}>{item.qty}x {item.name}</span>
+                    <span style={{ color: '#6B584C' }}>
+                      {item.qty}x {item.name}
+                      {item.fulfillment_status && <small style={{ display: 'block', color: '#8D5B36', fontSize: '10px', fontWeight: '800', marginTop: '3px', textTransform: 'uppercase' }}>{item.fulfillment_status}</small>}
+                    </span>
                     <span style={{ fontWeight: '600', color: '#221510' }}>₦{(item.price * item.qty).toLocaleString()}</span>
                   </div>
                 ))}
@@ -162,7 +176,7 @@ Your order is being processed.
                   <Download size={20} /> Download Your Receipt
                 </button>
                 <button 
-                  onClick={() => navigate('/')}
+                  onClick={() => navigate(order.brand_id ? `/shop-brand/${order.brand_id}` : '/store')}
                   style={{ width: '100%', backgroundColor: 'transparent', color: '#6B584C', border: 'none', marginTop: '16px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                 >
                   <ArrowLeft size={14} /> Back to Shopping
@@ -171,6 +185,7 @@ Your order is being processed.
             </div>
           </div>
         </div>
+        <StoreAttribution color="#6B584C" style={{ marginTop: '48px' }} />
       </div>
       
       <style>{`

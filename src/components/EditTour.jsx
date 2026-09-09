@@ -17,56 +17,56 @@ export default function EditTour({
     {
       id: 'tour-edit-save-btn',
       title: 'Auto-Save & Publish',
-      description: 'Your changes are automatically saved to your draft as you type. Click "Save Changes" to publish your edits live to your storefront.',
+      description: 'As you edit your site, changes are saved in the background. When you are happy with the update, click “Save Changes” to publish it to your live storefront for customers to see.',
       icon: CheckCircle2,
       preferredPlacement: 'bottom'
     },
     {
       id: 'tour-edit-progress',
       title: 'Profile Completion Tracker',
-      description: 'Keep track of your store readiness. Filling in every brand detail ensures a trustworthy and polished experience for customers.',
+      description: 'This bar shows how complete your store setup is. Completing each section improves your storefront quality and makes the buying experience smoother for customers.',
       icon: Sparkles,
       preferredPlacement: 'bottom'
     },
     {
       id: 'tour-edit-banner',
       title: 'Storefront Hero Banner',
-      description: 'Upload your high-resolution brand banner (recommended 2400x800px) that sits at the top of your shop.',
+      description: 'Use a strong banner image to create the first impression for shoppers. This large image sits at the top of your website and should clearly communicate your brand and what you sell.',
       icon: Image,
       preferredPlacement: 'bottom'
     },
     {
       id: 'tour-edit-core-identity',
       title: 'Core Identity & Narrative',
-      description: 'Define your Brand Name, Owner Name, Category, Delivery Duration, Brand Narrative, and Brand Manifesto.',
+      description: 'Tell people who you are and what your brand stands for. Add your store name, owner name, category, delivery timeline, brand story, and manifesto so customers understand your business.',
       icon: Store,
       preferredPlacement: 'top'
     },
     {
       id: 'tour-edit-colors',
       title: 'Brand Theme & Colors',
-      description: 'Customize your Primary, Secondary, and Accent brand colors. These dynamically style buttons, accents, and highlights.',
+      description: 'Choose your primary, secondary, and accent colours to create a consistent look across buttons, headings, highlights, and calls to action. A clean theme builds trust and professionalism.',
       icon: Palette,
       preferredPlacement: 'top'
     },
     {
       id: 'tour-edit-logo',
       title: 'Brand Logo Upload',
-      description: 'Upload a 1:1 square high-resolution SVG or PNG logo to represent your brand across all storefront pages.',
+      description: 'Upload a clear square logo so buyers can recognize your brand on every page. A professional logo makes your storefront look credible and memorable.',
       icon: Image,
       preferredPlacement: 'left'
     },
     {
       id: 'tour-edit-socials',
       title: 'Social Handles & Website',
-      description: 'Connect your Instagram, Twitter/X, Facebook, TikTok, and website URLs so shoppers can connect with your brand.',
+      description: 'Add your Instagram, X, Facebook, TikTok, and website links so customers can verify your brand and reach you beyond your storefront. This helps build trust and encourages engagement.',
       icon: Globe,
       preferredPlacement: 'left'
     },
     {
       id: 'tour-edit-showcase',
       title: 'Product Showcase Gallery',
-      description: 'Curate up to 4 flagship products showcased directly on your storefront homepage.',
+      description: 'Highlight your best products here so shoppers see your top offerings immediately. This section acts like a curated storefront homepage and helps guide people toward buying.',
       icon: Package,
       preferredPlacement: 'top'
     }
@@ -142,31 +142,6 @@ export default function EditTour({
     return () => clearTimeout(timer);
   }, [currentStep, isActive, currentTour, updatePosition]);
 
-  useEffect(() => {
-    if (!isActive) return;
-
-    window.addEventListener('resize', updatePosition);
-    window.addEventListener('scroll', updatePosition, true);
-
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape') {
-        handleComplete();
-      } else if (e.key === 'ArrowRight') {
-        handleNext();
-      } else if (e.key === 'ArrowLeft') {
-        handlePrev();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      window.removeEventListener('resize', updatePosition);
-      window.removeEventListener('scroll', updatePosition, true);
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isActive, updatePosition]);
-
   const handleNext = () => {
     if (currentStep < tourSteps.length - 1) {
       setCurrentStep(prev => prev + 1);
@@ -190,6 +165,26 @@ export default function EditTour({
     }
     onClose?.();
   };
+
+  useEffect(() => {
+    if (!isActive) return;
+
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') handleComplete();
+      else if (e.key === 'ArrowRight') handleNext();
+      else if (e.key === 'ArrowLeft') handlePrev();
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isActive, updatePosition, handleComplete, handleNext, handlePrev]);
 
   if (!isActive) return null;
 

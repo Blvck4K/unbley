@@ -3,6 +3,7 @@ import { ShoppingBag, User, Search, Heart, Bookmark, LogOut, Headphones } from '
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import PageTransition from '../components/PageTransition';
+import StoreAttribution from '../components/StoreAttribution';
 import { motion } from 'framer-motion';
 
 export default function Storefront() {
@@ -494,6 +495,7 @@ export default function Storefront() {
         <div style={s.footerCopyright}>
           © 2026 THE GALLERY OF ATELIERS
         </div>
+        <StoreAttribution color={brandColor} />
       </footer>
 
       {/* Simple global style for image hover */}

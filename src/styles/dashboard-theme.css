@@ -24,6 +24,215 @@
   box-sizing: border-box;
 }
 
+.unbley-domain-readonly {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+  padding: 0 13px;
+  border: 1px solid #EAE6DF;
+  border-radius: 8px;
+  background: #F7F2EC;
+  color: #6A3E1F;
+}
+
+.unbley-domain-readonly a {
+  min-width: 0;
+  overflow: hidden;
+  color: #6A3E1F;
+  font-size: 13px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.unbley-domain-help {
+  margin: 7px 0 0;
+  color: #8D7C70;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+/* Store owners admin directory */
+.admin-store-owners-page .unbley-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-store-owners-page .unbley-btn-primary,
+.store-owners-refresh {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 8px;
+  padding: 11px 15px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-store-owners-page .unbley-btn-primary {
+  background: #6A3E1F;
+  color: #fff;
+}
+
+.admin-store-owners-page .unbley-btn-primary:disabled,
+.store-owners-refresh:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.store-owners-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+
+.store-owners-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(520px, 100%);
+  padding: 12px 14px;
+  background: #fff;
+  border: 1px solid #EAE6DF;
+  border-radius: 9px;
+  color: #8D5B36;
+}
+
+.store-owners-search input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #111827;
+  font: inherit;
+  font-size: 13px;
+}
+
+.store-owners-toolbar-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: #6B584C;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.store-owners-toolbar-meta > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.store-owners-refresh {
+  background: #fff;
+  border: 1px solid #DFCFC2;
+  color: #6A3E1F;
+}
+
+.store-owners-table-wrap {
+  overflow: auto;
+  max-height: calc(100vh - 250px);
+  background: #fff;
+  border: 1px solid #EAE6DF;
+  border-radius: 10px;
+}
+
+.store-owners-table {
+  width: 100%;
+  min-width: 1100px;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.store-owners-table th,
+.store-owners-table td {
+  max-width: 260px;
+  padding: 13px 15px;
+  border-bottom: 1px solid #F0ECE4;
+  text-align: left;
+  vertical-align: top;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.store-owners-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #F7F2EC;
+  color: #6B584C;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.store-owners-table td {
+  color: #3F3027;
+}
+
+.store-owners-table tbody tr:hover {
+  background: #FCFBFA;
+}
+
+.store-owners-empty {
+  padding: 44px !important;
+  color: #8D7C70 !important;
+  text-align: center !important;
+}
+
+.store-owners-footnote {
+  margin: 12px 0 0;
+  color: #8D7C70;
+  font-size: 11px;
+}
+
+.store-owners-spin {
+  animation: store-owners-spin 0.8s linear infinite;
+}
+
+@keyframes store-owners-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+  .admin-store-owners-page .unbley-header-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .admin-store-owners-page .unbley-header-actions > * {
+    flex: 1;
+  }
+
+  .store-owners-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .store-owners-search {
+    width: 100%;
+  }
+
+  .store-owners-toolbar-meta {
+    justify-content: space-between;
+  }
+
+  .store-owners-table-wrap {
+    max-height: none;
+  }
+}
+
 /* ========================================================================== 
    SIDEBAR
    ========================================================================== */
@@ -1423,6 +1632,10 @@
 }
 
 @media (max-width: 768px) {
+  .mobile-wallet {
+    display: none !important;
+  }
+
   .unbley-mobile-menu-btn {
     display: flex !important;
   }

@@ -20,7 +20,7 @@ export default function DashboardTour({
       id: 'tour-nav-overview',
       fallbackId: 'tour-mobile-menu',
       title: 'Overview Command Center',
-      description: 'Your primary operational dashboard summarizing real-time sales, live stock listings, store traffic, and incoming orders.',
+      description: 'This is your main website control room. Use it to monitor sales, available stock, visitor activity, and the health of your store from one place.',
       icon: LayoutGrid,
       isSidebar: true,
       preferredPlacement: 'right'
@@ -29,7 +29,7 @@ export default function DashboardTour({
       id: 'tour-nav-profile',
       fallbackId: 'tour-mobile-menu',
       title: 'Brand Profile',
-      description: 'Inspect your public brand profile, contact information, and direct access to concierge support.',
+      description: 'Review your public brand details, contact information, WhatsApp number, and support access so customers can trust your business and reach you easily.',
       icon: User,
       isSidebar: true,
       preferredPlacement: 'right'
@@ -38,7 +38,7 @@ export default function DashboardTour({
       id: 'tour-nav-edit',
       fallbackId: 'tour-mobile-menu',
       title: 'Store Customizer (Edit)',
-      description: 'Customize your store branding, banners, color palette, curated product showcase gallery, and social media links.',
+      description: 'This is where you shape your storefront: update your logo, banner, colors, brand story, product highlights, and social links so your website feels polished and professional.',
       icon: Settings,
       isSidebar: true,
       preferredPlacement: 'right'
@@ -46,7 +46,7 @@ export default function DashboardTour({
     {
       id: 'tour-storefront',
       title: 'Your Live Storefront',
-      description: 'Click "Manage Store" to preview what customers see. Any products, prices, and branding you publish update here instantly.',
+      description: 'This button opens the customer-facing version of your website. It shows exactly how shoppers view your store, so you can check pricing, branding, and product presentation before publishing changes.',
       icon: Store,
       isSidebar: false,
       preferredPlacement: 'bottom'
@@ -58,7 +58,7 @@ export default function DashboardTour({
     id: 'tour-setup-meter',
     fallbackId: 'tour-launch-btn',
     title: 'Store Setup Checklist',
-    description: 'Follow these milestones to launch: upload your logo, set payout bank details, configure shipping, add products, and activate your store.',
+    description: 'Complete these steps to make your website functional and ready for buyers: add your brand identity, payments, shipping, products, and activation settings.',
     icon: Sparkles,
     isSidebar: false,
     preferredPlacement: 'bottom'
@@ -69,7 +69,7 @@ export default function DashboardTour({
     {
       id: 'tour-brand-identity',
       title: 'Brand Profile & Domain',
-      description: 'Your brand name, primary contact details, and custom store link are always visible here so you have quick access.',
+      description: 'This section keeps your store identity visible at a glance, including your brand name, contact details, and public website address. It helps customers recognize and trust your business.',
       icon: Compass,
       isSidebar: false,
       preferredPlacement: 'bottom'
@@ -77,7 +77,7 @@ export default function DashboardTour({
     {
       id: 'tour-stats-grid',
       title: 'Sales & Inventory Analytics',
-      description: 'Monitor your total revenue, active product listings, and real-time visitor traffic at a single glance.',
+      description: 'Use these numbers to understand your store performance. You can instantly see how much you have earned, how many products are active, and how much traffic your business is attracting.',
       icon: TrendingUp,
       isSidebar: false,
       preferredPlacement: 'top'
@@ -85,7 +85,7 @@ export default function DashboardTour({
     {
       id: 'tour-weekly-chart',
       title: 'Weekly Sales Activity Chart',
-      description: 'See a day-by-day breakdown of how much revenue your store generated this week. Hover over any bar to see the exact amount.',
+      description: 'This chart shows how your store is performing over the week. It helps you spot your busiest days so you can plan promotions, restocks, and marketing activities more effectively.',
       icon: BarChart2,
       isSidebar: false,
       preferredPlacement: 'top'
@@ -93,7 +93,7 @@ export default function DashboardTour({
     {
       id: 'tour-orders-ledger',
       title: 'Recent Orders & Ledger',
-      description: 'All customer purchases appear here in real time. Track order status, payment verification, and fulfill shipments easily.',
+      description: 'Every customer order appears here. Review payment status, confirm order details, and fulfil shipments in one place so you can manage purchases without confusion.',
       icon: Package,
       isSidebar: false,
       preferredPlacement: 'top'
@@ -101,7 +101,7 @@ export default function DashboardTour({
     {
       id: 'tour-quick-actions',
       title: 'Quick Actions Panel',
-      description: 'Jump straight into adding products, recording a sale, or sharing your storefront link — all from this handy shortcuts panel.',
+      description: 'Use this shortcut area to add products, manage payments, and share your store link without digging through menus. It helps you work faster as your store grows.',
       icon: Zap,
       isSidebar: false,
       preferredPlacement: 'top'
@@ -206,32 +206,6 @@ export default function DashboardTour({
     return () => clearTimeout(timer);
   }, [currentStep, isActive, currentTour, updatePosition]);
 
-  // Resize and keyboard listeners
-  useEffect(() => {
-    if (!isActive) return;
-
-    window.addEventListener('resize', updatePosition);
-    window.addEventListener('scroll', updatePosition, true);
-
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape') {
-        handleComplete();
-      } else if (e.key === 'ArrowRight') {
-        handleNext();
-      } else if (e.key === 'ArrowLeft') {
-        handlePrev();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      window.removeEventListener('resize', updatePosition);
-      window.removeEventListener('scroll', updatePosition, true);
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isActive, updatePosition]);
-
   const handleNext = () => {
     if (currentStep < tourSteps.length - 1) {
       setCurrentStep(prev => prev + 1);
@@ -255,6 +229,27 @@ export default function DashboardTour({
     }
     onClose?.();
   };
+
+  // Resize and keyboard listeners
+  useEffect(() => {
+    if (!isActive) return;
+
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') handleComplete();
+      else if (e.key === 'ArrowRight') handleNext();
+      else if (e.key === 'ArrowLeft') handlePrev();
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isActive, updatePosition, handleComplete, handleNext, handlePrev]);
 
   if (!isActive) return null;
 

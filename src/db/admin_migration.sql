@@ -2,6 +2,29 @@
 ALTER TABLE public.brand_profiles
 ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT false;
 
+-- Allow authenticated admins to read all store owner profiles.
+-- The security-definer helper avoids recursive RLS evaluation on brand_profiles.
+CREATE OR REPLACE FUNCTION public.is_admin_user()
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.brand_profiles
+    WHERE id = auth.uid() AND is_admin = true
+  );
+$$;
+
+REVOKE ALL ON FUNCTION public.is_admin_user() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.is_admin_user() TO authenticated;
+
+DROP POLICY IF EXISTS "Admins can view all store owner profiles" ON public.brand_profiles;
+CREATE POLICY "Admins can view all store owner profiles"
+ON public.brand_profiles FOR SELECT
+USING (auth.uid() = id OR public.is_admin_user());
+
 -- 2. Update specific administrator emails to have admin access
 -- This ensures these users bypass payment and see the Support tab.
 UPDATE public.brand_profiles

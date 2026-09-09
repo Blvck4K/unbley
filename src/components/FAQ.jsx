@@ -3,22 +3,14 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 
 export default function FAQ() {
   const faqs = [
-    {
-      q: 'Do I own my website?',
-      a: 'Yes, absolutely. You retain 100% ownership of your website and your custom domain name for this year. We simply handle the heavy lifting of building and launching it.'
-    },
-    {
-      q: 'Can I connect payment gateways?',
-      a: 'Yes! We have already seamlessly integrate local gateways like Paystack and Flutterwave, so you can receive payments securely and directly with no percentage taken from your sales.'
-    },
-    {
-      q: 'How long does setup take?',
-      a: 'We pride ourselves on lightning-fast delivery. Your entire e-commerce store and domain will be fully set up and ready to accept orders within 24 hours of payment.'
-    },
-    {
-      q: 'Can I manage it myself?',
-      a: 'Yes, your store comes with a beautifully customized, user-friendly admin dashboard. You will be able to easily add products, track inventory, process orders, and manage customers effortlessly.'
-    }
+    { q: 'Do I need coding knowledge?', a: 'No. Unbley is built to make setting up and managing your online store simple, even if you have no technical background.' },
+    { q: 'Do I get my own website?', a: 'Yes. Your business gets its own online storefront where customers can browse your products and place orders.' },
+    { q: 'Can I use my own domain?', a: 'Yes. Unbley supports custom domains so your store can have a professional web address that matches your brand.' },
+    { q: 'Can I manage my products and orders?', a: 'Yes. Your dashboard lets you manage products, inventory, orders, customers and other important store settings.' },
+    { q: 'Can customers pay online?', a: 'Yes. Unbley supports payment integrations that allow customers to complete purchases online.' },
+    { q: 'Can I sell from Nigeria?', a: 'Yes. Unbley is designed with Nigerian businesses and the local ecommerce environment in mind.' },
+    { q: 'Can I manage my store from my phone?', a: 'Yes. Your store and management experience are designed to work across modern mobile devices.' },
+    { q: 'What happens after I create my store?', a: 'You can add your products, configure your store, connect the necessary services and start sharing your store with customers.' }
   ];
 
   const [openIndex, setOpenIndex] = useState(0);
@@ -28,7 +20,7 @@ export default function FAQ() {
       <div className="container" style={{ maxWidth: '800px' }}>
         <div style={{ textAlign: 'center', marginBottom: '48px' }}>
           <h2 style={{ fontSize: '32px', fontWeight: '700', marginBottom: '16px' }}>Frequently Asked Questions</h2>
-          <p className="text-secondary">Everything you need to know about getting your brand online.</p>
+          <p className="text-secondary">Everything you need to know about building and managing your online store.</p>
         </div>
 
         <div className="faq-list" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>

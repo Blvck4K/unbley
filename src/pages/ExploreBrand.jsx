@@ -3,6 +3,7 @@ import { Search, Globe, Camera, Share2, Mail, ArrowRight, ArrowLeft, Heart, Book
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import PageTransition from '../components/PageTransition';
+import StoreAttribution from '../components/StoreAttribution';
 import { motion } from 'framer-motion';
 
 const FacebookIcon = ({ size = 14, color = "currentColor" }) => (
@@ -445,6 +446,7 @@ export default function ExploreBrand() {
               <span style={{ cursor: 'pointer' }}>Terms of Curation</span>
               <span style={{ cursor: 'pointer' }}>Legal Information</span>
             </div>
+            <StoreAttribution color="#555" />
           </div>
 
         </div>

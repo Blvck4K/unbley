@@ -5,18 +5,18 @@ export default function HowItWorks() {
   const steps = [
     {
       icon: <CreditCard size={28} color="white" />,
-      title: 'Pay & Submit Details',
-      description: 'Make your discounted first-year payment and fill out a quick form with your brand details and preferences.'
+      title: 'Create Your Store',
+      description: 'Provide your business details, choose your store setup and add your products.'
     },
     {
       icon: <Hammer size={28} color="white" />,
-      title: 'We Build Your Store',
-      description: 'Our expert team registers your domain and perfectly builds your custom e-commerce platform within 24 hours.'
+      title: 'Customize Your Brand',
+      description: 'Set up your storefront, domain, products, payments and other business details.'
     },
     {
       icon: <Rocket size={28} color="white" />,
-      title: 'You Start Selling',
-      description: 'You get full admin access. Add your products, set your prices, and launch your brand to the world immediately.'
+      title: 'Start Selling',
+      description: 'Share your store with customers and start accepting orders online.'
     }
   ];
 
@@ -24,8 +24,8 @@ export default function HowItWorks() {
     <section className="how-it-works-section" style={{ padding: '80px 0', backgroundColor: 'var(--bg-light)', borderBottom: '1px solid var(--border-color)' }}>
       <div className="container">
         <div style={{ textAlign: 'center', marginBottom: '64px' }}>
-          <h2 style={{ fontSize: '32px', fontWeight: '700', marginBottom: '16px' }}>How Unbley Works</h2>
-          <p className="text-secondary">Three simple steps to launch your digital storefront.</p>
+          <h2 style={{ fontSize: '32px', fontWeight: '700', marginBottom: '16px' }}>Start Selling Without the Technical Headache</h2>
+          <p className="text-secondary">Three simple steps to take your business online.</p>
         </div>
 
         <div className="grid grid-cols-3 gap-8" style={{ position: 'relative', marginTop: '40px' }}>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   Check,
+  ArrowLeft,
   HelpCircle,
   LogOut,
   X,
@@ -230,6 +231,13 @@ export default function Activation() {
     new Date(user.plan_ends_at) > new Date()
   );
   const shouldShowPlans = profileReady && (isAdmin || !hasActivePaidPlan);
+
+  const handleBackToDashboard = () => {
+    if (isOnActiveTrial) {
+      navigate('/dashboard');
+      return;
+    }
+  };
 
   // Handle plan selection -> forwards plan details to finalize activation
   const handleSelectPlan = (plan) => {
@@ -815,14 +823,16 @@ export default function Activation() {
                       {ACTIVATION_CONFIG.socialProof.logoutButtonText}
                     </button>
 
-                    {ACTIVATION_CONFIG.conditions.allowDismiss && (
-                      <button
-                        onClick={() => setIsOpen(false)}
-                        className="act-close-btn"
-                        title="Close pop-up"
-                      >
-                        <X size={16} />
-                      </button>
+                    {ACTIVATION_CONFIG.conditions.allowDismiss && isOnActiveTrial && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <button onClick={handleBackToDashboard} className="act-pill-action" title="Return to dashboard">
+                          <ArrowLeft size={14} />
+                          Back to dashboard
+                        </button>
+                        <button onClick={handleBackToDashboard} className="act-close-btn" title="Back to dashboard">
+                          <X size={16} />
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>

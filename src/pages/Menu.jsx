@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BarChart2, CreditCard, HelpCircle, Headphones, Sliders, ArrowLeft, ChevronRight, Menu as MenuIcon } from 'lucide-react';
+import { BarChart2, CreditCard, HelpCircle, Headphones, Sliders, Users, ArrowLeft, ChevronRight, Menu as MenuIcon } from 'lucide-react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import PageTransition from '../components/PageTransition';
@@ -60,14 +60,24 @@ export default function Menu() {
           ))}
 
           {isAdmin && (
-            <Link to="/support" className="mobile-menu-item">
-              <span className="mobile-menu-icon red"><Headphones size={19} /></span>
-              <span className="mobile-menu-copy">
-                <strong>Admin Support</strong>
-                <small>Manage customer conversations</small>
-              </span>
-              <ChevronRight size={17} color="#9CA3AF" />
-            </Link>
+            <>
+              <Link to="/support" className="mobile-menu-item">
+                <span className="mobile-menu-icon red"><Headphones size={19} /></span>
+                <span className="mobile-menu-copy">
+                  <strong>Admin Support</strong>
+                  <small>Manage customer conversations</small>
+                </span>
+                <ChevronRight size={17} color="#9CA3AF" />
+              </Link>
+              <Link to="/admin/store-owners" className="mobile-menu-item">
+                <span className="mobile-menu-icon blue"><Users size={19} /></span>
+                <span className="mobile-menu-copy">
+                  <strong>Store Owners</strong>
+                  <small>View and search owner details</small>
+                </span>
+                <ChevronRight size={17} color="#9CA3AF" />
+              </Link>
+            </>
           )}
         </section>
       </main>

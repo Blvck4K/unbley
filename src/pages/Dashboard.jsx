@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Share2, 
   Compass,
@@ -40,7 +40,7 @@ import DashboardTour from '../components/DashboardTour';
 import ProductsModal from '../components/onboarding/ProductsModal';
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const { toast } = useToast();
   const location = useLocation();
 
@@ -51,9 +51,15 @@ export default function Dashboard() {
   const [showOnboardingModal, setShowOnboardingModal] = useState(false);
   const [activeOnboardingStep, setActiveOnboardingStep] = useState(null);
   const [showDashboardTour, setShowDashboardTour] = useState(false);
+  const [showWelcomeOnboarding, setShowWelcomeOnboarding] = useState(false);
+  const [welcomeOnboardingStep, setWelcomeOnboardingStep] = useState(0);
   const [copiedLink, setCopiedLink] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [showEditProductModal, setShowEditProductModal] = useState(false);
+
+  const brandPrimary = '#6A3E1F';
+  const brandSoft = '#F6EFEA';
+  const brandAccent = '#B98D5B';
 
   const [profileData, setProfileData] = useState({
     brand_name: 'Isaac Akpasu',
@@ -61,6 +67,8 @@ export default function Dashboard() {
     email_address: 'diorbaron2@gmail.com',
     phone_number: '09153625566',
     website_url: 'www.zizzystores.com',
+    unbley_domain: '',
+    custom_domain: '',
     logo_url: '',
     bank_name: '',
     account_number: '',
@@ -72,14 +80,18 @@ export default function Dashboard() {
   const [profileDataLoaded, setProfileDataLoaded] = useState(false);
 
   const [metrics, setMetrics] = useState({
-    totalSales: 200,
-    activeStock: 7,
+    totalSales: 0,
+    activeStock: 0,
     totalTraffic: 0,
-    recentOrders: []
+    recentOrders: [],
+    weeklySales: []
   });
 
   const [products, setProducts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(false);
+  const [allOrders, setAllOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [expandedOrderId, setExpandedOrderId] = useState(null);
   const [payouts, setPayouts] = useState([]);
   const [withdrawalRequests, setWithdrawalRequests] = useState([]);
   const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
@@ -119,6 +131,59 @@ export default function Dashboard() {
   const totalSteps = onboardingSteps.length;
   const progressPct = Math.round((completedSteps / totalSteps) * 100);
 
+  const storeStatusCards = [
+    {
+      id: 'store_info',
+      label: 'Brand identity',
+      ready: Boolean(profileData.brand_name && profileData.brand_name !== 'Your Brand' && profileData.logo_url),
+      summary: profileData.brand_name && profileData.brand_name !== 'Your Brand'
+        ? `${profileData.brand_name} is live with a recognizable brand identity.`
+        : 'Brand details are incomplete and not yet customer-ready.',
+      actionLabel: 'Review brand',
+      accent: profileData.brand_name && profileData.brand_name !== 'Your Brand' && profileData.logo_url ? '#16A34A' : '#D97706'
+    },
+    {
+      id: 'products',
+      label: 'Product catalog',
+      ready: isProductsDone,
+      summary: isProductsDone
+        ? `${metrics.activeStock} product${metrics.activeStock !== 1 ? 's' : ''} visible to shoppers.`
+        : 'Your storefront needs at least one live product before buyers can place orders.',
+      actionLabel: isProductsDone ? 'Manage products' : 'Add product',
+      accent: isProductsDone ? '#16A34A' : '#D97706'
+    },
+    {
+      id: 'payment',
+      label: 'Checkout + payment',
+      ready: isWalletDone,
+      summary: isWalletDone
+        ? 'Bank and WhatsApp details are configured for buyer communication and payout setup.'
+        : 'Payment account and WhatsApp details are not fully connected yet.',
+      actionLabel: isWalletDone ? 'Review setup' : 'Complete setup',
+      accent: isWalletDone ? '#16A34A' : '#D97706'
+    },
+    {
+      id: 'shipping',
+      label: 'Delivery + fulfillment',
+      ready: isShippingDone,
+      summary: isShippingDone
+        ? `Delivery timing is set to ${profileData.delivery_duration}.`
+        : 'No delivery setup is configured yet, so buyers will not know shipping expectations.',
+      actionLabel: isShippingDone ? 'Review delivery' : 'Set delivery',
+      accent: isShippingDone ? '#16A34A' : '#D97706'
+    },
+    {
+      id: 'subscription',
+      label: 'Support + visibility',
+      ready: isPlanDone,
+      summary: isPlanDone
+        ? 'Your store is active and visible to customers.'
+        : 'The storefront is still missing the activation layer needed for a complete launch.',
+      actionLabel: isPlanDone ? 'View plan' : 'Activate store',
+      accent: isPlanDone ? '#16A34A' : '#D97706'
+    }
+  ];
+
   const hasActivePlan = Boolean(
     user?.store_active &&
     user?.plan_id &&
@@ -150,6 +215,24 @@ export default function Dashboard() {
   // Data fetch
   const fetchDashboardData = useCallback(async () => {
     if (!user) return;
+
+    const fallbackProfile = {
+      brand_name: user?.user_metadata?.brand_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Your Brand',
+      owner_name: user?.user_metadata?.full_name || user?.user_metadata?.brand_name || 'Brand Owner',
+      email_address: user?.email || '',
+      phone_number: user?.user_metadata?.phone_number || '',
+      website_url: user?.user_metadata?.website_url || '',
+      unbley_domain: user?.user_metadata?.unbley_domain || '',
+      custom_domain: user?.user_metadata?.custom_domain || '',
+      logo_url: user?.user_metadata?.logo_url || '',
+      bank_name: user?.user_metadata?.bank_name || '',
+      account_number: user?.user_metadata?.account_number || '',
+      account_name: user?.user_metadata?.account_name || '',
+      delivery_duration: user?.user_metadata?.delivery_duration || '',
+      store_active: Boolean(user?.user_metadata?.store_active),
+      trial_ends_at: user?.user_metadata?.trial_ends_at || null
+    };
+
     try {
       const { data: pData } = await supabase
         .from('brand_profiles')
@@ -159,12 +242,11 @@ export default function Dashboard() {
 
       setProfileDataLoaded(true);
 
-      if (pData) {
-        setProfileData(prev => ({
-          ...prev,
-          ...Object.fromEntries(Object.entries(pData).filter(([_, v]) => v != null && v !== ''))
-        }));
-      }
+      setProfileData(prev => ({
+        ...prev,
+        ...fallbackProfile,
+        ...(pData ? Object.fromEntries(Object.entries(pData).filter(([_, v]) => v != null && v !== '')) : {})
+      }));
 
       const { data: salesData } = await supabase
         .from('orders')
@@ -173,7 +255,30 @@ export default function Dashboard() {
       
       const calcSales = salesData && salesData.length > 0
         ? salesData.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0)
-        : 200;
+        : 0;
+
+      const weekStart = new Date();
+      weekStart.setHours(0, 0, 0, 0);
+      weekStart.setDate(weekStart.getDate() - 6);
+      const { data: weeklyOrders } = await supabase
+        .from('orders')
+        .select('total_amount, created_at, status')
+        .eq('brand_id', user.id)
+        .gte('created_at', weekStart.toISOString());
+      const paidStatuses = new Set(['paid', 'completed', 'processing', 'shipped', 'delivered']);
+      const weeklyTotals = Array.from({ length: 7 }, (_, index) => {
+        const day = new Date(weekStart);
+        day.setDate(weekStart.getDate() + index);
+        const nextDay = new Date(day);
+        nextDay.setDate(day.getDate() + 1);
+        return {
+          day,
+          total: (weeklyOrders || [])
+            .filter(order => paidStatuses.has(String(order.status).toLowerCase()) && new Date(order.created_at) >= day && new Date(order.created_at) < nextDay)
+            .reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0)
+        };
+      });
+      const maxWeeklyTotal = Math.max(...weeklyTotals.map(item => item.total), 0);
 
       const { count: stockCount } = await supabase
         .from('products')
@@ -195,9 +300,15 @@ export default function Dashboard() {
 
       setMetrics({
         totalSales: calcSales,
-        activeStock: stockCount !== null && stockCount > 0 ? stockCount : 7,
+        activeStock: stockCount || 0,
         totalTraffic: trafficCount || 0,
-        recentOrders: lastOrders || []
+        recentOrders: lastOrders || [],
+        weeklySales: weeklyTotals.map((item, index) => ({
+          day: `${item.day.toLocaleDateString('en-US', { weekday: 'short' })}${index === 6 ? ' (Today)' : ''}`,
+          pxHeight: maxWeeklyTotal > 0 ? Math.max(8, Math.round((item.total / maxWeeklyTotal) * 140)) : 8,
+          isToday: index === 6,
+          value: formatMoney(item.total)
+        }))
       });
     } catch (err) {
       console.error('Error loading live dashboard data:', err);
@@ -208,11 +319,12 @@ export default function Dashboard() {
     if (!user) return;
     setProductsLoading(true);
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('products')
         .select('*')
         .eq('brand_id', user.id)
         .order('created_at', { ascending: false });
+      if (error) throw error;
       setProducts(data || []);
     } catch (err) {
       console.error('Error fetching products:', err);
@@ -220,6 +332,26 @@ export default function Dashboard() {
       setProductsLoading(false);
     }
   }, [user]);
+
+  const fetchAllOrders = useCallback(async () => {
+    if (!user) return;
+    setOrdersLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('brand_id', user.id)
+        .in('status', ['paid', 'completed', 'processing', 'shipped', 'delivered', 'cancelled'])
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      setAllOrders(data || []);
+    } catch (err) {
+      console.error('Error fetching orders:', err);
+      toast?.error('Could not load orders');
+    } finally {
+      setOrdersLoading(false);
+    }
+  }, [user, toast]);
 
   const fetchPayouts = useCallback(async () => {
     if (!user) return;
@@ -296,6 +428,75 @@ export default function Dashboard() {
   }, [user, location.search]);
 
   // Main data + realtime
+  const brandDisplayName = profileData?.brand_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'your brand';
+
+  const firstMissingSetup = (() => {
+    if (!profileData.logo_url || !profileData.brand_name || profileData.brand_name === 'Your Brand') return 'store_info';
+    if (!isProductsDone) return 'products';
+    if (!isWalletDone) return 'payment';
+    if (!isShippingDone) return 'shipping';
+    if (!isPlanDone) return 'subscription';
+    return null;
+  })();
+
+  const welcomeSlides = [
+    {
+      title: `Welcome to ${brandDisplayName}`,
+      text: `Your dashboard is the control center for ${brandDisplayName}. Review your overview, watch your live activity, and get ready to launch your store.` ,
+      highlight: 'Action: open the Overview tab and check your store health before editing anything.'
+    },
+    {
+      title: 'Create your brand identity',
+      text: `Use Edit to upload your logo, choose your colors, add a banner, and share the story behind ${brandDisplayName}.`,
+      highlight: 'Action: update your logo and banner first so your storefront looks polished and trustworthy.'
+    },
+    {
+      title: 'Add your first products',
+      text: 'List your best items with clear photos, prices, and descriptions so customers can browse and buy with confidence.',
+      highlight: 'Action: add at least one product to make your store active and ready for orders.'
+    },
+    {
+      title: 'Complete payments and delivery',
+      text: 'Connect your payment method and set delivery charges before sharing your store. This helps customers complete checkout smoothly.',
+      highlight: 'Action: finish your payment and delivery setup, then share your store link.'
+    }
+  ];
+
+  const handleWelcomeSetupLaunch = useCallback((neverShow = false) => {
+    if (user?.id && neverShow) {
+      localStorage.setItem(`unbley_welcome_onboarding_never_show_${user.id}`, 'true');
+    }
+    setShowWelcomeOnboarding(false);
+    setWelcomeOnboardingStep(0);
+    if (firstMissingSetup) {
+      setActiveOnboardingStep(firstMissingSetup);
+      setShowOnboardingModal(true);
+      return;
+    }
+    if (!neverShow && user?.id && !localStorage.getItem(`unbley_dashboard_tour_seen_${user.id}`)) {
+      setTimeout(() => setShowDashboardTour(true), 200);
+    }
+  }, [firstMissingSetup, user?.id]);
+
+  const finishWelcomeOnboarding = useCallback((neverShow = false) => {
+    if (user?.id) {
+      localStorage.setItem(`unbley_welcome_onboarding_seen_${user.id}`, 'true');
+      if (neverShow) {
+        localStorage.setItem(`unbley_welcome_onboarding_never_show_${user.id}`, 'true');
+      }
+    }
+    handleWelcomeSetupLaunch(neverShow);
+  }, [handleWelcomeSetupLaunch, user?.id]);
+
+  useEffect(() => {
+    if (!user) return;
+    const hasSeenWelcome = localStorage.getItem(`unbley_welcome_onboarding_seen_${user.id}`) === 'true';
+    const hasDismissedWelcome = localStorage.getItem(`unbley_welcome_onboarding_never_show_${user.id}`) === 'true';
+    if (!hasSeenWelcome && !hasDismissedWelcome && !showSignupSuccessModal && !showOnboardingModal && !showDashboardTour) {
+      setShowWelcomeOnboarding(true);
+    }
+  }, [user, showSignupSuccessModal, showOnboardingModal, showDashboardTour]);
+
   useEffect(() => {
     if (!user) return;
     setProfileDataLoaded(false);
@@ -322,21 +523,30 @@ export default function Dashboard() {
         () => { fetchDashboardData(); fetchProducts(); }
       ).subscribe();
 
+    const ordersChannel = supabase
+      .channel(`dashboard_orders_${user.id}`)
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'orders', filter: `brand_id=eq.${user.id}` },
+        () => { fetchDashboardData(); if (currentTab === 'orders') fetchAllOrders(); }
+      ).subscribe();
+
     return () => {
       supabase.removeChannel(profileChannel);
       supabase.removeChannel(productsChannel);
+      supabase.removeChannel(ordersChannel);
     };
-  }, [user, fetchDashboardData, fetchProducts]);
+  }, [user, currentTab, fetchDashboardData, fetchProducts, fetchAllOrders]);
 
   // Tab-specific fetches
   useEffect(() => {
     if (currentTab === 'products') fetchProducts();
+    if (currentTab === 'orders') fetchAllOrders();
     if (currentTab === 'wallet') {
       fetchPayouts();
       fetchWithdrawalRequests();
       fetchAvailableBalance();
     }
-  }, [currentTab, fetchProducts, fetchPayouts, fetchWithdrawalRequests, fetchAvailableBalance]);
+  }, [currentTab, fetchProducts, fetchAllOrders, fetchPayouts, fetchWithdrawalRequests, fetchAvailableBalance]);
 
   useEffect(() => {
     if (!user || currentTab !== 'wallet') return undefined;
@@ -354,10 +564,14 @@ export default function Dashboard() {
     };
   }, [user, currentTab, fetchWithdrawalRequests, fetchAvailableBalance]);
 
+  const toStoreUrl = (domain) => {
+    if (!domain) return '#';
+    return domain.startsWith('http') ? domain : `https://${domain}`;
+  };
+
   const handleShareStore = () => {
-    const storeUrl = profileData.website_url
-      ? (profileData.website_url.startsWith('http') ? profileData.website_url : `https://${profileData.website_url}`)
-      : `${window.location.origin}/shop-brand/${user?.id || 'demo'}`;
+    const storeDomain = profileData.custom_domain || profileData.unbley_domain || profileData.website_url;
+    const storeUrl = storeDomain ? toStoreUrl(storeDomain) : `${window.location.origin}/shop-brand/${user?.id || 'demo'}`;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(storeUrl);
       setCopiedLink(true);
@@ -369,12 +583,99 @@ export default function Dashboard() {
   const handleDeleteProduct = async (productId) => {
     if (!window.confirm('Are you sure you want to delete this product?')) return;
     try {
-      await supabase.from('products').delete().eq('id', productId);
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', productId)
+        .eq('brand_id', user.id);
+      if (error) throw error;
       setProducts(prev => prev.filter(p => p.id !== productId));
       toast?.success('Product deleted');
       fetchDashboardData();
     } catch {
       toast?.error('Failed to delete product');
+    }
+  };
+
+  const fulfillmentOptions = [
+    { value: 'paid', label: 'Paid' },
+    { value: 'processing', label: 'Processing' },
+    { value: 'shipped', label: 'Shipped' },
+    { value: 'delivered', label: 'Delivered' },
+    { value: 'cancelled', label: 'Cancelled' }
+  ];
+
+  const itemStatusOptions = [
+    { value: 'paid', label: 'Paid' },
+    { value: 'processing', label: 'Processing' },
+    { value: 'unavailable', label: 'Unavailable' },
+    { value: 'shipped', label: 'Shipped' },
+    { value: 'delivered', label: 'Delivered' },
+    { value: 'cancelled', label: 'Cancelled' }
+  ];
+
+  const updateFulfillmentStatus = async (orderId, nextStatus) => {
+    const { error } = await supabase
+      .from('orders')
+      .update({
+        fulfillment_status: nextStatus
+      })
+      .eq('id', orderId)
+      .eq('brand_id', user.id);
+
+    if (error) {
+      toast?.error('Could not update order status. Apply the order fulfillment migration first.');
+      return;
+    }
+
+    setMetrics(prev => ({
+      ...prev,
+      recentOrders: prev.recentOrders.map(order => order.id === orderId
+        ? { ...order, fulfillment_status: nextStatus }
+        : order)
+    }));
+    setAllOrders(prev => prev.map(order => order.id === orderId
+      ? { ...order, fulfillment_status: nextStatus }
+      : order));
+    notifyOrderStatus(orderId, nextStatus);
+    toast?.success('Order status updated');
+  };
+
+  const updateOrderItemStatus = async (orderId, itemIndex, nextStatus) => {
+    const order = allOrders.find(item => item.id === orderId);
+    if (!order) return;
+    const items = Array.isArray(order.items) ? order.items : [];
+    const nextItems = items.map((item, index) => index === itemIndex
+      ? { ...item, fulfillment_status: nextStatus }
+      : item);
+    const { error } = await supabase
+      .from('orders')
+      .update({ items: nextItems })
+      .eq('id', orderId)
+      .eq('brand_id', user.id);
+    if (error) {
+      toast?.error('Could not update this item status');
+      return;
+    }
+    setAllOrders(prev => prev.map(item => item.id === orderId ? { ...item, items: nextItems } : item));
+    setMetrics(prev => ({
+      ...prev,
+      recentOrders: prev.recentOrders.map(item => item.id === orderId ? { ...item, items: nextItems } : item)
+    }));
+    toast?.success('Item status updated');
+  };
+
+  const notifyOrderStatus = async (orderId, nextStatus) => {
+    const order = allOrders.find(item => item.id === orderId) || metrics.recentOrders.find(item => item.id === orderId);
+    if (!order?.customer_email) return;
+    try {
+      await fetch('/api/orders/status-notification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}) },
+        body: JSON.stringify({ orderId, status: nextStatus })
+      });
+    } catch (error) {
+      console.warn('Order status notification failed:', error);
     }
   };
 
@@ -425,10 +726,10 @@ export default function Dashboard() {
   const formatMoney = (amount) => '₦' + Number(amount || 0).toLocaleString();
 
   const defaultOrders = [
-    { id: 'ORD-138901-999', order_number: 'ORD-138901-999', time: 'Today, 11:20 AM', item_name: 'Short Carton Colour Chinos (x2)', buyer_name: 'Tunde Balogun', amount: 18500, payment_status: 'PAID', fulfillment_status: 'READY TO SHIP' },
-    { id: 'ORD-138901-998', order_number: 'ORD-138901-998', time: 'Yesterday', item_name: 'Vintage Oversized Tee (x1)', buyer_name: 'Chidinma Eze', amount: 12000, payment_status: 'PAID', fulfillment_status: 'SHIPPED' },
-    { id: 'ORD-138901-997', order_number: 'ORD-138901-997', time: '2 days ago', item_name: 'Cargo Streetwear Pants (x1)', buyer_name: 'Femi Adeyemi', amount: 22000, payment_status: 'PAID', fulfillment_status: 'DELIVERED' },
-    { id: 'ORD-138901-996', order_number: 'ORD-138901-996', time: '3 days ago', item_name: 'Premium Cotton Crew Socks (x3)', buyer_name: 'Amaka Obi', amount: 6500, payment_status: 'AWAITING PAY', fulfillment_status: 'PENDING' }
+    { id: 'ORD-138901-999', order_number: 'ORD-138901-999', time: 'Today, 11:20 AM', item_name: 'Short Carton Colour Chinos (x2)', buyer_name: 'Tunde Balogun', amount: 18500, payment_status: 'PAID', fulfillment_status: 'READY TO SHIP', isDemo: true },
+    { id: 'ORD-138901-998', order_number: 'ORD-138901-998', time: 'Yesterday', item_name: 'Vintage Oversized Tee (x1)', buyer_name: 'Chidinma Eze', amount: 12000, payment_status: 'PAID', fulfillment_status: 'SHIPPED', isDemo: true },
+    { id: 'ORD-138901-997', order_number: 'ORD-138901-997', time: '2 days ago', item_name: 'Cargo Streetwear Pants (x1)', buyer_name: 'Femi Adeyemi', amount: 22000, payment_status: 'PAID', fulfillment_status: 'DELIVERED', isDemo: true },
+    { id: 'ORD-138901-996', order_number: 'ORD-138901-996', time: '3 days ago', item_name: 'Premium Cotton Crew Socks (x3)', buyer_name: 'Amaka Obi', amount: 6500, payment_status: 'AWAITING PAY', fulfillment_status: 'PENDING', isDemo: true }
   ];
 
   const ordersToDisplay = metrics.recentOrders.length > 0
@@ -439,24 +740,26 @@ export default function Dashboard() {
         item_name: order.product_name_snapshot || 'Catalog Product (x1)',
         buyer_name: order.customer_name || 'Store Customer',
         amount: order.total_amount || 0,
-        payment_status: order.status === 'completed' ? 'PAID' : 'AWAITING PAY',
-        fulfillment_status: order.fulfillment_status || 'READY TO SHIP'
+        payment_status: ['paid', 'completed'].includes(String(order.status).toLowerCase()) ? 'PAID' : 'AWAITING PAY',
+        fulfillment_status: order.fulfillment_status || 'pending',
+        order_status: ['paid', 'processing', 'shipped', 'delivered', 'cancelled'].includes(String(order.fulfillment_status).toLowerCase())
+          ? String(order.fulfillment_status).toLowerCase()
+          : 'paid',
+        isDemo: false
       }))
     : defaultOrders;
 
-  const weeklyData = [
-    { day: 'Mon', pxHeight: 52, isToday: false, value: '₦4,200' },
-    { day: 'Tue', pxHeight: 78, isToday: false, value: '₦6,800' },
-    { day: 'Wed', pxHeight: 40, isToday: false, value: '₦3,100' },
-    { day: 'Thu', pxHeight: 96, isToday: false, value: '₦8,500' },
-    { day: 'Fri (Today)', pxHeight: 140, isToday: true, value: '₦12,400' },
-    { day: 'Sat', pxHeight: 68, isToday: false, value: '₦5,200' },
-    { day: 'Sun', pxHeight: 34, isToday: false, value: '₦2,000' }
-  ];
+  const weeklyData = metrics.weeklySales.length > 0 ? metrics.weeklySales : Array.from({ length: 7 }, (_, index) => ({
+    day: `${new Date(Date.now() - (6 - index) * 86400000).toLocaleDateString('en-US', { weekday: 'short' })}${index === 6 ? ' (Today)' : ''}`,
+    pxHeight: 8,
+    isToday: index === 6,
+    value: '₦0'
+  }));
 
-  const tabTitles = { overview: 'Dashboard', products: 'Products', wallet: 'Wallet', insights: 'Store Insights' };
+  const tabTitles = { overview: 'Dashboard', orders: 'Orders', products: 'Products', wallet: 'Wallet', insights: 'Store Insights' };
   const tabSubtitles = {
     overview: "Welcome back, here is your store's performance today.",
+    orders: 'Review paid orders and keep customers updated as you fulfill them.',
     products: 'Manage your product catalog in real-time.',
     wallet: 'View your earnings and payment details.',
     insights: 'Detailed analytics for your store.'
@@ -554,8 +857,8 @@ export default function Dashboard() {
                 </div>
                 <div className="unbley-storefront-box">
                   <span className="unbley-storefront-label">LIVE STOREFRONT</span>
-                  <a href={profileData.website_url ? (profileData.website_url.startsWith('http') ? profileData.website_url : `https://${profileData.website_url}`) : '#'} target="_blank" rel="noreferrer" className="unbley-storefront-link">
-                    <span>{profileData.website_url || 'www.zizzystores.com'}</span>
+                  <a href={toStoreUrl(profileData.custom_domain || profileData.unbley_domain || profileData.website_url)} target="_blank" rel="noreferrer" className="unbley-storefront-link">
+                    <span>{profileData.custom_domain || profileData.unbley_domain || profileData.website_url || 'Your store domain is being prepared'}</span>
                     <ArrowUpRight size={14} color="#6B7280" />
                   </a>
                 </div>
@@ -606,6 +909,46 @@ export default function Dashboard() {
                     </div>
                   </div>
                 </div>
+              )}
+
+              {storeStatusCards.some(item => !item.ready) && (
+              <div className="unbley-card" style={{ padding: '18px 22px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
+                  <div>
+                    <div style={{ fontSize: '10px', fontWeight: '800', letterSpacing: '0.12em', color: '#8D5B36', textTransform: 'uppercase' }}>Store health</div>
+                    <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#111827', margin: '6px 0 0' }}>Business readiness overview</h3>
+                  </div>
+                  <div style={{ fontSize: '11px', fontWeight: '800', color: '#6B7280', background: '#F3F4F6', borderRadius: '999px', padding: '6px 10px' }}>
+                    {storeStatusCards.filter(item => item.ready).length}/{storeStatusCards.length} ready
+                  </div>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
+                  {storeStatusCards.map((item) => (
+                    <div key={item.id} style={{ border: '1px solid #EAE3D9', borderRadius: '12px', background: item.ready ? '#F5F9F5' : '#FFF9F2', padding: '14px 14px 12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '8px' }}>
+                        <span style={{ fontSize: '12px', fontWeight: '800', color: '#111827', letterSpacing: '0.02em' }}>{item.label}</span>
+                        <span style={{ fontSize: '10px', fontWeight: '800', padding: '4px 7px', borderRadius: '999px', background: item.ready ? 'rgba(22, 163, 74, 0.12)' : 'rgba(217, 119, 6, 0.12)', color: item.accent, textTransform: 'uppercase' }}>
+                          {item.ready ? 'Ready' : 'Needs attention'}
+                        </span>
+                      </div>
+                      <p style={{ fontSize: '12px', color: '#4B5563', margin: 0, lineHeight: '1.5' }}>{item.summary}</p>
+                      <button
+                        onClick={() => {
+                          if (item.id === 'subscription') setActiveOnboardingStep('subscription');
+                          else if (item.id === 'products') setActiveOnboardingStep('products');
+                          else if (item.id === 'payment') setActiveOnboardingStep('payment');
+                          else if (item.id === 'shipping') setActiveOnboardingStep('shipping');
+                          else setActiveOnboardingStep('store_info');
+                          setShowOnboardingModal(true);
+                        }}
+                        style={{ marginTop: '12px', width: '100%', border: 'none', borderRadius: '8px', background: item.ready ? '#111827' : '#6A3E1F', color: '#FFFFFF', padding: '9px 10px', fontSize: '11px', fontWeight: '800', cursor: 'pointer', letterSpacing: '0.04em', textTransform: 'uppercase' }}
+                      >
+                        {item.actionLabel}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
               )}
 
               {/* Setup Guide Card — hidden once 100% complete */}
@@ -791,9 +1134,20 @@ export default function Dashboard() {
                             <td style={{ fontWeight: '800', color: '#111827' }}>{formatMoney(order.amount)}</td>
                             <td><span className={order.payment_status === 'PAID' ? 'unbley-pill-paid' : 'unbley-pill-awaiting'}>{order.payment_status}</span></td>
                             <td>
-                              <span className={order.fulfillment_status === 'READY TO SHIP' ? 'unbley-pill-ready' : order.fulfillment_status === 'SHIPPED' ? 'unbley-pill-shipped' : order.fulfillment_status === 'DELIVERED' ? 'unbley-pill-delivered' : 'unbley-pill-pending'}>
-                                {order.fulfillment_status}
-                              </span>
+                              {order.isDemo ? (
+                                <span className={order.fulfillment_status === 'SHIPPED' ? 'unbley-pill-shipped' : order.fulfillment_status === 'DELIVERED' ? 'unbley-pill-delivered' : 'unbley-pill-ready'}>
+                                  {order.fulfillment_status}
+                                </span>
+                              ) : (
+                                <select
+                                  value={order.order_status}
+                                  onChange={(event) => updateFulfillmentStatus(order.id, event.target.value)}
+                                  aria-label={`Update fulfillment status for ${order.order_number}`}
+                                  style={{ border: '1px solid #E5E7EB', borderRadius: '7px', background: '#FFFFFF', color: '#374151', padding: '6px 8px', fontSize: '11px', fontWeight: '800', cursor: 'pointer', maxWidth: '150px' }}
+                                >
+                                  {fulfillmentOptions.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+                                </select>
+                              )}
                             </td>
                           </tr>
                         ))}
@@ -851,6 +1205,94 @@ export default function Dashboard() {
                     </p>
                   </div>
                 </div>
+              </div>
+            </main>
+          )}
+
+          {currentTab === 'orders' && (
+            <main className="unbley-workspace-container">
+              <div className="unbley-table-card">
+                <div className="unbley-table-header-bar">
+                  <div>
+                    <h3 style={{ fontSize: '16px', fontWeight: '800', color: '#111827', margin: 0 }}>All Paid Orders</h3>
+                    <p style={{ fontSize: '12px', color: '#6B7280', margin: '2px 0 0' }}>Update fulfillment as each order moves to the customer.</p>
+                  </div>
+                  <span style={{ fontSize: '11px', fontWeight: '800', color: '#6B7280' }}>{allOrders.length} order{allOrders.length === 1 ? '' : 's'}</span>
+                </div>
+                {ordersLoading ? (
+                  <div style={{ padding: '60px 24px', textAlign: 'center', color: '#9CA3AF' }}>Loading orders...</div>
+                ) : allOrders.length === 0 ? (
+                  <div style={{ padding: '60px 24px', textAlign: 'center', color: '#6B7280' }}>No paid orders yet.</div>
+                ) : (
+                  <table className="unbley-table">
+                    <thead><tr><th>ORDER</th><th>CUSTOMER</th><th>AMOUNT</th><th>PAYMENT</th><th>STATUS</th></tr></thead>
+                    <tbody>
+                      {allOrders.map(order => {
+                        const status = ['paid', 'processing', 'shipped', 'delivered', 'cancelled'].includes(String(order.fulfillment_status).toLowerCase()) ? String(order.fulfillment_status).toLowerCase() : 'paid';
+                        return (
+                          <React.Fragment key={order.id}>
+                            <tr>
+                            <td>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <button onClick={() => setExpandedOrderId(expandedOrderId === order.id ? null : order.id)} aria-label={`${expandedOrderId === order.id ? 'Collapse' : 'Expand'} ${order.order_number}`} style={{ border: 'none', background: 'none', padding: 0, color: '#111827', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <span>{expandedOrderId === order.id ? '−' : '+'}</span>
+                                  <span>{order.order_number}</span>
+                                </button>
+                                {Array.isArray(order.items) && order.items.length > 0 && (
+                                  <div title={`${order.items.length} item${order.items.length === 1 ? '' : 's'} in this order`} style={{ display: 'flex', alignItems: 'center', paddingLeft: '5px' }}>
+                                    {order.items.slice(0, 3).map((item, itemIndex) => (
+                                      item.image_url ? (
+                                        <img key={`${order.id}-thumb-${itemIndex}`} src={item.image_url} alt="" style={{ width: '30px', height: '30px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #FFFFFF', marginLeft: itemIndex === 0 ? '-5px' : '-8px', boxShadow: '0 1px 4px rgba(34,21,16,0.15)' }} />
+                                      ) : (
+                                        <div key={`${order.id}-thumb-${itemIndex}`} style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#F4F2EE', border: '2px solid #FFFFFF', marginLeft: itemIndex === 0 ? '-5px' : '-8px', display: 'grid', placeItems: 'center', boxShadow: '0 1px 4px rgba(34,21,16,0.15)' }}><Package size={12} color="#9CA3AF" /></div>
+                                      )
+                                    ))}
+                                    {order.items.length > 3 && <span style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#6A3E1F', border: '2px solid #FFFFFF', marginLeft: '-8px', display: 'grid', placeItems: 'center', color: '#FFFFFF', fontSize: '10px', fontWeight: '800', boxShadow: '0 1px 4px rgba(34,21,16,0.15)' }}>+{order.items.length - 3}</span>}
+                                  </div>
+                                )}
+                              </div>
+                              <div style={{ fontSize: '11px', color: '#8C827A', marginTop: '3px' }}>{order.created_at ? new Date(order.created_at).toLocaleDateString() : '—'}</div>
+                            </td>
+                            <td>{order.customer_name || 'Store Customer'}<div style={{ fontSize: '11px', color: '#8C827A', marginTop: '3px' }}>{order.customer_email || 'No email'}</div></td>
+                            <td style={{ fontWeight: '800' }}>{formatMoney(order.total_amount)}</td>
+                            <td><span className="unbley-pill-paid">{order.transaction_id ? 'PAID' : String(order.status || 'PENDING').toUpperCase()}</span></td>
+                            <td>
+                              <select value={status} onChange={(event) => updateFulfillmentStatus(order.id, event.target.value)} aria-label={`Update status for ${order.order_number}`} style={{ border: '1px solid #E5E7EB', borderRadius: '7px', background: '#FFFFFF', color: '#374151', padding: '7px 9px', fontSize: '11px', fontWeight: '800', cursor: 'pointer' }}>
+                                {fulfillmentOptions.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+                              </select>
+                            </td>
+                            </tr>
+                            {expandedOrderId === order.id && (
+                            <tr>
+                              <td colSpan="5" style={{ background: '#FBF9F5', padding: '14px 18px' }}>
+                                <div style={{ fontSize: '11px', fontWeight: '800', color: '#8D5B36', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '10px' }}>Items in this order</div>
+                                {Array.isArray(order.items) && order.items.length > 0 ? order.items.map((item, itemIndex) => (
+                                  <div key={`${order.id}-item-${itemIndex}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', padding: '10px 0', borderTop: '1px solid #EAE3D9', flexWrap: 'wrap' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                                      {item.image_url ? (
+                                        <img src={item.image_url} alt={item.name || item.title || 'Ordered product'} style={{ width: '42px', height: '42px', borderRadius: '8px', objectFit: 'cover', flexShrink: 0 }} />
+                                      ) : (
+                                        <div style={{ width: '42px', height: '42px', borderRadius: '8px', background: '#F4F2EE', display: 'grid', placeItems: 'center', flexShrink: 0 }}><Package size={16} color="#9CA3AF" /></div>
+                                      )}
+                                      <div>
+                                      <div style={{ fontWeight: '700', color: '#111827', fontSize: '13px' }}>{item.qty || 1}x {item.name || item.title || 'Product'}</div>
+                                      {item.price !== undefined && <div style={{ fontSize: '11px', color: '#6B7280' }}>{formatMoney(item.price)} each</div>}
+                                    </div>
+                                    </div>
+                                    <select value={item.fulfillment_status || 'paid'} onChange={(event) => updateOrderItemStatus(order.id, itemIndex, event.target.value)} aria-label={`Update ${item.name || item.title || 'item'} status`} style={{ border: '1px solid #E5E7EB', borderRadius: '7px', background: '#FFFFFF', color: '#374151', padding: '7px 9px', fontSize: '11px', fontWeight: '800', cursor: 'pointer' }}>
+                                      {itemStatusOptions.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+                                    </select>
+                                  </div>
+                                )) : <div style={{ color: '#6B7280', fontSize: '12px' }}>Item details are not available for this order.</div>}
+                              </td>
+                            </tr>
+                            )}
+                          </React.Fragment>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
               </div>
             </main>
           )}
@@ -1229,6 +1671,217 @@ export default function Dashboard() {
           storeData={{ ...profileData, activeStock: metrics.activeStock, store_active: profileData?.store_active || user?.user_metadata?.store_active }}
           storeId={user?.id}
         />
+        <AnimatePresence>
+          {showWelcomeOnboarding && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="unbley-modal-overlay"
+              style={{
+                position: 'fixed',
+                inset: 0,
+                background: 'rgba(15, 23, 42, 0.60)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '20px',
+                zIndex: 999999
+              }}
+              onClick={(e) => {
+                if (e.target === e.currentTarget) {
+                  finishWelcomeOnboarding();
+                }
+              }}
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.96, y: 18 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.96, y: 18 }}
+                transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                style={{
+                  width: '100%',
+                  maxWidth: '520px',
+                  background: '#ffffff',
+                  borderRadius: '18px',
+                  border: '1px solid #EAE3D9',
+                  boxShadow: '0 24px 60px rgba(18, 18, 20, 0.18)',
+                  overflow: 'hidden',
+                  position: 'relative'
+                }}
+              >
+                <div style={{ padding: '24px 24px 18px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', marginBottom: '18px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <img
+                        src="/src/assets/logogo.png"
+                        alt="Unbley logo"
+                        style={{ width: '34px', height: '34px', borderRadius: '10px', objectFit: 'cover', boxShadow: '0 4px 12px rgba(106, 62, 31, 0.15)' }}
+                      />
+                      <span style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        background: brandSoft,
+                        border: '1px solid #E7D7C8',
+                        color: brandPrimary,
+                        padding: '6px 10px',
+                        borderRadius: '999px',
+                        fontSize: '11px',
+                        fontWeight: '800',
+                        letterSpacing: '0.08em',
+                        textTransform: 'uppercase'
+                      }}>
+                        <Sparkles size={12} />
+                        Welcome
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => finishWelcomeOnboarding(true)}
+                      aria-label="Close welcome onboarding"
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '8px',
+                        background: '#F3F4F6',
+                        border: '1px solid #E5E7EB',
+                        color: '#6B7280',
+                        cursor: 'pointer',
+                        display: 'grid',
+                        placeItems: 'center'
+                      }}
+                    >
+                      <span style={{ fontSize: '18px', lineHeight: 1 }}>×</span>
+                    </button>
+                  </div>
+
+                  <div style={{ marginBottom: '20px' }}>
+                    <div style={{ fontSize: '11px', fontWeight: '700', letterSpacing: '0.08em', color: brandPrimary, textTransform: 'uppercase', marginBottom: '8px' }}>
+                      Step {welcomeOnboardingStep + 1} of {welcomeSlides.length}
+                    </div>
+                    <h2 style={{ margin: 0, fontSize: '26px', lineHeight: 1.15, letterSpacing: '-0.04em', color: '#111827', fontWeight: 800 }}>
+                      {welcomeSlides[welcomeOnboardingStep].title}
+                    </h2>
+                  </div>
+
+                  <div style={{
+                    background: '#F9F6F3',
+                    border: '1px solid #F0E5DB',
+                    borderRadius: '14px',
+                    padding: '16px',
+                    color: '#374151',
+                    fontSize: '14px',
+                    lineHeight: 1.6,
+                    marginBottom: '20px'
+                  }}>
+                    {welcomeSlides[welcomeOnboardingStep].text}
+                    <div style={{ marginTop: '10px', color: brandPrimary, fontWeight: 700 }}>
+                      {welcomeSlides[welcomeOnboardingStep].highlight}
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                      {welcomeSlides.map((_, idx) => (
+                        <span
+                          key={idx}
+                          style={{
+                            width: idx === welcomeOnboardingStep ? '18px' : '8px',
+                            height: '8px',
+                            borderRadius: '999px',
+                            background: idx === welcomeOnboardingStep ? brandPrimary : '#E5E7EB',
+                            transition: 'all 0.2s ease'
+                          }}
+                        />
+                      ))}
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                      {welcomeOnboardingStep > 0 && (
+                        <button
+                          onClick={() => setWelcomeOnboardingStep((prev) => Math.max(prev - 1, 0))}
+                          style={{
+                            background: '#FFFFFF',
+                            border: '1px solid #E5E7EB',
+                            color: '#374151',
+                            borderRadius: '10px',
+                            padding: '10px 14px',
+                            fontWeight: 700,
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Back
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => {
+                          if (welcomeOnboardingStep < welcomeSlides.length - 1) {
+                            setWelcomeOnboardingStep((prev) => prev + 1);
+                          } else {
+                            handleWelcomeSetupLaunch(false);
+                          }
+                        }}
+                        style={{
+                          background: `linear-gradient(135deg, ${brandPrimary} 0%, ${brandAccent} 100%)`,
+                          border: '1px solid ' + brandPrimary,
+                          color: '#FFFFFF',
+                          borderRadius: '10px',
+                          padding: '10px 18px',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          boxShadow: '0 10px 20px rgba(106, 62, 31, 0.18)'
+                        }}
+                      >
+                        {welcomeOnboardingStep < welcomeSlides.length - 1 ? 'Next' : 'Start setup'}
+                        <ArrowRight size={14} />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <button
+                      onClick={() => handleWelcomeSetupLaunch(true)}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#6B7280',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        padding: 0,
+                        textDecoration: 'underline'
+                      }}
+                    >
+                      Skip for now
+                    </button>
+                    <button
+                      onClick={() => handleWelcomeSetupLaunch(true)}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#6A3E1F',
+                        fontSize: '12px',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        padding: 0,
+                        textDecoration: 'underline'
+                      }}
+                    >
+                      Never show again
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <DashboardTour
           isActive={showDashboardTour}
           onClose={() => setShowDashboardTour(false)}

@@ -6,6 +6,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../context/ToastContext';
 import { isDarkColor, getContrastColor, getMutedColor, getBorderColor } from '../lib/colors';
 import PageTransition from '../components/PageTransition';
+import StoreAttribution from '../components/StoreAttribution';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Cart() {
@@ -442,6 +443,7 @@ export default function Cart() {
             <div style={{ borderBottom: '1.5px solid #333', width: '100%' }}></div>
           </div>
         </div>
+        <StoreAttribution color={mutedColor} />
       </div>
       </div>
     </PageTransition>

@@ -1,15 +1,47 @@
-import React from 'react';
-import { ArrowRight, CheckCircle2, ShieldCheck, LayoutGrid } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { ArrowRight, CheckCircle2, ShieldCheck, LayoutGrid, BarChart3, ShoppingBag, CircleDollarSign, Globe, Smartphone, Package, MessageCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { motion } from 'framer-motion';
 
+const typedWords = ['brand', 'store', 'atelier', 'business', 'studio'];
+const partnerItems = [
+  <img src="https://upload.wikimedia.org/wikipedia/commons/1/1f/Paystack.png" alt="Paystack" />,
+  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Flutterwave_Logo.png/1280px-Flutterwave_Logo.png" alt="Flutterwave" />,
+  <span className="partner-text-logo"><ShieldCheck size={20} color="#10B981" /> SSL Secured</span>,
+  <span className="partner-text-logo"><Globe size={20} color="#8D5B36" /> Custom Domain</span>,
+  <span className="partner-text-logo"><Smartphone size={20} color="#8D5B36" /> Mobile Ready</span>,
+  <span className="partner-text-logo"><Package size={20} color="#8D5B36" /> Product Management</span>,
+  <span className="partner-text-logo"><ShoppingBag size={20} color="#8D5B36" /> Online Storefront</span>,
+  <span className="partner-text-logo"><MessageCircle size={20} color="#25D366" /> WhatsApp-Friendly</span>,
+  <span className="partner-text-logo"><CheckCircle2 size={20} color="#10B981" /> Easy to Manage</span>
+];
+
 export default function Hero() {
   const { user } = useAuth();
+  const [wordIndex, setWordIndex] = useState(0);
+  const [displayWord, setDisplayWord] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  // Premium Customization: Partner Logo Size Control
-  const partnerLogoHeight = "50px"; // Change this value to resize all partner logos
+  useEffect(() => {
+    const currentWord = typedWords[wordIndex];
+    let timeout;
 
+    if (!isDeleting && displayWord === currentWord) {
+      timeout = setTimeout(() => setIsDeleting(true), 1400);
+    } else if (!isDeleting && displayWord.length < currentWord.length) {
+      timeout = setTimeout(() => setDisplayWord(currentWord.slice(0, displayWord.length + 1)), 105);
+    } else if (isDeleting && displayWord.length > 0) {
+      timeout = setTimeout(() => setDisplayWord(displayWord.slice(0, -1)), 65);
+    } else {
+      timeout = setTimeout(() => {
+        setWordIndex((index) => (index + 1) % typedWords.length);
+        setIsDeleting(false);
+      }, 260);
+    }
+
+    return () => clearTimeout(timeout);
+  }, [displayWord, isDeleting, wordIndex]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -54,21 +86,21 @@ export default function Hero() {
             variants={itemVariants}
             className="hero-badge"
           >
-            <ShieldCheck size={14} /> PREMIUM E-COMMERCE PLATFORM
+            <ShieldCheck size={14} /> PREMIUM ECOMMERCE PLATFORM
           </motion.div>
 
           <motion.h1
             variants={itemVariants}
             className="hero-title"
           >
-            Launch Your Brand Online <span>in Less Than 24 Hours.</span>
+            Launch Your <strong className="hero-typing-word">{displayWord}<i className="hero-typing-cursor" aria-hidden="true" /></strong> Online
           </motion.h1>
 
           <motion.p
             variants={itemVariants}
             className="hero-subtitle"
           >
-            Get a high-performance storefront and your own custom domain for just <strong style={{ color: 'var(--text-primary)' }}>₦30,000</strong>. No technical skills required.
+            Build a professional online store for your business without the technical stress. Unbley gives you everything you need to sell online — your own storefront, custom domain, payments, product management and the tools to grow your brand.
           </motion.p>
 
           <motion.div
@@ -92,22 +124,20 @@ export default function Hero() {
                   whileTap={{ scale: 0.98 }}
                   className="btn btn-primary hero-btn"
                 >
-                  Start Your Journey <ArrowRight size={18} />
+                    Get Started <ArrowRight size={18} />
                 </motion.button>
               </Link>
             )}
+            <a href="#solutions" className="btn btn-outline hero-btn">Explore Unbley</a>
           </motion.div>
 
           <motion.div
             variants={itemVariants}
             className="hero-promo"
           >
-            <div className="promo-item urgent">
-              <motion.span animate={{ opacity: [1, 0.6, 1] }} transition={{ duration: 2, repeat: Infinity }}>🔥 40% OFF ends soon!</motion.span>
-            </div>
             <div className="promo-item">
               <CheckCircle2 size={18} color="#10B981" />
-              <span><strong>₦30,000</strong>/year — Full Setup Included</span>
+                <span>Built for ambitious brands. Simple enough for anyone.</span>
             </div>
           </motion.div>
 
@@ -115,19 +145,12 @@ export default function Hero() {
             variants={itemVariants}
             className="hero-partners"
           >
-            <div className="partners-label">
-              Trusted Security Partners
-            </div>
-            <div className="partners-list" style={{ '--logo-height': partnerLogoHeight }}>
-              <div className="partner-logo">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/1/1f/Paystack.png" alt="Paystack" />
-              </div>
-              <div className="partner-logo">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Flutterwave_Logo.png/1280px-Flutterwave_Logo.png" alt="Flutterwave" />
-              </div>
-              <div className="partner-logo ssl">
-                <ShieldCheck size={20} color="#10B981" />
-                SSL Secured
+            <div className="partners-label">Trusted partners and store essentials</div>
+            <div className="partners-marquee" aria-label="Trusted partners and store capabilities">
+              <div className="partners-list">
+                {[...partnerItems, ...partnerItems].map((item, index) => (
+                  <div className="partner-logo" key={index}>{item}</div>
+                ))}
               </div>
             </div>
           </motion.div>
@@ -139,28 +162,49 @@ export default function Hero() {
           initial="hidden"
           animate="visible"
         >
-          <div className="dashboard-mockup">
-            <img
-              src="https://raw.githubusercontent.com/Blvck4K/Jss-png/refs/heads/main/replace.png"
-              alt="Dashboard Preview"
-              style={{ width: '90%', height: 'auto', display: 'block' }}
-            />
-          </div>
+            <div className="hero-orbit orbit-one" />
+            <div className="hero-orbit orbit-two" />
+            <div className="dashboard-mockup">
+              <div className="mockup-toolbar">
+                <span className="mockup-live"><span /> Live store</span>
+                <span className="mockup-period">Last 30 days</span>
+              </div>
+              <img
+                src="https://raw.githubusercontent.com/Blvck4K/Jss-png/refs/heads/main/hero(2).png"
+                alt="Unbley store dashboard preview"
+              />
+            </div>
 
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 1.2, duration: 0.8 }}
-            className="floating-badge"
-          >
-            <div className="badge-icon">
-              <CheckCircle2 size={24} />
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 1.2, duration: 0.8 }}
+              className="floating-badge"
+            >
+              <div className="badge-icon">
+                <CheckCircle2 size={22} />
+              </div>
+              <div>
+                <div className="badge-title">Store is ready</div>
+                <div className="badge-subtitle">unbley.top is connected</div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.5, duration: 0.8 }}
+              className="hero-metric-card"
+            >
+              <div className="metric-card-icon"><BarChart3 size={17} /></div>
+              <div><strong>+28.4%</strong><span>weekly store growth</span></div>
+            </motion.div>
+
+            <div className="hero-activity-card">
+              <div className="activity-heading"><span>Recent activity</span><span className="activity-live">Live</span></div>
+              <div className="activity-row"><span className="activity-icon orders"><ShoppingBag size={14} /></span><span><strong>New order</strong><small>2 minutes ago</small></span><b>+₦48,000</b></div>
+              <div className="activity-row"><span className="activity-icon revenue"><CircleDollarSign size={14} /></span><span><strong>Revenue updated</strong><small>18 minutes ago</small></span><b>+₦19,500</b></div>
             </div>
-            <div>
-              <div className="badge-title">Free Domain Name</div>
-              <div className="badge-subtitle">Fully automated setup</div>
-            </div>
-          </motion.div>
 
           {/* Decorative elements */}
           <motion.div

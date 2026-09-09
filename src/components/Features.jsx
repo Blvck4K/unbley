@@ -1,38 +1,48 @@
 import React from 'react';
-import { Store, CreditCard, Globe, Smartphone, LayoutDashboard, Headphones } from 'lucide-react';
+import { Store, CreditCard, Globe, Smartphone, LayoutDashboard, Search, MessageCircle, Headphones } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function Features() {
   const features = [
     {
       icon: <Store size={24} />,
-      title: 'Custom store website',
-      description: 'A beautifully designed, fully functional e-commerce platform tailored perfectly to your brand.'
+      title: 'Professional Storefront',
+      description: 'Create a beautiful online store that makes your brand look credible and gives customers a simple way to browse and buy.'
     },
     {
       icon: <CreditCard size={24} />,
-      title: 'Payment integration',
-      description: 'Secure, seamless payment gateways configured to process your sales globally with zero friction.'
+      title: 'Secure Payment Integration',
+      description: 'Accept online payments through trusted payment providers and give your customers a smooth checkout experience.'
     },
     {
       icon: <Globe size={24} />,
-      title: 'Free domain (.top)',
-      description: 'Establish your brand identity online immediately with a complimentary .top domain name included.'
+      title: 'Custom Domain',
+      description: 'Give your business a professional identity with your own domain name instead of relying only on social media.'
     },
     {
       icon: <Smartphone size={24} />,
-      title: 'Mobile-friendly design',
-      description: 'Optimized shopping experiences across all devices, capturing customers wherever they browse.'
+      title: 'Product & Inventory Management',
+      description: 'Add products, manage stock, update prices and keep your store organized from one simple dashboard.'
     },
     {
       icon: <LayoutDashboard size={24} />,
-      title: 'Admin dashboard',
-      description: 'A powerful, intuitive backend panel to manage your orders, inventory, and customers effortlessly.'
+      title: 'Mobile-First Shopping',
+      description: 'Your store is optimized for customers shopping from phones, tablets and other devices.'
     },
     {
       icon: <Headphones size={24} />,
-      title: 'Expert Support',
-      description: 'Dedicated account managers and technical team to guide you through setup, deployment, and post-sale operations.'
+      title: 'Business Dashboard',
+      description: 'Manage your products, orders, customers and store settings from one centralized dashboard.'
+    },
+    {
+      icon: <Search size={24} />,
+      title: 'Built-In SEO',
+      description: "Help customers discover your products through search engines with tools designed to improve your store's visibility."
+    },
+    {
+      icon: <MessageCircle size={24} />,
+      title: 'WhatsApp-Friendly Selling',
+      description: 'Connect your online store with the way many customers already communicate and shop - WhatsApp.'
     }
   ];
 
@@ -65,8 +75,8 @@ export default function Features() {
           transition={{ duration: 0.6 }}
           className="section-head"
         >
-          <h2>Value Built Into Every Setup</h2>
-          <p className="text-secondary">Architecting a faster way to launch digital retail.</p>
+          <h2>Everything You Need to Sell Online</h2>
+          <p className="text-secondary">From your first product to your next big sale, Unbley gives your business the infrastructure to grow online.</p>
         </motion.div>
 
         <motion.div

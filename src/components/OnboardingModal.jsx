@@ -10,14 +10,16 @@ import ShippingModal from './onboarding/ShippingModal';
 import ProductsModal from './onboarding/ProductsModal';
 import SubscriptionPlanModal from './onboarding/SubscriptionPlanModal';
 
-export default function OnboardingModal({ isOpen = true, onClose, storeData = {}, storeId = null, onRefresh = null, activeStep = null }) {
+export default function OnboardingModal({ isOpen = true, onClose, storeData = {}, storeId: _storeId = null, onRefresh = null, activeStep = null }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [activeModal, setActiveModal] = useState(activeStep);
   const [liveData, setLiveData] = useState({ brand_name: storeData?.brand_name || '', logo_url: storeData?.logo_url || '', phone_number: storeData?.phone_number || '', bank_name: storeData?.bank_name || '', account_number: storeData?.account_number || '', delivery_duration: storeData?.delivery_duration || '', store_active: storeData?.store_active || storeData?.is_active || false, trial_ends_at: storeData?.trial_ends_at || null });
   const [liveProductCount, setLiveProductCount] = useState(storeData?.activeStock || 0);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setLiveData({ brand_name: storeData?.brand_name || '', logo_url: storeData?.logo_url || '', phone_number: storeData?.phone_number || '', bank_name: storeData?.bank_name || '', account_number: storeData?.account_number || '', delivery_duration: storeData?.delivery_duration || '', store_active: storeData?.store_active || storeData?.is_active || false, trial_ends_at: storeData?.trial_ends_at || null }); setLiveProductCount(storeData?.activeStock || 0); }, [storeData]);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { if (activeStep) setActiveModal(activeStep); }, [activeStep]);
 
   const fetchLiveProfile = useCallback(async () => {
@@ -51,10 +53,12 @@ export default function OnboardingModal({ isOpen = true, onClose, storeData = {}
         .eq('status', 'active');
       setLiveProductCount(count || 0);
     } catch (err) { console.warn('OnboardingModal live fetch:', err.message); }
-  }, [user?.id]);
+  }, [user]);
 
   useEffect(() => {
     if (!isOpen || !user?.id) return;
+    // Profile refresh updates local state from the external Supabase source.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchLiveProfile();
     const profileCh = supabase
       .channel('onboarding_profile_' + user.id)
@@ -82,11 +86,11 @@ export default function OnboardingModal({ isOpen = true, onClose, storeData = {}
   const isPlanDone = Boolean(liveData.store_active || (liveData.trial_ends_at && new Date(liveData.trial_ends_at) > new Date()));
 
   const steps = [
-    { id: 'wallet', icon: <Landmark size={20} color={brandColor} />, title: 'Create your wallet to receive payments', subtitle: 'Choose your preferred payment gateway and add bank details for withdrawals', completed: isWalletDone, action: () => setActiveModal('payment') },
-    { id: 'store_info', icon: <Store size={20} color={brandColor} />, title: 'Complete store information', subtitle: 'Add your store logo, currency, and other relevant details', completed: isStoreInfoDone, action: () => setActiveModal('store_info') },
-    { id: 'shipping', icon: <Banknote size={20} color={brandColor} />, title: 'Add shipping prices on your website', subtitle: 'Add shipping prices for your customers to checkout seamlessly', completed: isShippingDone, action: () => setActiveModal('shipping') },
-    { id: 'products', icon: <Tag size={20} color={brandColor} />, title: 'Add products to your store', subtitle: 'You can always add more products later from the Products page', completed: isProductsDone, action: () => setActiveModal('products') },
-    { id: 'subscription', icon: <ShieldCheck size={20} color={brandColor} />, title: 'Get a Subscription Plan at 30% off', subtitle: 'Get this amazing discount and enjoy exclusive Unbley features', completed: isPlanDone, action: () => setActiveModal('subscription') }
+    { id: 'wallet', icon: <Landmark size={20} color={brandColor} />, title: 'Set up your payment account', subtitle: 'Connect your preferred payment method so customers can pay you and you can withdraw earnings safely.', completed: isWalletDone, action: () => setActiveModal('payment') },
+    { id: 'store_info', icon: <Store size={20} color={brandColor} />, title: 'Complete your store identity', subtitle: 'Add your logo, brand details, and store information so your website looks credible and professional.', completed: isStoreInfoDone, action: () => setActiveModal('store_info') },
+    { id: 'shipping', icon: <Banknote size={20} color={brandColor} />, title: 'Set delivery and shipping prices', subtitle: 'Create clear delivery charges so customers know the total amount before checkout and can complete orders smoothly.', completed: isShippingDone, action: () => setActiveModal('shipping') },
+    { id: 'products', icon: <Tag size={20} color={brandColor} />, title: 'Add your first products', subtitle: 'List items for sale with pricing and details so your storefront is ready for buyers and customers can browse your catalog.', completed: isProductsDone, action: () => setActiveModal('products') },
+    { id: 'subscription', icon: <ShieldCheck size={20} color={brandColor} />, title: 'Activate your website plan', subtitle: 'Choose a plan to unlock the full features your store needs and keep your business running smoothly online.', completed: isPlanDone, action: () => setActiveModal('subscription') }
   ];
 
   const completedCount = steps.filter(s => s.completed).length;

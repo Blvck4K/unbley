@@ -6,6 +6,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../context/ToastContext';
 import { isDarkColor, getContrastColor, getMutedColor, getBorderColor } from '../lib/colors';
 import PageTransition from '../components/PageTransition';
+import StoreAttribution from '../components/StoreAttribution';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function ProductDetail() {
@@ -685,6 +686,10 @@ export default function ProductDetail() {
           </div>
         )}
 
+      </div>
+
+      <div style={{ borderTop: `1px solid ${borderColor}`, marginTop: '64px', padding: '24px' }}>
+        <StoreAttribution color={mutedColor} />
       </div>
 
       {isOwner && isEditModalOpen && (

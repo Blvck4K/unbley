@@ -108,7 +108,8 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete, edi
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.title?.trim() || !formData.price) {
+    const parsedPrice = Number(formData.price);
+    if (!formData.title?.trim() || !formData.price || !Number.isFinite(parsedPrice) || parsedPrice <= 0) {
       setError('Please fill in both product name and price');
       return;
     }
@@ -129,7 +130,7 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete, edi
           .from('products')
           .update({
             title: formData.title.trim(),
-            price: parseFloat(formData.price) || 0,
+            price: parsedPrice,
             description: formData.description?.trim() || '',
             image_url: image_url
           })
@@ -145,7 +146,7 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete, edi
             {
               brand_id: user.id,
               title: formData.title.trim(),
-              price: parseFloat(formData.price) || 0,
+              price: parsedPrice,
               description: formData.description?.trim() || '',
               image_url: image_url,
               status: 'active'

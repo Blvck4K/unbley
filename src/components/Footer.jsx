@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FaWhatsapp, FaInstagram, FaTwitter, FaFacebook, FaYoutube, FaPinterest } from "react-icons/fa";
 import logoImg from '../assets/logogo.png';
 
 export default function Footer() {
@@ -110,16 +109,16 @@ export default function Footer() {
               <span>Unbley.</span>
             </div>
             <p style={{ maxWidth: '320px', margin: '16px auto 0', lineHeight: '1.6', fontSize: '15px' }}>
-              Build your brand’s online store, own your domain, and sell professionally.
+              Unbley helps businesses build professional online stores and turn their brands into businesses that can sell online.
             </p>
-            <Link to="/create-online-store" className="footer-cta">Get Your Store Today</Link>
+            <Link to="/create-online-store" className="footer-cta">Start Selling Online</Link>
           </div>
 
           <div className="footer-col" style={{ textAlign: 'center' }}>
             <h4 className="footer-heading">Solutions</h4>
             <ul style={{ listStyle: 'none', padding: 0 }}>
               <li style={{ marginBottom: '12px' }}><Link to="/create-online-store" className="footer-link">Create Online Store</Link></li>
-              <li style={{ marginBottom: '12px' }}><Link to="/#domains" className="footer-link">Custom Domain Setup</Link></li>
+              <li style={{ marginBottom: '12px' }}><Link to="/#domains" className="footer-link">Custom Domain</Link></li>
               <li style={{ marginBottom: '12px' }}><Link to="/creator-platform" className="footer-link">Ecommerce for Brands</Link></li>
               <li style={{ marginBottom: '12px' }}><Link to="/#payments" className="footer-link">Payment Integration</Link></li>
               <li style={{ marginBottom: '12px' }}><Link to="/dashboard" className="footer-link">Store Management</Link></li>
@@ -131,25 +130,18 @@ export default function Footer() {
             <ul style={{ listStyle: 'none', padding: 0 }}>
               <li style={{ marginBottom: '12px' }}><Link to="/about" className="footer-link">About Us</Link></li>
               <li style={{ marginBottom: '12px' }}><a href="#" className="footer-link">Success Stories</a></li>
-              <li style={{ marginBottom: '12px' }}><a href="#" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new Event('openChatWidget')); }} className="footer-link">Customer Service</a></li>
+              <li style={{ marginBottom: '12px' }}><a href="#" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new Event('openChatWidget')); }} className="footer-link">Customer Support</a></li>
               <li style={{ marginBottom: '12px' }}><Link to="/contact" className="footer-link">Contact Us</Link></li>
             </ul>
           </div>
 
           <div className="footer-col" style={{ textAlign: 'center' }}>
-            <h4 className="footer-heading">Socials</h4>
-            <div className="flex justify-center" style={{ marginTop: '16px' }}>
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0, }}>
-                <li className="flex" style={{ gap: '18px' }}>
-                  <a href="https://wa.link/bg2bpg" className="footer-social"><FaWhatsapp size={22} /></a>
-                  <a href="#" className="footer-social"><FaInstagram size={22} /></a>
-                  <a href="#" className="footer-social"><FaTwitter size={22} /></a>
-                  <a href="#" className="footer-social"><FaFacebook size={22} /></a>
-                  <a href="#" className="footer-social"><FaYoutube size={22} /></a>
-                  <a href="#" className="footer-social"><FaPinterest size={22} /></a>
-                </li>
-              </ul>
-            </div>
+            <h4 className="footer-heading">Resources</h4>
+            <ul style={{ listStyle: 'none', padding: 0 }}>
+              <li style={{ marginBottom: '12px' }}><Link to="/all-blogs" className="footer-link">Blog</Link></li>
+              <li style={{ marginBottom: '12px' }}><Link to="/support" className="footer-link">Help Center</Link></li>
+              <li style={{ marginBottom: '12px' }}><a href="#faq" className="footer-link">FAQs</a></li>
+            </ul>
           </div>
         </div>
 

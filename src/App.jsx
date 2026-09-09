@@ -5,6 +5,7 @@ import { ToastProvider } from './context/ToastContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import ErrorBoundary from './components/ErrorBoundary';
 import ScrollToTop from './components/ScrollToTop';
+import StoreDomainResolver from './components/StoreDomainResolver';
 
 // Lazy load pages
 const Home = lazy(() => import('./pages/Home'));
@@ -32,6 +33,7 @@ const Blog = lazy(() => import('./pages/Blog'));
 const AdminBlog = lazy(() => import('./pages/AdminBlog'));
 const FillBlog = lazy(() => import('./pages/FillBlog'));
 const AdminPayments = lazy(() => import('./pages/AdminPayments'));
+const AdminStoreOwners = lazy(() => import('./pages/AdminStoreOwners'));
 const About = lazy(() => import('./pages/About'));
 const Contact = lazy(() => import('./pages/Contact'));
 const Support = lazy(() => import('./pages/Support'));
@@ -55,6 +57,7 @@ function App() {
       <ToastProvider>
         <BrowserRouter>
           <ScrollToTop />
+          <StoreDomainResolver />
           <OAuthRedirectHandler />
           <Suspense fallback={<PageLoader />}>
             <ErrorBoundary>
@@ -83,6 +86,7 @@ function App() {
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/menu" element={<ProtectedRoute><Menu /></ProtectedRoute>} />
                 <Route path="/admin/payments" element={<ProtectedRoute><AdminPayments /></ProtectedRoute>} />
+                <Route path="/admin/store-owners" element={<ProtectedRoute><AdminStoreOwners /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                 <Route path="/edit" element={<ProtectedRoute><Edit /></ProtectedRoute>} />
                 <Route path="/support" element={<ProtectedRoute><Support /></ProtectedRoute>} />

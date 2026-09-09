@@ -5,23 +5,12 @@ export default function Stats() {
     <section className="stats-section">
       <div className="container">
         <div className="grid grid-cols-4 gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
-          <div className="stat-item">
-            <div className="stat-value">₦50M+</div>
-            <div className="stat-label">Total Volume Sold</div>
-          </div>
-          <div className="stat-item">
-            <div className="stat-value">12,000+</div>
-            <div className="stat-label">Verified Stores</div>
-          </div>
-          <div className="stat-item">
-            <div className="stat-value">98%</div>
-            <div className="stat-label">Success Rate</div>
-          </div>
-          <div className="stat-item">
-            <div className="stat-value">4.9/5</div>
-            <div className="stat-label">Founder Rating</div>
-          </div>
+          <div className="stat-item"><div className="stat-value">Professional</div><div className="stat-label">Online Store</div></div>
+          <div className="stat-item"><div className="stat-value">Secure</div><div className="stat-label">Payments</div></div>
+          <div className="stat-item"><div className="stat-value">Custom</div><div className="stat-label">Domain</div></div>
+          <div className="stat-item"><div className="stat-value">Built for</div><div className="stat-label">Mobile</div></div>
         </div>
+        <p className="text-secondary text-center" style={{ marginTop: '24px' }}>Everything your brand needs to start selling online.</p>
       </div>
     </section>
   );

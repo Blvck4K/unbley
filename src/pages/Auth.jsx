@@ -7,6 +7,25 @@ import { motion, AnimatePresence } from 'framer-motion';
 import SuccessModal from '../components/SuccessModal';
 import logoImg from '../assets/logogo.png';
 
+const authQuotes = [
+  {
+    text: "Your brand is what people say about you when you're not in the room.",
+    author: 'Jeff Bezos'
+  },
+  {
+    text: 'The secret of getting ahead is getting started.',
+    author: 'Mark Twain'
+  },
+  {
+    text: 'Great things are done by a series of small things brought together.',
+    author: 'Vincent van Gogh'
+  },
+  {
+    text: 'Do what you feel in your heart to be right, for you will be criticized anyway.',
+    author: 'Eleanor Roosevelt'
+  }
+];
+
 export default function Auth() {
   const [authMode, setAuthMode] = useState('signup'); // 'signin' | 'signup'
   const [userType, setUserType] = useState('brand'); // 'customer' | 'brand'
@@ -22,8 +41,32 @@ export default function Auth() {
   const [errorMsg, setErrorMsg] = useState('');
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [signupSuccessData, setSignupSuccessData] = useState(null);
+  const [quoteIndex, setQuoteIndex] = useState(0);
+  const [typedQuote, setTypedQuote] = useState('');
+  const [isDeletingQuote, setIsDeletingQuote] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+
+  React.useEffect(() => {
+    const currentQuote = authQuotes[quoteIndex].text;
+    const isQuoteComplete = typedQuote === currentQuote;
+    const isQuoteEmpty = typedQuote.length === 0;
+    const delay = isQuoteComplete && !isDeletingQuote ? 2400 : isQuoteEmpty && isDeletingQuote ? 450 : isDeletingQuote ? 24 : 48;
+
+    const timer = window.setTimeout(() => {
+      if (isQuoteComplete && !isDeletingQuote) {
+        setIsDeletingQuote(true);
+      } else if (isQuoteEmpty && isDeletingQuote) {
+        setQuoteIndex((currentIndex) => (currentIndex + 1) % authQuotes.length);
+        setIsDeletingQuote(false);
+      } else {
+        const nextLength = typedQuote.length + (isDeletingQuote ? -1 : 1);
+        setTypedQuote(currentQuote.slice(0, nextLength));
+      }
+    }, delay);
+
+    return () => window.clearTimeout(timer);
+  }, [isDeletingQuote, quoteIndex, typedQuote]);
 
   React.useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -170,6 +213,20 @@ export default function Auth() {
             border-radius: 12px;
             padding: 36px 40px;
             box-shadow: 0 8px 24px rgba(34, 21, 16, 0.06);
+          }
+
+          .auth-quote-cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1.1em;
+            margin-left: 4px;
+            vertical-align: -0.12em;
+            background-color: #8D5B36;
+            animation: auth-cursor-blink 0.9s steps(2, start) infinite;
+          }
+
+          @keyframes auth-cursor-blink {
+            50% { opacity: 0; }
           }
         `}</style>
 
@@ -424,13 +481,13 @@ export default function Auth() {
 
         {/* Right Side Quote Box */}
         <div className="auth-quote-box" style={{ width: '400px', backgroundColor: '#FBF9F5', borderLeft: '1px solid #EAE3D9', padding: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ padding: '60px 40px', border: '1px solid #EAE3D9', backgroundColor: '#FFFFFF', borderRadius: '12px' }}>
-            <p style={{ fontFamily: 'var(--font-heading)', fontSize: '22px', fontWeight: '600', letterSpacing: '-0.01em', lineHeight: '1.5', color: '#221510', marginBottom: '32px' }}>
-              "Your brand is what people say about you when you're not in the room."
+          <div style={{ minHeight: '330px', padding: '60px 40px', border: '1px solid #EAE3D9', backgroundColor: '#FFFFFF', borderRadius: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <p aria-live="polite" style={{ minHeight: '165px', fontFamily: 'var(--font-heading)', fontSize: '22px', fontWeight: '600', letterSpacing: '-0.01em', lineHeight: '1.5', color: '#221510', marginBottom: '32px' }}>
+              &quot;{typedQuote}<span className="auth-quote-cursor" aria-hidden="true" />&quot;
             </p>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '10px', color: '#8D5B36', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: '600' }}>
               <div style={{ width: '12px', height: '1px', backgroundColor: '#8D5B36' }}></div>
-              JEFF BEZOS
+              {authQuotes[quoteIndex].author}
             </div>
           </div>
         </div>
