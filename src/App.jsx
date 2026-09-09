@@ -7,6 +7,22 @@ import ErrorBoundary from './components/ErrorBoundary';
 import ScrollToTop from './components/ScrollToTop';
 import StoreDomainResolver from './components/StoreDomainResolver';
 
+const lazyWithRetry = (importer) => lazy(async () => {
+  const reloadKey = 'unbley:stale-chunk-reload';
+
+  try {
+    const module = await importer();
+    sessionStorage.removeItem(reloadKey);
+    return module;
+  } catch (error) {
+    if (!sessionStorage.getItem(reloadKey)) {
+      sessionStorage.setItem(reloadKey, '1');
+      window.location.reload();
+    }
+    throw error;
+  }
+});
+
 // Lazy load pages
 const Home = lazyWithRetry(() => import('./pages/Home'));
 const Auth = lazyWithRetry(() => import('./pages/Auth'));
@@ -42,22 +58,6 @@ import ChatWidget from './components/ChatWidget';
 import FloatingWhatsApp from './components/FloatingWhatsApp';
 import OAuthRedirectHandler from './components/OAuthRedirectHandler';
 import Menu from './pages/Menu.jsx';
-
-const lazyWithRetry = (importer) => lazy(async () => {
-  const reloadKey = 'unbley:stale-chunk-reload';
-
-  try {
-    const module = await importer();
-    sessionStorage.removeItem(reloadKey);
-    return module;
-  } catch (error) {
-    if (!sessionStorage.getItem(reloadKey)) {
-      sessionStorage.setItem(reloadKey, '1');
-      window.location.reload();
-    }
-    throw error;
-  }
-});
 
 // Loading Component
 const PageLoader = () => (
