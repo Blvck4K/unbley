@@ -50,6 +50,21 @@ export default function AdminBlog() {
     published: posts.filter(p => p.status === 'published').length
   };
 
+  const liveReadership = React.useMemo(() => {
+    if (!posts.length) return 0;
+
+    return posts.reduce((total, post) => {
+      const rawViews = Number(post.view_count ?? 0);
+      return total + (Number.isFinite(rawViews) ? rawViews : 0);
+    }, 0);
+  }, [posts]);
+
+  const formatReadership = (value) => {
+    if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+    if (value >= 1000) return `${(value / 1000).toFixed(1)}k`;
+    return `${Math.round(value)}`;
+  };
+
   const s = {
     page: { backgroundColor: '#FBF9F5', minHeight: '100vh', color: '#221510', fontFamily: '"Inter", sans-serif' },
     container: { maxWidth: '1200px', margin: '0 auto', padding: '0 24px 120px' },
@@ -135,8 +150,11 @@ export default function AdminBlog() {
             <div style={s.readershipCard} className="admin-readership-card">
               <span style={{ ...s.statLabel, color: '#C9BFB5' }}>Monthly Readership</span>
               <div className="flex items-baseline gap-2" style={{ marginBottom: '8px' }}>
-                <span style={{ ...s.statValue, fontSize: '48px', color: '#FDFBF7' }}>42.8k</span>
+                <span style={{ ...s.statValue, fontSize: '48px', color: '#FDFBF7' }}>{formatReadership(liveReadership)}</span>
                 <TrendingUp size={24} color="#DFCFC2" />
+              </div>
+              <div style={{ fontSize: '12px', color: '#C9BFB5', letterSpacing: '0.08em', textTransform: 'uppercase', opacity: 0.9 }}>
+                Live • {stats.published} published
               </div>
               <div style={s.graphOverlay}>
                 <TrendingUp size={120} />

@@ -100,6 +100,7 @@ export default function FillBlog() {
   const [authorName, setAuthorName] = useState('Julian Vane');
   const [publishedAt, setPublishedAt] = useState(new Date().toISOString().split('T')[0]);
   const [metaKeywords, setMetaKeywords] = useState('');
+  const [viewCount, setViewCount] = useState(0);
 
   // UI State
   const [isSearchOptOpen, setIsSearchOptOpen] = useState(false);
@@ -212,6 +213,7 @@ export default function FillBlog() {
             setMetaDescription(data.meta_description || '');
             setMetaTitle(data.meta_title || '');
             setMetaKeywords(data.meta_keywords || '');
+            setViewCount(Number(data.view_count ?? 0));
             setCategory(data.category || 'Editorial');
             setTags(data.tags || ['History', 'Curation']);
             setCoverImageUrl(data.cover_image_url || '');
@@ -278,6 +280,7 @@ export default function FillBlog() {
         meta_description: metaDescription || excerpt || '', 
         meta_keywords: metaKeywords,
         read_time: `${Math.ceil(content.split(' ').length / 200)} MIN READ`,
+        view_count: viewCount,
         created_at: new Date(publishedAt).toISOString(),
         updated_at: new Date().toISOString()
       };
@@ -334,12 +337,29 @@ export default function FillBlog() {
     }
   };
 
+  const parseTagInput = (value) => {
+    return value
+      .split(',')
+      .map(tag => tag.trim())
+      .filter(Boolean)
+      .filter((tag, index, arr) => arr.indexOf(tag) === index);
+  };
+
   const addTag = (e) => {
-    if (e.key === 'Enter' && newTag.trim()) {
+    if (!newTag.trim()) return;
+
+    if (e.key === 'Enter' || e.key === ',') {
       e.preventDefault();
-      if (!tags.includes(newTag.trim())) {
-        setTags([...tags, newTag.trim()]);
+      const incomingTags = parseTagInput(newTag);
+      if (!incomingTags.length) {
+        setNewTag('');
+        return;
       }
+
+      setTags(prev => {
+        const merged = [...prev, ...incomingTags];
+        return merged.filter((tag, index, arr) => arr.indexOf(tag) === index);
+      });
       setNewTag('');
     }
   };
@@ -612,7 +632,15 @@ export default function FillBlog() {
                 value={newTag}
                 onChange={(e) => setNewTag(e.target.value)}
                 onKeyDown={addTag}
-                placeholder="Add a tag..."
+                onBlur={() => {
+                  if (!newTag.trim()) return;
+                  setTags(prev => {
+                    const merged = [...prev, ...parseTagInput(newTag)];
+                    return merged.filter((tag, index, arr) => arr.indexOf(tag) === index);
+                  });
+                  setNewTag('');
+                }}
+                placeholder="Add tags separated by commas..."
                 style={{ width: '100%', padding: '10px', backgroundColor: '#FFFFFF', border: '1px solid #DFCFC2', borderRadius: '8px', color: '#221510' }} 
               />
             </div>

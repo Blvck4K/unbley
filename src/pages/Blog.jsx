@@ -16,6 +16,43 @@ export default function Blog() {
   const [showCopied, setShowCopied] = useState(false);
   const [isTocOpen, setIsTocOpen] = useState(window.innerWidth > 992);
 
+  const trackPostView = useCallback(async (postId) => {
+    if (!postId) return;
+
+    const storageKey = `unbley_blog_viewed_${postId}`;
+    if (typeof window !== 'undefined' && window.localStorage.getItem(storageKey) === '1') return;
+
+    try {
+      const { data: existing, error: fetchError } = await supabase
+        .from('blog_posts')
+        .select('view_count')
+        .eq('id', postId)
+        .single();
+
+      if (fetchError && !/view_count|column.*view_count/i.test(fetchError.message || '')) {
+        throw fetchError;
+      }
+
+      const nextCount = Number(existing?.view_count ?? 0) + 1;
+      const { error: updateError } = await supabase
+        .from('blog_posts')
+        .update({ view_count: nextCount })
+        .eq('id', postId);
+
+      if (updateError && !/view_count|column.*view_count/i.test(updateError.message || '')) {
+        throw updateError;
+      }
+
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(storageKey, '1');
+      }
+
+      setPost((current) => current ? { ...current, view_count: nextCount } : current);
+    } catch (err) {
+      console.warn('Blog view tracking failed:', err.message || err);
+    }
+  }, []);
+
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth > 992) setIsTocOpen(true);
@@ -55,12 +92,15 @@ export default function Blog() {
 
       if (error) throw error;
       setPost(data);
+      if (data?.id) {
+        trackPostView(data.id);
+      }
     } catch (err) {
       console.error("Error fetching post:", err);
     } finally {
       setLoading(false);
     }
-  }, [slug]);
+  }, [slug, trackPostView]);
 
   useEffect(() => {
     if (slug) fetchPost();
