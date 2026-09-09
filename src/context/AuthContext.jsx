@@ -46,7 +46,8 @@ export const AuthProvider = ({ children }) => {
     // 1. Initial Session Check
     const fetchInitialSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
         setSession(session);
         if (session?.user) {
           // Set initial user base and WAIT for the admin check
@@ -58,6 +59,12 @@ export const AuthProvider = ({ children }) => {
         }
       } catch (err) {
         console.error("AuthContext: Initial session fetch failed:", err);
+        if (/invalid refresh token|refresh token not found/i.test(err.message || '')) {
+          await supabase.auth.signOut().catch(() => {});
+          setSession(null);
+          setUser(null);
+          setProfileReady(true);
+        }
       } finally {
         setLoading(false);
       }

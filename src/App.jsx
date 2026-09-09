@@ -6,20 +6,17 @@ import ProtectedRoute from './components/ProtectedRoute';
 import ErrorBoundary from './components/ErrorBoundary';
 import ScrollToTop from './components/ScrollToTop';
 import StoreDomainResolver from './components/StoreDomainResolver';
+import OfflineBanner from './components/OfflineBanner';
 
 const lazyWithRetry = (importer) => lazy(async () => {
-  const reloadKey = 'unbley:stale-chunk-reload';
-
   try {
     const module = await importer();
-    sessionStorage.removeItem(reloadKey);
     return module;
   } catch (error) {
-    if (!sessionStorage.getItem(reloadKey)) {
-      sessionStorage.setItem(reloadKey, '1');
-      window.location.reload();
-    }
-    throw error;
+    await new Promise((resolve) => window.setTimeout(resolve, 250));
+    return importer().catch(() => {
+      throw error;
+    });
   }
 });
 
@@ -72,6 +69,7 @@ function App() {
     <AuthProvider>
       <ToastProvider>
         <BrowserRouter>
+          <OfflineBanner />
           <ScrollToTop />
           <StoreDomainResolver />
           <OAuthRedirectHandler />
