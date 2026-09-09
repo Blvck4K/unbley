@@ -38,6 +38,7 @@ import SuccessModal from '../components/SuccessModal';
 import OnboardingModal from '../components/OnboardingModal';
 import DashboardTour from '../components/DashboardTour';
 import ProductsModal from '../components/onboarding/ProductsModal';
+import logoImg from '../assets/logogo.png';
 
 const PAGE_SIZE = 25;
 const REVENUE_STATUSES = ['paid', 'completed', 'processing', 'shipped', 'delivered'];
@@ -58,6 +59,7 @@ export default function Dashboard() {
   const [showDashboardTour, setShowDashboardTour] = useState(false);
   const [dashboardTourStartStep, setDashboardTourStartStep] = useState(0);
   const [showWelcomeOnboarding, setShowWelcomeOnboarding] = useState(false);
+  const [isFirstSignupSession, setIsFirstSignupSession] = useState(false);
   const [welcomeOnboardingStep, setWelcomeOnboardingStep] = useState(0);
   const [copiedLink, setCopiedLink] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -558,6 +560,7 @@ export default function Dashboard() {
         userType: meta.role || 'brand'
       };
       localStorage.setItem('unbley_just_signed_up', JSON.stringify(successInfo));
+      setIsFirstSignupSession(true);
       setSignupModalData(successInfo);
       setShowSignupSuccessModal(true);
     } else {
@@ -565,6 +568,8 @@ export default function Dashboard() {
       if (justSignedUpRaw) {
         try {
           const parsed = JSON.parse(justSignedUpRaw);
+          localStorage.removeItem('unbley_just_signed_up');
+          setIsFirstSignupSession(true);
           setSignupModalData(parsed);
           setShowSignupSuccessModal(true);
         } catch (e) {
@@ -639,10 +644,10 @@ export default function Dashboard() {
     if (!user) return;
     const hasSeenWelcome = localStorage.getItem(`unbley_welcome_onboarding_seen_${user.id}`) === 'true';
     const hasDismissedWelcome = localStorage.getItem(`unbley_welcome_onboarding_never_show_${user.id}`) === 'true';
-    if (!hasSeenWelcome && !hasDismissedWelcome && !showSignupSuccessModal && !showOnboardingModal && !showDashboardTour) {
+    if (isFirstSignupSession && !hasSeenWelcome && !hasDismissedWelcome && !showSignupSuccessModal && !showOnboardingModal && !showDashboardTour) {
       setShowWelcomeOnboarding(true);
     }
-  }, [user, showSignupSuccessModal, showOnboardingModal, showDashboardTour]);
+  }, [user, isFirstSignupSession, showSignupSuccessModal, showOnboardingModal, showDashboardTour]);
 
   useEffect(() => {
     if (!user) return;
@@ -1916,7 +1921,7 @@ export default function Dashboard() {
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', marginBottom: '18px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <img
-                        src="/src/assets/logogo.png"
+                        src={logoImg}
                         alt="Unbley logo"
                         style={{ width: '34px', height: '34px', borderRadius: '10px', objectFit: 'cover', boxShadow: '0 4px 12px rgba(106, 62, 31, 0.15)' }}
                       />

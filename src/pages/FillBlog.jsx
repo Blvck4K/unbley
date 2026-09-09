@@ -129,10 +129,10 @@ export default function FillBlog() {
 
   // Sync content when loaded
   useEffect(() => {
-    if (editor && dataLoaded && content) {
-      editor.commands.setContent(content);
+    if (editor && dataLoaded && content && editor.getHTML() !== content) {
+      editor.commands.setContent(content, false);
     }
-  }, [editor, dataLoaded]);
+  }, [editor, dataLoaded, content]);
 
   // Auto-slug and SEO generation
   useEffect(() => {
@@ -165,7 +165,8 @@ export default function FillBlog() {
           .eq('id', editId)
           .single();
 
-        if (data && !error) {
+        if (error) throw error;
+        if (data) {
           setTitle(data.title);
           setSlug(data.slug || '');
           setContent(data.content || '');
@@ -183,9 +184,13 @@ export default function FillBlog() {
           setDataLoaded(true);
         }
       };
-      fetchPost();
+      fetchPost().catch((error) => {
+        console.error('Error loading blog post:', error);
+        toast.error(`Could not load post: ${error.message}`);
+        navigate('/admin-blog');
+      });
     }
-  }, [editId]);
+  }, [editId, navigate, toast]);
 
   const handleSave = async (isPublishing = false) => {
     if (!title) return toast.error("Title is required");
@@ -206,9 +211,11 @@ export default function FillBlog() {
       };
 
       if (editId) {
-        await supabase.from('blog_posts').update(postData).eq('id', editId);
+        const { error } = await supabase.from('blog_posts').update(postData).eq('id', editId);
+        if (error) throw error;
       } else {
-        await supabase.from('blog_posts').insert([postData]);
+        const { error } = await supabase.from('blog_posts').insert([postData]);
+        if (error) throw error;
       }
       toast.success(isPublishing ? "Post Published!" : "Draft Saved!");
       navigate('/admin-blog');
@@ -274,7 +281,8 @@ export default function FillBlog() {
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random()}.${fileExt}`;
       const filePath = `blog-covers/${fileName}`;
-      await supabase.storage.from('blog_images').upload(filePath, file);
+      const { error: uploadError } = await supabase.storage.from('blog_images').upload(filePath, file);
+      if (uploadError) throw uploadError;
       const { data: { publicUrl } } = supabase.storage.from('blog_images').getPublicUrl(filePath);
       setCoverImageUrl(publicUrl);
     } catch (err) {

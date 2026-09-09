@@ -25,11 +25,14 @@ const aboutStyles = `
   .about-flow-label { position:relative; z-index:1; display:flex; justify-content:space-between; color:#8D5B36; font-size:10px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
   .about-flow-stage { min-height:315px; display:flex; align-items:center; justify-content:center; gap:18px; position:relative; z-index:1; }
   .about-social-stack { width:126px; display:grid; gap:9px; transform:rotate(-5deg); }
-  .about-message { padding:11px 12px; border:1px solid rgba(141,91,54,.18); border-radius:9px; background:rgba(255,255,255,.7); box-shadow:0 8px 16px rgba(34,21,16,.05); color:#6B584C; font-size:10px; font-weight:700; }
+  .about-message { width:max-content; max-width:100%; padding:11px 12px; border:1px solid rgba(141,91,54,.18); border-radius:9px; background:rgba(255,255,255,.7); box-shadow:0 8px 16px rgba(34,21,16,.05); color:#6B584C; font-size:10px; font-weight:700; overflow:hidden; white-space:nowrap; animation:about-message-in .7s ease both; }
+  .about-message:nth-child(1) { animation-delay:.25s; }
+  .about-message:nth-child(2) { animation-delay:.7s; }
+  .about-message:nth-child(3) { animation-delay:1.15s; }
   .about-message:nth-child(2) { margin-left:14px; background:#FFF8E8; }
   .about-message:nth-child(3) { margin-left:-6px; background:#F5EAE6; }
   .about-flow-arrow { color:#B98D5B; }
-  .about-store-window { width:min(100%,285px); overflow:hidden; border:1px solid #DCCFC2; border-radius:14px; background:#FFF; box-shadow:0 18px 30px rgba(34,21,16,.13); }
+  .about-store-window { width:min(100%,285px); overflow:hidden; border:1px solid #DCCFC2; border-radius:14px; background:#FFF; box-shadow:0 18px 30px rgba(34,21,16,.13); animation:about-store-float 5s ease-in-out infinite; }
   .about-store-top { display:flex; align-items:center; justify-content:space-between; padding:10px 13px; border-bottom:1px solid #F0E8DF; font-size:9px; font-weight:800; }
   .about-store-brand { display:flex; align-items:center; gap:5px; color:#6A3E1F; }
   .about-store-brand i { display:block; width:13px; height:13px; border-radius:4px; background:#6A3E1F; }
@@ -39,7 +42,9 @@ const aboutStyles = `
   .about-store-hero b { display:block; max-width:110px; font-size:13px; line-height:1.05; }
   .about-store-hero span { display:block; margin-top:7px; color:#DCCFC2; font-size:7px; }
   .about-store-products { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; margin-top:10px; }
-  .about-product-tile { height:74px; padding:7px; border-radius:7px; background:#F2ECE4; }
+  .about-product-tile { height:74px; padding:7px; border-radius:7px; background:#F2ECE4; animation:about-product-drift 4s ease-in-out infinite; }
+  .about-product-tile:nth-child(2) { animation-delay:.45s; }
+  .about-product-tile:nth-child(3) { animation-delay:.9s; }
   .about-product-tile div { height:41px; border-radius:5px; background:#D6B69A; }
   .about-product-tile:nth-child(2) div { background:#B4C2B2; }
   .about-product-tile:nth-child(3) div { background:#C8A4A0; }
@@ -100,6 +105,10 @@ const aboutStyles = `
   .about-cta small { display:block; margin-top:17px; color:#8D5B36; font-size:11px; font-weight:700; }
   .about-reveal { animation:about-rise .65s ease both; }
   @keyframes about-rise { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes about-message-in { from { opacity:0; width:0; transform:translateX(-10px); } to { opacity:1; width:max-content; transform:translateX(0); } }
+  @keyframes about-store-float { 0%,100% { transform:translateY(0) rotate(0deg); } 50% { transform:translateY(-7px) rotate(.6deg); } }
+  @keyframes about-product-drift { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-4px); } }
+  @media (prefers-reduced-motion:reduce) { .about-reveal,.about-message,.about-store-window,.about-product-tile { animation:none; } }
   @media (max-width:900px) { .about-hero-grid,.about-belief,.about-vision { grid-template-columns:1fr; gap:44px; } .about-capability-grid { grid-template-columns:repeat(3,1fr); } .about-principles { grid-template-columns:repeat(2,1fr); } .about-principle:nth-child(2) { border-right:0; } .about-principle:nth-child(n+3) { border-top:1px solid rgba(255,255,255,.18); } .about-principle:nth-child(3) { padding-left:0; } }
   @media (max-width:640px) { .about-wrap { width:min(100% - 32px,1180px); } .about-hero { padding:122px 0 58px; } .about-flow { min-height:315px; padding:17px; } .about-flow-stage { min-height:252px; gap:8px; } .about-social-stack { width:90px; } .about-message { padding:8px; font-size:8px; } .about-store-window { width:205px; } .about-store-body { padding:10px; } .about-store-hero { height:54px; } .about-store-hero b { font-size:10px; } .about-product-tile { height:57px; padding:5px; } .about-product-tile div { height:29px; } .about-section { padding:64px 0; } .about-pain-grid,.about-capability-grid { grid-template-columns:repeat(2,1fr); } .about-pain { min-height:112px; padding:14px; } .about-reframe { grid-template-columns:1fr; gap:20px; margin-top:50px; } .about-capabilities-head { display:block; } .about-capabilities-head p { margin-top:18px; } .about-capability:nth-child(even) { transform:none; } .about-capability-icon { margin-bottom:22px; } .about-credibility-card:nth-child(2),.about-credibility-card:nth-child(3) { transform:none; } .about-principles { grid-template-columns:1fr; } .about-principle,.about-principle:not(:first-child) { padding:22px 0; border-right:0; border-top:1px solid rgba(255,255,255,.18); } .about-principle:first-child { border-top:0; } .about-ecosystem { grid-template-columns:repeat(2,1fr); } }
 `;

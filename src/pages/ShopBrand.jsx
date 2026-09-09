@@ -153,7 +153,7 @@ export default function ShopBrand({ customId }) {
     }
 
     fetchStoreData();
-  }, [id, slug, user?.id]);
+  }, [id, slug, user, navigate]);
 
   // Admin Product Creation Logic
   const handleImageSelect = (e) => {

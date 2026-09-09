@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
@@ -35,7 +35,7 @@ export default function SuccessPage() {
   const { user } = useAuth();
 
   // Extract navigation state
-  const rawState = location.state || {};
+  const rawState = useMemo(() => location.state || {}, [location.state]);
   const queryType = new URLSearchParams(location.search).get('type');
 
   // Determine scenario type
