@@ -19,15 +19,6 @@ export default function FinalizeActivation() {
   const selectedUsdAmount = location.state?.usdAmount !== undefined ? location.state.usdAmount : 30;
   const isFreeTrial = selectedAmount === 0 || selectedPlanId === 'free-trial';
 
-  const planEndsAt = new Date();
-  if (isFreeTrial) {
-    planEndsAt.setDate(planEndsAt.getDate() + 14);
-  } else if (location.state?.interval === 'yearly') {
-    planEndsAt.setFullYear(planEndsAt.getFullYear() + 1);
-  } else {
-    planEndsAt.setMonth(planEndsAt.getMonth() + 1);
-  }
-
   const [processing, setProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('paystack'); // 'paystack' or 'flutterwave'
@@ -36,61 +27,27 @@ export default function FinalizeActivation() {
     setProcessing(true);
     setErrorMsg('');
     try {
-      const subscriptionData = isFreeTrial
-        ? {
-            plan_id: null,
-            plan_ends_at: null,
-            trial_used: true,
-            trial_ends_at: planEndsAt.toISOString()
-          }
-        : {
-            plan_id: selectedPlanId,
-            plan_ends_at: planEndsAt.toISOString(),
-            trial_ends_at: null,
-            plan_interval: location.state?.interval || 'monthly'
-          };
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) throw new Error('Your session has expired. Please sign in again.');
 
-      // 1. Physically unlock the store gateway barrier in the Postgres DB
-      let updateResult = await supabase
-        .from('brand_profiles')
-        .upsert({ 
-          id: user?.id,
-          email_address: user?.email || '',
-          brand_name: user?.user_metadata?.brand_name || user?.user_metadata?.full_name || 'Your Brand',
-          owner_name: user?.user_metadata?.full_name || user?.user_metadata?.name || '',
-          store_active: true,
-          ...subscriptionData,
-          last_transaction_id: transaction.reference || null,
-          updated_at: new Date().toISOString() 
-        }, { onConflict: 'id' });
-        
-      // Fallback for databases where the subscription migration is not applied yet.
-      if (updateResult.error) {
-        console.warn("Primary activation update failed, attempting minimal fallback:", updateResult.error);
-        updateResult = await supabase
-          .from('brand_profiles')
-          .upsert({ 
-            id: user?.id,
-            email_address: user?.email || '',
-            brand_name: user?.user_metadata?.brand_name || user?.user_metadata?.full_name || 'Your Brand',
-            owner_name: user?.user_metadata?.full_name || user?.user_metadata?.name || '',
-            store_active: true,
-            updated_at: new Date().toISOString() 
-          }, { onConflict: 'id' });
-      }
-        
-      if (updateResult.error) throw updateResult.error;
-
-      // 2. Refresh the local Auth Session immediately
-      const { error: authError } = await supabase.auth.updateUser({
-        data: {
-          store_active: true,
-          ...subscriptionData,
-          last_transaction_id: transaction.reference || null
-        }
+      const response = await fetch('/api/payments/confirm-activation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`
+        },
+        body: JSON.stringify({
+          planId: selectedPlanId,
+          interval: location.state?.interval || 'monthly',
+          provider: paymentMethod,
+          reference: transaction.reference,
+          trial: isFreeTrial
+        })
       });
-      
-      if (authError) throw authError;
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload.ok) throw new Error(payload.error || 'Activation could not be completed.');
+
       await refreshUser?.();
 
       // 3. Complete! Navigate to Success Page
@@ -115,7 +72,7 @@ export default function FinalizeActivation() {
       
     } catch (err) {
       console.error("Critical Post-Payment DB failure:", err);
-      setErrorMsg("Payment processed but database error occurred. Reference: " + transaction.reference);
+      setErrorMsg(err.message || "Activation could not be completed. Reference: " + transaction.reference);
       setProcessing(false);
     }
   };
