@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   CreditCard, 
   ArrowLeft, 
@@ -24,8 +24,11 @@ export default function AdminPayments() {
   const [selectedTab, setSelectedTab] = useState('all');
   const [actionInProgress, setActionInProgress] = useState(null);
   const [tableNotFound, setTableNotFound] = useState(false);
+  const refreshTimerRef = useRef(null);
+  const requestRef = useRef(0);
 
   const fetchWithdrawalRequests = useCallback(async () => {
+    const requestId = ++requestRef.current;
     try {
       setLoading(true);
       setTableNotFound(false);
@@ -35,6 +38,7 @@ export default function AdminPayments() {
         .select('*')
         .order('created_at', { ascending: false });
 
+      if (requestId !== requestRef.current) return;
       if (error) {
         if (
           error.code === 'PGRST116' ||
@@ -55,9 +59,17 @@ export default function AdminPayments() {
       console.error('Error:', err);
       setTableNotFound(true);
     } finally {
-      setLoading(false);
+      if (requestId === requestRef.current) setLoading(false);
     }
   }, [toast]);
+
+  const scheduleWithdrawalRefresh = useCallback(() => {
+    if (refreshTimerRef.current) window.clearTimeout(refreshTimerRef.current);
+    refreshTimerRef.current = window.setTimeout(() => {
+      refreshTimerRef.current = null;
+      fetchWithdrawalRequests();
+    }, 400);
+  }, [fetchWithdrawalRequests]);
 
   useEffect(() => {
     fetchWithdrawalRequests();
@@ -67,13 +79,14 @@ export default function AdminPayments() {
       .channel('admin_withdrawal_requests')
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'withdrawal_requests' },
-        () => fetchWithdrawalRequests()
+        scheduleWithdrawalRefresh
       ).subscribe();
 
     return () => {
+      if (refreshTimerRef.current) window.clearTimeout(refreshTimerRef.current);
       supabase.removeChannel(channel);
     };
-  }, [fetchWithdrawalRequests]);
+  }, [fetchWithdrawalRequests, scheduleWithdrawalRefresh]);
 
   useEffect(() => {
     const fetchUnreadSupport = async () => {

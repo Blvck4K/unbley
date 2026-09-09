@@ -1030,7 +1030,7 @@ export default function Dashboard() {
                 </div>
               )}
 
-              {storeStatusCards.some(item => !item.ready) && (
+              {profileDataLoaded && completedSteps < totalSteps && storeStatusCards.some(item => !item.ready) && (
               <div className="unbley-card" style={{ padding: '18px 22px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
                   <div>

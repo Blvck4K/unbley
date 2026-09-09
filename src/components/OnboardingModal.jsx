@@ -55,6 +55,24 @@ export default function OnboardingModal({ isOpen = true, onClose, storeData = {}
     } catch (err) { console.warn('OnboardingModal live fetch:', err.message); }
   }, [user]);
 
+  const handleProfileRealtime = useCallback((payload) => {
+    if (!payload.new) return;
+    setLiveData((previous) => ({
+      ...previous,
+      ...Object.fromEntries(Object.entries(payload.new).filter(([_, value]) => value != null && value !== ''))
+    }));
+  }, []);
+
+  const handleProductRealtime = useCallback((payload) => {
+    const wasActive = payload.old?.status === 'active';
+    const isActive = payload.new?.status === 'active';
+    let delta = 0;
+    if (payload.eventType === 'INSERT' && isActive) delta = 1;
+    if (payload.eventType === 'DELETE' && wasActive) delta = -1;
+    if (payload.eventType === 'UPDATE') delta = Number(isActive) - Number(wasActive);
+    if (delta !== 0) setLiveProductCount((count) => Math.max(0, count + delta));
+  }, []);
+
   useEffect(() => {
     if (!isOpen || !user?.id) return;
     // Profile refresh updates local state from the external Supabase source.
@@ -63,15 +81,15 @@ export default function OnboardingModal({ isOpen = true, onClose, storeData = {}
     const profileCh = supabase
       .channel('onboarding_profile_' + user.id)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'brand_profiles', filter: 'id=eq.' + user.id },
-        () => { fetchLiveProfile(); if (onRefresh) onRefresh(); })
+        handleProfileRealtime)
       .subscribe();
     const productsCh = supabase
       .channel('onboarding_products_' + user.id)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'products', filter: 'brand_id=eq.' + user.id },
-        () => { fetchLiveProfile(); if (onRefresh) onRefresh(); })
+        handleProductRealtime)
       .subscribe();
     return () => { supabase.removeChannel(profileCh); supabase.removeChannel(productsCh); };
-  }, [isOpen, user?.id, fetchLiveProfile, onRefresh]);
+  }, [isOpen, user?.id, fetchLiveProfile, handleProfileRealtime, handleProductRealtime]);
 
   if (!isOpen) return null;
   const brandColor = '#6A3E1F';

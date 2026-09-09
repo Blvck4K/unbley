@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Download, Search, Store, RefreshCw, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
@@ -26,14 +26,18 @@ export default function AdminStoreOwners() {
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
   const [lastUpdated, setLastUpdated] = useState(null);
+  const refreshTimerRef = useRef(null);
+  const requestRef = useRef(0);
 
   const fetchOwners = useCallback(async () => {
+    const requestId = ++requestRef.current;
     setLoading(true);
     const { data, error } = await supabase
       .from('brand_profiles')
       .select('*')
       .order('created_at', { ascending: false });
 
+    if (requestId !== requestRef.current) return;
     if (error) {
       console.error('Could not load store owners:', error);
       toast?.error('Could not load store owners. Apply the admin read policy first.');
@@ -41,21 +45,30 @@ export default function AdminStoreOwners() {
       setOwners(data || []);
       setLastUpdated(new Date());
     }
-    setLoading(false);
+    if (requestId === requestRef.current) setLoading(false);
   }, [toast]);
+
+  const scheduleOwnersRefresh = useCallback(() => {
+    if (refreshTimerRef.current) window.clearTimeout(refreshTimerRef.current);
+    refreshTimerRef.current = window.setTimeout(() => {
+      refreshTimerRef.current = null;
+      fetchOwners();
+    }, 400);
+  }, [fetchOwners]);
 
   useEffect(() => {
     if (!isAdmin) return undefined;
     const initialFetch = window.setTimeout(() => fetchOwners(), 0);
     const channel = supabase
       .channel('admin_store_owners')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'brand_profiles' }, fetchOwners)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'brand_profiles' }, scheduleOwnersRefresh)
       .subscribe();
     return () => {
       window.clearTimeout(initialFetch);
+      if (refreshTimerRef.current) window.clearTimeout(refreshTimerRef.current);
       supabase.removeChannel(channel);
     };
-  }, [fetchOwners, isAdmin]);
+  }, [fetchOwners, isAdmin, scheduleOwnersRefresh]);
 
   const columns = useMemo(() => {
     const keys = new Set();
