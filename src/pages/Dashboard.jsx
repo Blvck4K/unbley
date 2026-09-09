@@ -294,6 +294,16 @@ export default function Dashboard() {
         ...(pData ? Object.fromEntries(Object.entries(pData).filter(([_, v]) => v != null && v !== '')) : {})
       }));
 
+      const { count: stockCount, error: stockError } = await supabase
+        .from('products')
+        .select('id', { count: 'exact', head: true })
+        .eq('brand_id', user.id)
+        .eq('status', 'active');
+      if (stockError) throw new Error(`Could not load product totals: ${stockError.message}`);
+
+      if (!isMountedRef.current || requestId !== dashboardRequestRef.current) return;
+      setMetrics(currentMetrics => ({ ...currentMetrics, activeStock: stockCount || 0 }));
+
       const { data: salesData, error: salesError } = await supabase
         .from('orders')
         .select('total_amount')
@@ -330,19 +340,11 @@ export default function Dashboard() {
       });
       const maxWeeklyTotal = Math.max(...weeklyTotals.map(item => item.total), 0);
 
-      const { count: stockCount, error: stockError } = await supabase
-        .from('products')
-        .select('*', { count: 'exact', head: true })
-        .eq('brand_id', user.id)
-        .in('status', [...REVENUE_STATUSES, 'cancelled'])
-        .eq('status', 'active');
-      if (stockError) throw new Error(`Could not load product totals: ${stockError.message}`);
-
       const { count: trafficCount, error: trafficError } = await supabase
         .from('store_traffic')
         .select('*', { count: 'exact', head: true })
         .eq('brand_id', user.id);
-      if (trafficError) throw new Error(`Could not load traffic totals: ${trafficError.message}`);
+      if (trafficError) console.warn('Could not load traffic totals:', trafficError.message);
 
       const { data: lastOrders, error: recentOrdersError } = await supabase
         .from('orders')

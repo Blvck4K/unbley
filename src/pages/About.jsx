@@ -3,476 +3,143 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import PageTransition from '../components/PageTransition';
 import SEO from '../components/SEO';
-import { Rocket, Target, Globe, PhoneOff, CheckCircle2, ShoppingBag, CreditCard, LayoutDashboard, Store, ArrowRight, ShieldCheck, Zap } from 'lucide-react';
+import {
+  ArrowRight, BarChart3, Check, ChevronRight, CreditCard, Globe2,
+  Inbox, Layers3, Package, Search, ShoppingBag, Store, Truck, Users
+} from 'lucide-react';
 
 const aboutStyles = `
-  .about-hero {
-    padding: 180px 0 100px;
-    background-color: var(--bg-surface);
-    background-image:
-      radial-gradient(at 0% 0%, rgba(247, 242, 236, 0.9) 0, transparent 55%),
-      radial-gradient(at 100% 0%, rgba(234, 227, 217, 0.6) 0, transparent 55%);
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-  }
-  .about-hero::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-    opacity: 0.02;
-    pointer-events: none;
-  }
-  .about-hero-title {
-    font-family: var(--font-heading);
-    font-size: clamp(40px, 6vw, 64px);
-    font-weight: 800;
-    letter-spacing: -0.03em;
-    color: var(--text-primary);
-    margin-bottom: 24px;
-    line-height: 1.1;
-  }
-  .about-hero-subtitle {
-    font-size: 20px;
-    color: var(--text-secondary);
-    max-width: 700px;
-    margin: 0 auto;
-    line-height: 1.6;
-  }
-  .about-section {
-    padding: 100px 0;
-  }
-  .about-section-alt {
-    padding: 100px 0;
-    background-color: var(--bg-light);
-  }
-  .section-label {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--accent);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    margin-bottom: 12px;
-    display: inline-block;
-  }
-  .section-title {
-    font-family: var(--font-heading);
-    font-size: clamp(32px, 4vw, 48px);
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    margin-bottom: 24px;
-    color: var(--text-primary);
-  }
-  .section-body {
-    font-size: 18px;
-    color: var(--text-secondary);
-    line-height: 1.7;
-    margin-bottom: 24px;
-  }
-  .grid-2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 64px;
-    align-items: center;
-  }
-  .card-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 32px;
-    margin-top: 48px;
-  }
-  .feature-box {
-    background: var(--bg-white);
-    border: 1px solid var(--border-color);
-    padding: 32px;
-    border-radius: var(--radius-xl);
-    transition: var(--transition);
-  }
-  .feature-box:hover {
-    transform: translateY(-5px);
-    box-shadow: var(--shadow-lg);
-    border-color: rgba(106, 62, 31, 0.25);
-  }
-  .feature-icon-wrapper {
-    width: 56px;
-    height: 56px;
-    background: var(--accent-soft);
-    color: var(--accent);
-    border-radius: var(--radius-lg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 24px;
-  }
-  .feature-box h4 {
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-bottom: 12px;
-  }
-  .feature-box p {
-    color: var(--text-secondary);
-    line-height: 1.5;
-  }
-  .why-list {
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-  }
-  .why-item {
-    display: flex;
-    gap: 20px;
-    align-items: flex-start;
-  }
-  .why-icon {
-    color: #6A3E1F;
-    flex-shrink: 0;
-    background: #F7F2EC;
-    padding: 8px;
-    border-radius: 50%;
-  }
-  .why-content h4 {
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-bottom: 8px;
-  }
-  .why-content p {
-    color: var(--text-secondary);
-    line-height: 1.6;
-  }
-  .vision-box {
-    background: linear-gradient(135deg, #261710, #3D291E);
-    color: #FDFBF7;
-    padding: 80px 64px;
-    border-radius: var(--radius-2xl);
-    margin-bottom: 64px;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 12px 36px rgba(38, 23, 16, 0.15);
-  }
-  .vision-box::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    width: 50%;
-    background: radial-gradient(circle at top right, rgba(141, 91, 54, 0.25), transparent 70%);
-  }
-  .vision-box .section-title {
-    color: #FDFBF7;
-  }
-  .vision-box .section-body {
-    color: #C9BFB5;
-  }
-  .audience-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-    margin-top: 40px;
-  }
-  .audience-tag {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    padding: 12px 24px;
-    border-radius: 100px;
-    font-size: 15px;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: #FDFBF7;
-    backdrop-filter: blur(10px);
-  }
-  .cta-banner {
-    background: #F7F2EC;
-    border: 1px solid #DFCFC2;
-    text-align: center;
-    padding: 80px 24px;
-    border-radius: var(--radius-2xl);
-    margin: 100px auto;
-    max-width: 900px;
-    box-shadow: 0 4px 20px rgba(34, 21, 16, 0.04);
-  }
-  .cta-banner h2 {
-    font-family: var(--font-heading);
-    font-size: clamp(32px, 4vw, 42px);
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    color: var(--text-primary);
-    margin-bottom: 16px;
-  }
-  .cta-banner p {
-    font-size: 18px;
-    color: var(--text-secondary);
-    margin-bottom: 32px;
-  }
-  .cta-button {
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
-    background: var(--primary);
-    color: white;
-    padding: 18px 40px;
-    border-radius: var(--radius-lg);
-    font-weight: 600;
-    font-size: 16px;
-    transition: var(--transition);
-    border: none;
-    cursor: pointer;
-    text-decoration: none;
-    box-shadow: 0 4px 14px rgba(106, 62, 31, 0.25);
-  }
-  .cta-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 20px -10px rgba(106, 62, 31, 0.4);
-    background: var(--primary-hover);
-  }
-  @media (max-width: 768px) {
-    .grid-2 {
-      grid-template-columns: 1fr;
-      gap: 48px;
-    }
-    .vision-box {
-      padding: 40px 24px;
-    }
-    .about-hero {
-      padding: 140px 0 60px;
-    }
-  }
+  .about-page { --about-ink:#221510; --about-muted:#6B584C; --about-line:#EAE3D9; --about-paper:#FBF9F5; --about-wash:#F4EEE7; background:var(--about-paper); color:var(--about-ink); overflow:hidden; }
+  .about-wrap { width:min(1180px,calc(100% - 48px)); margin:0 auto; }
+  .about-hero { padding:148px 0 84px; background:var(--about-paper); }
+  .about-hero-grid { display:grid; grid-template-columns:minmax(0,.95fr) minmax(420px,1.05fr); gap:74px; align-items:center; }
+  .about-kicker,.about-label { color:#8D5B36; font-size:11px; font-weight:800; letter-spacing:.16em; text-transform:uppercase; }
+  .about-kicker { display:inline-flex; align-items:center; gap:9px; margin-bottom:22px; }
+  .about-kicker::before { content:''; width:26px; height:1px; background:#8D5B36; }
+  .about-hero h1 { max-width:680px; margin:0 0 24px; font-size:clamp(42px,6vw,76px); line-height:.98; letter-spacing:-.055em; }
+  .about-lead { max-width:590px; margin:0; color:var(--about-muted); font-size:18px; line-height:1.65; }
+  .about-hero-note { display:flex; align-items:center; gap:10px; margin-top:30px; color:#8D5B36; font-size:12px; font-weight:700; }
+  .about-hero-note span { width:7px; height:7px; background:#3E8B68; border-radius:50%; box-shadow:0 0 0 5px rgba(62,139,104,.12); }
+  .about-flow { min-height:390px; padding:28px; border:1px solid var(--about-line); border-radius:26px; background:#F2ECE4; position:relative; }
+  .about-flow::after { content:''; position:absolute; inset:14px; border:1px dashed rgba(141,91,54,.25); border-radius:18px; pointer-events:none; }
+  .about-flow-label { position:relative; z-index:1; display:flex; justify-content:space-between; color:#8D5B36; font-size:10px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
+  .about-flow-stage { min-height:315px; display:flex; align-items:center; justify-content:center; gap:18px; position:relative; z-index:1; }
+  .about-social-stack { width:126px; display:grid; gap:9px; transform:rotate(-5deg); }
+  .about-message { padding:11px 12px; border:1px solid rgba(141,91,54,.18); border-radius:9px; background:rgba(255,255,255,.7); box-shadow:0 8px 16px rgba(34,21,16,.05); color:#6B584C; font-size:10px; font-weight:700; }
+  .about-message:nth-child(2) { margin-left:14px; background:#FFF8E8; }
+  .about-message:nth-child(3) { margin-left:-6px; background:#F5EAE6; }
+  .about-flow-arrow { color:#B98D5B; }
+  .about-store-window { width:min(100%,285px); overflow:hidden; border:1px solid #DCCFC2; border-radius:14px; background:#FFF; box-shadow:0 18px 30px rgba(34,21,16,.13); }
+  .about-store-top { display:flex; align-items:center; justify-content:space-between; padding:10px 13px; border-bottom:1px solid #F0E8DF; font-size:9px; font-weight:800; }
+  .about-store-brand { display:flex; align-items:center; gap:5px; color:#6A3E1F; }
+  .about-store-brand i { display:block; width:13px; height:13px; border-radius:4px; background:#6A3E1F; }
+  .about-store-top small { color:#A48B79; }
+  .about-store-body { padding:15px; }
+  .about-store-hero { height:66px; padding:12px; border-radius:8px; background:#3B2920; color:#FFF8F0; }
+  .about-store-hero b { display:block; max-width:110px; font-size:13px; line-height:1.05; }
+  .about-store-hero span { display:block; margin-top:7px; color:#DCCFC2; font-size:7px; }
+  .about-store-products { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; margin-top:10px; }
+  .about-product-tile { height:74px; padding:7px; border-radius:7px; background:#F2ECE4; }
+  .about-product-tile div { height:41px; border-radius:5px; background:#D6B69A; }
+  .about-product-tile:nth-child(2) div { background:#B4C2B2; }
+  .about-product-tile:nth-child(3) div { background:#C8A4A0; }
+  .about-product-tile span { display:block; margin-top:5px; color:#6B584C; font-size:7px; }
+  .about-section { padding:92px 0; }
+  .about-section.wash { background:var(--about-wash); }
+  .about-section.dark { background:#2B1B13; color:#FFF9F3; }
+  .about-section h2 { max-width:700px; margin:12px 0 20px; font-size:clamp(34px,4.4vw,58px); line-height:1.02; letter-spacing:-.045em; }
+  .about-section p { color:var(--about-muted); font-size:16px; line-height:1.7; }
+  .about-section.dark p { color:#D7C9BD; }
+  .about-problem-head { max-width:650px; }
+  .about-problem-head p { max-width:600px; }
+  .about-pain-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:46px; }
+  .about-pain { min-height:132px; padding:20px; border:1px solid var(--about-line); border-radius:12px; background:rgba(255,255,255,.54); display:flex; flex-direction:column; justify-content:space-between; }
+  .about-pain strong { font-size:17px; letter-spacing:-.02em; }
+  .about-pain span { color:#A48B79; font-size:11px; }
+  .about-pain mark { width:fit-content; padding:3px 6px; background:#F2DFD5; color:#995B42; font-size:10px; font-weight:800; }
+  .about-reframe { display:grid; grid-template-columns:1fr 1.2fr; gap:70px; align-items:center; margin-top:78px; padding-top:42px; border-top:1px solid var(--about-line); }
+  .about-reframe h3 { margin:0; font-size:28px; line-height:1.1; }
+  .about-reframe p { margin:0; }
+  .about-capabilities-head { display:flex; align-items:end; justify-content:space-between; gap:32px; }
+  .about-capabilities-head p { max-width:420px; margin-bottom:4px; }
+  .about-capability-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-top:48px; }
+  .about-capability { min-height:214px; padding:20px 16px; border:1px solid var(--about-line); border-radius:12px; background:#FFFDFC; }
+  .about-capability:nth-child(even) { transform:translateY(18px); background:#F8F1E9; }
+  .about-capability-icon { display:grid; place-items:center; width:38px; height:38px; margin-bottom:34px; border-radius:10px; background:#F1E5D9; color:#6A3E1F; }
+  .about-capability h3 { margin:0 0 8px; font-size:16px; }
+  .about-capability p { font-size:12px; line-height:1.5; }
+  .about-belief { display:grid; grid-template-columns:.9fr 1.1fr; gap:90px; align-items:center; }
+  .about-belief h2 { margin-bottom:24px; }
+  .about-belief-copy { max-width:520px; }
+  .about-credibility { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+  .about-credibility-card { min-height:130px; padding:20px; border:1px solid var(--about-line); border-radius:12px; background:#FFFDFC; }
+  .about-credibility-card:nth-child(2) { transform:translateY(20px); }
+  .about-credibility-card:nth-child(3) { transform:translateY(-12px); }
+  .about-credibility-card svg { color:#8D5B36; margin-bottom:24px; }
+  .about-credibility-card strong { display:block; font-size:14px; }
+  .about-credibility-card span { display:block; margin-top:5px; color:var(--about-muted); font-size:11px; }
+  .about-principles { display:grid; grid-template-columns:repeat(4,1fr); gap:0; margin-top:52px; border-top:1px solid rgba(255,255,255,.18); }
+  .about-principle { padding:26px 22px 10px 0; border-right:1px solid rgba(255,255,255,.18); }
+  .about-principle:not(:first-child) { padding-left:22px; }
+  .about-principle:last-child { border-right:0; }
+  .about-principle b { color:#D2A77B; font-size:12px; }
+  .about-principle h3 { margin:38px 0 10px; color:#FFF9F3; font-size:17px; }
+  .about-principle p { font-size:13px; line-height:1.55; }
+  .about-vision { display:grid; grid-template-columns:.95fr 1.05fr; gap:80px; align-items:center; }
+  .about-vision h2 { color:#FFF9F3; }
+  .about-built { display:inline-block; margin-top:26px; color:#D2A77B; font-size:14px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+  .about-ecosystem { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; padding:18px; border:1px solid rgba(255,255,255,.18); border-radius:20px; background:rgba(255,255,255,.04); }
+  .about-ecosystem-item { min-height:92px; padding:13px; border:1px solid rgba(255,255,255,.12); border-radius:10px; background:rgba(255,255,255,.06); }
+  .about-ecosystem-item svg { color:#D2A77B; }
+  .about-ecosystem-item span { display:block; margin-top:22px; color:#FFF9F3; font-size:12px; font-weight:700; }
+  .about-cta { padding:88px 0 100px; text-align:center; }
+  .about-cta h2 { margin:12px auto 16px; }
+  .about-cta p { max-width:470px; margin:0 auto 28px; }
+  .about-cta a { display:inline-flex; align-items:center; gap:10px; padding:14px 22px; border-radius:9px; background:#6A3E1F; color:#FFF; font-size:14px; font-weight:800; box-shadow:0 10px 20px rgba(106,62,31,.18); transition:transform .2s ease,background .2s ease; }
+  .about-cta a:hover { background:#522F16; transform:translateY(-2px); }
+  .about-cta small { display:block; margin-top:17px; color:#8D5B36; font-size:11px; font-weight:700; }
+  .about-reveal { animation:about-rise .65s ease both; }
+  @keyframes about-rise { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+  @media (max-width:900px) { .about-hero-grid,.about-belief,.about-vision { grid-template-columns:1fr; gap:44px; } .about-capability-grid { grid-template-columns:repeat(3,1fr); } .about-principles { grid-template-columns:repeat(2,1fr); } .about-principle:nth-child(2) { border-right:0; } .about-principle:nth-child(n+3) { border-top:1px solid rgba(255,255,255,.18); } .about-principle:nth-child(3) { padding-left:0; } }
+  @media (max-width:640px) { .about-wrap { width:min(100% - 32px,1180px); } .about-hero { padding:122px 0 58px; } .about-flow { min-height:315px; padding:17px; } .about-flow-stage { min-height:252px; gap:8px; } .about-social-stack { width:90px; } .about-message { padding:8px; font-size:8px; } .about-store-window { width:205px; } .about-store-body { padding:10px; } .about-store-hero { height:54px; } .about-store-hero b { font-size:10px; } .about-product-tile { height:57px; padding:5px; } .about-product-tile div { height:29px; } .about-section { padding:64px 0; } .about-pain-grid,.about-capability-grid { grid-template-columns:repeat(2,1fr); } .about-pain { min-height:112px; padding:14px; } .about-reframe { grid-template-columns:1fr; gap:20px; margin-top:50px; } .about-capabilities-head { display:block; } .about-capabilities-head p { margin-top:18px; } .about-capability:nth-child(even) { transform:none; } .about-capability-icon { margin-bottom:22px; } .about-credibility-card:nth-child(2),.about-credibility-card:nth-child(3) { transform:none; } .about-principles { grid-template-columns:1fr; } .about-principle,.about-principle:not(:first-child) { padding:22px 0; border-right:0; border-top:1px solid rgba(255,255,255,.18); } .about-principle:first-child { border-top:0; } .about-ecosystem { grid-template-columns:repeat(2,1fr); } }
 `;
+
+const capabilityItems = [
+  { icon: Store, title: 'Store', text: 'A storefront your business can call its own.' },
+  { icon: Package, title: 'Products', text: 'A clear place for customers to browse what you sell.' },
+  { icon: CreditCard, title: 'Payments', text: 'A simpler path from product interest to payment.' },
+  { icon: Inbox, title: 'Orders', text: 'One view for what was bought and what happens next.' },
+  { icon: Users, title: 'Customers', text: 'A better buying experience built around real people.' }
+];
+
+const principleItems = [
+  ['01', 'Own your brand', "Your business shouldn't be hidden behind a marketplace or social media profile."],
+  ['02', 'Make buying easy', 'Customers should discover, order and pay without unnecessary back-and-forth.'],
+  ['03', 'Build trust', 'A professional online store creates a stronger digital presence for your business.'],
+  ['04', 'Grow without the headache', 'Unbley handles the infrastructure so you can focus on products and customers.']
+];
+
+const ecosystemItems = [
+  [Store, 'Stores'], [CreditCard, 'Payments'], [ShoppingBag, 'Orders'],
+  [Users, 'Customers'], [Truck, 'Logistics'], [BarChart3, 'Intelligence']
+];
 
 export default function About() {
   return (
     <>
-      <SEO 
-        title="About Us | Unbley"
-        description="Unbley is a modern e-commerce solution built for brands that want to own their identity, build trust, and sell smarter online."
-      />
+      <SEO title="About Us | Unbley" description="Unbley helps businesses build professional online stores, accept payments, manage orders, and sell with confidence." />
       <Navbar />
       <PageTransition>
         <style dangerouslySetInnerHTML={{ __html: aboutStyles }} />
-        
-        <main>
-          {/* Hero Section */}
-          <section className="about-hero">
-            <div className="container">
-              <div className="hero-badge mx-auto" style={{ margin: '0 auto 24px', display: 'inline-flex' }}>
-                <span role="img" aria-label="rocket">🚀</span> About Unbley
-              </div>
-              <h1 className="about-hero-title">
-                Who We Are
-              </h1>
-              <p className="about-hero-subtitle">
-                Unbley is a modern e-commerce solution built for brands that want to own their identity, build trust, and sell smarter online.
-              </p>
-            </div>
-          </section>
-
-          {/* Intro / Who We Are */}
-          <section className="about-section">
-            <div className="container">
-              <div className="grid-2">
-                <div>
-                  <span className="section-label">Our Identity</span>
-                  <h2 className="section-title">Beyond Basic Social Media Selling</h2>
-                  <p className="section-body">
-                    We help businesses move beyond basic social media selling by giving them something more powerful — a fully functional online store + a custom domain (like <em className="font-normal" style={{color: 'var(--text-primary)', fontWeight: '600'}}>yourbrand.store</em>).
-                  </p>
-                  <p className="section-body">
-                    No confusion. No stress. Just a clean, professional store that actually converts visitors into customers.
-                  </p>
-                </div>
-                <div style={{ position: 'relative' }}>
-                   {/* Aesthetic Mockup abstract replacement for visual */}
-                   <div style={{ background: 'var(--bg-light)', borderRadius: 'var(--radius-2xl)', border: '1px solid var(--border-color)', padding: '40px', position: 'relative' }}>
-                    <div style={{ position: 'absolute', top: -20, right: -20, width: 100, height: 100, background: 'var(--accent-soft)', borderRadius: '50%', zIndex: 0 }} />
-                    <div style={{ position: 'relative', zIndex: 1, background: 'white', padding: '32px', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-md)' }}>
-                      <Store size={48} color="var(--accent)" style={{ marginBottom: 16 }} />
-                      <h3 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '8px' }}>Your Online Store</h3>
-                      <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>Professional, fast, and secure checkout experiences for your customers.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Mission */}
-          <section className="about-section-alt">
-            <div className="container">
-              <div className="grid-2" style={{ direction: 'rtl' }}>
-                <div style={{ direction: 'ltr' }}>
-                  <span className="section-label">Our Mission</span>
-                  <h2 className="section-title">Affordable & Accessible</h2>
-                  <p className="section-body">
-                    Our mission is simple: <strong>To make owning a professional online store affordable and accessible for every brand in Nigeria and beyond.</strong>
-                  </p>
-                  <p className="section-body" style={{ marginBottom: '16px' }}>Too many brands lose customers because:</p>
-                  <ul style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px' }}>
-                     <li style={{ display: 'flex', alignItems: 'center', gap: '12px', color: 'var(--text-secondary)' }}>
-                       <PhoneOff size={20} color="#ef4444" /> Their website isn't working
-                     </li>
-                     <li style={{ display: 'flex', alignItems: 'center', gap: '12px', color: 'var(--text-secondary)' }}>
-                       <ShieldCheck size={20} color="#ef4444" /> They use untrusted links
-                     </li>
-                     <li style={{ display: 'flex', alignItems: 'center', gap: '12px', color: 'var(--text-secondary)' }}>
-                       <Globe size={20} color="#ef4444" /> They rely only on Instagram or WhatsApp
-                     </li>
-                  </ul>
-                  <p className="section-body" style={{ fontWeight: '600', color: 'var(--text-primary)' }}>
-                    We're here to fix that.
-                  </p>
-                </div>
-                <div style={{ direction: 'ltr', paddingRight: '48px' }}>
-                  <div style={{ aspectRatio: '1/1', background: 'var(--bg-white)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)', position: 'relative' }}>
-                     <Target size={80} color="var(--accent)" opacity={0.2} style={{ position: 'absolute' }} />
-                     <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '30px', fontWeight: '800', letterSpacing: '-0.02em', zIndex: 1, textAlign: 'center' }}>Building<br />Trust</h3>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* What We Do */}
-          <section className="about-section">
-            <div className="container">
-              <div className="text-center mx-auto" style={{ maxWidth: '700px', marginBottom: '64px' }}>
-                <span className="section-label">What We Do</span>
-                <h2 className="section-title text-center">Complete Selling Systems</h2>
-                <p className="section-body">
-                  At Unbley, we don't just "build websites" — we create complete selling systems. Everything is designed to help your brand look legit, premium, and trustworthy.
-                </p>
-              </div>
-
-              <div className="card-grid">
-                <div className="feature-box">
-                  <div className="feature-icon-wrapper">
-                    <Globe size={28} />
-                  </div>
-                  <h4>Custom Domain</h4>
-                  <p>Get your own professional web address (yourbrand.store) that builds instant trust.</p>
-                </div>
-                <div className="feature-box">
-                  <div className="feature-icon-wrapper">
-                    <LayoutDashboard size={28} />
-                  </div>
-                  <h4>Modern Online Store</h4>
-                  <p>A clean, beautifully designed storefront that turns your visitors into paying customers.</p>
-                </div>
-                <div className="feature-box">
-                  <div className="feature-icon-wrapper">
-                    <CreditCard size={28} />
-                  </div>
-                  <h4>Payment Integration</h4>
-                  <p>Built-in payment links and Paystack-ready solutions to collect money seamlessly.</p>
-                </div>
-                <div className="feature-box">
-                  <div className="feature-icon-wrapper">
-                    <ShoppingBag size={28} />
-                  </div>
-                  <h4>Order Management</h4>
-                  <p>Easily track, manage, and fulfill all your store orders from one simplified dashboard.</p>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Why Unbley */}
-          <section className="about-section-alt">
-            <div className="container">
-              <div className="grid-2">
-                <div>
-                  <span className="section-label">Why Choose Us</span>
-                  <h2 className="section-title">Built Differently.<br />And It Shows.</h2>
-                  <p className="section-body">
-                    We understand the challenges of running a business in Africa. That's why we tailored every feature specifically for your success.
-                  </p>
-                </div>
-                <div>
-                  <div className="why-list">
-                    <div className="why-item">
-                      <div className="why-icon"><CheckCircle2 size={24} /></div>
-                      <div className="why-content">
-                        <h4>Affordable</h4>
-                        <p>We offer a pricing model designed for real brands — not overpriced foreign platforms.</p>
-                      </div>
-                    </div>
-                    <div className="why-item">
-                      <div className="why-icon"><CheckCircle2 size={24} /></div>
-                      <div className="why-content">
-                        <h4>Simple</h4>
-                        <p>No complicated setup. No tech stress. We handle everything.</p>
-                      </div>
-                    </div>
-                    <div className="why-item">
-                      <div className="why-icon"><CheckCircle2 size={24} /></div>
-                      <div className="why-content">
-                        <h4>Professional</h4>
-                        <p>Your store looks like a real business — not a trial link or unfinished page.</p>
-                      </div>
-                    </div>
-                    <div className="why-item">
-                      <div className="why-icon"><CheckCircle2 size={24} /></div>
-                      <div className="why-content">
-                        <h4>Built for Nigeria 🇳🇬</h4>
-                        <p>We understand how Nigerian brands operate: Payment systems, delivery challenges, and customer behavior. Unbley is built with all of that in mind.</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Vision & Audience */}
-          <section className="about-section">
-            <div className="container">
-              <div className="vision-box">
-                <div style={{ position: 'relative', zIndex: 1, maxWidth: '800px' }}>
-                  <span className="section-label" style={{ color: 'rgba(255,255,255,0.7)' }}>Our Vision</span>
-                  <h2 className="section-title">Empowering Across Africa</h2>
-                  <p className="section-body">
-                    We are building more than just a service. We are building a future where every brand owns its platform, every business looks trustworthy online, and selling online becomes easy and scalable.
-                  </p>
-                  <p className="section-body" style={{ color: 'white', fontWeight: 'bold' }}>
-                    Unbley aims to become the go-to platform for brand owners across Africa.
-                  </p>
-
-                  <div className="audience-tags">
-                    <span className="audience-tag">👕 Fashion Brands</span>
-                    <span className="audience-tag">👖 Clothing Stores</span>
-                    <span className="audience-tag">👟 Sneaker Sellers</span>
-                    <span className="audience-tag">🛍️ Small Businesses</span>
-                    <span className="audience-tag">💼 Personal Brands</span>
-                  </div>
-                  
-                  <p style={{ marginTop: '32px', fontSize: '18px', color: 'rgba(255,255,255,0.8)' }}>
-                    Whether you're just starting or already selling — we help you level up.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Call to Action */}
-          <div className="container">
-            <div className="cta-banner">
-              <h2>Let's Build Your Store</h2>
-              <p>Your brand deserves more than just a social media page. It deserves a real online store.</p>
-              <a href="/create-online-store" className="cta-button">
-                Get Your Store Today <ArrowRight size={20} />
-              </a>
-              <p style={{ marginTop: '20px', fontSize: '14px', marginBottom: 0 }}>
-                Own Your Domain. Sell Like a Brand.
-              </p>
-            </div>
-          </div>
-
+        <main className="about-page">
+          <section className="about-hero"><div className="about-wrap about-hero-grid"><div className="about-reveal"><span className="about-kicker">About Unbley</span><h1>Your business deserves more than a social media page.</h1><p className="about-lead">Unbley gives businesses the tools to build a real online store, accept payments, manage orders, and give customers a better buying experience - without unnecessary complexity.</p><div className="about-hero-note"><span /> Built for the next stage of your business</div></div><div className="about-flow about-reveal" style={{ animationDelay: '.1s' }} aria-label="A visual transition from social selling to an online store"><div className="about-flow-label"><span>From scattered selling</span><span>To one clear system</span></div><div className="about-flow-stage"><div className="about-social-stack"><div className="about-message">How much?</div><div className="about-message">What's your account number?</div><div className="about-message">Can I see your products?</div></div><ArrowRight className="about-flow-arrow" size={22} /><div className="about-store-window"><div className="about-store-top"><span className="about-store-brand"><i /> ZIZZY STORE</span><small><Search size={10} /></small></div><div className="about-store-body"><div className="about-store-hero"><b>Everyday pieces, made yours.</b><span>SHOP THE COLLECTION</span></div><div className="about-store-products"><div className="about-product-tile"><div /><span>Essential tee</span></div><div className="about-product-tile"><div /><span>Canvas tote</span></div><div className="about-product-tile"><div /><span>New season</span></div></div></div></div></div></div></div></section>
+          <section className="about-section wash"><div className="about-wrap"><div className="about-problem-head"><span className="about-label">The problem</span><h2>Selling online shouldn't feel this complicated.</h2><p>Too many businesses are running a serious operation through a trail of DMs, transfers, screenshots, spreadsheets, and questions that should have one clear answer.</p></div><div className="about-pain-grid"><div className="about-pain"><mark>DM</mark><strong>How much?</strong><span>Every product becomes a conversation.</span></div><div className="about-pain"><mark>TRANSFER</mark><strong>What's your account number?</strong><span>Payment details get buried in chat.</span></div><div className="about-pain"><mark>FOLLOW UP</mark><strong>Has my order been sent?</strong><span>Updates depend on memory and manual replies.</span></div><div className="about-pain"><mark>DISCOVERY</mark><strong>Can I see your products?</strong><span>Your catalogue is scattered across posts.</span></div></div><div className="about-reframe"><h3>Unbley brings the selling experience together.</h3><p>Your products, payments, orders, and customer experience belong in one dependable place. Not because social media is bad - because your business is ready for more structure behind it.</p></div></div></section>
+          <section className="about-section"><div className="about-wrap"><div className="about-capabilities-head"><div><span className="about-label">What Unbley does</span><h2>One place to run your online store.</h2></div><p>Unbley turns the important parts of selling online into a system that feels clear from the first product to the next order.</p></div><div className="about-capability-grid">{capabilityItems.map(({ icon, title, text }) => <article className="about-capability" key={title}><div className="about-capability-icon">{React.createElement(icon, { size: 19 })}</div><h3>{title}</h3><p>{text}</p></article>)}</div></div></section>
+          <section className="about-section wash"><div className="about-wrap about-belief"><div className="about-belief-copy"><span className="about-label">Why we built Unbley</span><h2>We believe African businesses deserve better.</h2><p>Talented business owners are already building serious brands through social media. But a serious business needs infrastructure behind it: a professional storefront, online payments, order management, a better customer experience, and the credibility to match the work.</p><p style={{ marginTop: 18 }}>Unbley is being built to make that next step feel possible.</p></div><div className="about-credibility"><div className="about-credibility-card"><Globe2 size={19} /><strong>Professional storefront</strong><span>A home for your brand beyond the feed.</span></div><div className="about-credibility-card"><CreditCard size={19} /><strong>Online payments</strong><span>A clearer way for customers to complete a purchase.</span></div><div className="about-credibility-card"><Layers3 size={19} /><strong>Order management</strong><span>Less chasing. More visibility into what happens next.</span></div><div className="about-credibility-card"><Check size={19} /><strong>Business credibility</strong><span>Give the quality of your work a proper digital home.</span></div></div></div></section>
+          <section className="about-section dark"><div className="about-wrap"><span className="about-label" style={{ color: '#D2A77B' }}>The Unbley philosophy</span><h2 style={{ color: '#FFF9F3' }}>Simple enough to start. Powerful enough to grow.</h2><div className="about-principles">{principleItems.map(([number, title, text]) => <article className="about-principle" key={number}><b>{number}</b><h3>{title}</h3><p>{text}</p></article>)}</div></div></section>
+          <section className="about-section dark" style={{ paddingTop: 0 }}><div className="about-wrap about-vision"><div><span className="about-label" style={{ color: '#D2A77B' }}>The vision</span><h2>We're building the infrastructure behind Africa's next generation of businesses.</h2><p>Unbley starts by helping businesses get online and sell professionally. Over time, the opportunity is bigger: connecting stores, payments, orders, customers, logistics, and intelligence into infrastructure businesses can grow with.</p><span className="about-built">Built in Nigeria. Designed for Africa.</span></div><div className="about-ecosystem">{ecosystemItems.map(([icon, label]) => <div className="about-ecosystem-item" key={label}>{React.createElement(icon, { size: 18 })}<span>{label}</span></div>)}</div></div></section>
+          <section className="about-cta"><div className="about-wrap"><span className="about-label">Start with what you sell</span><h2>Your business is ready for more.</h2><p>Turn your brand into a business customers can buy from, trust and come back to.</p><a href="/create-online-store">Get Started <ArrowRight size={17} /></a><small>Own your store. Sell with confidence.</small></div></section>
         </main>
-        
         <Footer />
       </PageTransition>
     </>
