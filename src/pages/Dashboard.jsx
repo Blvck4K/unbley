@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Share2, 
@@ -99,6 +99,11 @@ export default function Dashboard() {
   const [withdrawalLoading, setWithdrawalLoading] = useState(false);
   const [withdrawalError, setWithdrawalError] = useState(null);
   const [availableBalance, setAvailableBalance] = useState(0);
+  const isMountedRef = useRef(true);
+  const dashboardRequestRef = useRef(0);
+  const productsRequestRef = useRef(0);
+  const ordersRequestRef = useRef(0);
+  const dashboardRefreshTimerRef = useRef(null);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(Date.now()), 60000);
@@ -106,6 +111,17 @@ export default function Dashboard() {
   }, []);
 
   const currentTab = new URLSearchParams(location.search).get('tab') || 'overview';
+
+  const currentTabRef = useRef(currentTab);
+
+  useEffect(() => {
+    currentTabRef.current = currentTab;
+  }, [currentTab]);
+
+  useEffect(() => () => {
+    isMountedRef.current = false;
+    if (dashboardRefreshTimerRef.current) clearTimeout(dashboardRefreshTimerRef.current);
+  }, []);
 
   // Onboarding completion logic (mirrors OnboardingModal)
   const isWalletDone = Boolean(
@@ -215,6 +231,7 @@ export default function Dashboard() {
   // Data fetch
   const fetchDashboardData = useCallback(async () => {
     if (!user) return;
+    const requestId = ++dashboardRequestRef.current;
 
     const fallbackProfile = {
       brand_name: user?.user_metadata?.brand_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Your Brand',
@@ -239,6 +256,8 @@ export default function Dashboard() {
         .select('*')
         .eq('id', user.id)
         .maybeSingle();
+
+      if (!isMountedRef.current || requestId !== dashboardRequestRef.current) return;
 
       setProfileDataLoaded(true);
 
@@ -298,6 +317,8 @@ export default function Dashboard() {
         .order('created_at', { ascending: false })
         .limit(5);
 
+      if (!isMountedRef.current || requestId !== dashboardRequestRef.current) return;
+
       setMetrics({
         totalSales: calcSales,
         activeStock: stockCount || 0,
@@ -317,6 +338,7 @@ export default function Dashboard() {
 
   const fetchProducts = useCallback(async () => {
     if (!user) return;
+    const requestId = ++productsRequestRef.current;
     setProductsLoading(true);
     try {
       const { data, error } = await supabase
@@ -325,16 +347,18 @@ export default function Dashboard() {
         .eq('brand_id', user.id)
         .order('created_at', { ascending: false });
       if (error) throw error;
+      if (!isMountedRef.current || requestId !== productsRequestRef.current) return;
       setProducts(data || []);
     } catch (err) {
       console.error('Error fetching products:', err);
     } finally {
-      setProductsLoading(false);
+      if (isMountedRef.current && requestId === productsRequestRef.current) setProductsLoading(false);
     }
   }, [user]);
 
   const fetchAllOrders = useCallback(async () => {
     if (!user) return;
+    const requestId = ++ordersRequestRef.current;
     setOrdersLoading(true);
     try {
       const { data, error } = await supabase
@@ -344,14 +368,76 @@ export default function Dashboard() {
         .in('status', ['paid', 'completed', 'processing', 'shipped', 'delivered', 'cancelled'])
         .order('created_at', { ascending: false });
       if (error) throw error;
+      if (!isMountedRef.current || requestId !== ordersRequestRef.current) return;
       setAllOrders(data || []);
     } catch (err) {
       console.error('Error fetching orders:', err);
       toast?.error('Could not load orders');
     } finally {
-      setOrdersLoading(false);
+      if (isMountedRef.current && requestId === ordersRequestRef.current) setOrdersLoading(false);
     }
   }, [user, toast]);
+
+  const scheduleDashboardRefresh = useCallback(() => {
+    if (dashboardRefreshTimerRef.current) clearTimeout(dashboardRefreshTimerRef.current);
+    dashboardRefreshTimerRef.current = setTimeout(() => {
+      dashboardRefreshTimerRef.current = null;
+      fetchDashboardData();
+    }, 500);
+  }, [fetchDashboardData]);
+
+  const handleProductRealtime = useCallback((payload) => {
+    const eventType = payload.eventType;
+    const nextProduct = payload.new;
+    const previousProduct = payload.old;
+
+    setProducts((currentProducts) => {
+      if (eventType === 'INSERT' && nextProduct?.id) return [nextProduct, ...currentProducts.filter((product) => product.id !== nextProduct.id)];
+      if (eventType === 'UPDATE' && nextProduct?.id) return currentProducts.map((product) => product.id === nextProduct.id ? { ...product, ...nextProduct } : product);
+      if (eventType === 'DELETE' && previousProduct?.id) return currentProducts.filter((product) => product.id !== previousProduct.id);
+      return currentProducts;
+    });
+
+    setMetrics((currentMetrics) => {
+      const previousActive = previousProduct?.status === 'active';
+      const nextActive = nextProduct?.status === 'active';
+      let activeStockDelta = 0;
+      if (eventType === 'INSERT' && nextActive) activeStockDelta = 1;
+      if (eventType === 'DELETE' && previousActive) activeStockDelta = -1;
+      if (eventType === 'UPDATE') activeStockDelta = Number(nextActive) - Number(previousActive);
+      return activeStockDelta === 0 ? currentMetrics : { ...currentMetrics, activeStock: Math.max(0, currentMetrics.activeStock + activeStockDelta) };
+    });
+  }, []);
+
+  const handleOrderRealtime = useCallback((payload) => {
+    const eventType = payload.eventType;
+    const nextOrder = payload.new;
+    const previousOrder = payload.old;
+    const orderId = nextOrder?.id || previousOrder?.id;
+    if (!orderId) return;
+
+    setAllOrders((currentOrders) => {
+      if (eventType === 'INSERT' && nextOrder) return [nextOrder, ...currentOrders.filter((order) => order.id !== orderId)];
+      if (eventType === 'UPDATE' && nextOrder) return currentOrders.some((order) => order.id === orderId)
+        ? currentOrders.map((order) => order.id === orderId ? { ...order, ...nextOrder } : order)
+        : [nextOrder, ...currentOrders];
+      if (eventType === 'DELETE') return currentOrders.filter((order) => order.id !== orderId);
+      return currentOrders;
+    });
+
+    setMetrics((currentMetrics) => {
+      const previousAmount = Number(previousOrder?.total_amount) || 0;
+      const nextAmount = Number(nextOrder?.total_amount) || 0;
+      const salesDelta = eventType === 'INSERT' ? nextAmount : eventType === 'DELETE' ? -previousAmount : nextAmount - previousAmount;
+      let recentOrders = currentMetrics.recentOrders;
+      if (eventType === 'INSERT' && nextOrder) recentOrders = [nextOrder, ...recentOrders.filter((order) => order.id !== orderId)].slice(0, 5);
+      if (eventType === 'UPDATE' && nextOrder) recentOrders = recentOrders.some((order) => order.id === orderId)
+        ? recentOrders.map((order) => order.id === orderId ? { ...order, ...nextOrder } : order)
+        : [nextOrder, ...recentOrders].slice(0, 5);
+      if (eventType === 'DELETE') recentOrders = recentOrders.filter((order) => order.id !== orderId);
+      return { ...currentMetrics, totalSales: Math.max(0, currentMetrics.totalSales + salesDelta), recentOrders };
+    });
+  }, []);
 
   const fetchPayouts = useCallback(async () => {
     if (!user) return;
@@ -514,28 +600,61 @@ export default function Dashboard() {
             }));
           }
         }
-      ).subscribe();
+      ).subscribe((status) => {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') scheduleDashboardRefresh();
+      });
 
     const productsChannel = supabase
       .channel(`dashboard_products_${user.id}`)
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'products', filter: `brand_id=eq.${user.id}` },
-        () => { fetchDashboardData(); fetchProducts(); }
-      ).subscribe();
+        (payload) => handleProductRealtime(payload)
+      ).subscribe((status) => {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') scheduleDashboardRefresh();
+      });
 
     const ordersChannel = supabase
       .channel(`dashboard_orders_${user.id}`)
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'orders', filter: `brand_id=eq.${user.id}` },
-        () => { fetchDashboardData(); if (currentTab === 'orders') fetchAllOrders(); }
-      ).subscribe();
+        (payload) => {
+          handleOrderRealtime(payload);
+          if (currentTabRef.current === 'overview') scheduleDashboardRefresh();
+        }
+      ).subscribe((status) => {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') scheduleDashboardRefresh();
+      });
 
     return () => {
       supabase.removeChannel(profileChannel);
       supabase.removeChannel(productsChannel);
       supabase.removeChannel(ordersChannel);
     };
-  }, [user, currentTab, fetchDashboardData, fetchProducts, fetchAllOrders]);
+  }, [user, fetchDashboardData, handleProductRealtime, handleOrderRealtime, scheduleDashboardRefresh]);
+
+  useEffect(() => {
+    if (!user) return undefined;
+
+    const synchronizeOnVisible = () => {
+      if (document.visibilityState !== 'visible') return;
+      fetchDashboardData();
+      if (currentTabRef.current === 'products') fetchProducts();
+      if (currentTabRef.current === 'orders') fetchAllOrders();
+      if (currentTabRef.current === 'wallet') {
+        fetchPayouts();
+        fetchWithdrawalRequests();
+        fetchAvailableBalance();
+      }
+    };
+
+    const synchronizeOnOnline = () => synchronizeOnVisible();
+    document.addEventListener('visibilitychange', synchronizeOnVisible);
+    window.addEventListener('online', synchronizeOnOnline);
+    return () => {
+      document.removeEventListener('visibilitychange', synchronizeOnVisible);
+      window.removeEventListener('online', synchronizeOnOnline);
+    };
+  }, [user, fetchDashboardData, fetchProducts, fetchAllOrders, fetchPayouts, fetchWithdrawalRequests, fetchAvailableBalance]);
 
   // Tab-specific fetches
   useEffect(() => {
