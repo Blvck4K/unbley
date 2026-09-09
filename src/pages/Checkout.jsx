@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ShoppingCart, Lock, ArrowLeft, ArrowRight, ShieldCheck, CreditCard, Banknote, Smartphone, CheckCircle2, AlertCircle, X } from 'lucide-react';
+import { ShoppingCart, Lock, ArrowLeft, ArrowRight, ShieldCheck, CreditCard, Banknote, Smartphone, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import PaystackPop from '@paystack/inline-js';
@@ -7,6 +7,7 @@ import { useToast } from '../context/ToastContext';
 import { isDarkColor, getContrastColor, getMutedColor, getBorderColor } from '../lib/colors';
 import PageTransition from '../components/PageTransition';
 import StoreAttribution from '../components/StoreAttribution';
+import PaymentFailureModal from '../components/PaymentFailureModal';
 import { nigeriaLocations, nigeriaStates } from '../lib/nigeriaLocations';
 import { motion } from 'framer-motion';
 
@@ -113,6 +114,7 @@ export default function Checkout() {
   const [errors, setErrors] = useState({});
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentError, setPaymentError] = useState('');
+  const [confirmationRetryAvailable, setConfirmationRetryAvailable] = useState(false);
   const hasPaystack = Boolean(import.meta.env.VITE_PAYSTACK_PUBLIC_KEY);
   const hasFlutterwave = Boolean(import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY);
   const [paymentMethod, setPaymentMethod] = useState(() => {
@@ -126,41 +128,48 @@ export default function Checkout() {
   const showPaymentFailure = (reason) => {
     setIsProcessing(false);
     paymentHandledRef.current = false;
-    setPaymentError(reason || 'We could not complete your payment. Please try again.');
+    const message = reason instanceof Error ? reason.message : String(reason || 'We could not complete your payment. Please try again.');
+    setPaymentError(message);
   };
 
+  const confirmationRetryKey = 'unbley:checkout-confirmation-retry';
 
-  const onSuccess = async (transaction) => {
+  const onSuccess = async (transaction, retryRequest = null) => {
     if (paymentHandledRef.current) return;
     paymentHandledRef.current = true;
     setIsProcessing(true);
     
-    const brandId = cartItems[0]?.brand_id;
+    const requestItems = retryRequest?.items || cartItems;
+    const brandId = retryRequest?.brandId || requestItems[0]?.brand_id;
     if (!brandId) {
       console.error("No brand_id found in cart items.");
       showPaymentFailure('This checkout is missing its store information. Your cart is still saved. Please return to the cart and try again.');
       return;
     }
 
-    const transactionReference = transaction?.reference || transaction?.trxref || transaction?.transaction_id || transaction?.tx_ref;
+    const transactionReference = retryRequest?.transactionReference || transaction?.reference || transaction?.trxref || transaction?.transaction_id || transaction?.tx_ref;
     if (!transactionReference) {
       showPaymentFailure('The payment provider did not return a transaction reference. Your cart is still saved.');
       return;
     }
 
     try {
-      const customerDetails = {
-        ...formData,
-        address: [formData.address, formData.city, formData.state].filter(Boolean).join(', ')
-      };
+      const customerDetails = retryRequest?.customer || { ...formData };
+      sessionStorage.setItem(confirmationRetryKey, JSON.stringify({
+        brandId,
+        provider: retryRequest?.provider || paymentMethod,
+        transactionReference,
+        items: requestItems,
+        customer: customerDetails
+      }));
       const response = await fetch('/api/payments/confirm-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           brandId,
-          provider: paymentMethod,
+          provider: retryRequest?.provider || paymentMethod,
           transactionReference,
-          items: cartItems,
+          items: requestItems,
           customer: customerDetails
         })
       });
@@ -172,11 +181,12 @@ export default function Checkout() {
       const orderData = {
         ...payload.order,
         brand_name: brand?.brand_name || 'Digital Atelier',
-        items: payload.order.items || cartItems
+        items: payload.order.items || requestItems
       };
 
       // The order is confirmed independently of optional notifications.
       localStorage.removeItem('cart');
+      sessionStorage.removeItem(confirmationRetryKey);
       window.dispatchEvent(new Event('cartUpdated'));
       setIsProcessing(false);
       navigate('/checkout-success', { state: { order: orderData } });
@@ -188,6 +198,23 @@ export default function Checkout() {
     } catch (err) {
       console.error("Critical Post-Checkout failure:", err);
       showPaymentFailure(err.message || 'Payment was received, but the order could not be confirmed. Your cart is still saved.');
+      setConfirmationRetryAvailable(true);
+    }
+  };
+
+  const retryOrderConfirmation = () => {
+    try {
+      const retryData = JSON.parse(sessionStorage.getItem(confirmationRetryKey) || 'null');
+      if (!retryData?.transactionReference) {
+        setConfirmationRetryAvailable(false);
+        setPaymentError('The previous payment attempt could not be recovered. Your cart is still saved.');
+        return;
+      }
+      setPaymentError('');
+      setConfirmationRetryAvailable(false);
+      onSuccess({ reference: retryData.transactionReference }, retryData);
+    } catch {
+      setPaymentError('The previous payment attempt could not be recovered. Your cart is still saved.');
     }
   };
 
@@ -311,6 +338,11 @@ View in Dashboard.
   };
 
   const handlePaystack = () => {
+    const testPaymentAdapter = typeof window !== 'undefined' && window.__UNBLEY_PAYMENT_TEST__;
+    if (testPaymentAdapter) {
+      testPaymentAdapter({ provider: 'paystack', amount: total, onSuccess, onCancel: onClose, onError: showPaymentFailure });
+      return;
+    }
     const paystackKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY;
     if (!paystackKey) {
       showPaymentFailure('Paystack is currently unavailable. Please select Flutterwave or contact support.');
@@ -336,6 +368,11 @@ View in Dashboard.
   };
 
   const handleFlutterwave = () => {
+    const testPaymentAdapter = typeof window !== 'undefined' && window.__UNBLEY_PAYMENT_TEST__;
+    if (testPaymentAdapter) {
+      testPaymentAdapter({ provider: 'flutterwave', amount: total, onSuccess, onCancel: onClose, onError: showPaymentFailure });
+      return;
+    }
     const flwKey = import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY;
     if (!flwKey) {
       showPaymentFailure('Flutterwave payment configuration is missing. Please contact support.');
@@ -465,14 +502,14 @@ View in Dashboard.
   const getInputStyle = (fieldName) => {
     return {
       ...s.input,
-      borderColor: errors[fieldName] ? '#D83A3A' : 'transparent',
+      border: `1px solid ${errors[fieldName] ? '#D83A3A' : 'transparent'}`,
       backgroundColor: errors[fieldName] ? '#FFF5F5' : inputBg
     };
   };
 
   const getSelectStyle = (fieldName) => ({
     ...s.select,
-    borderColor: errors[fieldName] ? '#D83A3A' : borderColor,
+    border: `1px solid ${errors[fieldName] ? '#D83A3A' : borderColor}`,
     backgroundColor: errors[fieldName] ? '#FFF5F5' : inputBg
   });
 
@@ -568,39 +605,39 @@ View in Dashboard.
               
               {/* Contact Info (New) */}
               <div style={s.inputGroupFull} className={errors.email ? 'has-error' : ''}>
-                <label style={s.label}>Email Address *</label>
-                <input type="email" name="email" value={formData.email} onChange={handleInputChange} style={getInputStyle('email')} placeholder="For order confirmation" autoComplete="email" />
+                <label htmlFor="checkout-email" style={s.label}>Email Address *</label>
+                <input id="checkout-email" type="email" name="email" value={formData.email} onChange={handleInputChange} style={getInputStyle('email')} placeholder="For order confirmation" autoComplete="email" />
                 {errors.email && <div style={s.errorText}>{errors.email}</div>}
               </div>
               
               <div style={s.inputGroupFull} className={errors.phone ? 'has-error' : ''}>
-                <label style={s.label}>Phone Number *</label>
-                <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} style={getInputStyle('phone')} placeholder="For delivery updates" autoComplete="tel" />
+                <label htmlFor="checkout-phone" style={s.label}>Phone Number *</label>
+                <input id="checkout-phone" type="tel" name="phone" value={formData.phone} onChange={handleInputChange} style={getInputStyle('phone')} placeholder="For delivery updates" autoComplete="tel" />
                 {errors.phone && <div style={s.errorText}>{errors.phone}</div>}
               </div>
 
               {/* Shipping Details */}
               <div style={s.inputGroup} className={errors.firstName ? 'has-error' : ''}>
-                <label style={s.label}>First Name *</label>
-                <input type="text" name="firstName" value={formData.firstName} onChange={handleInputChange} style={getInputStyle('firstName')} autoComplete="given-name" />
+                <label htmlFor="checkout-first-name" style={s.label}>First Name *</label>
+                <input id="checkout-first-name" type="text" name="firstName" value={formData.firstName} onChange={handleInputChange} style={getInputStyle('firstName')} autoComplete="given-name" />
                 {errors.firstName && <div style={s.errorText}>{errors.firstName}</div>}
               </div>
               
               <div style={s.inputGroup} className={errors.lastName ? 'has-error' : ''}>
-                <label style={s.label}>Last Name *</label>
-                <input type="text" name="lastName" value={formData.lastName} onChange={handleInputChange} style={getInputStyle('lastName')} autoComplete="family-name" />
+                <label htmlFor="checkout-last-name" style={s.label}>Last Name *</label>
+                <input id="checkout-last-name" type="text" name="lastName" value={formData.lastName} onChange={handleInputChange} style={getInputStyle('lastName')} autoComplete="family-name" />
                 {errors.lastName && <div style={s.errorText}>{errors.lastName}</div>}
               </div>
               
               <div style={s.inputGroupFull} className={errors.address ? 'has-error' : ''}>
-                <label style={s.label}>Address *</label>
-                <textarea name="address" value={formData.address} onChange={handleInputChange} style={{ ...getInputStyle('address'), minHeight: '112px', resize: 'vertical', fontFamily: 'inherit' }} placeholder="House number, street, area" autoComplete="street-address" />
+                <label htmlFor="checkout-address" style={s.label}>Address *</label>
+                <textarea id="checkout-address" name="address" value={formData.address} onChange={handleInputChange} style={{ ...getInputStyle('address'), minHeight: '112px', resize: 'vertical', fontFamily: 'inherit' }} placeholder="House number, street, area" autoComplete="street-address" />
                 {errors.address && <div style={s.errorText}>{errors.address}</div>}
               </div>
               
               <div style={s.inputGroup} className={errors.state ? 'has-error' : ''}>
-                <label style={s.label}>State *</label>
-                <select name="state" value={formData.state} onChange={handleInputChange} style={getSelectStyle('state')} autoComplete="address-level1">
+                <label htmlFor="checkout-state" style={s.label}>State *</label>
+                <select id="checkout-state" name="state" value={formData.state} onChange={handleInputChange} style={getSelectStyle('state')} autoComplete="address-level1">
                   <option value="" style={{ color: '#111827', backgroundColor: '#FFFFFF' }}>Select a state</option>
                   {nigeriaStates.map(state => <option key={state} value={state} style={{ color: '#111827', backgroundColor: '#FFFFFF' }}>{state}</option>)}
                 </select>
@@ -608,8 +645,8 @@ View in Dashboard.
               </div>
 
               <div style={s.inputGroup} className={errors.city ? 'has-error' : ''}>
-                <label style={s.label}>City *</label>
-                <select name="city" value={formData.city} onChange={handleInputChange} style={{ ...getSelectStyle('city'), color: formData.city ? textColor : mutedColor, opacity: formData.state ? 1 : 0.65 }} autoComplete="address-level2" disabled={!formData.state}>
+                <label htmlFor="checkout-city" style={s.label}>City *</label>
+                <select id="checkout-city" name="city" value={formData.city} onChange={handleInputChange} style={{ ...getSelectStyle('city'), color: formData.city ? textColor : mutedColor, opacity: formData.state ? 1 : 0.65 }} autoComplete="address-level2" disabled={!formData.state}>
                   <option value="" style={{ color: '#111827', backgroundColor: '#FFFFFF' }}>{formData.state ? 'Select a city' : 'Select a state first'}</option>
                   {(nigeriaLocations[formData.state] || []).map(city => <option key={city} value={city} style={{ color: '#111827', backgroundColor: '#FFFFFF' }}>{city}</option>)}
                 </select>
@@ -786,34 +823,14 @@ View in Dashboard.
         <StoreAttribution color={mutedColor} />
       </div>
 
-      {paymentError && (
-        <div
-          role="alertdialog"
-          aria-modal="true"
-          aria-labelledby="payment-error-title"
-          style={{ position: 'fixed', inset: 0, zIndex: 12000, backgroundColor: 'rgba(0,0,0,0.58)', backdropFilter: 'blur(5px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
-        >
-          <div style={{ position: 'relative', width: '100%', maxWidth: '440px', backgroundColor: secondaryBg, color: textColor, border: `1px solid ${borderColor}`, borderRadius: '8px', padding: '32px', boxShadow: '0 24px 60px rgba(0,0,0,0.3)', textAlign: 'center' }}>
-            <button
-              type="button"
-              aria-label="Close payment error"
-              onClick={() => setPaymentError('')}
-              style={{ position: 'absolute', top: '14px', right: '14px', border: 'none', background: 'transparent', color: mutedColor, cursor: 'pointer', padding: '4px' }}
-            >
-              <X size={18} />
-            </button>
-            <div style={{ width: '52px', height: '52px', borderRadius: '50%', backgroundColor: 'rgba(216,58,58,0.12)', color: dangerColor, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px' }}>
-              <AlertCircle size={28} />
-            </div>
-            <h2 id="payment-error-title" style={{ fontSize: '22px', fontWeight: '700', margin: '0 0 12px', color: textColor }}>Payment failed</h2>
-            <p style={{ fontSize: '14px', lineHeight: '1.6', color: mutedColor, margin: '0 0 24px', overflowWrap: 'anywhere' }}>{paymentError}</p>
-            <div style={{ display: 'flex', gap: '12px', flexDirection: 'column' }}>
-              <button type="button" onClick={() => setPaymentError('')} style={{ ...s.continueBtn, padding: '14px 20px' }}>Try Payment Again</button>
-              <button type="button" onClick={() => navigate('/cart')} style={{ ...s.backBtn, marginTop: 0 }}>Return to Cart</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <PaymentFailureModal
+        error={paymentError}
+        canRetryConfirmation={confirmationRetryAvailable}
+        onRetry={confirmationRetryAvailable ? retryOrderConfirmation : () => setPaymentError('')}
+        onClose={() => setPaymentError('')}
+        onReturnToCart={() => navigate('/cart')}
+        styles={{ secondaryBg, textColor, borderColor, mutedColor, dangerColor, continueBtn: s.continueBtn, backBtn: s.backBtn }}
+      />
       </div>
     </PageTransition>
   );

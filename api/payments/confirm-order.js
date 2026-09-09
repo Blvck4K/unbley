@@ -62,7 +62,7 @@ export default async function handler(req, res) {
     const supabase = serverClient();
     const { data: brandRecord, error: brandError } = await supabase
       .from('brand_profiles')
-      .select('id')
+      .select('id, brand_name, email_address, owner_name')
       .eq('id', brandId)
       .maybeSingle();
     if (brandError) return json(res, 500, { error: 'Could not load the store for this order.' });
@@ -92,7 +92,7 @@ export default async function handler(req, res) {
 
     const { data: products, error: productsError } = await supabase
       .from('products')
-    .select('id, brand_id, title, price, status, image_url')
+      .select('id, brand_id, title, price, status, image_url')
       .eq('brand_id', brandId)
       .in('id', productIds);
     if (productsError) return json(res, 500, { error: 'Could not load products.' });
@@ -134,21 +134,39 @@ export default async function handler(req, res) {
       customer_email: clean(customer.email),
       customer_phone: clean(customer.phone, /[^0-9+]/g),
       customer_address: clean(customer.address),
+      customer_address_line: clean(customer.address),
+      customer_state: clean(customer.state),
       customer_city: clean(customer.city),
       customer_zip: clean(customer.zip),
       items: normalizedItems,
       transaction_id: verifiedReference,
-      payment_method: provider
+      payment_method: provider,
+      confirmation_status: 'confirmed',
+      confirmed_at: new Date().toISOString()
     };
 
     let { data: savedOrder, error: orderError } = await supabase.from('orders').insert(order).select('*').single();
 
     // Older deployments may not have the optional fulfillment columns yet.
     // Keep a verified payment recoverable by retrying with the legacy order shape.
+    if (orderError && orderError.code === '23505' && /transaction_id|orders_transaction_id_unique_idx/i.test(orderError.message || '')) {
+      const { data: duplicateOrder, error: duplicateLookupError } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('transaction_id', verifiedReference)
+        .maybeSingle();
+      if (!duplicateLookupError && duplicateOrder) return json(res, 200, { order: duplicateOrder, alreadyExists: true });
+    }
+
     if (orderError && /column .* does not exist|schema cache/i.test(orderError.message || '')) {
       const legacyOrder = { ...order };
       delete legacyOrder.shipping_fee;
       delete legacyOrder.delivery_duration;
+      delete legacyOrder.customer_state;
+      delete legacyOrder.customer_address_line;
+      delete legacyOrder.confirmation_status;
+      delete legacyOrder.confirmation_error;
+      delete legacyOrder.confirmed_at;
       const legacyResult = await supabase.from('orders').insert(legacyOrder).select('*').single();
       savedOrder = legacyResult.data;
       orderError = legacyResult.error;
