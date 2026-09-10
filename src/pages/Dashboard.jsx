@@ -1272,7 +1272,6 @@ export default function Dashboard() {
                 <div className="unbley-metric-card">
                   <div className="unbley-metric-top">
                     <div className="unbley-icon-box-cream"><DollarSign size={18} /></div>
-                    <span style={{ padding: '3px 8px', borderRadius: '9999px', fontSize: '10px', fontWeight: '800', letterSpacing: '0.05em', backgroundColor: '#DCFCE7', color: '#15803D', textTransform: 'uppercase' }}>+12.4% THIS MONTH</span>
                   </div>
                   <div>
                     <div className="unbley-metric-label">TOTAL SALES</div>
@@ -1406,16 +1405,7 @@ export default function Dashboard() {
                         </div>
                         <ArrowRight size={15} color="#9CA3AF" />
                       </div>
-                      <div onClick={() => { setActiveOnboardingStep('payment'); setShowOnboardingModal(true); }} className="unbley-action-row">
-                        <div className="unbley-action-left">
-                          <div className="unbley-action-icon"><FileSpreadsheet size={16} /></div>
-                          <div>
-                            <div className="unbley-action-title">Record Quick Sale</div>
-                            <div className="unbley-action-desc">Log sales made on WhatsApp or IG</div>
-                          </div>
-                        </div>
-                        <ArrowRight size={15} color="#9CA3AF" />
-                      </div>
+
                       <div onClick={handleShareStore} className="unbley-action-row">
                         <div className="unbley-action-left">
                           <div className="unbley-action-icon"><Share2 size={16} /></div>
