@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS public.merchant_payout_attempts (
 );
 
 ALTER TABLE public.brand_profiles
+  ADD COLUMN IF NOT EXISTS bank_code text,
   ADD COLUMN IF NOT EXISTS paystack_subaccount_code text,
   ADD COLUMN IF NOT EXISTS flutterwave_subaccount_code text,
   ADD COLUMN IF NOT EXISTS merchant_settlement_enabled boolean DEFAULT false,
