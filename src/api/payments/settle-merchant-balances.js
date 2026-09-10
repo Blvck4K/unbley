@@ -37,29 +37,21 @@ export default async function handler(req, res) {
       const merchantId = payment.merchant_id;
       const merchantResult = await supabase
         .from('brand_profiles')
-        .select('id, payout_bank_name, payout_account_number, payout_account_name, payout_bank_code, payout_provider, payout_recipient_code, paystack_subaccount_code, flutterwave_subaccount_code')
+        .select('id, bank_name, account_number, account_name, paystack_subaccount_code, flutterwave_subaccount_code')
         .eq('id', merchantId)
         .maybeSingle();
 
       if (merchantResult.error) throw merchantResult.error;
       const merchant = merchantResult.data;
-      if (!merchant || !merchant.payout_bank_name || !merchant.payout_account_number || !merchant.payout_account_name) {
+      if (!merchant || !merchant.bank_name || !merchant.account_number || !merchant.account_name) {
         results.push({ merchantId, status: 'skipped', reason: 'missing_payout_account' });
         continue;
       }
 
       const payoutAmount = Number(payment.amount || 0);
-      const provider = merchant.payout_provider || payment.payment_provider || 'paystack';
-      const providerRecipientCode = provider === 'flutterwave'
-        ? merchant.flutterwave_subaccount_code || merchant.payout_recipient_code || merchant.payout_bank_code
-        : merchant.payout_recipient_code || merchant.paystack_subaccount_code || merchant.payout_bank_code;
+      const provider = payment.payment_provider || 'paystack';
       const transferReference = `UNB-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
       const payoutRef = `PO-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-
-      if (!providerRecipientCode) {
-        results.push({ merchantId, status: 'skipped', reason: `missing_${provider}_payout_code` });
-        continue;
-      }
 
       const { data: existingPayout, error: existingError } = await supabase
         .from('merchant_payouts')
@@ -81,7 +73,7 @@ export default async function handler(req, res) {
             amount: payoutAmount,
             currency: 'NGN',
             status: 'PENDING',
-            provider_recipient_code: providerRecipientCode,
+            provider_recipient_code: null,
             provider_transfer_reference: transferReference,
             available_at: payment.available_at,
             retry_count: 0,
@@ -110,7 +102,9 @@ export default async function handler(req, res) {
         });
 
         const payload = await adapter.initiateTransfer({
-          recipientCode: providerRecipientCode,
+          bankName: merchant.bank_name,
+          accountNumber: merchant.account_number,
+          accountName: merchant.account_name,
           amountMinor: payoutAmount,
           reason: `Settlement for merchant ${merchantId}`,
           reference: transferReference
@@ -123,7 +117,7 @@ export default async function handler(req, res) {
           .from('merchant_payouts')
           .update({
             status: payoutStatus,
-            provider_recipient_code: providerRecipientCode,
+            provider_recipient_code: payload?.recipientCode || payload?.beneficiary_id || null,
             provider_transfer_reference: providerTransferRef,
             failure_reason: null,
             retry_count: nextAttempt,

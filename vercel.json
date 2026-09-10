@@ -42,7 +42,7 @@
   ],
   "crons": [
     {
-      "path": "/api",
+      "path": "/api/payments/settle-merchant-balances",
       "schedule": "0 0 * * *"
     }
   ],

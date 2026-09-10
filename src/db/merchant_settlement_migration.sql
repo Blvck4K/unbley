@@ -44,17 +44,21 @@ CREATE TABLE IF NOT EXISTS public.merchant_payout_attempts (
 );
 
 ALTER TABLE public.brand_profiles
-  ADD COLUMN IF NOT EXISTS payout_bank_code text,
-  ADD COLUMN IF NOT EXISTS payout_bank_name text,
-  ADD COLUMN IF NOT EXISTS payout_account_number text,
-  ADD COLUMN IF NOT EXISTS payout_account_name text,
-  ADD COLUMN IF NOT EXISTS payout_account_verified boolean DEFAULT false,
-  ADD COLUMN IF NOT EXISTS payout_provider text,
-  ADD COLUMN IF NOT EXISTS payout_recipient_code text,
   ADD COLUMN IF NOT EXISTS paystack_subaccount_code text,
   ADD COLUMN IF NOT EXISTS flutterwave_subaccount_code text,
   ADD COLUMN IF NOT EXISTS merchant_settlement_enabled boolean DEFAULT false,
   ADD COLUMN IF NOT EXISTS settlement_offset_days integer DEFAULT 1;
+
+-- Payouts use the existing bank_name, account_name, and account_number fields.
+-- Provider subaccount codes remain available for checkout settlement/splits.
+ALTER TABLE public.brand_profiles
+  DROP COLUMN IF EXISTS payout_bank_code,
+  DROP COLUMN IF EXISTS payout_bank_name,
+  DROP COLUMN IF EXISTS payout_account_number,
+  DROP COLUMN IF EXISTS payout_account_name,
+  DROP COLUMN IF EXISTS payout_account_verified,
+  DROP COLUMN IF EXISTS payout_provider,
+  DROP COLUMN IF EXISTS payout_recipient_code;
 
 ALTER TABLE public.merchant_financial_transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.merchant_payouts ENABLE ROW LEVEL SECURITY;

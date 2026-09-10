@@ -40,6 +40,22 @@ export const getSettlementOffsetDays = () => {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : 1;
 };
 
+const normalizeBankName = (value = '') => String(value).toLowerCase().replace(/[^a-z0-9]+/g, '');
+
+const resolveBankCode = async ({ provider, bankName, secretKey }) => {
+  const target = normalizeBankName(bankName);
+  const url = provider === 'paystack'
+    ? 'https://api.paystack.co/bank'
+    : 'https://api.flutterwave.com/v3/banks/NG';
+  const response = await fetch(url, { headers: { Authorization: `Bearer ${secretKey}` } });
+  const payload = await response.json().catch(() => ({}));
+  const banks = Array.isArray(payload?.data) ? payload.data : [];
+  const match = banks.find((bank) => normalizeBankName(bank.name) === target)
+    || banks.find((bank) => normalizeBankName(bank.name).includes(target) || target.includes(normalizeBankName(bank.name)));
+  if (!match?.code) throw new Error(`Could not resolve bank code for ${bankName}.`);
+  return String(match.code);
+};
+
 export const nextSettlementAt = (offsetDays = getSettlementOffsetDays()) => {
   const ms = Number(offsetDays || 0) * 24 * 60 * 60 * 1000;
   return new Date(Date.now() + ms).toISOString();
@@ -201,10 +217,19 @@ export const getProviderPayoutAdapter = (provider) => {
         };
       },
 
-      async initiateTransfer({ recipientCode, amountMinor, reason, reference }) {
+      async initiateTransfer({ bankName, accountNumber, accountName, amountMinor, reason, reference }) {
         if (!process.env.PAYSTACK_SECRET_KEY) {
           throw new Error('Paystack payout is not configured.');
         }
+
+        const bankCode = await resolveBankCode({ provider: 'paystack', bankName, secretKey: process.env.PAYSTACK_SECRET_KEY });
+        const recipient = await this.createTransferRecipient({
+          accountNumber,
+          bankCode,
+          accountName,
+          reason
+        });
+        if (!recipient.recipientCode) throw new Error('Paystack did not return a transfer recipient code.');
 
         const response = await fetch('https://api.paystack.co/transfer', {
           method: 'POST',
@@ -215,7 +240,7 @@ export const getProviderPayoutAdapter = (provider) => {
           body: JSON.stringify({
             source: 'balance',
             amount: Number(amountMinor),
-            recipient: recipientCode,
+            recipient: recipient.recipientCode,
             reason: reason || 'Unbley merchant settlement',
             currency: 'NGN',
             reference
@@ -265,10 +290,12 @@ export const getProviderPayoutAdapter = (provider) => {
         };
       },
 
-      async initiateTransfer({ recipientCode, amountMinor, reason, reference }) {
+      async initiateTransfer({ bankName, accountNumber, amountMinor, reason, reference }) {
         if (!process.env.FLUTTERWAVE_SECRET_KEY) {
           throw new Error('Flutterwave payout is not configured.');
         }
+
+        const bankCode = await resolveBankCode({ provider: 'flutterwave', bankName, secretKey: process.env.FLUTTERWAVE_SECRET_KEY });
 
         const response = await fetch('https://api.flutterwave.com/v3/transfers', {
           method: 'POST',
@@ -277,8 +304,8 @@ export const getProviderPayoutAdapter = (provider) => {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            account_bank: recipientCode,
-            account_number: recipientCode,
+            account_bank: bankCode,
+            account_number: String(accountNumber).replace(/\D/g, ''),
             amount: Number(amountMinor) / 100,
             narration: reason || 'Unbley merchant settlement',
             currency: 'NGN',
