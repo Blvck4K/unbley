@@ -51,6 +51,8 @@ ALTER TABLE public.brand_profiles
   ADD COLUMN IF NOT EXISTS payout_account_verified boolean DEFAULT false,
   ADD COLUMN IF NOT EXISTS payout_provider text,
   ADD COLUMN IF NOT EXISTS payout_recipient_code text,
+  ADD COLUMN IF NOT EXISTS paystack_subaccount_code text,
+  ADD COLUMN IF NOT EXISTS flutterwave_subaccount_code text,
   ADD COLUMN IF NOT EXISTS merchant_settlement_enabled boolean DEFAULT false,
   ADD COLUMN IF NOT EXISTS settlement_offset_days integer DEFAULT 1;
 
