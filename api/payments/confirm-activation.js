@@ -1,4 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
+import { sendEmail } from '../../lib/notifications/resend.js';
+import { recordNotification } from '../../lib/notifications/notificationStore.js';
 
 const plans = {
   starter: { monthly: { ngn: 5000, usd: 5 }, yearly: { ngn: 50000, usd: 40 } },
@@ -109,6 +111,29 @@ export default async function handler(req, res) {
 
     const { error: updateError } = await supabase.from('brand_profiles').update(profileUpdate).eq('id', authData.user.id);
     if (updateError) return json(res, 500, { error: 'Activation was verified but the store could not be updated.' });
+
+    const email = authData.user.email;
+    const planName = trial ? 'Unbley Free Trial' : (plans[planId]?.name || planId);
+    const subject = trial ? 'Your Unbley free trial has started' : 'Your Unbley plan is now active';
+    const html = `<p>Hi ${authData.user.email},</p><p>Your activation request has been processed.</p><p>Plan: ${planName}</p><p>Reference: ${reference || 'Trial started'}</p>`;
+    const text = `Hi ${authData.user.email}, your Unbley activation is complete. Plan: ${planName}. Reference: ${reference || 'Trial started'}.`;
+    const emailResult = await sendEmail({ to: email, subject, html, text }).catch(() => ({ ok: false, skipped: true, error: 'Email send failed.' }));
+
+    await recordNotification({
+      eventType: trial ? 'activation_trial' : 'activation_complete',
+      templateSlug: trial ? 'activation_complete' : 'activation_complete',
+      userId: authData.user.id,
+      recipient: email,
+      subject,
+      body: text,
+      html,
+      channel: 'email',
+      provider: 'resend',
+      providerMessageId: emailResult?.data?.id || null,
+      status: emailResult?.ok ? 'sent' : 'skipped',
+      payload: { planId, interval, trial, provider, reference: reference || null },
+      errorMessage: emailResult?.error || null
+    });
 
     return json(res, 200, { ok: true, ...profileUpdate });
   } catch (error) {

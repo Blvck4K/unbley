@@ -1,5 +1,7 @@
 import crypto from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
+import { sendEmail } from '../../lib/notifications/resend.js';
+import { recordNotification } from '../../lib/notifications/notificationStore.js';
 
 const json = (res, status, body) => res.status(status).json(body);
 const serverClient = () => createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
@@ -43,5 +45,57 @@ export default async function handler(req, res) {
   const paystackResponse = await fetch('https://api.paystack.co/transaction/initialize', { method: 'POST', headers: { Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ email: customer.email, amount: Math.round(total * 100), currency: 'NGN', reference, callback_url: process.env.PAYSTACK_CALLBACK_URL || undefined, metadata: { orderId: order.id, paymentId: reference } }) });
   const payload = await paystackResponse.json().catch(() => ({}));
   if (!paystackResponse.ok || !payload.status) return json(res, 502, { error: 'Payment provider initialization failed.' });
+
+  const { data: merchantProfile, error: merchantProfileError } = await supabase.from('brand_profiles').select('email_address, brand_name, owner_name').eq('id', brandId).maybeSingle();
+  const merchantEmail = merchantProfile?.email_address || null;
+
+  const subject = 'Your Unbley checkout is ready';
+  const html = `<p>Hi ${customer.firstName || 'there'},</p><p>Your checkout has started.</p><p>Order reference: ${reference}</p><p>Amount: ₦${Number(total).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>`;
+  const text = `Hi ${customer.firstName || 'there'}, your Unbley checkout is ready. Order reference: ${reference}. Amount: ₦${Number(total).toLocaleString(undefined, { minimumFractionDigits: 2 })}.`;
+  const emailResult = await sendEmail({ to: customer.email, subject, html, text }).catch(() => ({ ok: false, skipped: true, error: 'Email send failed.' }));
+
+  await recordNotification({
+    eventType: 'checkout_started',
+    templateSlug: 'checkout_started',
+    userId: authData.user.id,
+    brandId,
+    orderId: order.id,
+    recipient: customer.email,
+    subject,
+    body: text,
+    html,
+    channel: 'email',
+    provider: 'resend',
+    providerMessageId: emailResult?.data?.id || null,
+    status: emailResult?.ok ? 'sent' : 'skipped',
+    payload: { orderNumber, provider, reference, amount: total, items: normalizedItems },
+    errorMessage: emailResult?.error || null
+  });
+
+  if (merchantEmail && !merchantProfileError) {
+    const merchantSubject = `New order placed: ${orderNumber}`;
+    const merchantHtml = `<p>Hi ${merchantProfile.owner_name || merchantProfile.brand_name || 'Merchant'},</p><p>A customer just placed a new order.</p><p>Order: ${orderNumber}</p><p>Reference: ${reference}</p><p>Amount: ₦${Number(total).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p><p>Customer: ${customer.firstName || ''} ${customer.lastName || ''} (${customer.email})</p>`;
+    const merchantText = `Hi ${merchantProfile.owner_name || merchantProfile.brand_name || 'Merchant'}, a customer just placed a new order. Order: ${orderNumber}. Reference: ${reference}. Amount: ₦${Number(total).toLocaleString(undefined, { minimumFractionDigits: 2 })}. Customer: ${customer.email}.`;
+    const merchantEmailResult = await sendEmail({ to: merchantEmail, subject: merchantSubject, html: merchantHtml, text: merchantText }).catch(() => ({ ok: false, skipped: true, error: 'Merchant notification email send failed.' }));
+
+    await recordNotification({
+      eventType: 'merchant_new_order',
+      templateSlug: 'merchant_new_order',
+      userId: authData.user.id,
+      brandId,
+      orderId: order.id,
+      recipient: merchantEmail,
+      subject: merchantSubject,
+      body: merchantText,
+      html: merchantHtml,
+      channel: 'email',
+      provider: 'resend',
+      providerMessageId: merchantEmailResult?.data?.id || null,
+      status: merchantEmailResult?.ok ? 'sent' : 'skipped',
+      payload: { orderNumber, provider, reference, amount: total, customer: customer.email },
+      errorMessage: merchantEmailResult?.error || null
+    });
+  }
+
   return json(res, 200, { orderId: order.id, paymentId: reference, checkoutUrl: payload.data.authorization_url, status: 'pending' });
 }

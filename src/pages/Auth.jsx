@@ -118,6 +118,25 @@ export default function Auth() {
         // Log successful sign-up for debugging
         console.log('✅ sign-up succeeded', signUpData);
 
+        try {
+          await fetch('/api/notifications/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              to: email,
+              subject: 'Welcome to Unbley',
+              html: `<p>Hi ${name || 'there'},</p><p>Welcome to Unbley. Your account has been created successfully.</p><p>You can now launch your store and start selling.</p>`,
+              text: `Hi ${name || 'there'}, welcome to Unbley. Your account has been created successfully. You can now launch your store and start selling.`,
+              eventType: 'signup_unbley',
+              templateSlug: 'signup_unbley',
+              userId: signUpData?.user?.id || null,
+              payload: { userType, role: userType }
+            })
+          }).catch(() => null);
+        } catch (err) {
+          console.warn('Could not send Unbley welcome email after sign-up:', err);
+        }
+
         const successInfo = {
           name: name || (userType === 'customer' ? 'Shopper' : 'Creator'),
           email,
