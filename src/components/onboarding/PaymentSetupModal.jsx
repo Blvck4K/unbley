@@ -44,9 +44,48 @@ const BANK_OPTIONS = [
   'Other Bank'
 ];
 
+const BANK_CODE_MAP = {
+  'Access Bank': '044',
+  'ALAT by WEMA': '035',
+  'Apex MFB': '770',
+  'ASO Savings': '401',
+  'Citibank Nigeria': '023',
+  'Ecobank Nigeria': '050',
+  'Fidelity Bank': '070',
+  'First Bank of Nigeria': '011',
+  'FCMB': '214',
+  'Globus Bank': '00103',
+  'Greenwich Bank': '562',
+  'GTBank': '058',
+  'Jaiz Bank': '301',
+  'Keystone Bank': '082',
+  'Kuda MFB': '50211',
+  'Lotus Bank': '303',
+  'Moniepoint MFB': '110',
+  'Opay': '329',
+  'Palmpay': '999991',
+  'Parkway - ReadyCash': '311',
+  'Paycom': '559',
+  'Polaris Bank': '076',
+  'Providus Bank': '101',
+  'Rubies MFB': '125',
+  'Sparkle Microfinance Bank': '377',
+  'Stanbic IBTC': '221',
+  'Sterling Bank': '232',
+  'SunTrust Bank': '100',
+  'TAJ Bank': '302',
+  'Titan Trust Bank': '102',
+  'UBA': '033',
+  'Union Bank': '032',
+  'Unity Bank': '215',
+  'Wema Bank': '035',
+  'Zenith Bank': '057'
+};
+
 export default function PaymentSetupModal({ isOpen = false, onClose, onComplete }) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [resolvingAccount, setResolvingAccount] = useState(false);
   const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     bank_name: '',
@@ -63,6 +102,42 @@ export default function PaymentSetupModal({ isOpen = false, onClose, onComplete 
   };
 
   const selectedBankName = formData.bank_name === 'Other Bank' ? (formData.custom_bank_name || '').trim() : formData.bank_name;
+  const selectedBankCode = BANK_CODE_MAP[selectedBankName] || '';
+
+  const resolveAccountName = async (bankLabel, accountNumber) => {
+    const cleanBankName = (bankLabel || '').trim();
+    const cleanAccountNumber = String(accountNumber || '').replace(/\D/g, '');
+    const bankCode = BANK_CODE_MAP[cleanBankName] || '';
+
+    if (!cleanBankName || (!bankCode && cleanBankName !== 'Other Bank') || cleanAccountNumber.length < 10) {
+      return;
+    }
+
+    try {
+      setResolvingAccount(true);
+      setError(null);
+
+      const response = await fetch('/api/payments/resolve-bank-account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ account_number: cleanAccountNumber, bank_code: bankCode, bank_name: cleanBankName })
+      });
+
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload?.error || 'Unable to verify account details.');
+      }
+
+      const accountName = payload?.account_name?.trim();
+      if (accountName) {
+        setFormData(prev => ({ ...prev, account_name: accountName }));
+      }
+    } catch (resolveErr) {
+      setError(resolveErr.message || 'Unable to verify account details.');
+    } finally {
+      setResolvingAccount(false);
+    }
+  };
 
   React.useEffect(() => {
     async function fetchPaymentInfo() {
@@ -105,7 +180,7 @@ export default function PaymentSetupModal({ isOpen = false, onClose, onComplete 
       return;
     }
 
-    if (formData.account_number.length < 10) {
+    if (formData.account_number.replace(/\D/g, '').length < 10) {
       setError('Account number must be at least 10 digits');
       return;
     }
@@ -120,6 +195,7 @@ export default function PaymentSetupModal({ isOpen = false, onClose, onComplete 
           brand_name: user.user_metadata?.brand_name || user.user_metadata?.full_name || 'Your Brand',
           owner_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
           bank_name: bankToSave,
+          bank_code: selectedBankCode,
           account_name: formData.account_name,
           account_number: formData.account_number,
           phone_number: formData.phone_number,
@@ -131,7 +207,7 @@ export default function PaymentSetupModal({ isOpen = false, onClose, onComplete 
       onComplete?.();
       handleClose();
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Could not save payment details.');
     } finally {
       setLoading(false);
     }
@@ -140,6 +216,7 @@ export default function PaymentSetupModal({ isOpen = false, onClose, onComplete 
   const handleClose = () => {
     setFormData({ bank_name: '', custom_bank_name: '', account_name: '', account_number: '', phone_number: '' });
     setError(null);
+    setResolvingAccount(false);
     onClose?.();
   };
 
@@ -321,12 +398,18 @@ export default function PaymentSetupModal({ isOpen = false, onClose, onComplete 
                   value={formData.bank_name}
                   onChange={(e) => {
                     const value = e.target.value;
+                    const nextAccountNumber = formData.account_number;
+
                     setFormData(prev => ({
                       ...prev,
                       bank_name: value,
                       custom_bank_name: value === 'Other Bank' ? prev.custom_bank_name : ''
                     }));
                     setError(null);
+
+                    if (value && value !== 'Other Bank' && nextAccountNumber.replace(/\D/g, '').length >= 10) {
+                      resolveAccountName(value, nextAccountNumber);
+                    }
                   }}
                   style={{
                     width: '100%',
@@ -370,7 +453,14 @@ export default function PaymentSetupModal({ isOpen = false, onClose, onComplete 
                       type="text"
                       name="custom_bank_name"
                       value={formData.custom_bank_name}
-                      onChange={handleInputChange}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        const nextAccountNumber = formData.account_number;
+                        handleInputChange(e);
+                        if (value.trim() && nextAccountNumber.replace(/\D/g, '').length >= 10) {
+                          resolveAccountName(value, nextAccountNumber);
+                        }
+                      }}
                       placeholder="Enter your bank name"
                       style={{
                         width: '100%',
@@ -448,7 +538,16 @@ export default function PaymentSetupModal({ isOpen = false, onClose, onComplete 
                   type="text"
                   name="account_number"
                   value={formData.account_number}
-                  onChange={handleInputChange}
+                  onChange={(e) => {
+                    const nextValue = e.target.value.replace(/\D/g, '').slice(0, 10);
+                    const activeBankName = formData.bank_name === 'Other Bank' ? formData.custom_bank_name : formData.bank_name;
+                    setFormData(prev => ({ ...prev, account_number: nextValue }));
+                    setError(null);
+
+                    if (nextValue.length >= 10 && activeBankName) {
+                      resolveAccountName(activeBankName, nextValue);
+                    }
+                  }}
                   placeholder="Your 10-digit account number"
                   style={{
                     width: '100%',
@@ -516,17 +615,17 @@ export default function PaymentSetupModal({ isOpen = false, onClose, onComplete 
                 </button>
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || resolvingAccount}
                   style={{
                     flex: 1,
                     padding: '10px',
-                    backgroundColor: loading ? '#D1D5DB' : '#6A3E1F',
+                    backgroundColor: loading || resolvingAccount ? '#D1D5DB' : '#6A3E1F',
                     border: 'none',
                     borderRadius: '8px',
                     fontSize: '13px',
                     fontWeight: '600',
                     color: '#FFFFFF',
-                    cursor: loading ? 'not-allowed' : 'pointer',
+                    cursor: loading || resolvingAccount ? 'not-allowed' : 'pointer',
                     transition: 'all 0.15s ease',
                     display: 'flex',
                     alignItems: 'center',
@@ -534,17 +633,17 @@ export default function PaymentSetupModal({ isOpen = false, onClose, onComplete 
                     gap: '6px'
                   }}
                   onMouseEnter={(e) => {
-                    if (!loading) {
+                    if (!loading && !resolvingAccount) {
                       e.currentTarget.style.backgroundColor = '#5a3219';
                     }
                   }}
                   onMouseLeave={(e) => {
-                    if (!loading) {
+                    if (!loading && !resolvingAccount) {
                       e.currentTarget.style.backgroundColor = '#6A3E1F';
                     }
                   }}
                 >
-                  {loading ? 'Saving...' : 'Save & Continue'}
+                  {resolvingAccount ? 'Verifying account...' : (loading ? 'Saving...' : 'Save & Continue')}
                 </button>
               </div>
             </form>
