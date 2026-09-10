@@ -17,8 +17,10 @@ export default function Home() {
   return (
     <>
       <SEO 
-        title="Unbley | Build Your Professional Online Store"
-        description="Unbley helps Nigerian businesses build professional online stores, manage products and orders, accept payments and sell online."
+        title="Unbley | Online Store Builder for Nigerian Businesses"
+        description="Launch a professional online store in Nigeria with Unbley. Sell products online, manage orders, accept payments, and grow your ecommerce brand with an easy storefront platform."
+        keywords="online store in Nigeria, ecommerce platform for small businesses, Shopify alternative in Nigeria, ecommerce website builder, sell products online Nigeria"
+        canonical="https://unbley.com/"
       />
       <Navbar />
       <PageTransition>

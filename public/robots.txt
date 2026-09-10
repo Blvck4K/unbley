@@ -1,5 +1,7 @@
 User-agent: *
 Allow: /
+Allow: /about
+Allow: /contact
 Allow: /all-blogs
 Allow: /store
 Allow: /explore-brand
@@ -21,5 +23,6 @@ Disallow: /success
 Disallow: /fillblog
 Disallow: /checkout
 Disallow: /checkout-success
+Disallow: /admin/
 
 Sitemap: https://unbley.com/sitemap.xml

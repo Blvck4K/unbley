@@ -136,7 +136,12 @@ const ecosystemItems = [
 export default function About() {
   return (
     <>
-      <SEO title="About Us | Unbley" description="Unbley helps businesses build professional online stores, accept payments, manage orders, and sell with confidence." />
+      <SEO
+        title="About Unbley | Build Your Professional Online Store"
+        description="Unbley helps businesses build a professional online store, manage products and orders, accept payments, and grow with confidence in Nigeria and beyond."
+        keywords="about Unbley, online store platform Nigeria, ecommerce business tools, professional storefront builder"
+        canonical="https://unbley.com/about"
+      />
       <Navbar />
       <PageTransition>
         <style dangerouslySetInnerHTML={{ __html: aboutStyles }} />

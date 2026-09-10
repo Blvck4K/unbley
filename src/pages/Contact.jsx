@@ -317,8 +317,10 @@ ${formData.message}
   return (
     <>
       <SEO
-        title="Contact Us | Unbley"
-        description="Get in touch with Unbley. We're here to help you build your ecommerce website, get a custom domain, and manage your online store in Nigeria."
+        title="Contact Unbley | Ecommerce Help for Nigerian Businesses"
+        description="Talk to Unbley about launching your online store, getting your domain, managing sales, and growing your ecommerce business in Nigeria."
+        keywords="contact Unbley, ecommerce support Nigeria, online store help, business website support, Unbley customer support"
+        canonical="https://unbley.com/contact"
       />
       <Navbar />
       <PageTransition>
