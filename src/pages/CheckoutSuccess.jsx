@@ -41,7 +41,7 @@ ADDRESS:      ${order.customer_address}
 ----------------------------------------
 ORDER SUMMARY:
 ----------------------------------------
-${order.items.map(item => `${item.qty}x ${item.name} - ₦${(item.price * item.qty).toLocaleString()}`).join('\n')}
+  ${order.items.map(item => `${item.qty}x ${getItemName(item)} - ₦${(item.price * item.qty).toLocaleString()}`).join('\n')}
 
 TOTAL AMOUNT: ₦${order.total_amount.toLocaleString()}
 PAYMENT:      ${order.payment_method.toUpperCase()}
@@ -68,6 +68,8 @@ Your order is being processed.
   };
 
   const brandColor = '#6A3E1F';
+  const getItemName = (item) => item.title || item.name || 'Product';
+  const getItemImage = (item) => item.image_url || item.image || item.imageUrl || '';
 
   return (
     <PageTransition>
@@ -115,10 +117,12 @@ Your order is being processed.
                   <Package size={18} color={brandColor} /> Order Summary
                 </h3>
                 {order.items.map((item, idx) => (
-                  <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', fontSize: '14px' }}>
-                    <span style={{ color: '#6B584C' }}>
-                      {item.qty}x {item.name}
+                  <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '14px', marginBottom: '12px', fontSize: '14px' }}>
+                    <span style={{ color: '#6B584C', display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                      {getItemImage(item) ? <img src={getItemImage(item)} alt={getItemName(item)} style={{ width: '52px', height: '52px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #EAE3D9', flexShrink: 0 }} /> : <span style={{ width: '52px', height: '52px', borderRadius: '8px', backgroundColor: '#F7F2EC', display: 'inline-block', flexShrink: 0 }} />}
+                      <span style={{ minWidth: 0 }}>{item.qty}x {getItemName(item)}
                       {item.fulfillment_status && <small style={{ display: 'block', color: '#8D5B36', fontSize: '10px', fontWeight: '800', marginTop: '3px', textTransform: 'uppercase' }}>{item.fulfillment_status}</small>}
+                      </span>
                     </span>
                     <span style={{ fontWeight: '600', color: '#221510' }}>₦{(item.price * item.qty).toLocaleString()}</span>
                   </div>

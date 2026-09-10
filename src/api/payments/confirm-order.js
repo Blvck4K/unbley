@@ -94,7 +94,10 @@ const formatAmount = (value) => `NGN ${Number(value || 0).toLocaleString('en-NG'
 const sendOrderEmails = async ({ order, brandRecord, provider }) => {
   const itemRows = (Array.isArray(order.items) ? order.items : []).map((item) => `
     <tr>
-      <td style="padding:10px 0;border-bottom:1px solid #eee7e1;">${escapeHtml(item.qty)} x ${escapeHtml(item.title || item.name)}</td>
+      <td style="padding:10px 0;border-bottom:1px solid #eee7e1;vertical-align:middle;">
+        ${item.image_url ? `<img src="${escapeHtml(item.image_url)}" width="52" height="52" alt="${escapeHtml(item.title || item.name || 'Product')}" style="width:52px;height:52px;object-fit:cover;border-radius:8px;vertical-align:middle;margin-right:10px;" />` : ''}
+        <span style="vertical-align:middle;">${escapeHtml(item.qty)} x ${escapeHtml(item.title || item.name)}</span>
+      </td>
       <td align="right" style="padding:10px 0;border-bottom:1px solid #eee7e1;">${formatAmount(Number(item.price) * Number(item.qty))}</td>
     </tr>`).join('');
   const customerName = escapeHtml(order.customer_name || 'there');
