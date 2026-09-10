@@ -18,15 +18,16 @@ app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 app.use('/api', async (req, res) => {
-  const pathname = req.path.replace(/^\/api\/?/, '');
-  const normalized = pathname.replace(/^\/|\/$/g, '');
+  const incoming = req.originalUrl || req.url || '/';
+  const clean = incoming.replace(/^\/api\/?/, '');
+  const normalized = clean.replace(/^\/|\/$/g, '');
 
   if (!normalized) {
     return json(res, 404, { error: 'API endpoint not found.' });
   }
 
-  const routeParts = normalized.split('/');
-  const filePath = path.join(__dirname, 'api', ...routeParts) + '.js';
+  const routeParts = normalized.split('/').filter(Boolean);
+  const filePath = path.join(__dirname, 'src', 'api', ...routeParts) + '.js';
   const routeFile = path.resolve(filePath);
 
   if (!existsSync(routeFile)) {
