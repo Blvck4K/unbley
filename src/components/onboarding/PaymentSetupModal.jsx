@@ -128,7 +128,7 @@ export default function PaymentSetupModal({ isOpen = false, onClose, onComplete 
 
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
-        setVerificationNote('We could not match that account automatically. You can still type the account name manually and continue.');
+        setVerificationNote('Account could not be verified. Please enter the account name manually.');
         return;
       }
 
@@ -141,7 +141,7 @@ export default function PaymentSetupModal({ isOpen = false, onClose, onComplete 
       }
     } catch (resolveErr) {
       console.warn('Bank account verification failed:', resolveErr);
-      setVerificationNote('We could not match that account automatically. You can still type the account name manually and continue.');
+      setVerificationNote('Account could not be verified. Please enter the account name manually.');
     } finally {
       setResolvingAccount(false);
     }
