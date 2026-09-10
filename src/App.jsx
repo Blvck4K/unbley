@@ -64,6 +64,10 @@ const PageLoader = () => (
   </div>
 );
 
+const TestErrorRoute = () => {
+  throw new Error('This is a deliberate test error to preview the custom error fallback screen.');
+};
+
 function App() {
   return (
     <AuthProvider>
@@ -97,6 +101,7 @@ function App() {
                 <Route path="/create-online-store" element={<CreateOnlineStore />} />
                 <Route path="/shopify-alternative" element={<ShopifyAlternative />} />
                 <Route path="/affordable-ecommerce-platform" element={<AffordableEcommerce />} />
+                <Route path="/__error-test" element={import.meta.env.DEV ? <TestErrorRoute /> : <Home />} />
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/menu" element={<ProtectedRoute><Menu /></ProtectedRoute>} />
                 <Route path="/admin/payments" element={<ProtectedRoute><AdminPayments /></ProtectedRoute>} />
