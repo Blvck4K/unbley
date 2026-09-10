@@ -27,11 +27,34 @@ const findBankCodeFromPaystack = async (bankName, secretKey) => {
   return '';
 };
 
+const findBankCodeFromFlutterwave = async (bankName, secretKey) => {
+  const target = normalizeBankName(bankName);
+  if (!target || !secretKey) return '';
+
+  const bankListResponse = await fetch('https://api.flutterwave.com/v3/banks/NG', {
+    headers: { Authorization: `Bearer ${secretKey}` }
+  });
+
+  const bankListPayload = await bankListResponse.json().catch(() => ({}));
+  const banks = Array.isArray(bankListPayload?.data) ? bankListPayload.data : [];
+
+  const directMatch = banks.find((bank) => normalizeBankName(bank.name) === target);
+  if (directMatch?.code) return String(directMatch.code);
+
+  const fuzzyMatch = banks.find((bank) => {
+    const bankName = normalizeBankName(bank.name);
+    return bankName.includes(target) || target.includes(bankName);
+  });
+
+  if (fuzzyMatch?.code) return String(fuzzyMatch.code);
+
+  return '';
+};
+
 const json = (res, status, body) => res.status(status).json(body);
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return json(res, 405, { error: 'Method not allowed.' });
-  if (!process.env.PAYSTACK_SECRET_KEY) return json(res, 503, { error: 'Paystack verification is not configured.' });
 
   const { account_number, bank_code, bank_name } = req.body || {};
   const cleanAccountNumber = String(account_number || '').replace(/\D/g, '');
@@ -44,9 +67,12 @@ export default async function handler(req, res) {
 
   if (!resolvedBankCode && rawBankName) {
     try {
-      resolvedBankCode = await findBankCodeFromPaystack(rawBankName, process.env.PAYSTACK_SECRET_KEY);
+      resolvedBankCode = await findBankCodeFromPaystack(rawBankName, process.env.PAYSTACK_SECRET_KEY || '');
+      if (!resolvedBankCode) {
+        resolvedBankCode = await findBankCodeFromFlutterwave(rawBankName, process.env.FLUTTERWAVE_SECRET_KEY || '');
+      }
     } catch (error) {
-      console.error('Paystack bank lookup failed:', error);
+      console.error('Bank lookup failed:', error);
     }
   }
 
@@ -54,26 +80,42 @@ export default async function handler(req, res) {
     return json(res, 400, { error: 'Please select a valid bank and enter a valid account number.' });
   }
 
-  try {
-    const response = await fetch('https://api.paystack.co/bank/resolve', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ account_number: cleanAccountNumber, bank_code: resolvedBankCode })
-    });
+  const providers = [];
+  if (process.env.PAYSTACK_SECRET_KEY) providers.push({ name: 'paystack', secret: process.env.PAYSTACK_SECRET_KEY, url: 'https://api.paystack.co/bank/resolve', body: { account_number: cleanAccountNumber, bank_code: resolvedBankCode } });
+  if (process.env.FLUTTERWAVE_SECRET_KEY) providers.push({ name: 'flutterwave', secret: process.env.FLUTTERWAVE_SECRET_KEY, url: 'https://api.flutterwave.com/v3/accounts/resolve', body: { account_number: cleanAccountNumber, account_bank: resolvedBankCode } });
 
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok || !payload.status || !payload.data?.account_name) {
-      return json(res, 400, { error: payload.message || 'We could not verify that account number. Please check your details and try again.' });
+  if (providers.length === 0) {
+    return json(res, 503, { error: 'Account verification is not configured.' });
+  }
+
+  try {
+    for (const provider of providers) {
+      const response = await fetch(provider.url, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${provider.secret}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(provider.body)
+      });
+
+      const payload = await response.json().catch(() => ({}));
+      const accountName = provider.name === 'paystack' ? payload?.data?.account_name : payload?.data?.account_name;
+      if (response.ok && payload?.status !== false && accountName) {
+        return json(res, 200, {
+          account_name: String(accountName).trim(),
+          bank_code: resolvedBankCode,
+          account_number: cleanAccountNumber,
+          provider: provider.name
+        });
+      }
     }
 
-    return json(res, 200, {
-      account_name: payload.data.account_name,
-      bank_code: payload.data.bank_code || resolvedBankCode,
-      account_number: cleanAccountNumber
-    });
+    const errorMessage = providers[0]?.name === 'paystack'
+      ? 'We could not verify that account number. Please check your details and try again.'
+      : 'We could not verify that account number with the configured bank provider. Please check your details and try again.';
+
+    return json(res, 400, { error: errorMessage });
   } catch (error) {
     return json(res, 500, {
       error: 'Unable to verify your bank account right now. Please try again in a moment.'
