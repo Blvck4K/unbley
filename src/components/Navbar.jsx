@@ -241,51 +241,91 @@ export default function Navbar() {
       <AnimatePresence>
         {isMobile && isMenuOpen && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
+            initial={{ opacity: 0, y: -16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.22, ease: 'easeOut' }}
             style={{
               position: 'absolute',
               top: '72px',
-              left: 0,
-              right: 0,
-              backgroundColor: '#FFF',
-              borderBottom: '1px solid var(--border-color)',
+              left: 12,
+              right: 12,
+              background: 'linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(249,245,240,0.98) 100%)',
+              border: '1px solid rgba(106, 62, 31, 0.08)',
+              borderRadius: '22px',
+              boxShadow: '0 24px 60px rgba(34, 21, 16, 0.12)',
               overflow: 'hidden',
-              zIndex: 99
+              zIndex: 99,
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)'
             }}
           >
-            <div className="container flex flex-col gap-6" style={{ padding: '24px 20px' }}>
-              <div className="flex flex-col gap-2">
-                <div className="font-bold" style={{ fontSize: '14px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Solutions</div>
-                <Link to="/sell-digital-products" onClick={() => setIsMenuOpen(false)} className="font-semibold" style={{ fontSize: '15px' }}>Sell Digital Products</Link>
-                <Link to="/creator-platform" onClick={() => setIsMenuOpen(false)} className="font-semibold" style={{ fontSize: '15px' }}>Creative Brands</Link>
-                <Link to="/create-online-store" onClick={() => setIsMenuOpen(false)} className="font-semibold" style={{ fontSize: '15px' }}>Create Online Store</Link>
-                <Link to="/shopify-alternative" onClick={() => setIsMenuOpen(false)} className="font-semibold" style={{ fontSize: '15px' }}>Shopify Alternative</Link>
-                <Link to="/affordable-ecommerce-platform" onClick={() => setIsMenuOpen(false)} className="font-semibold" style={{ fontSize: '15px' }}>Affordable Ecommerce</Link>
-                <Link to="/all-blogs" onClick={() => setIsMenuOpen(false)} className="font-semibold" style={{ fontSize: '15px', color: 'var(--primary)' }}>Blog</Link>
-                <Link to="/about" onClick={() => setIsMenuOpen(false)} className="font-semibold" style={{ fontSize: '15px' }}>About</Link>
+            <div className="container flex flex-col gap-5" style={{ padding: '18px 16px 16px' }}>
+              <div style={{ padding: '6px 8px 0' }}>
+                <div className="font-bold" style={{ fontSize: '12px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '12px' }}>Solutions</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {[
+                    ['/sell-digital-products', 'Sell Digital Products'],
+                    ['/creator-platform', 'Creative Brands'],
+                    ['/create-online-store', 'Create Online Store'],
+                    ['/shopify-alternative', 'Shopify Alternative'],
+                    ['/affordable-ecommerce-platform', 'Affordable Ecommerce'],
+                    ['/all-blogs', 'Blog'],
+                    ['/about', 'About']
+                  ].map(([to, label]) => (
+                    <Link
+                      key={to}
+                      to={to}
+                      onClick={() => setIsMenuOpen(false)}
+                      style={{
+                        textDecoration: 'none',
+                        color: '#1f2937',
+                        fontSize: '15px',
+                        fontWeight: 600,
+                        padding: '12px 14px',
+                        borderRadius: '12px',
+                        background: 'rgba(255,255,255,0.7)',
+                        border: '1px solid rgba(106, 62, 31, 0.06)',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+                      }}
+                    >
+                      {label}
+                    </Link>
+                  ))}
+                </div>
               </div>
 
-              <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-2" style={{ background: 'rgba(106, 62, 31, 0.04)', padding: '12px 14px', borderRadius: '14px', border: '1px solid rgba(106, 62, 31, 0.08)' }}>
+                <Search size={18} style={{ color: '#6B7280' }} />
+                <input
+                  type="text"
+                  placeholder="Search stores..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  onKeyDown={handleSearch}
+                  style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: '15px', width: '100%', color: '#111827' }}
+                />
+              </div>
+
+              <div className="flex flex-col gap-3" style={{ paddingTop: '2px' }}>
                 {user ? (
                   <>
-                    <Link to="/dashboard" onClick={() => setIsMenuOpen(false)} className="font-semibold flex items-center gap-3" style={{ fontSize: '16px', padding: '12px 0' }}>
-                      <LayoutGrid size={20} />
+                    <Link to="/dashboard" onClick={() => setIsMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: '#1f2937', fontSize: '16px', fontWeight: 700, padding: '14px 12px', borderRadius: '12px', background: 'rgba(255,255,255,0.7)', border: '1px solid rgba(106, 62, 31, 0.06)' }}>
+                      <LayoutGrid size={18} />
                       Dashboard
                     </Link>
-                    <button onClick={handleLogout} className="btn btn-outline" style={{ width: '100%', padding: '12px' }}>
-                      Logout
-                    </button>
                   </>
                 ) : (
                   <>
-                    <Link to="/auth?mode=signin" onClick={() => setIsMenuOpen(false)} className="font-semibold flex items-center gap-3" style={{ fontSize: '16px', padding: '12px 0' }}>
-                      <LogIn size={20} />
+                    <Link to="/auth?mode=signin" onClick={() => setIsMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: '#1f2937', fontSize: '16px', fontWeight: 700, padding: '14px 12px', borderRadius: '12px', background: 'rgba(255,255,255,0.7)', border: '1px solid rgba(106, 62, 31, 0.06)' }}>
+                      <LogIn size={18} />
                       Sign In
                     </Link>
-                    <Link to="/auth?mode=signup" onClick={() => setIsMenuOpen(false)} className="btn btn-primary" style={{ width: '100%', padding: '12px' }}>
+                    <Link to="/auth?mode=signup" onClick={() => setIsMenuOpen(false)} style={{ display: 'block', width: '100%', textAlign: 'center', textDecoration: 'none', padding: '15px 16px', borderRadius: '14px', background: 'linear-gradient(135deg, #6A3E1F 0%, #8A5A37 100%)', color: '#fff', fontWeight: 800, boxShadow: '0 12px 24px rgba(106, 62, 31, 0.2)' }}>
                       Get Started
+                    </Link>
+                    <Link to="/" onClick={() => setIsMenuOpen(false)} style={{ display: 'block', width: '100%', textAlign: 'center', textDecoration: 'none', padding: '14px 16px', borderRadius: '14px', background: '#fff', border: '1px solid rgba(106, 62, 31, 0.08)', color: '#6A3E1F', fontWeight: 700 }}>
+                      Explore Unbley
                     </Link>
                   </>
                 )}

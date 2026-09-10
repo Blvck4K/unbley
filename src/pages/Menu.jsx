@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BarChart2, CreditCard, HelpCircle, Headphones, Sliders, Users, ArrowLeft, ChevronRight, Menu as MenuIcon } from 'lucide-react';
+import { BarChart2, CreditCard, HelpCircle, Headphones, Sliders, Users, ArrowLeft, ChevronRight, Menu as MenuIcon, LogOut } from 'lucide-react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import PageTransition from '../components/PageTransition';
@@ -13,7 +13,7 @@ const menuItems = [
 ];
 
 export default function Menu() {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
   const [isMobile, setIsMobile] = useState(null);
   const [tourStep, setTourStep] = useState(() => {
@@ -39,6 +39,11 @@ export default function Menu() {
     new Date(user.plan_ends_at) > new Date()
   );
   const visibleItems = menuItems.filter(item => !item.requiresInactivePlan || !hasActivePlan);
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/');
+  };
 
   return (
     <PageTransition>
@@ -91,6 +96,33 @@ export default function Menu() {
             </>
           )}
         </section>
+
+        <div style={{ padding: '18px 16px 28px' }}>
+          <button
+            type="button"
+            onClick={handleLogout}
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '10px',
+              border: 'none',
+              borderRadius: '14px',
+              background: 'linear-gradient(135deg, #6A3E1F 0%, #8C5A35 100%)',
+              color: '#fff',
+              padding: '14px 18px',
+              fontSize: '15px',
+              fontWeight: 800,
+              cursor: 'pointer',
+              boxShadow: '0 12px 28px rgba(106, 62, 31, 0.2)'
+            }}
+          >
+            <LogOut size={18} />
+            Logout
+          </button>
+        </div>
+
         <DashboardTour
           isActive={tourStep !== null}
           initialStep={tourStep ?? 0}
