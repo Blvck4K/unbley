@@ -459,6 +459,24 @@ export default function Dashboard() {
     });
   }, []);
 
+  const refreshRecentOrders = useCallback(async () => {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('brand_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(5);
+
+    if (error) {
+      console.error('Error refreshing recent orders:', error);
+      return;
+    }
+
+    if (!isMountedRef.current) return;
+    setMetrics((currentMetrics) => ({ ...currentMetrics, recentOrders: data || [] }));
+  }, [user]);
+
   const handleOrderRealtime = useCallback((payload) => {
     const eventType = payload.eventType;
     const nextOrder = payload.new;
@@ -479,15 +497,11 @@ export default function Dashboard() {
       const previousAmount = Number(previousOrder?.total_amount) || 0;
       const nextAmount = Number(nextOrder?.total_amount) || 0;
       const salesDelta = eventType === 'INSERT' ? nextAmount : eventType === 'DELETE' ? -previousAmount : nextAmount - previousAmount;
-      let recentOrders = currentMetrics.recentOrders;
-      if (eventType === 'INSERT' && nextOrder) recentOrders = [nextOrder, ...recentOrders.filter((order) => order.id !== orderId)].slice(0, 5);
-      if (eventType === 'UPDATE' && nextOrder) recentOrders = recentOrders.some((order) => order.id === orderId)
-        ? recentOrders.map((order) => order.id === orderId ? { ...order, ...nextOrder } : order)
-        : [nextOrder, ...recentOrders].slice(0, 5);
-      if (eventType === 'DELETE') recentOrders = recentOrders.filter((order) => order.id !== orderId);
-      return { ...currentMetrics, totalSales: Math.max(0, currentMetrics.totalSales + salesDelta), recentOrders };
+      return { ...currentMetrics, totalSales: Math.max(0, currentMetrics.totalSales + salesDelta) };
     });
-  }, []);
+
+    void refreshRecentOrders();
+  }, [refreshRecentOrders]);
 
   const fetchPayouts = useCallback(async () => {
     if (!user) return;
@@ -685,7 +699,10 @@ export default function Dashboard() {
         { event: '*', schema: 'public', table: 'orders', filter: `brand_id=eq.${user.id}` },
         (payload) => {
           handleOrderRealtime(payload);
-          if (currentTabRef.current === 'overview') scheduleDashboardRefresh();
+          if (currentTabRef.current === 'overview') {
+            scheduleDashboardRefresh();
+            void refreshRecentOrders();
+          }
         }
       ).subscribe((status) => {
         if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') scheduleDashboardRefresh();
@@ -696,7 +713,7 @@ export default function Dashboard() {
       supabase.removeChannel(productsChannel);
       supabase.removeChannel(ordersChannel);
     };
-  }, [user, fetchDashboardData, handleProductRealtime, handleOrderRealtime, scheduleDashboardRefresh]);
+  }, [user, fetchDashboardData, handleProductRealtime, handleOrderRealtime, scheduleDashboardRefresh, refreshRecentOrders]);
 
   useEffect(() => {
     if (!user) return undefined;

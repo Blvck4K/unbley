@@ -5,6 +5,45 @@ import { createPortal } from 'react-dom';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 
+const BANK_OPTIONS = [
+  'Access Bank',
+  'ALAT by WEMA',
+  'Apex MFB',
+  'ASO Savings',
+  'Citibank Nigeria',
+  'Ecobank Nigeria',
+  'Fidelity Bank',
+  'First Bank of Nigeria',
+  'FCMB',
+  'Globus Bank',
+  'Greenwich Bank',
+  'GTBank',
+  'Jaiz Bank',
+  'Keystone Bank',
+  'Kuda MFB',
+  'Lotus Bank',
+  'Moniepoint MFB',
+  'Opay',
+  'Palmpay',
+  'Parkway - ReadyCash',
+  'Paycom',
+  'Polaris Bank',
+  'Providus Bank',
+  'Rubies MFB',
+  'Sparkle Microfinance Bank',
+  'Stanbic IBTC',
+  'Sterling Bank',
+  'SunTrust Bank',
+  'TAJ Bank',
+  'Titan Trust Bank',
+  'UBA',
+  'Union Bank',
+  'Unity Bank',
+  'Wema Bank',
+  'Zenith Bank',
+  'Other Bank'
+];
+
 export default function PaymentSetupModal({ isOpen = false, onClose, onComplete }) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -298,17 +337,9 @@ export default function PaymentSetupModal({ isOpen = false, onClose, onComplete 
                   }}
                 >
                   <option value="">Select your bank</option>
-                  <option value="GTBank">GTBank</option>
-                  <option value="Access Bank">Access Bank</option>
-                  <option value="First Bank">First Bank</option>
-                  <option value="Zenith Bank">Zenith Bank</option>
-                  <option value="Ecobank">Ecobank</option>
-                  <option value="FCMB">FCMB</option>
-                  <option value="Fidelity Bank">Fidelity Bank</option>
-                  <option value="Stanbic IBTC">Stanbic IBTC</option>
-                  <option value="UBA">UBA</option>
-                  <option value="Wema Bank">Wema Bank</option>
-                  <option value="Other">Other Bank</option>
+                  {BANK_OPTIONS.map((bank) => (
+                    <option key={bank} value={bank}>{bank}</option>
+                  ))}
                 </select>
               </div>
 

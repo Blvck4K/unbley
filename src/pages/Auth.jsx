@@ -203,7 +203,7 @@ export default function Auth() {
             .auth-sidebar { display: none !important; }
             .auth-quote-box { display: none !important; }
             .auth-mobile-header { display: flex !important; }
-            .auth-mobile-logo { display: none !important; }
+            .auth-mobile-logo { display: block !important; }
             .auth-form-card { padding: 28px 22px !important; }
           }
 
@@ -281,8 +281,9 @@ export default function Auth() {
               >
                 <ArrowLeft size={18} />
               </Link>
-              <Link to="/" style={{ fontFamily: 'var(--font-heading)', fontSize: '24px', letterSpacing: '-0.02em', fontWeight: '800', color: brandColor, textDecoration: 'none', textTransform: 'none' }}>
-                Unbley.
+              <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontFamily: 'var(--font-heading)', fontSize: '24px', letterSpacing: '-0.02em', fontWeight: '800', color: brandColor, textDecoration: 'none', textTransform: 'none' }}>
+                <img src={logoImg} alt="Unbley logo" className="auth-mobile-logo" style={{ width: '30px', height: '30px', objectFit: 'contain', display: 'none' }} />
+                <span>Unbley.</span>
               </Link>
               <div style={{ width: '40px' }} /> {/* Keeps the logo centered */}
             </div>
