@@ -913,6 +913,7 @@ export default function Dashboard() {
       ...prev,
       recentOrders: prev.recentOrders.map(item => item.id === orderId ? { ...item, items: nextItems } : item)
     }));
+    notifyOrderStatus(orderId, nextStatus);
     toast?.success('Item status updated');
   };
 

@@ -90,12 +90,13 @@ const escapeHtml = (value) => String(value || '').replace(/[&<>'"]/g, (character
 }[character]));
 
 const formatAmount = (value) => `NGN ${Number(value || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 })}`;
+const getProductImage = (value) => String(value || '').split(',').map((url) => url.trim()).find(Boolean) || '';
 
 const sendOrderEmails = async ({ order, brandRecord, provider }) => {
   const itemRows = (Array.isArray(order.items) ? order.items : []).map((item) => `
     <tr>
       <td style="padding:10px 0;border-bottom:1px solid #eee7e1;vertical-align:middle;">
-        ${item.image_url ? `<img src="${escapeHtml(item.image_url)}" width="52" height="52" alt="${escapeHtml(item.title || item.name || 'Product')}" style="width:52px;height:52px;object-fit:cover;border-radius:8px;vertical-align:middle;margin-right:10px;" />` : ''}
+        ${getProductImage(item.image_url) ? `<img src="${escapeHtml(getProductImage(item.image_url))}" width="52" height="52" alt="${escapeHtml(item.title || item.name || 'Product')}" style="width:52px;height:52px;object-fit:cover;border-radius:8px;vertical-align:middle;margin-right:10px;" />` : ''}
         <span style="vertical-align:middle;">${escapeHtml(item.qty)} x ${escapeHtml(item.title || item.name)}</span>
       </td>
       <td align="right" style="padding:10px 0;border-bottom:1px solid #eee7e1;">${formatAmount(Number(item.price) * Number(item.qty))}</td>
@@ -247,7 +248,7 @@ export default async function handler(req, res) {
       }
       const price = Number(product.price);
       subtotal += price * quantity;
-      normalizedItems.push({ id: product.id, name: product.title, title: product.title, price, qty: quantity, image_url: product.image_url || null, size: item.size || null, color: item.color || null, fulfillment_status: 'paid' });
+      normalizedItems.push({ id: product.id, name: product.title, title: product.title, price, qty: quantity, image_url: getProductImage(product.image_url) || null, size: item.size || null, color: item.color || null, fulfillment_status: 'paid' });
     }
 
     const total = subtotal + shippingFee;

@@ -1,4 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
+import { sendEmail } from '../../../lib/notifications/resend.js';
+import { recordNotification } from '../../../lib/notifications/notificationStore.js';
 
 const json = (res, status, body) => res.status(status).json(body);
 const statuses = new Set(['paid', 'processing', 'shipped', 'delivered', 'cancelled']);
@@ -25,16 +27,35 @@ export default async function handler(req, res) {
   if (!order.customer_email) return json(res, 200, { sent: false, reason: 'Customer has no email address.' });
   if (!process.env.RESEND_API_KEY || !process.env.RESEND_FROM_EMAIL) return json(res, 200, { sent: false, reason: 'Email provider is not configured.' });
 
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      from: process.env.RESEND_FROM_EMAIL,
-      to: [order.customer_email],
-      subject: `Order ${order.order_number} update`,
-      text: `Hello ${order.customer_name || 'there'},\n\nYour order ${order.order_number} is now: ${status.toUpperCase()}.\n\nThank you for shopping with us.`
-    })
+  const subject = `Order ${order.order_number} update`;
+  const statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
+  const text = `Hello ${order.customer_name || 'there'},\n\nYour order ${order.order_number} is now: ${statusLabel}.\n\nThank you for shopping with us.`;
+  const html = `<h1 style="margin:0 0 12px;color:#2b211c;font-size:26px;line-height:1.2;">Order status updated</h1>
+    <p style="margin:0 0 22px;">Hello ${order.customer_name || 'there'}, your order status has changed.</p>
+    <div style="background:#f8f4ef;border-radius:10px;padding:18px 20px;">
+      <div style="color:#75675e;font-size:12px;text-transform:uppercase;letter-spacing:.08em;">Order</div>
+      <strong style="font-size:18px;">${order.order_number}</strong>
+      <div style="margin-top:14px;color:#75675e;font-size:12px;text-transform:uppercase;letter-spacing:.08em;">Current status</div>
+      <strong style="color:#8a552f;font-size:18px;">${statusLabel}</strong>
+    </div>
+    <p style="margin:22px 0 0;color:#75675e;">Thank you for shopping with us.</p>`;
+  const result = await sendEmail({ to: order.customer_email, subject, html, text }).catch((error) => ({ ok: false, error: error.message }));
+
+  await recordNotification({
+    eventType: 'order_status_updated',
+    templateSlug: 'order_status_updated',
+    brandId: order.brand_id,
+    orderId: order.id,
+    recipient: order.customer_email,
+    subject,
+    body: text,
+    html,
+    providerMessageId: result?.data?.id || null,
+    status: result?.ok ? 'sent' : 'failed',
+    payload: { orderNumber: order.order_number, status },
+    errorMessage: result?.error || null
   });
-  if (!response.ok) return json(res, 502, { error: 'Customer notification could not be sent.' });
-  return json(res, 200, { sent: true });
+
+  if (!result.ok) return json(res, 502, { error: result.error || 'Customer notification could not be sent.' });
+  return json(res, 200, { sent: true, messageId: result.data?.id || null });
 }

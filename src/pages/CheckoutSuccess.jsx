@@ -69,7 +69,7 @@ Your order is being processed.
 
   const brandColor = '#6A3E1F';
   const getItemName = (item) => item.title || item.name || 'Product';
-  const getItemImage = (item) => item.image_url || item.image || item.imageUrl || '';
+  const getItemImage = (item) => String(item.image_url || item.image || item.imageUrl || '').split(',').map((url) => url.trim()).find(Boolean) || '';
 
   return (
     <PageTransition>
