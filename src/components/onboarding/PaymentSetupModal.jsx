@@ -87,6 +87,7 @@ export default function PaymentSetupModal({ isOpen = false, onClose, onComplete 
   const [loading, setLoading] = useState(false);
   const [resolvingAccount, setResolvingAccount] = useState(false);
   const [error, setError] = useState(null);
+  const [verificationNote, setVerificationNote] = useState('');
   const [formData, setFormData] = useState({
     bank_name: '',
     custom_bank_name: '',
@@ -116,6 +117,7 @@ export default function PaymentSetupModal({ isOpen = false, onClose, onComplete 
     try {
       setResolvingAccount(true);
       setError(null);
+      setVerificationNote('');
 
       const response = await fetch('/api/payments/resolve-bank-account', {
         method: 'POST',
@@ -125,15 +127,18 @@ export default function PaymentSetupModal({ isOpen = false, onClose, onComplete 
 
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(payload?.error || 'Unable to verify account details.');
+        setVerificationNote('We could not match that account automatically. You can still type the account name manually and continue.');
+        return;
       }
 
       const accountName = payload?.account_name?.trim();
       if (accountName) {
         setFormData(prev => ({ ...prev, account_name: accountName }));
+        setVerificationNote('');
       }
     } catch (resolveErr) {
-      setError(resolveErr.message || 'Unable to verify account details.');
+      console.warn('Bank account verification failed:', resolveErr);
+      setVerificationNote('We could not match that account automatically. You can still type the account name manually and continue.');
     } finally {
       setResolvingAccount(false);
     }
@@ -175,13 +180,18 @@ export default function PaymentSetupModal({ isOpen = false, onClose, onComplete 
 
     const bankToSave = selectedBankName;
 
-    if (!bankToSave || !formData.account_name || !formData.account_number || !formData.phone_number) {
-      setError('Please fill in all fields');
+    if (!bankToSave || !formData.account_number || !formData.phone_number) {
+      setError('Please fill in the required bank and contact details');
       return;
     }
 
     if (formData.account_number.replace(/\D/g, '').length < 10) {
       setError('Account number must be at least 10 digits');
+      return;
+    }
+
+    if (!formData.account_name) {
+      setError('Please enter the account holder name or wait for automatic verification to fill it in.');
       return;
     }
 
@@ -216,6 +226,7 @@ export default function PaymentSetupModal({ isOpen = false, onClose, onComplete 
   const handleClose = () => {
     setFormData({ bank_name: '', custom_bank_name: '', account_name: '', account_number: '', phone_number: '' });
     setError(null);
+    setVerificationNote('');
     setResolvingAccount(false);
     onClose?.();
   };
@@ -339,6 +350,28 @@ export default function PaymentSetupModal({ isOpen = false, onClose, onComplete 
                   margin: 0
                 }}>
                   {error}
+                </p>
+              </div>
+            )}
+
+            {verificationNote && !error && (
+              <div style={{
+                backgroundColor: '#FEF3C7',
+                border: '1px solid #FCD34D',
+                borderRadius: '8px',
+                padding: '12px',
+                marginBottom: '20px',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '10px'
+              }}>
+                <AlertCircle size={18} color="#A16207" style={{ flexShrink: 0, marginTop: '2px' }} />
+                <p style={{
+                  fontSize: '12px',
+                  color: '#92400E',
+                  margin: 0
+                }}>
+                  {verificationNote}
                 </p>
               </div>
             )}
@@ -485,44 +518,6 @@ export default function PaymentSetupModal({ isOpen = false, onClose, onComplete 
                 )}
               </div>
 
-              {/* Account Name */}
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '13px',
-                  fontWeight: '600',
-                  color: '#111827',
-                  marginBottom: '6px'
-                }}>
-                  Account Name *
-                </label>
-                <input
-                  type="text"
-                  name="account_name"
-                  value={formData.account_name}
-                  onChange={handleInputChange}
-                  placeholder="Your full name or business name"
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    border: '1px solid #D1D5DB',
-                    borderRadius: '8px',
-                    fontSize: '13px',
-                    fontFamily: 'inherit',
-                    boxSizing: 'border-box',
-                    transition: 'all 0.15s ease'
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = '#6A3E1F';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(106, 62, 31, 0.1)';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = '#D1D5DB';
-                    e.target.style.boxShadow = 'none';
-                  }}
-                />
-              </div>
-
               {/* Account Number */}
               <div>
                 <label style={{
@@ -549,6 +544,44 @@ export default function PaymentSetupModal({ isOpen = false, onClose, onComplete 
                     }
                   }}
                   placeholder="Your 10-digit account number"
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    border: '1px solid #D1D5DB',
+                    borderRadius: '8px',
+                    fontSize: '13px',
+                    fontFamily: 'inherit',
+                    boxSizing: 'border-box',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = '#6A3E1F';
+                    e.target.style.boxShadow = '0 0 0 3px rgba(106, 62, 31, 0.1)';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = '#D1D5DB';
+                    e.target.style.boxShadow = 'none';
+                  }}
+                />
+              </div>
+
+              {/* Account Name */}
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  color: '#111827',
+                  marginBottom: '6px'
+                }}>
+                  Account Name *
+                </label>
+                <input
+                  type="text"
+                  name="account_name"
+                  value={formData.account_name}
+                  onChange={handleInputChange}
+                  placeholder="Your full name or business name"
                   style={{
                     width: '100%',
                     padding: '10px 12px',
