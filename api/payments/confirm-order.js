@@ -3,6 +3,78 @@ import { createClient } from '@supabase/supabase-js';
 const json = (res, status, body) => res.status(status).json(body);
 const serverClient = () => createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 
+const getPlatformFeeConfig = () => {
+  const percentage = Number(process.env.PLATFORM_FEE_PERCENTAGE ?? '0');
+  const fixedAmount = Number(process.env.PLATFORM_FEE_FIXED_AMOUNT ?? '0');
+  return {
+    percentage: Number.isFinite(percentage) ? percentage : 0,
+    fixedAmount: Number.isFinite(fixedAmount) ? fixedAmount : 0
+  };
+};
+
+const calculatePlatformFeeMinor = (grossMinorAmount) => {
+  const { percentage, fixedAmount } = getPlatformFeeConfig();
+  const percentageFee = Math.floor((Number(grossMinorAmount || 0) * percentage) / 100);
+  const fixedFeeMinor = Math.round(fixedAmount * 100);
+  return Math.max(0, percentageFee + fixedFeeMinor);
+};
+
+const createLedgerEntries = async ({ supabase, merchantId, orderId, provider, reference, grossMinorAmount, settlementOffsetDays = 1 }) => {
+  const { data: existingPayment, error: existingError } = await supabase
+    .from('merchant_financial_transactions')
+    .select('id')
+    .eq('merchant_id', merchantId)
+    .eq('provider_transaction_id', reference)
+    .eq('type', 'PAYMENT')
+    .maybeSingle();
+
+  if (existingError) throw existingError;
+  if (existingPayment?.id) return;
+
+  const platformFeeMinor = calculatePlatformFeeMinor(grossMinorAmount);
+  const netMinorAmount = Math.max(0, Number(grossMinorAmount || 0) - platformFeeMinor);
+  const now = new Date();
+  const availableAt = new Date(now.getTime() + settlementOffsetDays * 24 * 60 * 60 * 1000).toISOString();
+
+  const paymentInsert = {
+    merchant_id: merchantId,
+    order_id: orderId,
+    payment_provider: provider,
+    provider_transaction_id: reference,
+    type: 'PAYMENT',
+    amount: netMinorAmount,
+    currency: 'NGN',
+    status: 'PENDING',
+    available_at: availableAt,
+    metadata: {
+      grossAmountMinor: Number(grossMinorAmount || 0),
+      platformFeeMinor: platformFeeMinor,
+      settlementOffsetDays
+    }
+  };
+
+  const feeInsert = {
+    merchant_id: merchantId,
+    order_id: orderId,
+    payment_provider: provider,
+    provider_transaction_id: reference,
+    type: 'PLATFORM_FEE',
+    amount: -Math.abs(platformFeeMinor),
+    currency: 'NGN',
+    status: 'POSTED',
+    available_at: null,
+    metadata: { grossAmountMinor: Number(grossMinorAmount || 0) }
+  };
+
+  const { error: paymentLedgerError } = await supabase.from('merchant_financial_transactions').insert(paymentInsert);
+  if (paymentLedgerError) throw paymentLedgerError;
+
+  if (platformFeeMinor > 0) {
+    const { error: feeLedgerError } = await supabase.from('merchant_financial_transactions').insert(feeInsert);
+    if (feeLedgerError) throw feeLedgerError;
+  }
+};
+
 const clean = (value, pattern = /[^a-zA-Z0-9, .+@_-]/g) => String(value || '').replace(pattern, '').trim();
 
 const wait = (milliseconds) => new Promise(resolve => setTimeout(resolve, milliseconds));
@@ -146,6 +218,18 @@ export default async function handler(req, res) {
     };
 
     let { data: savedOrder, error: orderError } = await supabase.from('orders').insert(order).select('*').single();
+
+    if (!orderError && savedOrder) {
+      await createLedgerEntries({
+        supabase,
+        merchantId: brandId,
+        orderId: savedOrder.id,
+        provider,
+        reference: verifiedReference,
+        grossMinorAmount: Math.round(Number(total) * 100),
+        settlementOffsetDays: Number(process.env.SETTLEMENT_OFFSET_DAYS ?? '1')
+      });
+    }
 
     // Older deployments may not have the optional fulfillment columns yet.
     // Keep a verified payment recoverable by retrying with the legacy order shape.

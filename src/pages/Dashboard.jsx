@@ -120,6 +120,7 @@ export default function Dashboard() {
   const [withdrawalLoading, setWithdrawalLoading] = useState(false);
   const [withdrawalError, setWithdrawalError] = useState(null);
   const [availableBalance, setAvailableBalance] = useState(0);
+  const [pendingBalance, setPendingBalance] = useState(0);
   const [dashboardError, setDashboardError] = useState('');
   const [productsError, setProductsError] = useState('');
   const [ordersError, setOrdersError] = useState('');
@@ -559,6 +560,29 @@ export default function Dashboard() {
 
   const fetchAvailableBalance = useCallback(async () => {
     if (!user) return;
+
+    let ledgerAvailable = 0;
+    let ledgerPending = 0;
+
+    try {
+      const { data: ledgerData, error: ledgerError } = await supabase
+        .from('merchant_financial_transactions')
+        .select('amount, type, status, available_at')
+        .eq('merchant_id', user.id);
+
+      if (!ledgerError && Array.isArray(ledgerData)) {
+        ledgerAvailable = (ledgerData || [])
+          .filter(entry => entry.type === 'PAYMENT' && (entry.status === 'AVAILABLE' || entry.status === 'POSTED'))
+          .reduce((sum, entry) => sum + (Number(entry.amount) || 0), 0);
+
+        ledgerPending = (ledgerData || [])
+          .filter(entry => entry.type === 'PAYMENT' && entry.status === 'PENDING')
+          .reduce((sum, entry) => sum + (Number(entry.amount) || 0), 0);
+      }
+    } catch (error) {
+      console.warn('Ledger balance not available yet:', error);
+    }
+
     const [{ data: orderData, error: orderError }, { data: requestData, error: requestError }] = await Promise.all([
       supabase.from('orders').select('total_amount, status').eq('brand_id', user.id),
       supabase.from('withdrawal_requests').select('amount, status').eq('brand_id', user.id)
@@ -569,13 +593,20 @@ export default function Dashboard() {
       setWalletError(error.message || 'Could not calculate available balance.');
       return;
     }
+
     const completedSales = (orderData || [])
       .filter(order => order.status === 'completed')
       .reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0);
     const reservedWithdrawals = (requestData || [])
       .filter(request => request.status === 'pending' || request.status === 'approved')
       .reduce((sum, request) => sum + (Number(request.amount) || 0), 0);
-    setAvailableBalance(Math.max(0, completedSales - reservedWithdrawals));
+
+    const fallbackAvailable = Math.max(0, completedSales - reservedWithdrawals);
+    const nextAvailableBalance = ledgerAvailable > 0 ? Math.max(ledgerAvailable, fallbackAvailable) : fallbackAvailable;
+    const nextPendingBalance = ledgerPending > 0 ? Math.max(ledgerPending, 0) : Math.max(0, completedSales - nextAvailableBalance);
+
+    setAvailableBalance(nextAvailableBalance);
+    setPendingBalance(nextPendingBalance);
     setWalletError('');
   }, [user]);
   useEffect(() => {
@@ -1636,17 +1667,17 @@ export default function Dashboard() {
                 <div className="unbley-metric-card">
                   <div className="unbley-metric-top"><div className="unbley-icon-box-blue"><Wallet size={18} /></div></div>
                   <div>
-                    <div className="unbley-metric-label">PENDING SETTLEMENT</div>
-                    <div className="unbley-metric-value">{formatMoney(payouts.filter(p => PENDING_SETTLEMENT_STATUSES.includes(p.status)).reduce((s, p) => s + (p.total_amount || 0), 0))}</div>
-                    <div className="unbley-metric-subtext">Paid orders not yet completed</div>
+                    <div className="unbley-metric-label">PENDING BALANCE</div>
+                    <div className="unbley-metric-value">{formatMoney(pendingBalance)}</div>
+                    <div className="unbley-metric-subtext">Funds waiting for settlement</div>
                   </div>
                 </div>
                 <div className="unbley-metric-card">
                   <div className="unbley-metric-top"><div className="unbley-icon-box-cream"><TrendingUp size={18} /></div></div>
                   <div>
-                    <div className="unbley-metric-label">COMPLETED SALES</div>
-                    <div className="unbley-metric-value">{formatMoney(payouts.filter(p => p.status === 'completed').reduce((s, p) => s + (p.total_amount || 0), 0))}</div>
-                    <div className="unbley-metric-subtext">Completed and paid out</div>
+                    <div className="unbley-metric-label">AVAILABLE BALANCE</div>
+                    <div className="unbley-metric-value">{formatMoney(availableBalance)}</div>
+                    <div className="unbley-metric-subtext">Ready for payout</div>
                   </div>
                 </div>
               </div>

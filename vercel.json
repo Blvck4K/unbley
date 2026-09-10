@@ -40,6 +40,12 @@
       "permanent": true
     }
   ],
+  "crons": [
+    {
+      "path": "/api/payments/settle-merchant-balances",
+      "schedule": "0 0 * * *"
+    }
+  ],
   "rewrites": [
     {
       "source": "/((?!api/|assets/|favicon.ico).*)",

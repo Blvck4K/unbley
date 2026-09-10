@@ -212,6 +212,13 @@ export default function PaymentSetupModal({ isOpen = false, onClose, onComplete 
           account_name: formData.account_name,
           account_number: formData.account_number,
           phone_number: formData.phone_number,
+          payout_bank_name: bankToSave,
+          payout_bank_code: selectedBankCode || resolvedBankCode,
+          payout_account_name: formData.account_name,
+          payout_account_number: formData.account_number,
+          payout_account_verified: true,
+          payout_provider: 'paystack',
+          settlement_offset_days: 1,
           updated_at: new Date().toISOString()
         }, { onConflict: 'id' });
 

@@ -19,6 +19,54 @@ export default async function handler(req, res) {
   if (Number(event.data.amount) !== Math.round(Number(payment.amount) * 100) || event.data.currency !== payment.currency) return res.status(400).json({ error: 'Payment amount mismatch.' });
   const now = new Date().toISOString();
   await supabase.from('payment_records').update({ status: 'paid', paid_at: now, updated_at: now }).eq('id', payment.id).eq('status', 'pending');
-  if (payment.order_id) await supabase.from('orders').update({ status: 'paid', transaction_id: reference, payment_method: 'paystack' }).eq('id', payment.order_id);
+  if (payment.order_id) {
+    const { data: orderRecord } = await supabase.from('orders').select('brand_id, total_amount').eq('id', payment.order_id).maybeSingle();
+    await supabase.from('orders').update({ status: 'paid', transaction_id: reference, payment_method: 'paystack' }).eq('id', payment.order_id);
+
+    if (orderRecord?.brand_id) {
+      const settlementOffsetDays = Number(process.env.SETTLEMENT_OFFSET_DAYS ?? '1');
+      const grossMinorAmount = Math.round(Number(orderRecord.total_amount || 0) * 100);
+      const platformFeeMinor = Math.floor((grossMinorAmount * Number(process.env.PLATFORM_FEE_PERCENTAGE ?? '0')) / 100) + Math.round((Number(process.env.PLATFORM_FEE_FIXED_AMOUNT ?? '0') || 0) * 100);
+      const netMinorAmount = Math.max(0, grossMinorAmount - platformFeeMinor);
+      const availableAt = new Date(Date.now() + settlementOffsetDays * 24 * 60 * 60 * 1000).toISOString();
+
+      const { data: existingLedger } = await supabase
+        .from('merchant_financial_transactions')
+        .select('id')
+        .eq('merchant_id', orderRecord.brand_id)
+        .eq('provider_transaction_id', reference)
+        .eq('type', 'PAYMENT')
+        .maybeSingle();
+
+      if (!existingLedger?.id) {
+        await supabase.from('merchant_financial_transactions').insert({
+          merchant_id: orderRecord.brand_id,
+          order_id: payment.order_id,
+          payment_provider: 'paystack',
+          provider_transaction_id: reference,
+          type: 'PAYMENT',
+          amount: netMinorAmount,
+          currency: 'NGN',
+          status: 'PENDING',
+          available_at: availableAt,
+          metadata: { grossAmountMinor: grossMinorAmount, platformFeeMinor, settlementOffsetDays }
+        });
+
+        if (platformFeeMinor > 0) {
+          await supabase.from('merchant_financial_transactions').insert({
+            merchant_id: orderRecord.brand_id,
+            order_id: payment.order_id,
+            payment_provider: 'paystack',
+            provider_transaction_id: reference,
+            type: 'PLATFORM_FEE',
+            amount: -Math.abs(platformFeeMinor),
+            currency: 'NGN',
+            status: 'POSTED',
+            metadata: { grossAmountMinor: grossMinorAmount }
+          });
+        }
+      }
+    }
+  }
   return res.status(200).json({ received: true });
 }

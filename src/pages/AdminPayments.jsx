@@ -19,11 +19,23 @@ export default function AdminPayments() {
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [withdrawalRequests, setWithdrawalRequests] = useState([]);
+  const [merchantTransactions, setMerchantTransactions] = useState([]);
+  const [financialSummary, setFinancialSummary] = useState({
+    processedPayments: 0,
+    pendingFunds: 0,
+    availableFunds: 0,
+    totalPayouts: 0,
+    successfulPayouts: 0,
+    failedPayouts: 0,
+    refunds: 0,
+    platformFees: 0
+  });
   const [unreadSupportCount, setUnreadSupportCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [selectedTab, setSelectedTab] = useState('all');
   const [actionInProgress, setActionInProgress] = useState(null);
   const [tableNotFound, setTableNotFound] = useState(false);
+  const [financialTableNotFound, setFinancialTableNotFound] = useState(false);
   const refreshTimerRef = useRef(null);
   const requestRef = useRef(0);
 
@@ -63,6 +75,66 @@ export default function AdminPayments() {
     }
   }, [toast]);
 
+  const fetchFinancialSummary = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('merchant_financial_transactions')
+        .select('id, merchant_id, type, amount, status, created_at, payment_provider, metadata')
+        .order('created_at', { ascending: false })
+        .limit(200);
+
+      if (error) {
+        if (
+          error.code === 'PGRST116' ||
+          error.code === '42P01' ||
+          error.message?.toLowerCase().includes('not found') ||
+          error.message?.toLowerCase().includes('does not exist')
+        ) {
+          setFinancialTableNotFound(true);
+          setMerchantTransactions([]);
+          setFinancialSummary({
+            processedPayments: 0,
+            pendingFunds: 0,
+            availableFunds: 0,
+            totalPayouts: 0,
+            successfulPayouts: 0,
+            failedPayouts: 0,
+            refunds: 0,
+            platformFees: 0
+          });
+          return;
+        }
+        throw error;
+      }
+
+      const entries = data || [];
+      const totalSales = entries.filter(item => item.type === 'PAYMENT' && Number(item.amount) > 0).reduce((sum, item) => sum + Number(item.amount || 0), 0);
+      const pendingFunds = entries.filter(item => item.type === 'PAYMENT' && item.status === 'PENDING').reduce((sum, item) => sum + Number(item.amount || 0), 0);
+      const availableFunds = entries.filter(item => item.type === 'PAYMENT' && (item.status === 'AVAILABLE' || item.status === 'POSTED')).reduce((sum, item) => sum + Number(item.amount || 0), 0);
+      const totalPayouts = entries.filter(item => item.type === 'PAYOUT').reduce((sum, item) => sum + Math.abs(Number(item.amount || 0)), 0);
+      const successfulPayouts = entries.filter(item => item.type === 'PAYOUT' && item.status === 'SUCCESS').reduce((sum, item) => sum + Math.abs(Number(item.amount || 0)), 0);
+      const failedPayouts = entries.filter(item => item.type === 'PAYOUT_FAILED').reduce((sum, item) => sum + Math.abs(Number(item.amount || 0)), 0);
+      const refunds = entries.filter(item => item.type === 'REFUND').reduce((sum, item) => sum + Math.abs(Number(item.amount || 0)), 0);
+      const platformFees = entries.filter(item => item.type === 'PLATFORM_FEE').reduce((sum, item) => sum + Math.abs(Number(item.amount || 0)), 0);
+
+      setFinancialSummary({
+        processedPayments: totalSales,
+        pendingFunds,
+        availableFunds,
+        totalPayouts,
+        successfulPayouts,
+        failedPayouts,
+        refunds,
+        platformFees
+      });
+      setMerchantTransactions(entries);
+      setFinancialTableNotFound(false);
+    } catch (err) {
+      console.error('Failed to load financial summary:', err);
+      setFinancialTableNotFound(true);
+    }
+  }, []);
+
   const scheduleWithdrawalRefresh = useCallback(() => {
     if (refreshTimerRef.current) window.clearTimeout(refreshTimerRef.current);
     refreshTimerRef.current = window.setTimeout(() => {
@@ -73,6 +145,7 @@ export default function AdminPayments() {
 
   useEffect(() => {
     fetchWithdrawalRequests();
+    fetchFinancialSummary();
 
     // Subscribe to real-time updates
     const channel = supabase
@@ -86,7 +159,7 @@ export default function AdminPayments() {
       if (refreshTimerRef.current) window.clearTimeout(refreshTimerRef.current);
       supabase.removeChannel(channel);
     };
-  }, [fetchWithdrawalRequests, scheduleWithdrawalRefresh]);
+  }, [fetchWithdrawalRequests, fetchFinancialSummary, scheduleWithdrawalRefresh]);
 
   useEffect(() => {
     const fetchUnreadSupport = async () => {
@@ -207,6 +280,155 @@ export default function AdminPayments() {
 
           {/* Main Content */}
           <main className="unbley-workspace-container">
+            <div className="unbley-metrics-grid" style={{ marginBottom: '20px' }}>
+              <div className="unbley-metric-card">
+                <div className="unbley-metric-top">
+                  <div className="unbley-icon-box-cream" style={{ color: '#F59E0B' }}>
+                    <CreditCard size={18} />
+                  </div>
+                </div>
+                <div>
+                  <div className="unbley-metric-label">PROCESSED PAYMENTS</div>
+                  <div className="unbley-metric-value">{formatMoney(financialSummary.processedPayments)}</div>
+                  <div className="unbley-metric-subtext">Total verified merchant sales</div>
+                </div>
+              </div>
+
+              <div className="unbley-metric-card">
+                <div className="unbley-metric-top">
+                  <div className="unbley-icon-box-blue" style={{ color: '#3B82F6' }}>
+                    <Check size={18} />
+                  </div>
+                </div>
+                <div>
+                  <div className="unbley-metric-label">PENDING MERCHANT FUNDS</div>
+                  <div className="unbley-metric-value">{formatMoney(financialSummary.pendingFunds)}</div>
+                  <div className="unbley-metric-subtext">Awaiting settlement date</div>
+                </div>
+              </div>
+
+              <div className="unbley-metric-card">
+                <div className="unbley-metric-top">
+                  <div className="unbley-icon-box-cream" style={{ color: '#10B981' }}>
+                    <CreditCard size={18} />
+                  </div>
+                </div>
+                <div>
+                  <div className="unbley-metric-label">AVAILABLE FUNDS</div>
+                  <div className="unbley-metric-value">{formatMoney(financialSummary.availableFunds)}</div>
+                  <div className="unbley-metric-subtext">Ready for payout</div>
+                </div>
+              </div>
+
+              <div className="unbley-metric-card">
+                <div className="unbley-metric-top">
+                  <div className="unbley-icon-box-blue" style={{ color: '#7C3AED' }}>
+                    <Check size={18} />
+                  </div>
+                </div>
+                <div>
+                  <div className="unbley-metric-label">TOTAL PAYOUTS</div>
+                  <div className="unbley-metric-value">{formatMoney(financialSummary.totalPayouts)}</div>
+                  <div className="unbley-metric-subtext">All merchant transfers</div>
+                </div>
+              </div>
+            </div>
+
+            {!financialTableNotFound && merchantTransactions.length > 0 && (
+              <div className="unbley-table-card" style={{ marginBottom: '20px' }}>
+                <div className="unbley-table-header-bar">
+                  <div>
+                    <h3 style={{ fontSize: '16px', fontWeight: '800', color: '#111827', margin: 0 }}>Financial Activity</h3>
+                    <p style={{ fontSize: '12px', color: '#6B7280', margin: '2px 0 0' }}>Recent payment, payout, refund, and platform fee events</p>
+                  </div>
+                </div>
+                <table className="unbley-table">
+                  <thead>
+                    <tr>
+                      <th>TYPE</th>
+                      <th>MERCHANT</th>
+                      <th>AMOUNT</th>
+                      <th>STATUS</th>
+                      <th>DATE</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {merchantTransactions.slice(0, 8).map(transaction => (
+                      <tr key={transaction.id}>
+                        <td style={{ fontWeight: '700', color: '#111827' }}>{transaction.type}</td>
+                        <td style={{ fontSize: '12px', color: '#6B7280' }}>{transaction.merchant_id?.slice(0, 8) || '—'}</td>
+                        <td style={{ fontWeight: '800', color: '#111827' }}>{formatMoney(Math.abs(Number(transaction.amount || 0)))}</td>
+                        <td>
+                          <span style={{
+                            backgroundColor: transaction.status === 'SUCCESS' ? '#DCFCE7' : transaction.status === 'PENDING' ? '#FEF3C7' : '#E5E7EB',
+                            color: transaction.status === 'SUCCESS' ? '#15803D' : transaction.status === 'PENDING' ? '#92400E' : '#374151',
+                            padding: '4px 10px',
+                            borderRadius: '6px',
+                            fontSize: '11px',
+                            fontWeight: '700'
+                          }}>{String(transaction.status || 'POSTED')}</span>
+                        </td>
+                        <td style={{ fontSize: '11px', color: '#9CA3AF' }}>{transaction.created_at ? new Date(transaction.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' }) : '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            <div className="unbley-metrics-grid" style={{ marginBottom: '20px' }}>
+              <div className="unbley-metric-card">
+                <div className="unbley-metric-top">
+                  <div className="unbley-icon-box-cream" style={{ color: '#10B981' }}>
+                    <Check size={18} />
+                  </div>
+                </div>
+                <div>
+                  <div className="unbley-metric-label">SUCCESSFUL PAYOUTS</div>
+                  <div className="unbley-metric-value">{formatMoney(financialSummary.successfulPayouts)}</div>
+                  <div className="unbley-metric-subtext">Completed transfer value</div>
+                </div>
+              </div>
+
+              <div className="unbley-metric-card">
+                <div className="unbley-metric-top">
+                  <div className="unbley-icon-box-blue" style={{ color: '#F43F5E' }}>
+                    <AlertCircle size={18} />
+                  </div>
+                </div>
+                <div>
+                  <div className="unbley-metric-label">FAILED PAYOUTS</div>
+                  <div className="unbley-metric-value">{formatMoney(financialSummary.failedPayouts)}</div>
+                  <div className="unbley-metric-subtext">Escalated or retriable amounts</div>
+                </div>
+              </div>
+
+              <div className="unbley-metric-card">
+                <div className="unbley-metric-top">
+                  <div className="unbley-icon-box-cream" style={{ color: '#F59E0B' }}>
+                    <Check size={18} />
+                  </div>
+                </div>
+                <div>
+                  <div className="unbley-metric-label">REFUNDS</div>
+                  <div className="unbley-metric-value">{formatMoney(financialSummary.refunds)}</div>
+                  <div className="unbley-metric-subtext">Returned customer amounts</div>
+                </div>
+              </div>
+
+              <div className="unbley-metric-card">
+                <div className="unbley-metric-top">
+                  <div className="unbley-icon-box-blue" style={{ color: '#6B7280' }}>
+                    <CreditCard size={18} />
+                  </div>
+                </div>
+                <div>
+                  <div className="unbley-metric-label">PLATFORM FEES</div>
+                  <div className="unbley-metric-value">{formatMoney(financialSummary.platformFees)}</div>
+                  <div className="unbley-metric-subtext">Recorded commission collected</div>
+                </div>
+              </div>
+            </div>
             
             {/* Stats Grid */}
             <div className="unbley-metrics-grid">
