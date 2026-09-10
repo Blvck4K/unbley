@@ -108,14 +108,15 @@ export default function AdminPayments() {
       }
 
       const entries = data || [];
-      const totalSales = entries.filter(item => item.type === 'PAYMENT' && Number(item.amount) > 0).reduce((sum, item) => sum + Number(item.amount || 0), 0);
-      const pendingFunds = entries.filter(item => item.type === 'PAYMENT' && item.status === 'PENDING').reduce((sum, item) => sum + Number(item.amount || 0), 0);
-      const availableFunds = entries.filter(item => item.type === 'PAYMENT' && (item.status === 'AVAILABLE' || item.status === 'POSTED')).reduce((sum, item) => sum + Number(item.amount || 0), 0);
-      const totalPayouts = entries.filter(item => item.type === 'PAYOUT').reduce((sum, item) => sum + Math.abs(Number(item.amount || 0)), 0);
-      const successfulPayouts = entries.filter(item => item.type === 'PAYOUT' && item.status === 'SUCCESS').reduce((sum, item) => sum + Math.abs(Number(item.amount || 0)), 0);
-      const failedPayouts = entries.filter(item => item.type === 'PAYOUT_FAILED').reduce((sum, item) => sum + Math.abs(Number(item.amount || 0)), 0);
-      const refunds = entries.filter(item => item.type === 'REFUND').reduce((sum, item) => sum + Math.abs(Number(item.amount || 0)), 0);
-      const platformFees = entries.filter(item => item.type === 'PLATFORM_FEE').reduce((sum, item) => sum + Math.abs(Number(item.amount || 0)), 0);
+      const fromLedgerMinorUnits = (amount) => Number(amount || 0) / 100;
+      const totalSales = entries.filter(item => item.type === 'PAYMENT' && Number(item.amount) > 0).reduce((sum, item) => sum + fromLedgerMinorUnits(item.amount), 0);
+      const pendingFunds = entries.filter(item => item.type === 'PAYMENT' && item.status === 'PENDING').reduce((sum, item) => sum + fromLedgerMinorUnits(item.amount), 0);
+      const availableFunds = entries.filter(item => item.type === 'PAYMENT' && (item.status === 'AVAILABLE' || item.status === 'POSTED')).reduce((sum, item) => sum + fromLedgerMinorUnits(item.amount), 0);
+      const totalPayouts = entries.filter(item => item.type === 'PAYOUT').reduce((sum, item) => sum + fromLedgerMinorUnits(Math.abs(Number(item.amount || 0))), 0);
+      const successfulPayouts = entries.filter(item => item.type === 'PAYOUT' && item.status === 'SUCCESS').reduce((sum, item) => sum + fromLedgerMinorUnits(Math.abs(Number(item.amount || 0))), 0);
+      const failedPayouts = entries.filter(item => item.type === 'PAYOUT_FAILED').reduce((sum, item) => sum + fromLedgerMinorUnits(Math.abs(Number(item.amount || 0))), 0);
+      const refunds = entries.filter(item => item.type === 'REFUND').reduce((sum, item) => sum + fromLedgerMinorUnits(Math.abs(Number(item.amount || 0))), 0);
+      const platformFees = entries.filter(item => item.type === 'PLATFORM_FEE').reduce((sum, item) => sum + fromLedgerMinorUnits(Math.abs(Number(item.amount || 0))), 0);
 
       setFinancialSummary({
         processedPayments: totalSales,
@@ -197,6 +198,7 @@ export default function AdminPayments() {
   };
 
   const formatMoney = (amount) => '₦' + Number(amount || 0).toLocaleString();
+  const fromLedgerMinorUnits = (amount) => Number(amount || 0) / 100;
 
   const getStatusColor = (status) => {
     switch(status) {
@@ -357,7 +359,7 @@ export default function AdminPayments() {
                       <tr key={transaction.id}>
                         <td style={{ fontWeight: '700', color: '#111827' }}>{transaction.type}</td>
                         <td style={{ fontSize: '12px', color: '#6B7280' }}>{transaction.merchant_id?.slice(0, 8) || '—'}</td>
-                        <td style={{ fontWeight: '800', color: '#111827' }}>{formatMoney(Math.abs(Number(transaction.amount || 0)))}</td>
+                        <td style={{ fontWeight: '800', color: '#111827' }}>{formatMoney(fromLedgerMinorUnits(Math.abs(Number(transaction.amount || 0))))}</td>
                         <td>
                           <span style={{
                             backgroundColor: transaction.status === 'SUCCESS' ? '#DCFCE7' : transaction.status === 'PENDING' ? '#FEF3C7' : '#E5E7EB',
