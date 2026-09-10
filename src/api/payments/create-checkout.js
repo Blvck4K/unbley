@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
-import { sendEmail } from '../../lib/notifications/resend.js';
-import { recordNotification } from '../../lib/notifications/notificationStore.js';
+import { sendEmail } from '../../../lib/notifications/resend.js';
+import { recordNotification } from '../../../lib/notifications/notificationStore.js';
 
 const json = (res, status, body) => res.status(status).json(body);
 const serverClient = () => createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });

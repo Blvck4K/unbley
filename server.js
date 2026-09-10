@@ -18,8 +18,9 @@ app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 app.use('/api', async (req, res) => {
-  const incoming = req.originalUrl || req.url || '/';
-  const clean = incoming.replace(/^\/api\/?/, '');
+  const incoming = req.originalUrl || req.url || req.path || '/';
+  const url = new URL(incoming, 'http://localhost');
+  const clean = url.pathname.replace(/^\/api\/?/, '');
   const normalized = clean.replace(/^\/|\/$/g, '');
 
   if (!normalized) {

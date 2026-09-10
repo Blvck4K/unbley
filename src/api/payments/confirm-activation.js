@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
-import { sendEmail } from '../../lib/notifications/resend.js';
-import { recordNotification } from '../../lib/notifications/notificationStore.js';
+import { sendEmail } from '../../../lib/notifications/resend.js';
+import { recordNotification } from '../../../lib/notifications/notificationStore.js';
 
 const plans = {
   starter: { monthly: { ngn: 5000, usd: 5 }, yearly: { ngn: 50000, usd: 40 } },

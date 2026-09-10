@@ -1,5 +1,5 @@
-import { sendEmail } from '../../lib/notifications/resend.js';
-import { recordNotification } from '../../lib/notifications/notificationStore.js';
+import { sendEmail } from '../../../lib/notifications/resend.js';
+import { recordNotification } from '../../../lib/notifications/notificationStore.js';
 
 const json = (res, status, body) => res.status(status).json(body);
 

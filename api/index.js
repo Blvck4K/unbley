@@ -6,8 +6,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export default async function handler(req, res) {
-  const incoming = req.url || req.originalUrl || req.path || '/';
-  const clean = incoming.replace(/^\/api\/?/, '');
+  const incoming = req.originalUrl || req.url || req.path || '/';
+  const url = new URL(incoming, 'https://unbley.com');
+  const clean = url.pathname.replace(/^\/api\/?/, '');
   const normalized = clean.replace(/^\/|\/$/g, '');
 
   if (!normalized) {
