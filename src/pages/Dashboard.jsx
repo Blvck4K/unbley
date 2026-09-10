@@ -49,6 +49,7 @@ export default function Dashboard() {
   const { toast } = useToast();
   const location = useLocation();
   const navigate = useNavigate();
+  const DASHBOARD_TUTORIAL_URL = 'https://www.youtube.com/results?search_query=Unbley+dashboard+guide';
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState(() => Date.now());
@@ -59,6 +60,7 @@ export default function Dashboard() {
   const [showDashboardTour, setShowDashboardTour] = useState(false);
   const [dashboardTourStartStep, setDashboardTourStartStep] = useState(0);
   const [isCompactView, setIsCompactView] = useState(typeof window !== 'undefined' ? window.innerWidth <= 1024 : false);
+  const [showTutorialModal, setShowTutorialModal] = useState(false);
   const [showWelcomeOnboarding, setShowWelcomeOnboarding] = useState(false);
   const [isFirstSignupSession, setIsFirstSignupSession] = useState(false);
   const [welcomeOnboardingStep, setWelcomeOnboardingStep] = useState(0);
@@ -1034,7 +1036,17 @@ export default function Dashboard() {
                 <Share2 size={14} />
                 <span>{copiedLink ? 'Link Copied!' : 'Share Store'}</span>
               </button>
-              <button id="tour-guide-trigger" onClick={() => setShowDashboardTour(true)} className="unbley-btn-white">
+              <button
+                id="tour-guide-trigger"
+                onClick={() => {
+                  if (isCompactView) {
+                    setShowTutorialModal(true);
+                    return;
+                  }
+                  setShowDashboardTour(true);
+                }}
+                className="unbley-btn-white"
+              >
                 <Compass size={14} />
                 <span>Tour Guide</span>
               </button>
@@ -2116,6 +2128,48 @@ export default function Dashboard() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {showTutorialModal && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999, padding: '20px' }}>
+            <div style={{ width: '100%', maxWidth: '420px', background: '#FFFFFF', borderRadius: '20px', boxShadow: '0 24px 48px rgba(15, 23, 42, 0.2)', padding: '22px', border: '1px solid #F1E7DE' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', marginBottom: '14px' }}>
+                <div style={{ fontSize: '20px', fontWeight: 800, color: '#111827' }}>Dashboard tour</div>
+                <button
+                  type="button"
+                  onClick={() => setShowTutorialModal(false)}
+                  aria-label="Close tutorial modal"
+                  style={{ border: 'none', background: '#F3F4F6', color: '#374151', width: '32px', height: '32px', borderRadius: '999px', fontSize: '18px', cursor: 'pointer', fontWeight: 800 }}
+                >
+                  ×
+                </button>
+              </div>
+
+              <p style={{ margin: '0 0 12px', fontSize: '14px', color: '#4B5563', lineHeight: 1.6 }}>
+                This dashboard is easier to understand with the walkthrough video. Please watch the tutorial to learn how the pages, tools, and store setup flow work on mobile or tablet.
+              </p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '18px' }}>
+                <a
+                  href={DASHBOARD_TUTORIAL_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: 'linear-gradient(135deg, #6A3E1F 0%, #8C5A35 100%)', color: '#FFFFFF', textDecoration: 'none', borderRadius: '12px', padding: '12px 18px', fontWeight: 800, fontSize: '14px' }}
+                >
+                  <Compass size={15} />
+                  Watch the YouTube tutorial
+                </a>
+
+                <button
+                  type="button"
+                  onClick={() => setShowTutorialModal(false)}
+                  style={{ border: '1px solid #E5E7EB', background: '#FFFFFF', color: '#374151', borderRadius: '12px', padding: '12px 18px', fontWeight: 700, cursor: 'pointer' }}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {!isCompactView && (
           <DashboardTour
