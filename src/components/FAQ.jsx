@@ -8,6 +8,7 @@ export default function FAQ() {
     { q: 'Can I use my own domain?', a: 'Yes. Unbley supports custom domains so your store can have a professional web address that matches your brand.' },
     { q: 'Can I manage my products and orders?', a: 'Yes. Your dashboard lets you manage products, inventory, orders, customers and other important store settings.' },
     { q: 'Can customers pay online?', a: 'Yes. Unbley supports payment integrations that allow customers to complete purchases online.' },
+    { q: 'When will my earnings reach my bank?', a: <>Payments from your completed orders are securely processed by Unbley and automatically sent to your <strong>registered bank account within 24 hours</strong>. No manual withdrawal is required.</> },
     { q: 'Can I sell from Nigeria?', a: 'Yes. Unbley is designed with Nigerian businesses and the local ecommerce environment in mind.' },
     { q: 'Can I manage my store from my phone?', a: 'Yes. Your store and management experience are designed to work across modern mobile devices.' },
     { q: 'What happens after I create my store?', a: 'You can add your products, configure your store, connect the necessary services and start sharing your store with customers.' }
