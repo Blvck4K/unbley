@@ -50,6 +50,7 @@ export default function PaymentSetupModal({ isOpen = false, onClose, onComplete 
   const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     bank_name: '',
+    custom_bank_name: '',
     account_name: '',
     account_number: '',
     phone_number: ''
@@ -60,6 +61,8 @@ export default function PaymentSetupModal({ isOpen = false, onClose, onComplete 
     setFormData(prev => ({ ...prev, [name]: value }));
     setError(null);
   };
+
+  const selectedBankName = formData.bank_name === 'Other Bank' ? (formData.custom_bank_name || '').trim() : formData.bank_name;
 
   React.useEffect(() => {
     async function fetchPaymentInfo() {
@@ -94,8 +97,10 @@ export default function PaymentSetupModal({ isOpen = false, onClose, onComplete 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!formData.bank_name || !formData.account_name || !formData.account_number || !formData.phone_number) {
+
+    const bankToSave = selectedBankName;
+
+    if (!bankToSave || !formData.account_name || !formData.account_number || !formData.phone_number) {
       setError('Please fill in all fields');
       return;
     }
@@ -114,7 +119,7 @@ export default function PaymentSetupModal({ isOpen = false, onClose, onComplete 
           email_address: user.email || '',
           brand_name: user.user_metadata?.brand_name || user.user_metadata?.full_name || 'Your Brand',
           owner_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
-          bank_name: formData.bank_name,
+          bank_name: bankToSave,
           account_name: formData.account_name,
           account_number: formData.account_number,
           phone_number: formData.phone_number,
@@ -133,7 +138,7 @@ export default function PaymentSetupModal({ isOpen = false, onClose, onComplete 
   };
 
   const handleClose = () => {
-    setFormData({ bank_name: '', account_name: '', account_number: '', phone_number: '' });
+    setFormData({ bank_name: '', custom_bank_name: '', account_name: '', account_number: '', phone_number: '' });
     setError(null);
     onClose?.();
   };
@@ -314,7 +319,15 @@ export default function PaymentSetupModal({ isOpen = false, onClose, onComplete 
                 <select
                   name="bank_name"
                   value={formData.bank_name}
-                  onChange={handleInputChange}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setFormData(prev => ({
+                      ...prev,
+                      bank_name: value,
+                      custom_bank_name: value === 'Other Bank' ? prev.custom_bank_name : ''
+                    }));
+                    setError(null);
+                  }}
                   style={{
                     width: '100%',
                     padding: '10px 12px',
@@ -341,6 +354,45 @@ export default function PaymentSetupModal({ isOpen = false, onClose, onComplete 
                     <option key={bank} value={bank}>{bank}</option>
                   ))}
                 </select>
+
+                {formData.bank_name === 'Other Bank' && (
+                  <div style={{ marginTop: '12px' }}>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      color: '#111827',
+                      marginBottom: '6px'
+                    }}>
+                      Bank Name
+                    </label>
+                    <input
+                      type="text"
+                      name="custom_bank_name"
+                      value={formData.custom_bank_name}
+                      onChange={handleInputChange}
+                      placeholder="Enter your bank name"
+                      style={{
+                        width: '100%',
+                        padding: '10px 12px',
+                        border: '1px solid #D1D5DB',
+                        borderRadius: '8px',
+                        fontSize: '13px',
+                        fontFamily: 'inherit',
+                        boxSizing: 'border-box',
+                        transition: 'all 0.15s ease'
+                      }}
+                      onFocus={(e) => {
+                        e.target.style.borderColor = '#6A3E1F';
+                        e.target.style.boxShadow = '0 0 0 3px rgba(106, 62, 31, 0.1)';
+                      }}
+                      onBlur={(e) => {
+                        e.target.style.borderColor = '#D1D5DB';
+                        e.target.style.boxShadow = 'none';
+                      }}
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Account Name */}
