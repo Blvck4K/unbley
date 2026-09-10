@@ -116,7 +116,14 @@ const sendOrderEmails = async ({ order, brandRecord, provider }) => {
 
   const sendAndLog = async ({ to, subject, html, text, eventType }) => {
     if (!to) return;
-    const result = await sendEmail({ to, subject, html, text }).catch((error) => ({ ok: false, error: error.message }));
+    const result = await sendEmail({
+      to,
+      subject,
+      html,
+      text,
+      storeName: brandRecord.brand_name || 'Unbley Store',
+      storeLogoUrl: brandRecord.logo_url || undefined
+    }).catch((error) => ({ ok: false, error: error.message }));
     await recordNotification({
       eventType,
       templateSlug: eventType,
@@ -202,7 +209,7 @@ export default async function handler(req, res) {
     const supabase = serverClient();
     const { data: brandRecord, error: brandError } = await supabase
       .from('brand_profiles')
-      .select('id, brand_name, email_address, owner_name')
+      .select('id, brand_name, logo_url, email_address, owner_name')
       .eq('id', brandId)
       .maybeSingle();
     if (brandError) return json(res, 500, { error: 'Could not load the store for this order.' });
