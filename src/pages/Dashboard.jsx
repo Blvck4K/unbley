@@ -1686,9 +1686,9 @@ export default function Dashboard() {
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', background: '#FFF9E8', border: '1px solid #F3D98B', borderRadius: '10px', padding: '14px 16px', marginBottom: '20px', color: '#7A5610' }}>
                 <Info size={18} style={{ flexShrink: 0, marginTop: '1px' }} />
                 <div>
-                  <div style={{ fontSize: '13px', fontWeight: '800', marginBottom: '3px' }}>Why is my payment still pending?</div>
+                  <div style={{ fontSize: '13px', fontWeight: '800', marginBottom: '3px' }}>When will my earnings reach my bank?</div>
                   <div style={{ fontSize: '12px', lineHeight: '1.6' }}>
-                    Customer payments are held for 24 hours for settlement. After that period, the settlement process makes the funds available for payout. Test payment keys may verify payments but cannot always send real bank payouts.
+                    Payments from your completed orders are securely processed by Unbley and automatically sent to your <strong>registered bank account within 24 hours</strong>. No manual withdrawal is required.
                   </div>
                 </div>
               </div>
@@ -1763,19 +1763,8 @@ export default function Dashboard() {
                 <div className="unbley-table-header-bar">
                   <div>
                     <h3 style={{ fontSize: '16px', fontWeight: '800', color: '#111827', margin: 0 }}>Your Withdrawal Requests</h3>
-                    <p style={{ fontSize: '12px', color: '#6B7280', margin: '2px 0 0' }}>Request and track your payouts</p>
+                    <p style={{ fontSize: '12px', color: '#6B7280', margin: '2px 0 0' }}>Track your automatic payouts</p>
                   </div>
-                  <button 
-                    onClick={() => {
-                      setWithdrawalError(null);
-                      setWithdrawalAmount('');
-                      setShowWithdrawalModal(true);
-                    }}
-                    className="unbley-btn-black"
-                    style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
-                  >
-                    <Plus size={14} /> Request Withdrawal
-                  </button>
                 </div>
                 {withdrawalRequests.length === 0 ? (
                   <div style={{ padding: '48px', textAlign: 'center', color: '#9CA3AF', fontSize: '14px' }}>
