@@ -1,4 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
+import { sendEmail } from '../../../lib/notifications/resend.js';
+import { recordNotification } from '../../../lib/notifications/notificationStore.js';
 
 const json = (res, status, body) => res.status(status).json(body);
 const serverClient = () => createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
@@ -78,6 +80,68 @@ const createLedgerEntries = async ({ supabase, merchantId, orderId, provider, re
 const clean = (value, pattern = /[^a-zA-Z0-9, .+@_-]/g) => String(value || '').replace(pattern, '').trim();
 
 const wait = (milliseconds) => new Promise(resolve => setTimeout(resolve, milliseconds));
+
+const escapeHtml = (value) => String(value || '').replace(/[&<>'"]/g, (character) => ({
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  "'": '&#39;',
+  '"': '&quot;'
+}[character]));
+
+const formatAmount = (value) => `NGN ${Number(value || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 })}`;
+
+const sendOrderEmails = async ({ order, brandRecord, provider }) => {
+  const itemRows = (Array.isArray(order.items) ? order.items : []).map((item) => `
+    <tr>
+      <td style="padding:10px 0;border-bottom:1px solid #eee7e1;">${escapeHtml(item.qty)} x ${escapeHtml(item.title || item.name)}</td>
+      <td align="right" style="padding:10px 0;border-bottom:1px solid #eee7e1;">${formatAmount(Number(item.price) * Number(item.qty))}</td>
+    </tr>`).join('');
+  const customerName = escapeHtml(order.customer_name || 'there');
+  const orderNumber = escapeHtml(order.order_number);
+  const reference = escapeHtml(order.transaction_id);
+  const total = formatAmount(order.total_amount);
+  const customerHtml = `<h1 style="margin:0 0 12px;color:#2b211c;font-size:26px;line-height:1.2;">Order confirmed</h1>
+    <p style="margin:0 0 22px;">Hi ${customerName}, your payment was successful and your order is now confirmed.</p>
+    <div style="background:#f8f4ef;border-radius:10px;padding:16px 18px;margin-bottom:24px;"><strong>Order ${orderNumber}</strong><br /><span style="color:#75675e;">${escapeHtml(brandRecord.brand_name || 'Unbley store')}</span></div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:18px;">${itemRows}</table>
+    <p style="margin:0;text-align:right;font-size:18px;"><strong>Total: ${total}</strong></p>
+    <p style="margin:24px 0 0;color:#75675e;font-size:13px;">Payment reference: ${reference}<br />Payment method: ${escapeHtml(provider)}</p>`;
+  const customerText = `Hi ${order.customer_name || 'there'}, your payment was successful and order ${order.order_number} is confirmed. Total: ${total}. Payment reference: ${order.transaction_id}.`;
+  const customerSubject = `Order confirmed: ${order.order_number}`;
+
+  const sendAndLog = async ({ to, subject, html, text, eventType }) => {
+    if (!to) return;
+    const result = await sendEmail({ to, subject, html, text }).catch((error) => ({ ok: false, error: error.message }));
+    await recordNotification({
+      eventType,
+      templateSlug: eventType,
+      brandId: order.brand_id,
+      orderId: order.id,
+      recipient: to,
+      subject,
+      body: text,
+      html,
+      providerMessageId: result?.data?.id || null,
+      status: result?.ok ? 'sent' : 'failed',
+      payload: { orderNumber: order.order_number, provider, reference: order.transaction_id },
+      errorMessage: result?.error || null
+    });
+  };
+
+  await sendAndLog({ to: order.customer_email, subject: customerSubject, html: customerHtml, text: customerText, eventType: 'order_confirmed_customer' });
+
+  if (brandRecord.email_address) {
+    const merchantName = escapeHtml(brandRecord.owner_name || brandRecord.brand_name || 'Merchant');
+    const merchantSubject = `New order received: ${order.order_number}`;
+    const merchantHtml = `<h1 style="margin:0 0 12px;color:#2b211c;font-size:26px;line-height:1.2;">New order received</h1>
+      <p style="margin:0 0 22px;">Hi ${merchantName}, a customer has completed payment for an order on your store.</p>
+      <div style="background:#f8f4ef;border-radius:10px;padding:16px 18px;"><strong>${orderNumber}</strong><br />Customer: ${escapeHtml(order.customer_name)}<br />Email: ${escapeHtml(order.customer_email)}<br />Total: <strong>${total}</strong></div>
+      <p style="margin:22px 0 0;color:#75675e;font-size:13px;">Payment reference: ${reference}</p>`;
+    const merchantText = `New paid order ${order.order_number}. Customer: ${order.customer_name} (${order.customer_email}). Total: ${total}. Payment reference: ${order.transaction_id}.`;
+    await sendAndLog({ to: brandRecord.email_address, subject: merchantSubject, html: merchantHtml, text: merchantText, eventType: 'order_confirmed_merchant' });
+  }
+};
 
 async function verifyPayment(provider, reference, expectedAmount) {
   if (provider === 'paystack') {
@@ -260,6 +324,9 @@ export default async function handler(req, res) {
       console.error('Order save failed after verified payment:', orderError);
       return json(res, 500, { error: `Payment was verified, but the order could not be saved: ${orderError.message || 'database error'}` });
     }
+    await sendOrderEmails({ order: savedOrder, brandRecord, provider }).catch((emailError) => {
+      console.error('Order confirmation email failed after successful checkout:', emailError);
+    });
     return json(res, 200, { order: savedOrder });
   } catch (error) {
     return json(res, 400, { error: error.message || 'Could not confirm payment.' });
