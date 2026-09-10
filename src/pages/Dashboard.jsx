@@ -1683,6 +1683,16 @@ export default function Dashboard() {
                 </div>
               </div>
 
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', background: '#FFF9E8', border: '1px solid #F3D98B', borderRadius: '10px', padding: '14px 16px', marginBottom: '20px', color: '#7A5610' }}>
+                <Info size={18} style={{ flexShrink: 0, marginTop: '1px' }} />
+                <div>
+                  <div style={{ fontSize: '13px', fontWeight: '800', marginBottom: '3px' }}>Why is my payment still pending?</div>
+                  <div style={{ fontSize: '12px', lineHeight: '1.6' }}>
+                    Customer payments are held for 24 hours for settlement. After that period, the settlement process makes the funds available for payout. Test payment keys may verify payments but cannot always send real bank payouts.
+                  </div>
+                </div>
+              </div>
+
               <div className="unbley-card" style={{ marginBottom: '20px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
                   <div>
