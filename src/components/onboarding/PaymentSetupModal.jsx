@@ -88,6 +88,7 @@ export default function PaymentSetupModal({ isOpen = false, onClose, onComplete 
   const [resolvingAccount, setResolvingAccount] = useState(false);
   const [error, setError] = useState(null);
   const [verificationNote, setVerificationNote] = useState('');
+  const [resolvedBankCode, setResolvedBankCode] = useState('');
   const [formData, setFormData] = useState({
     bank_name: '',
     custom_bank_name: '',
@@ -103,14 +104,14 @@ export default function PaymentSetupModal({ isOpen = false, onClose, onComplete 
   };
 
   const selectedBankName = formData.bank_name === 'Other Bank' ? (formData.custom_bank_name || '').trim() : formData.bank_name;
-  const selectedBankCode = BANK_CODE_MAP[selectedBankName] || '';
+  const selectedBankCode = resolvedBankCode || BANK_CODE_MAP[selectedBankName] || '';
 
   const resolveAccountName = async (bankLabel, accountNumber) => {
     const cleanBankName = (bankLabel || '').trim();
     const cleanAccountNumber = String(accountNumber || '').replace(/\D/g, '');
     const bankCode = BANK_CODE_MAP[cleanBankName] || '';
 
-    if (!cleanBankName || (!bankCode && cleanBankName !== 'Other Bank') || cleanAccountNumber.length < 10) {
+    if (!cleanBankName || cleanAccountNumber.length < 10) {
       return;
     }
 
@@ -132,6 +133,8 @@ export default function PaymentSetupModal({ isOpen = false, onClose, onComplete 
       }
 
       const accountName = payload?.account_name?.trim();
+      const resolvedCode = payload?.bank_code || bankCode || '';
+      if (resolvedCode) setResolvedBankCode(resolvedCode);
       if (accountName) {
         setFormData(prev => ({ ...prev, account_name: accountName }));
         setVerificationNote('');
@@ -205,7 +208,7 @@ export default function PaymentSetupModal({ isOpen = false, onClose, onComplete 
           brand_name: user.user_metadata?.brand_name || user.user_metadata?.full_name || 'Your Brand',
           owner_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
           bank_name: bankToSave,
-          bank_code: selectedBankCode,
+          bank_code: selectedBankCode || resolvedBankCode,
           account_name: formData.account_name,
           account_number: formData.account_number,
           phone_number: formData.phone_number,
@@ -227,6 +230,7 @@ export default function PaymentSetupModal({ isOpen = false, onClose, onComplete 
     setFormData({ bank_name: '', custom_bank_name: '', account_name: '', account_number: '', phone_number: '' });
     setError(null);
     setVerificationNote('');
+    setResolvedBankCode('');
     setResolvingAccount(false);
     onClose?.();
   };

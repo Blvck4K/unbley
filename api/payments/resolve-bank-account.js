@@ -1,45 +1,31 @@
-const BANK_NAME_TO_CODE = {
-  'Access Bank': '044',
-  'ALAT by WEMA': '035',
-  'Apex MFB': '770',
-  'ASO Savings': '401',
-  'Citibank Nigeria': '023',
-  'Ecobank Nigeria': '050',
-  'Fidelity Bank': '070',
-  'First Bank of Nigeria': '011',
-  'FCMB': '214',
-  'Globus Bank': '00103',
-  'Greenwich Bank': '562',
-  'GTBank': '058',
-  'Jaiz Bank': '301',
-  'Keystone Bank': '082',
-  'Kuda MFB': '50211',
-  'Lotus Bank': '303',
-  'Moniepoint MFB': '110',
-  'Opay': '329',
-  'PalmPay': '999991',
-  'Parkway - ReadyCash': '311',
-  'Paycom': '559',
-  'Polaris Bank': '076',
-  'Providus Bank': '101',
-  'Rubies MFB': '125',
-  'Sparkle Microfinance Bank': '377',
-  'Stanbic IBTC': '221',
-  'Sterling Bank': '232',
-  'SunTrust Bank': '100',
-  'TAJ Bank': '302',
-  'Titan Trust Bank': '102',
-  'UBA': '033',
-  'Union Bank': '032',
-  'Unity Bank': '215',
-  'Wema Bank': '035',
-  'Zenith Bank': '057'
-};
-
 const normalizeBankName = (value = '') => String(value)
   .toLowerCase()
   .replace(/[^a-z0-9]+/g, '')
   .trim();
+
+const findBankCodeFromPaystack = async (bankName, secretKey) => {
+  const target = normalizeBankName(bankName);
+  if (!target) return '';
+
+  const bankListResponse = await fetch('https://api.paystack.co/bank', {
+    headers: { Authorization: `Bearer ${secretKey}` }
+  });
+
+  const bankListPayload = await bankListResponse.json().catch(() => ({}));
+  const banks = Array.isArray(bankListPayload?.data) ? bankListPayload.data : [];
+
+  const directMatch = banks.find((bank) => normalizeBankName(bank.name) === target);
+  if (directMatch?.code) return String(directMatch.code);
+
+  const fuzzyMatch = banks.find((bank) => {
+    const bankName = normalizeBankName(bank.name);
+    return bankName.includes(target) || target.includes(bankName);
+  });
+
+  if (fuzzyMatch?.code) return String(fuzzyMatch.code);
+
+  return '';
+};
 
 const json = (res, status, body) => res.status(status).json(body);
 
@@ -49,29 +35,18 @@ export default async function handler(req, res) {
 
   const { account_number, bank_code, bank_name } = req.body || {};
   const cleanAccountNumber = String(account_number || '').replace(/\D/g, '');
+  const rawBankName = String(bank_name || '').trim();
   let resolvedBankCode = String(bank_code || '').trim();
-
-  if (!resolvedBankCode && bank_name) {
-    const normalizedName = String(bank_name).trim();
-    resolvedBankCode = BANK_NAME_TO_CODE[normalizedName] || '';
-  }
 
   if (!cleanAccountNumber || cleanAccountNumber.length < 10) {
     return json(res, 400, { error: 'Please enter a valid account number.' });
   }
 
-  if (!resolvedBankCode && bank_name) {
+  if (!resolvedBankCode && rawBankName) {
     try {
-      const bankListResponse = await fetch('https://api.paystack.co/bank', {
-        headers: { Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}` }
-      });
-      const bankListPayload = await bankListResponse.json().catch(() => ({}));
-      const banks = Array.isArray(bankListPayload?.data) ? bankListPayload.data : [];
-      const targetName = normalizeBankName(bank_name);
-      const match = banks.find((bank) => normalizeBankName(bank.name).includes(targetName) || targetName.includes(normalizeBankName(bank.name)));
-      if (match?.code) resolvedBankCode = String(match.code);
+      resolvedBankCode = await findBankCodeFromPaystack(rawBankName, process.env.PAYSTACK_SECRET_KEY);
     } catch (error) {
-      console.error('Paystack bank list lookup failed:', error);
+      console.error('Paystack bank lookup failed:', error);
     }
   }
 
