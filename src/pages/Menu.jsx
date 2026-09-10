@@ -15,10 +15,6 @@ export default function Menu() {
   const { user, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
   const [isMobile, setIsMobile] = useState(null);
-  const [tourStep, setTourStep] = useState(() => {
-    const savedStep = sessionStorage.getItem('unbley_mobile_tour_resume_step');
-    return savedStep === null ? null : Number(savedStep);
-  });
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(max-width: 768px)');

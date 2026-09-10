@@ -15,6 +15,37 @@ const addPlanPeriod = (interval) => {
   return date.toISOString();
 };
 
+const ensureBrandProfileRow = async ({ supabase, user }) => {
+  const { data: existing, error: selectError } = await supabase
+    .from('brand_profiles')
+    .select('id, email_address, brand_name, owner_name')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (selectError) throw selectError;
+  if (existing?.id) return existing;
+
+  const insertPayload = {
+    id: user.id,
+    email_address: user.email,
+    brand_name: user.user_metadata?.brand_name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Unbley Store',
+    owner_name: user.user_metadata?.full_name || user.user_metadata?.owner_name || user.email?.split('@')[0] || 'Store Owner',
+    phone_number: user.user_metadata?.phone || null,
+    brand_category: user.user_metadata?.category || null,
+    profile_completed: false,
+    store_active: false,
+    trial_used: false,
+    trial_ends_at: null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+
+  const { error: insertError } = await supabase.from('brand_profiles').insert(insertPayload);
+  if (insertError) throw insertError;
+
+  return insertPayload;
+};
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return json(res, 405, { error: 'Method not allowed' });
   if (!process.env.VITE_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) return json(res, 503, { error: 'Activation service is not configured.' });
@@ -28,6 +59,16 @@ export default async function handler(req, res) {
     const { data: authData, error: authError } = await supabase.auth.getUser(token);
     if (authError || !authData.user) return json(res, 401, { error: 'Invalid session.' });
 
+    await ensureBrandProfileRow({ supabase, user: authData.user });
+
+    const { data: existingProfile, error: profileLookupError } = await supabase
+      .from('brand_profiles')
+      .select('trial_used, trial_ends_at, store_active')
+      .eq('id', authData.user.id)
+      .maybeSingle();
+
+    if (profileLookupError) return json(res, 500, { error: 'Could not read the brand profile for this activation.' });
+
     const profileUpdate = {
       store_active: true,
       plan_id: trial ? null : planId,
@@ -40,8 +81,15 @@ export default async function handler(req, res) {
     };
 
     if (trial) {
-      const { data: existing } = await supabase.from('brand_profiles').select('trial_used, trial_ends_at').eq('id', authData.user.id).maybeSingle();
-      if (existing?.trial_used || existing?.trial_ends_at) return json(res, 409, { error: 'Your free trial has already been used.' });
+      const existingTrialHasActiveWindow = Boolean(
+        existingProfile?.trial_used &&
+        existingProfile?.trial_ends_at &&
+        new Date(existingProfile.trial_ends_at) > new Date()
+      );
+
+      if (existingTrialHasActiveWindow) {
+        return json(res, 409, { error: 'Your free trial is already active.' });
+      }
     } else {
       const price = plans[planId]?.[interval];
       if (!price || !reference || !['paystack', 'flutterwave'].includes(provider)) return json(res, 400, { error: 'Invalid activation plan or payment details.' });

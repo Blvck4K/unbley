@@ -116,7 +116,7 @@ export default async function handler(req, res) {
       : 'We could not verify that account number with the configured bank provider. Please check your details and try again.';
 
     return json(res, 400, { error: errorMessage });
-  } catch (error) {
+  } catch {
     return json(res, 500, {
       error: 'Unable to verify your bank account right now. Please try again in a moment.'
     });

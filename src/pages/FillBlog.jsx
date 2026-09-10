@@ -210,7 +210,7 @@ export default function FillBlog() {
     return Number.isNaN(value) ? 0 : value;
   };
 
-  const getMostRecentDraft = (localDraft, dbDraft) => {
+  const getMostRecentDraft = useCallback((localDraft, dbDraft) => {
     if (!localDraft && !dbDraft) return null;
     if (!localDraft) return dbDraft;
     if (!dbDraft) return localDraft;
@@ -220,7 +220,7 @@ export default function FillBlog() {
 
     if (dbTs > localTs) return dbDraft;
     return localDraft;
-  };
+  }, []);
 
   // Full Tiptap setup
   const editor = useEditor({
@@ -327,7 +327,7 @@ export default function FillBlog() {
       hydrateDraft(savedDraft);
       setDataLoaded(true);
     }
-  }, [draftStorageKey, editId, navigate, toast]);
+  }, [draftStorageKey, editId, navigate, toast, getMostRecentDraft]);
 
   useEffect(() => {
     if (!dataLoaded) return;

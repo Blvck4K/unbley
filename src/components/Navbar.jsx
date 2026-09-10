@@ -10,7 +10,6 @@ import logoImg from '../assets/logogo.png';
 export default function Navbar() {
   const [search, setSearch] = useState('');
   const [scrolled, setScrolled] = useState(false);
-  const [cartCount, setCartCount] = useState(0);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -32,24 +31,9 @@ export default function Navbar() {
     window.addEventListener('resize', handleResize);
     window.addEventListener('scroll', handleScroll);
 
-    const updateCartCount = () => {
-      try {
-        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-        const count = cart.reduce((total, item) => total + (item.qty || 1), 0);
-        setCartCount(count);
-      } catch {
-        setCartCount(0);
-      }
-    };
-    updateCartCount();
-    window.addEventListener('storage', updateCartCount);
-    window.addEventListener('cartUpdated', updateCartCount);
-
     return () => {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('storage', updateCartCount);
-      window.removeEventListener('cartUpdated', updateCartCount);
     };
   }, []);
 
