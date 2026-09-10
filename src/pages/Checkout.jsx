@@ -11,6 +11,9 @@ import PaymentFailureModal from '../components/PaymentFailureModal';
 import { nigeriaLocations, nigeriaStates } from '../lib/nigeriaLocations';
 import { motion } from 'framer-motion';
 
+const normalizePublicKey = (value) => String(value || '').trim().replace(/^['"]|['"]$/g, '');
+const normalizeSubaccountCode = (value) => String(value || '').trim().replace(/^['"]|['"]$/g, '');
+
 export default function Checkout() {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -115,8 +118,10 @@ export default function Checkout() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentError, setPaymentError] = useState('');
   const [confirmationRetryAvailable, setConfirmationRetryAvailable] = useState(false);
-  const hasPaystack = Boolean(import.meta.env.VITE_PAYSTACK_PUBLIC_KEY);
-  const hasFlutterwave = Boolean(import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY);
+  const paystackPublicKey = normalizePublicKey(import.meta.env.VITE_PAYSTACK_PUBLIC_KEY);
+  const flutterwavePublicKey = normalizePublicKey(import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY);
+  const hasPaystack = Boolean(paystackPublicKey);
+  const hasFlutterwave = Boolean(flutterwavePublicKey);
   const [paymentMethod, setPaymentMethod] = useState(() => {
     if (hasPaystack) return 'paystack';
     if (hasFlutterwave) return 'flutterwave';
@@ -343,11 +348,18 @@ View in Dashboard.
       testPaymentAdapter({ provider: 'paystack', amount: total, onSuccess, onCancel: onClose, onError: showPaymentFailure });
       return;
     }
-    const paystackKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY;
+    const paystackKey = paystackPublicKey;
     if (!paystackKey) {
       showPaymentFailure('Paystack is currently unavailable. Please select Flutterwave or contact support.');
       return;
     }
+    if (!/^pk_(test|live)_/.test(paystackKey)) {
+      showPaymentFailure('Paystack public key is invalid. Configure a pk_test_ or pk_live_ key in the deployed environment.');
+      return;
+    }
+
+    const paystackSubaccountCode = normalizeSubaccountCode(brand?.paystack_subaccount_code);
+    const validPaystackSubaccount = /^ACCT_[A-Za-z0-9]+$/.test(paystackSubaccountCode);
 
     try {
       const paystack = new PaystackPop();
@@ -357,7 +369,7 @@ View in Dashboard.
         amount: Math.round(total * 100),
         currency: 'NGN',
         ref: `UNB-PSTK-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
-        ...(brand?.paystack_subaccount_code ? { subaccount: brand.paystack_subaccount_code } : {}),
+        ...(validPaystackSubaccount ? { subaccount: paystackSubaccountCode } : {}),
         onSuccess: (transaction) => onSuccess(transaction),
         onCancel: () => onClose(),
       });
@@ -373,9 +385,13 @@ View in Dashboard.
       testPaymentAdapter({ provider: 'flutterwave', amount: total, onSuccess, onCancel: onClose, onError: showPaymentFailure });
       return;
     }
-    const flwKey = import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY;
+    const flwKey = flutterwavePublicKey;
     if (!flwKey) {
       showPaymentFailure('Flutterwave payment configuration is missing. Please contact support.');
+      return;
+    }
+    if (!/^FLWPUBK_(TEST|LIVE)-/.test(flwKey)) {
+      showPaymentFailure('Flutterwave public key is invalid. Configure an FLWPUBK_TEST- or FLWPUBK_LIVE- key in the deployed environment.');
       return;
     }
 
@@ -383,6 +399,9 @@ View in Dashboard.
       showPaymentFailure('Flutterwave checkout is still loading or was blocked by your browser. Please try again or disable your ad blocker.');
       return;
     }
+
+    const flutterwaveSubaccountCode = normalizeSubaccountCode(brand?.flutterwave_subaccount_code);
+    const validFlutterwaveSubaccount = /^\d+$/.test(flutterwaveSubaccountCode);
 
     try {
       window.FlutterwaveCheckout({
@@ -396,10 +415,10 @@ View in Dashboard.
           phone_number: formData.phone,
           name: `${formData.firstName} ${formData.lastName}`.trim(),
         },
-        ...(brand?.flutterwave_subaccount_code ? {
+        ...(validFlutterwaveSubaccount ? {
           subaccounts: [
             {
-              id: brand.flutterwave_subaccount_code,
+              id: flutterwaveSubaccountCode,
             }
           ]
         } : {}),
