@@ -576,11 +576,11 @@ export default function Dashboard() {
       if (!ledgerError && Array.isArray(ledgerData)) {
         ledgerAvailable = (ledgerData || [])
           .filter(entry => entry.type === 'PAYMENT' && (entry.status === 'AVAILABLE' || entry.status === 'POSTED'))
-          .reduce((sum, entry) => sum + (Number(entry.amount) || 0), 0);
+          .reduce((sum, entry) => sum + ((Number(entry.amount) || 0) / 100), 0);
 
         ledgerPending = (ledgerData || [])
           .filter(entry => entry.type === 'PAYMENT' && entry.status === 'PENDING')
-          .reduce((sum, entry) => sum + (Number(entry.amount) || 0), 0);
+          .reduce((sum, entry) => sum + ((Number(entry.amount) || 0) / 100), 0);
       }
     } catch (error) {
       console.warn('Ledger balance not available yet:', error);
