@@ -58,6 +58,7 @@ export default function Dashboard() {
   const [activeOnboardingStep, setActiveOnboardingStep] = useState(null);
   const [showDashboardTour, setShowDashboardTour] = useState(false);
   const [dashboardTourStartStep, setDashboardTourStartStep] = useState(0);
+  const [isCompactView, setIsCompactView] = useState(typeof window !== 'undefined' ? window.innerWidth <= 1024 : false);
   const [showWelcomeOnboarding, setShowWelcomeOnboarding] = useState(false);
   const [isFirstSignupSession, setIsFirstSignupSession] = useState(false);
   const [welcomeOnboardingStep, setWelcomeOnboardingStep] = useState(0);
@@ -135,6 +136,21 @@ export default function Dashboard() {
     const timer = setInterval(() => setCurrentTime(Date.now()), 60000);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 1024px)');
+    const updateViewport = () => setIsCompactView(mediaQuery.matches);
+    updateViewport();
+    mediaQuery.addEventListener('change', updateViewport);
+    return () => mediaQuery.removeEventListener('change', updateViewport);
+  }, []);
+
+  useEffect(() => {
+    if (isCompactView) {
+      setShowDashboardTour(false);
+      sessionStorage.removeItem('unbley_mobile_tour_resume_step');
+    }
+  }, [isCompactView]);
 
   const currentTab = new URLSearchParams(location.search).get('tab') || 'overview';
 
@@ -639,10 +655,10 @@ export default function Dashboard() {
       setShowOnboardingModal(true);
       return;
     }
-    if (!neverShow && user?.id && !localStorage.getItem(`unbley_dashboard_tour_seen_${user.id}`)) {
+    if (!isCompactView && !neverShow && user?.id && !localStorage.getItem(`unbley_dashboard_tour_seen_${user.id}`)) {
       setTimeout(() => setShowDashboardTour(true), 200);
     }
-  }, [firstMissingSetup, user?.id]);
+  }, [firstMissingSetup, user?.id, isCompactView]);
 
   const finishWelcomeOnboarding = useCallback((neverShow = false) => {
     if (user?.id) {
@@ -927,29 +943,20 @@ export default function Dashboard() {
 
   const formatMoney = (amount) => '₦' + Number(amount || 0).toLocaleString();
 
-  const defaultOrders = [
-    { id: 'ORD-138901-999', order_number: 'ORD-138901-999', time: 'Today, 11:20 AM', item_name: 'Short Carton Colour Chinos (x2)', buyer_name: 'Tunde Balogun', amount: 18500, payment_status: 'PAID', fulfillment_status: 'READY TO SHIP', isDemo: true },
-    { id: 'ORD-138901-998', order_number: 'ORD-138901-998', time: 'Yesterday', item_name: 'Vintage Oversized Tee (x1)', buyer_name: 'Chidinma Eze', amount: 12000, payment_status: 'PAID', fulfillment_status: 'SHIPPED', isDemo: true },
-    { id: 'ORD-138901-997', order_number: 'ORD-138901-997', time: '2 days ago', item_name: 'Cargo Streetwear Pants (x1)', buyer_name: 'Femi Adeyemi', amount: 22000, payment_status: 'PAID', fulfillment_status: 'DELIVERED', isDemo: true },
-    { id: 'ORD-138901-996', order_number: 'ORD-138901-996', time: '3 days ago', item_name: 'Premium Cotton Crew Socks (x3)', buyer_name: 'Amaka Obi', amount: 6500, payment_status: 'AWAITING PAY', fulfillment_status: 'PENDING', isDemo: true }
-  ];
-
-  const ordersToDisplay = metrics.recentOrders.length > 0
-    ? metrics.recentOrders.map(order => ({
-        id: order.id,
-        order_number: order.order_number || `ORD-${order.id.slice(0, 6)}`,
-        time: new Date(order.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        item_name: order.product_name_snapshot || 'Catalog Product (x1)',
-        buyer_name: order.customer_name || 'Store Customer',
-        amount: order.total_amount || 0,
-        payment_status: ['paid', 'completed'].includes(String(order.status).toLowerCase()) ? 'PAID' : 'AWAITING PAY',
-        fulfillment_status: order.fulfillment_status || 'pending',
-        order_status: ['paid', 'processing', 'shipped', 'delivered', 'cancelled'].includes(String(order.fulfillment_status).toLowerCase())
-          ? String(order.fulfillment_status).toLowerCase()
-          : 'paid',
-        isDemo: false
-      }))
-    : defaultOrders;
+  const ordersToDisplay = (metrics.recentOrders || []).map(order => ({
+    id: order.id,
+    order_number: order.order_number || `ORD-${order.id.slice(0, 6)}`,
+    time: new Date(order.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    item_name: order.product_name_snapshot || 'Catalog Product (x1)',
+    buyer_name: order.customer_name || 'Store Customer',
+    amount: order.total_amount || 0,
+    payment_status: ['paid', 'completed'].includes(String(order.status).toLowerCase()) ? 'PAID' : 'AWAITING PAY',
+    fulfillment_status: order.fulfillment_status || 'pending',
+    order_status: ['paid', 'processing', 'shipped', 'delivered', 'cancelled'].includes(String(order.fulfillment_status).toLowerCase())
+      ? String(order.fulfillment_status).toLowerCase()
+      : 'paid',
+    isDemo: false
+  }));
 
   const weeklyData = metrics.weeklySales.length > 0 ? metrics.weeklySales : Array.from({ length: 7 }, (_, index) => ({
     day: `${new Date(Date.now() - (6 - index) * 86400000).toLocaleDateString('en-US', { weekday: 'short' })}${index === 6 ? ' (Today)' : ''}`,
@@ -1322,7 +1329,13 @@ export default function Dashboard() {
                         </tr>
                       </thead>
                       <tbody>
-                        {ordersToDisplay.map((order) => (
+                        {ordersToDisplay.length === 0 ? (
+                          <tr>
+                            <td colSpan={5} style={{ padding: '22px 12px', textAlign: 'center', color: '#6B7280', fontWeight: 600 }}>
+                              No recent customer orders yet.
+                            </td>
+                          </tr>
+                        ) : ordersToDisplay.map((order) => (
                           <tr key={order.id}>
                             <td>
                               <div style={{ fontWeight: '800', color: '#111827' }}>{order.order_number}</div>
@@ -2104,19 +2117,21 @@ export default function Dashboard() {
           )}
         </AnimatePresence>
 
-        <DashboardTour
-          isActive={showDashboardTour}
-          initialStep={dashboardTourStartStep}
-          onClose={() => setShowDashboardTour(false)}
-          userId={user?.id}
-          onSidebarToggle={(open) => setIsSidebarOpen(open)}
-          onMobileMenuOpen={(step) => {
-            sessionStorage.setItem('unbley_mobile_tour_resume_step', String(step));
-            setShowDashboardTour(false);
-            navigate('/menu');
-          }}
-          isStoreComplete={progressPct >= 100}
-        />
+        {!isCompactView && (
+          <DashboardTour
+            isActive={showDashboardTour}
+            initialStep={dashboardTourStartStep}
+            onClose={() => setShowDashboardTour(false)}
+            userId={user?.id}
+            onSidebarToggle={(open) => setIsSidebarOpen(open)}
+            onMobileMenuOpen={(step) => {
+              sessionStorage.setItem('unbley_mobile_tour_resume_step', String(step));
+              setShowDashboardTour(false);
+              navigate('/menu');
+            }}
+            isStoreComplete={progressPct >= 100}
+          />
+        )}
         <ProductsModal
           isOpen={showEditProductModal}
           editProduct={editingProduct}

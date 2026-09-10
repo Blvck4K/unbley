@@ -3,7 +3,6 @@ import { BarChart2, CreditCard, HelpCircle, Headphones, Sliders, Users, ArrowLef
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import PageTransition from '../components/PageTransition';
-import DashboardTour from '../components/DashboardTour';
 
 const menuItems = [
   { to: '/dashboard?tab=insights', label: 'Store Insights', description: 'Review traffic and performance', icon: BarChart2, tone: 'blue' },
@@ -123,27 +122,6 @@ export default function Menu() {
           </button>
         </div>
 
-        <DashboardTour
-          isActive={tourStep !== null}
-          initialStep={tourStep ?? 0}
-          userId={user?.id}
-          isStoreComplete={false}
-          onClose={() => {
-            sessionStorage.removeItem('unbley_mobile_tour_resume_step');
-            setTourStep(null);
-          }}
-          onMobileMenuAdvance={(nextStep) => {
-            if (nextStep >= 4) {
-              sessionStorage.removeItem('unbley_mobile_tour_resume_step');
-              setTourStep(null);
-              navigate('/dashboard');
-              return;
-            }
-            sessionStorage.setItem('unbley_mobile_tour_resume_step', String(nextStep));
-            setTourStep(null);
-            navigate('/dashboard');
-          }}
-        />
       </main>
     </PageTransition>
   );
