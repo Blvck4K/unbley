@@ -114,7 +114,6 @@ export default function Dashboard() {
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [expandedOrderId, setExpandedOrderId] = useState(null);
   const [payouts, setPayouts] = useState([]);
-  const [withdrawalRequests, setWithdrawalRequests] = useState([]);
   const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
   const [withdrawalAmount, setWithdrawalAmount] = useState('');
   const [withdrawalLoading, setWithdrawalLoading] = useState(false);
@@ -532,29 +531,33 @@ export default function Dashboard() {
         .order('created_at', { ascending: false })
         .limit(20);
       if (error) throw error;
-      setPayouts(data || []);
+
+      const [{ data: ledgerData }, { data: payoutData }] = await Promise.all([
+        supabase
+          .from('merchant_financial_transactions')
+          .select('id, order_id')
+          .eq('merchant_id', user.id)
+          .eq('type', 'PAYMENT'),
+        supabase
+          .from('merchant_payouts')
+          .select('status, metadata')
+          .eq('merchant_id', user.id)
+      ]);
+      const ledgerIdByOrderId = new Map((ledgerData || []).map((entry) => [entry.order_id, entry.id]));
+      const payoutStatusByLedgerId = new Map((payoutData || []).map((payout) => [payout.metadata?.settlementPaymentId, payout.status]));
+
+      setPayouts((data || []).map((order) => {
+        const payoutStatus = payoutStatusByLedgerId.get(ledgerIdByOrderId.get(order.id));
+        return {
+          ...order,
+          customerPaymentStatus: order.status === 'paid' || order.status === 'completed' ? 'RECEIVED' : String(order.status || 'PENDING').toUpperCase(),
+          merchantPayoutStatus: payoutStatus === 'SUCCESS' ? 'SENT' : payoutStatus === 'FAILED' ? 'FAILED' : 'PENDING'
+        };
+      }));
       setWalletError('');
     } catch (err) {
       console.error('Error fetching payouts:', err);
       setWalletError(err.message || 'Could not load payout data.');
-    }
-  }, [user]);
-
-  const fetchWithdrawalRequests = useCallback(async () => {
-    if (!user) return;
-    try {
-      const { data, error } = await supabase
-        .from('withdrawal_requests')
-        .select('*')
-        .eq('brand_id', user.id)
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      setWithdrawalRequests(data || []);
-      setWalletError('');
-    } catch (err) {
-      // Table may not exist yet, gracefully handle
-      console.error('Error fetching withdrawal requests:', err);
-      setWalletError(err.message || 'Could not load withdrawal requests.');
     }
   }, [user]);
 
@@ -774,7 +777,6 @@ export default function Dashboard() {
       if (currentTabRef.current === 'orders') fetchAllOrders();
       if (currentTabRef.current === 'wallet') {
         fetchPayouts();
-        fetchWithdrawalRequests();
         fetchAvailableBalance();
       }
     };
@@ -786,7 +788,7 @@ export default function Dashboard() {
       document.removeEventListener('visibilitychange', synchronizeOnVisible);
       window.removeEventListener('online', synchronizeOnOnline);
     };
-  }, [user, fetchDashboardData, fetchProducts, fetchAllOrders, fetchPayouts, fetchWithdrawalRequests, fetchAvailableBalance]);
+  }, [user, fetchDashboardData, fetchProducts, fetchAllOrders, fetchPayouts, fetchAvailableBalance]);
 
   // Tab-specific fetches
   useEffect(() => {
@@ -794,10 +796,9 @@ export default function Dashboard() {
     if (currentTab === 'orders') fetchAllOrders();
     if (currentTab === 'wallet') {
       fetchPayouts();
-      fetchWithdrawalRequests();
       fetchAvailableBalance();
     }
-  }, [currentTab, fetchProducts, fetchAllOrders, fetchPayouts, fetchWithdrawalRequests, fetchAvailableBalance]);
+  }, [currentTab, fetchProducts, fetchAllOrders, fetchPayouts, fetchAvailableBalance]);
 
   useEffect(() => {
     if (!user || currentTab !== 'wallet') return undefined;
@@ -806,14 +807,14 @@ export default function Dashboard() {
       .channel(`dashboard_withdrawals_${user.id}`)
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'withdrawal_requests', filter: `brand_id=eq.${user.id}` },
-        () => { fetchWithdrawalRequests(); fetchAvailableBalance(); }
+        () => { fetchAvailableBalance(); }
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(withdrawalChannel);
     };
-  }, [user, currentTab, fetchWithdrawalRequests, fetchAvailableBalance]);
+  }, [user, currentTab, fetchAvailableBalance]);
 
   const toStoreUrl = (domain) => {
     if (!domain) return '#';
@@ -965,7 +966,6 @@ export default function Dashboard() {
       toast?.success('Withdrawal request submitted successfully!');
       setWithdrawalAmount('');
       setShowWithdrawalModal(false);
-      fetchWithdrawalRequests();
       fetchAvailableBalance();
     } catch (err) {
       console.error('Error requesting withdrawal:', err);
@@ -1740,7 +1740,7 @@ export default function Dashboard() {
                 ) : (
                   <table className="unbley-table">
                     <thead>
-                      <tr><th>ORDER</th><th>PRODUCT</th><th>CUSTOMER</th><th>AMOUNT</th><th>STATUS</th><th>DATE</th></tr>
+                      <tr><th>ORDER</th><th>PRODUCT</th><th>CUSTOMER</th><th>AMOUNT</th><th>CUSTOMER PAYMENT</th><th>MERCHANT PAYOUT</th><th>DATE</th></tr>
                     </thead>
                     <tbody>
                       {payouts.map(p => (
@@ -1749,7 +1749,8 @@ export default function Dashboard() {
                           <td style={{ fontSize: '12px', color: '#374151' }}>{p.product_name_snapshot || 'Product'}</td>
                           <td style={{ fontSize: '12px', color: '#6B7280' }}>{p.customer_name || '—'}</td>
                           <td style={{ fontWeight: '800', color: '#111827' }}>{formatMoney(p.total_amount)}</td>
-                          <td><span className={p.status === 'completed' ? 'unbley-pill-paid' : 'unbley-pill-awaiting'}>{p.status === 'completed' ? 'PAID' : 'PENDING'}</span></td>
+                          <td><span className="unbley-pill-paid">{p.customerPaymentStatus || 'RECEIVED'}</span></td>
+                          <td><span className={p.merchantPayoutStatus === 'SENT' ? 'unbley-pill-paid' : p.merchantPayoutStatus === 'FAILED' ? 'unbley-pill-cancelled' : 'unbley-pill-awaiting'}>{p.merchantPayoutStatus || 'PENDING'}</span></td>
                           <td style={{ fontSize: '11px', color: '#9CA3AF' }}>{p.created_at ? new Date(p.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' }) : '—'}</td>
                         </tr>
                       ))}
@@ -1758,64 +1759,6 @@ export default function Dashboard() {
                 )}
               </div>
 
-              {/* Withdrawal Requests Section */}
-              <div className="unbley-table-card">
-                <div className="unbley-table-header-bar">
-                  <div>
-                    <h3 style={{ fontSize: '16px', fontWeight: '800', color: '#111827', margin: 0 }}>Your Withdrawal Requests</h3>
-                    <p style={{ fontSize: '12px', color: '#6B7280', margin: '2px 0 0' }}>Track your automatic payouts</p>
-                  </div>
-                </div>
-                {withdrawalRequests.length === 0 ? (
-                  <div style={{ padding: '48px', textAlign: 'center', color: '#9CA3AF', fontSize: '14px' }}>
-                    No withdrawal requests yet. Request a withdrawal when you're ready to cash out.
-                  </div>
-                ) : (
-                  <table className="unbley-table">
-                    <thead>
-                      <tr><th>AMOUNT</th><th>BANK NAME</th><th>ACCOUNT</th><th>STATUS</th><th>DATE REQUESTED</th></tr>
-                    </thead>
-                    <tbody>
-                      {withdrawalRequests.map(req => {
-                        const statusColors = {
-                          pending: { bg: '#FEF3C7', color: '#92400E', label: 'PENDING' },
-                          approved: { bg: '#DBEAFE', color: '#1E40AF', label: 'APPROVED' },
-                          paid_out: { bg: '#DCFCE7', color: '#15803D', label: 'PAID OUT' }
-                        };
-                        const statusStyle = statusColors[req.status] || statusColors.pending;
-                        return (
-                          <tr key={req.id}>
-                            <td style={{ fontWeight: '800', color: '#111827' }}>{formatMoney(req.amount)}</td>
-                            <td style={{ fontSize: '12px', color: '#374151' }}>{req.bank_name || '—'}</td>
-                            <td style={{ fontSize: '12px', color: '#6B7280' }}>
-                              <div>{req.account_number}</div>
-                              <div style={{ fontSize: '11px', marginTop: '2px' }}>{req.account_name}</div>
-                            </td>
-                            <td>
-                              <span style={{
-                                backgroundColor: statusStyle.bg,
-                                color: statusStyle.color,
-                                padding: '4px 10px',
-                                borderRadius: '6px',
-                                fontSize: '11px',
-                                fontWeight: '700'
-                              }}>
-                                {statusStyle.label}
-                              </span>
-                            </td>
-                            <td style={{ fontSize: '11px', color: '#9CA3AF' }}>
-                              {req.created_at 
-                                ? new Date(req.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })
-                                : '—'
-                              }
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                )}
-              </div>
             </main>
           )}
 
