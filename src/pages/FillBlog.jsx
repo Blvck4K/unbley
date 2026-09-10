@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   ChevronRight, Search, Settings, Bold, Italic, Quote,
   Link as LinkIcon, Image as ImageIcon, ChevronDown,
@@ -112,6 +112,76 @@ export default function FillBlog() {
 
   const draftStorageKey = `unbley_fillblog_draft_${user?.id || 'guest'}_${editId || 'new'}`;
 
+  const saveDraftToSupabase = useCallback(async (savePayload = null) => {
+    const payload = savePayload || {
+      title,
+      slug,
+      content,
+      excerpt,
+      meta_description: metaDescription,
+      meta_title: metaTitle,
+      meta_keywords: metaKeywords,
+      category,
+      tags,
+      cover_image_url: coverImageUrl,
+      author_name: authorName,
+      published_at: publishedAt,
+      updatedAt: new Date().toISOString()
+    };
+
+    if (!payload.title && !payload.content && !payload.excerpt && !payload.cover_image_url) {
+      return;
+    }
+
+    try {
+      const autosaveData = {
+        title: payload.title || 'Untitled Draft',
+        slug: payload.slug || title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || `draft-${Date.now()}`,
+        excerpt: payload.excerpt || '',
+        category: payload.category || 'Editorial',
+        tags: payload.tags || [],
+        cover_image_url: payload.cover_image_url || '',
+        author_name: payload.author_name || authorName || 'Julian Vane',
+        meta_title: payload.meta_title || payload.title || title || 'Untitled Draft',
+        meta_description: payload.meta_description || payload.excerpt || '',
+        meta_keywords: payload.meta_keywords || '',
+        content: payload.content || '',
+        status: 'draft',
+        updated_at: new Date().toISOString(),
+        autosave_payload: payload,
+        autosave_updated_at: new Date().toISOString()
+      };
+
+      if (editId) {
+        const { error } = await supabase
+          .from('blog_posts')
+          .update(autosaveData)
+          .eq('id', editId);
+
+        if (error) throw error;
+      } else {
+        const { data: insertedRow, error } = await supabase
+          .from('blog_posts')
+          .insert([{ ...autosaveData, author_id: user?.id, created_at: new Date().toISOString() }])
+          .select('id')
+          .single();
+
+        if (error) throw error;
+
+        if (insertedRow?.id) {
+          navigate(`/fillblog?id=${insertedRow.id}`, { replace: true });
+        }
+      }
+
+      setAutoSaveStatus(`Saved to Supabase at ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
+      localStorage.setItem(draftStorageKey, JSON.stringify({ ...payload, autosave_updated_at: new Date().toISOString(), editId: editId || null }));
+    } catch (err) {
+      console.warn('Supabase autosave failed, using local fallback:', err);
+      setAutoSaveStatus('Local draft only');
+      localStorage.setItem(draftStorageKey, JSON.stringify({ ...payload, autosave_updated_at: new Date().toISOString(), editId: editId || null }));
+    }
+  }, [authorName, category, content, coverImageUrl, draftStorageKey, editId, excerpt, metaDescription, metaKeywords, metaTitle, navigate, publishedAt, slug, tags, title, user?.id]);
+
   const hydrateDraft = (draft) => {
     if (!draft) return;
     if (draft.title !== undefined) setTitle(draft.title || '');
@@ -130,6 +200,26 @@ export default function FillBlog() {
     if (draft.updatedAt) {
       setAutoSaveStatus(`Restored auto-saved draft at ${new Date(draft.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
     }
+  };
+
+  const getDraftTimestamp = (draft) => {
+    if (!draft) return 0;
+    const raw = draft.autosave_updated_at || draft.updated_at || draft.updatedAt || draft.created_at || null;
+    if (!raw) return 0;
+    const value = new Date(raw).getTime();
+    return Number.isNaN(value) ? 0 : value;
+  };
+
+  const getMostRecentDraft = (localDraft, dbDraft) => {
+    if (!localDraft && !dbDraft) return null;
+    if (!localDraft) return dbDraft;
+    if (!dbDraft) return localDraft;
+
+    const localTs = getDraftTimestamp(localDraft);
+    const dbTs = getDraftTimestamp(dbDraft);
+
+    if (dbTs > localTs) return dbDraft;
+    return localDraft;
   };
 
   // Full Tiptap setup
@@ -200,13 +290,16 @@ export default function FillBlog() {
 
         if (error) throw error;
         if (data) {
-          const latestDbUpdate = data.updated_at || data.created_at;
-          const shouldUseSavedDraft = savedDraft && savedDraft.editId === editId && savedDraft.updatedAt && latestDbUpdate && new Date(savedDraft.updatedAt).getTime() > new Date(latestDbUpdate).getTime();
+          const dbDraft = data.autosave_payload && typeof data.autosave_payload === 'object'
+            ? { ...data.autosave_payload, updatedAt: data.autosave_updated_at || data.updated_at || data.created_at, editId: String(data.id) }
+            : null;
 
-          if (shouldUseSavedDraft) {
-            hydrateDraft(savedDraft);
+          const restoredDraft = getMostRecentDraft(savedDraft, dbDraft);
+
+          if (restoredDraft) {
+            hydrateDraft(restoredDraft);
           } else {
-            setTitle(data.title);
+            setTitle(data.title || '');
             setSlug(data.slug || '');
             setContent(data.content || '');
             setExcerpt(data.excerpt || '');
@@ -237,7 +330,7 @@ export default function FillBlog() {
   }, [draftStorageKey, editId, navigate, toast]);
 
   useEffect(() => {
-    if (!dataLoaded && !editId) return;
+    if (!dataLoaded) return;
 
     const hasAnyContent = Boolean(
       title || slug || content || excerpt || metaDescription || metaTitle || coverImageUrl || category || tags.length
@@ -262,9 +355,14 @@ export default function FillBlog() {
       updatedAt: new Date().toISOString()
     };
 
+    const timeoutId = setTimeout(() => {
+      saveDraftToSupabase(draftPayload);
+    }, 1200);
+
     localStorage.setItem(draftStorageKey, JSON.stringify(draftPayload));
-    setAutoSaveStatus(`Auto-saved at ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
-  }, [draftStorageKey, title, slug, content, excerpt, metaDescription, metaTitle, metaKeywords, category, tags, coverImageUrl, authorName, publishedAt, editId, dataLoaded]);
+
+    return () => clearTimeout(timeoutId);
+  }, [draftStorageKey, title, slug, content, excerpt, metaDescription, metaTitle, metaKeywords, category, tags, coverImageUrl, authorName, publishedAt, editId, dataLoaded, saveDraftToSupabase]);
 
   const handleSave = async (isPublishing = false) => {
     if (!title) return toast.error("Title is required");
