@@ -84,7 +84,7 @@ export default function ExploreBrand() {
 
     // Components
     banner: { position: 'relative', height: '400px', backgroundColor: '#261710', border: '1px solid #3D291E', borderRadius: '16px', display: 'flex', flexDirection: 'column', padding: '64px', overflow: 'hidden', marginBottom: '32px', boxShadow: '0 8px 30px rgba(38,23,16,0.15)' },
-    bannerBg: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundImage: `url("${brand?.banner_url || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1200&q=80'}")`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.3 },
+    bannerBg: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, ...(brand?.banner_url ? { backgroundImage: `url("${brand.banner_url}")` } : {}), backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.3 },
     bannerContent: { position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: '32px', marginTop: 'auto' },
     brandBadge: { width: '88px', height: '88px', border: `2px solid #DFCFC2`, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF', overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.2)' },
     brandBadgeText: { fontFamily: 'var(--font-heading)', fontSize: '28px', fontWeight: '800', color: brandColor },
@@ -110,7 +110,7 @@ export default function ExploreBrand() {
     exploreLink: { fontSize: '13px', color: '#6A3E1F', fontWeight: '600', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px', letterSpacing: '0.05em', cursor: 'pointer' },
 
     productGrid: { display: 'grid', gridTemplateColumns: 'minmax(300px, 1.2fr) minmax(200px, 0.8fr)', gap: '16px' },
-    productMain: { backgroundColor: '#F7F2EC', minHeight: '500px', backgroundImage: `url("${brand?.product_1_url || 'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=800&q=80'}")`, backgroundSize: 'cover', backgroundPosition: 'center', borderRadius: '12px', cursor: 'pointer', border: '1px solid #EAE3D9' },
+    productMain: { backgroundColor: '#F7F2EC', minHeight: '500px', ...(brand?.product_1_url ? { backgroundImage: `url("${brand.product_1_url}")` } : {}), backgroundSize: 'cover', backgroundPosition: 'center', borderRadius: '12px', cursor: 'pointer', border: '1px solid #EAE3D9' },
     productSubGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: '16px', minHeight: '500px' },
     productItemCard: { backgroundColor: '#F7F2EC', backgroundSize: 'cover', backgroundPosition: 'center', borderRadius: '12px', cursor: 'pointer', border: '1px solid #EAE3D9' },
 
@@ -397,17 +397,17 @@ export default function ExploreBrand() {
               ></div>
               <div style={s.productSubGrid} className="product-sub-grid">
                 <div 
-                  style={{ ...s.productItemCard, gridColumn: '1 / span 2', backgroundImage: `url("${brand?.product_2_url || 'https://images.unsplash.com/photo-1584916201218-f4242ceb4809?w=600&q=80'}")` }} 
+                  style={{ ...s.productItemCard, gridColumn: '1 / span 2', ...(brand?.product_2_url ? { backgroundImage: `url("${brand.product_2_url}")` } : {}) }} 
                   className="product-item-card"
                   onClick={() => navigate(`/shop-brand/${id}`)}
                 ></div>
                 <div 
-                  style={{ ...s.productItemCard, backgroundImage: `url("${brand?.product_3_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&q=80'}")` }} 
+                  style={{ ...s.productItemCard, ...(brand?.product_3_url ? { backgroundImage: `url("${brand.product_3_url}")` } : {}) }} 
                   className="product-item-card"
                   onClick={() => navigate(`/shop-brand/${id}`)}
                 ></div>
                 <div 
-                  style={{ ...s.productItemCard, backgroundImage: `url("${brand?.product_4_url || 'https://images.unsplash.com/photo-1516280440502-617513511eb4?w=300&q=80'}")` }} 
+                  style={{ ...s.productItemCard, ...(brand?.product_4_url ? { backgroundImage: `url("${brand.product_4_url}")` } : {}) }} 
                   className="product-item-card"
                   onClick={() => navigate(`/shop-brand/${id}`)}
                 ></div>
