@@ -4,7 +4,7 @@ import Footer from '../components/Footer';
 import PageTransition from '../components/PageTransition';
 import HowItWorks from '../components/HowItWorks';
 import CTASection from '../components/CTASection';
-import { Palette, Share2, Sparkles, Layout, Settings, Rocket } from 'lucide-react';
+import { Palette, Share2, Sparkles, Layout, Settings, Rocket, CreditCard, Hammer } from 'lucide-react';
 import SEO from '../components/SEO';
 
 export default function CreatorPlatform() {
@@ -12,32 +12,32 @@ export default function CreatorPlatform() {
     {
       icon: <Palette size={24} />,
       title: "Your Brand, Your Identity",
-      description: "Don't settle for a cookie-cutter store. Customize your layout, colors, and fonts to match your creative vision perfectly."
+      description: "Your store should feel like your brand. Create a storefront that gives your products the presentation and identity they deserve."
     },
     {
       icon: <Share2 size={24} />,
-      title: "Built-In Social Growth",
-      description: "Seamlessly integrate your Instagram, TikTok, and Pinterest feeds to build trust and show off your creative process."
+      title: "Your Own Online Store",
+      description: "Give your audience a dedicated place to discover your products, learn about your brand, and place orders directly online."
     },
     {
       icon: <Sparkles size={24} />,
-      title: "Premium User Experience",
-      description: "We provide an ultra-clean, high-end shopping experience that elevates your brand and delights your customers."
+      title: "Simple, Secure Payments",
+      description: "Accept payments from your customers through trusted payment providers and give them a smooth checkout experience."
     },
     {
       icon: <Layout size={24} />,
       title: "Powerful Brand Dashboard",
-      description: "Manage your inventory, track your orders, and communicate with your customers from one centralized, easy-to-use hub."
+      description: "Manage your products, orders, store information, and other important parts of your online business from one centralized dashboard."
     },
     {
       icon: <Settings size={24} />,
-      title: "Advanced Creator Tools",
-      description: "From custom domains to automated email marketing, we give you the professional tools you need to grow."
+      title: "Grow With Your Brand",
+      description: "Start with the essentials and build your online presence as your business grows. Connect a custom domain when you're ready to give your brand an even more professional identity."
     },
     {
       icon: <Rocket size={24} />,
-      title: "Launch in Minutes",
-      description: "Forget complex setups. Our intuitive onboarding process means you can have your brand live in under 5 minutes."
+      title: "Launch Without the Technical Headache",
+      description: "You shouldn't need to be a developer to start selling online. Unbley makes setting up your store simple so you can spend more time creating and growing your business."
     }
   ];
 
@@ -45,7 +45,7 @@ export default function CreatorPlatform() {
     <>
       <SEO 
         title="Ecommerce for Creators & Creative Brands"
-        description="Build a professional storefront for your creative brand. The most trusted platform for artisans, designers, and creative entrepreneurs to grow their business."
+        description="Build a professional online store for your creative brand. Unbley helps artisans, designers, and creative entrepreneurs sell online and grow their business."
         keywords="ecommerce for creators, creative brand platform, launch online store, artist shop platform, boutique ecommerce builder"
         canonical="https://unbley.com/creator-platform"
       />
@@ -61,10 +61,10 @@ export default function CreatorPlatform() {
                   <span>The Future of Creative Commerce</span>
                 </div>
                 <h1 style={{ fontSize: '48px', fontWeight: '800', marginBottom: '24px', lineHeight: '1.2' }}>
-                  Where <span style={{ color: 'var(--primary)' }}>Creative Passion</span> Meets Business Growth
+                  Turn Your Creativity Into a Business
                 </h1>
                 <p style={{ fontSize: '18px', color: 'var(--text-secondary)', marginBottom: '32px' }}>
-                  Unbley is designed for the modern artisan. We provide the professional tools you need to build your boutique brand and sell directly to your audience without the middleman.
+                  Unbley gives creators the tools to build a professional online store, showcase what they create, accept payments, manage orders, and sell directly to their customers — all from one platform.
                 </p>
                 <a href="/auth?mode=signup" className="btn btn-primary" style={{ padding: '12px 32px' }}>Build Your Brand Now</a>
               </div>
@@ -74,8 +74,8 @@ export default function CreatorPlatform() {
           <section id="creator-features" style={{ padding: '100px 0' }}>
             <div className="container">
               <div style={{ textAlign: 'center', marginBottom: '64px' }}>
-                <h2 style={{ fontSize: '32px', fontWeight: '700', marginBottom: '16px' }}>Designed Specifically for Creative Brands</h2>
-                <p style={{ color: 'var(--text-secondary)' }}>Powerful tools that respect your brand's unique identity.</p>
+                <h2 style={{ fontSize: '32px', fontWeight: '700', marginBottom: '16px' }}>Designed for Creators Who Mean Business</h2>
+                <p style={{ color: 'var(--text-secondary)' }}>Powerful tools to help you turn your creative work into a professional brand.</p>
               </div>
               
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '48px 32px' }}>
@@ -104,33 +104,24 @@ export default function CreatorPlatform() {
             </div>
           </section>
 
-          <HowItWorks />
+          <HowItWorks
+            title="Start Selling Without the Technical Headache"
+            subtitle="Three simple steps to take your creative business online."
+            steps={[
+              { icon: <CreditCard size={28} color="white" />, title: 'Create Your Store', description: 'Sign up for Unbley, provide your business details, and add the products you want to sell.' },
+              { icon: <Hammer size={28} color="white" />, title: 'Build Your Brand', description: 'Customize your storefront, add your products, configure your payment options, and make your store feel like your brand.' },
+              { icon: <Rocket size={28} color="white" />, title: 'Start Selling', description: 'Share your store with your audience, accept orders, and start building your business online.' }
+            ]}
+          />
 
           <section style={{ padding: '100px 0', backgroundColor: 'var(--bg-dark)', color: 'white' }}>
             <div className="container">
               <div style={{ textAlign: 'center', maxWidth: '800px', margin: '0 auto' }}>
-                <h2 style={{ fontSize: '36px', fontWeight: '700', marginBottom: '32px' }}>Join a Growing Community of 1,000+ Creators</h2>
-                <p style={{ fontSize: '18px', opacity: 0.8, marginBottom: '40px' }}>
-                  Join the artists, designers, and creative entrepreneurs who have launched their high-value brands on Unbley. We've helped creators generate over $5M in revenue since our launch.
+                <h2 style={{ fontSize: '36px', fontWeight: '700', marginBottom: '32px', color: '#FDFBF7' }}>Your Creativity Deserves a Business Behind It</h2>
+                <p style={{ fontSize: '18px', opacity: 0.8, marginBottom: '40px', color: '#D4C8BE' }}>
+                  You already have something worth creating. Unbley gives you the tools to turn that creativity into a professional online business.
                 </p>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '32px' }}>
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '32px', fontWeight: '800', color: 'var(--primary)' }}>$5M+</div>
-                    <div style={{ fontSize: '14px', opacity: 0.6 }}>Sales Generated</div>
-                  </div>
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '32px', fontWeight: '800', color: 'var(--primary)' }}>1,200+</div>
-                    <div style={{ fontSize: '14px', opacity: 0.6 }}>Active Creative Shops</div>
-                  </div>
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '32px', fontWeight: '800', color: 'var(--primary)' }}>250k+</div>
-                    <div style={{ fontSize: '14px', opacity: 0.6 }}>Happy Customers</div>
-                  </div>
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '32px', fontWeight: '800', color: 'var(--primary)' }}>99.9%</div>
-                    <div style={{ fontSize: '14px', opacity: 0.6 }}>Platform Uptime</div>
-                  </div>
-                </div>
+                <a href="/auth?mode=signup" className="btn btn-primary" style={{ padding: '12px 32px' }}>Build Your Brand Now</a>
               </div>
             </div>
           </section>

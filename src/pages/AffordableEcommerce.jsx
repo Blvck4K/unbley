@@ -16,7 +16,7 @@ export default function AffordableEcommerce() {
     },
     {
       icon: <BadgeCheck size={24} />,
-      title: "All-Inclusive Features",
+      title: "Essential Commerce Tools",
       description: "No 'Lite' plans here. You get everything: custom domain, hosting, unlimited products, and localized payments."
     },
     {
@@ -29,7 +29,7 @@ export default function AffordableEcommerce() {
   return (
     <>
       <SEO 
-        title="Affordable Ecommerce Website Nigeria & Global | Only ₦30,000 / $30"
+        title="Affordable Online Store Platform for Nigerian Businesses | Unbley"
         description="Looking for a cheap ecommerce website in Nigeria? Unbley offers the most affordable way to launch a professional online store for ₦30,000 a year."
         keywords="cheap ecommerce website Nigeria, affordable online store builder, best value ecommerce platform, website for my business Nigeria"
         canonical="https://unbley.com/affordable-ecommerce-platform"
@@ -42,10 +42,10 @@ export default function AffordableEcommerce() {
           <section style={{ padding: '80px 20px', backgroundColor: 'var(--bg-light)', textAlign: 'center' }}>
             <div className="container" style={{ maxWidth: '800px', margin: '0 auto' }}>
               <h1 style={{ fontSize: 'clamp(32px, 5vw, 56px)', fontWeight: '800', lineHeight: '1.2', marginBottom: '24px' }}>
-                The Most <span style={{ color: 'var(--primary)' }}>Affordable way</span> to Launch a Professional Store
+                An Affordable Way to Launch a <span style={{ color: 'var(--primary)' }}>Professional Store</span>
               </h1>
               <p style={{ fontSize: '18px', color: 'var(--text-secondary)', marginBottom: '32px' }}>
-                Why spend ₦100k+ on a custom developer when you can get a professional .store website for just <strong>₦30,000 / $30</strong> for your first year?
+                Give your business a professional online store with the essential tools to showcase products, accept payments, and manage orders.
               </p>
               <Link to="/auth?mode=signup" className="btn btn-primary" style={{ padding: '14px 40px', fontSize: '16px' }}>Start Your Shop for ₦30,000</Link>
             </div>
@@ -96,7 +96,7 @@ export default function AffordableEcommerce() {
                       <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Check size={14} color="white" />
                       </div>
-                      <span>Secure Local & Global Payments (Integrated)</span>
+                      <span>Secure Payment Provider Integration</span>
                     </li>
                     <li style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                       <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -136,7 +136,7 @@ export default function AffordableEcommerce() {
                 </div>
                 <div style={{ padding: '24px', backgroundColor: 'var(--bg-gray)', borderRadius: '16px' }}>
                   <h4 style={{ fontWeight: '700', marginBottom: '8px' }}>Do you support Paystack/Flutterwave?</h4>
-                  <p style={{ fontSize: '15px', color: 'var(--text-secondary)' }}>Native support for top-tier gateways means you can accept payments from anyone in Nigeria or globally with ease.</p>
+                  <p style={{ fontSize: '15px', color: 'var(--text-secondary)' }}>Paystack and Flutterwave support helps you accept customer payments through a familiar checkout experience.</p>
                 </div>
               </div>
             </div>

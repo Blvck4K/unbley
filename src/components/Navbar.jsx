@@ -133,25 +133,25 @@ export default function Navbar() {
                     }}
                   >
                     <Link to="/sell-digital-products" className="solutions-item">
-                      <div className="font-bold">Digital Products</div>
-                      <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>Ebooks, software, and courses.</p>
+                      <div className="font-bold">Products & Services</div>
+                      <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>Sell products, digital goods, and services.</p>
                     </Link>
                     <Link to="/creator-platform" className="solutions-item">
-                      <div className="font-bold">Creative Brands</div>
-                      <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>Artisans and boutique shops.</p>
+                      <div className="font-bold">Creators & Brands</div>
+                      <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>For makers and creative businesses.</p>
                     </Link>
                     <div style={{ borderTop: '1px solid var(--border-color)', margin: '8px 0' }}></div>
                     <Link to="/create-online-store" className="solutions-item">
                       <div className="font-bold">Create Store</div>
-                      <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>Launch in under 5 minutes.</p>
+                      <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>Build a professional storefront.</p>
                     </Link>
                     <Link to="/shopify-alternative" className="solutions-item">
-                      <div className="font-bold">Shopify Alternative</div>
-                      <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>Save thousands in yearly fees.</p>
+                      <div className="font-bold">Affordable Commerce</div>
+                      <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>Simple tools for growing businesses.</p>
                     </Link>
                     <Link to="/affordable-ecommerce-platform" className="solutions-item">
-                      <div className="font-bold">Price & Value</div>
-                      <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>High value for any budget.</p>
+                      <div className="font-bold">Plans & Value</div>
+                      <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>Clear pricing for your business.</p>
                     </Link>
                     <style>{`
                       .solutions-item {
@@ -249,11 +249,11 @@ export default function Navbar() {
                 <div className="font-bold" style={{ fontSize: '12px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '12px' }}>Solutions</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {[
-                    ['/sell-digital-products', 'Sell Digital Products'],
-                    ['/creator-platform', 'Creative Brands'],
+                    ['/sell-digital-products', 'Products & Services'],
+                    ['/creator-platform', 'Creators & Brands'],
                     ['/create-online-store', 'Create Online Store'],
-                    ['/shopify-alternative', 'Shopify Alternative'],
-                    ['/affordable-ecommerce-platform', 'Affordable Ecommerce'],
+                    ['/shopify-alternative', 'Affordable Commerce'],
+                    ['/affordable-ecommerce-platform', 'Plans & Value'],
                     ['/all-blogs', 'Blog'],
                     ['/about', 'About']
                   ].map(([to, label]) => (
