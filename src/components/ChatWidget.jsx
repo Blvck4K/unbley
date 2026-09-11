@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MessageCircle, X, Send, Paperclip, MoreHorizontal, User, Minus } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
+import logoImg from '../assets/logogo.png';
 
 const ChatWidget = () => {
     const { user } = useAuth();
@@ -12,6 +13,7 @@ const ChatWidget = () => {
     const [chatHistory, setChatHistory] = useState([]);
     const [loading, setLoading] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [sendError, setSendError] = useState('');
     const scrollRef = useRef(null);
     const isOpenRef = useRef(isOpen);
     const dragStateRef = useRef(null);
@@ -95,6 +97,7 @@ const ChatWidget = () => {
         if (!message.trim() || !email) return;
 
         setLoading(true);
+        setSendError('');
         try {
             const response = await fetch('/api/concierge', {
                 method: 'POST',
@@ -107,7 +110,7 @@ const ChatWidget = () => {
             setMessage('');
         } catch (err) {
             console.error("Error sending message:", err);
-            alert(err.message || "Failed to send message. Please try again.");
+            setSendError(err.message || "Failed to send message. Please try again.");
         } finally {
             setLoading(false);
         }
@@ -165,7 +168,7 @@ const ChatWidget = () => {
     const borderColor = '#EAE3D9';
 
     return (
-        <div style={{
+        <div className={`chat-widget-root${isOpen ? ' chat-is-open' : ''}`} style={{
             position: 'fixed',
             ...(floatingPosition ? { left: floatingPosition.left, top: floatingPosition.top } : { bottom: '24px', right: '24px' }),
             zIndex: 10000,
@@ -173,7 +176,7 @@ const ChatWidget = () => {
         }}>
             {/* Chat Window */}
             {isOpen && (
-                <div style={{
+                <div className="chat-widget-window" role="dialog" aria-modal="true" aria-label="Unbley customer support" style={{
                     width: 'min(380px, calc(100vw - 48px))',
                     maxHeight: '600px',
                     height: '80vh',
@@ -188,20 +191,20 @@ const ChatWidget = () => {
                     animation: 'slideUp 0.3s ease-out'
                 }}>
                     {/* Header */}
-                    <div style={{ padding: '24px', backgroundColor: cardColor, borderBottom: `1px solid ${borderColor}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div className="chat-widget-header" style={{ padding: '24px', backgroundColor: cardColor, borderBottom: `1px solid ${borderColor}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                             <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#EAE3D9', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-                                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR13HUAnJxZA_NhkLvR_U0Ce2SuRjAXdfQ7RA&s" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} alt="Sarah" />
+                                <img src={logoImg} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} alt="Unbley Support" />
                                 <div style={{ position: 'absolute', bottom: '0', right: '0', width: '10px', height: '10px', backgroundColor: '#10B981', borderRadius: '50%', border: '2px solid #FFF' }} />
                             </div>
                             <div>
                                 <div style={{ fontSize: '14px', fontWeight: '700', color: '#221510' }}>Unbley Concierge</div>
-                                <div style={{ fontSize: '10px', color: '#8D5B36', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>Isaac from Support</div>
+                                <div style={{ fontSize: '10px', color: '#8D5B36', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>Unbley Customer Support</div>
                             </div>
                         </div>
                         <div style={{ display: 'flex', gap: '12px' }}>
-                            <button onClick={toggleOpen} style={{ background: 'none', border: 'none', color: '#6B584C', cursor: 'pointer' }}><Minus size={18} /></button>
-                            <button onClick={toggleOpen} style={{ background: 'none', border: 'none', color: '#6B584C', cursor: 'pointer' }}><X size={18} /></button>
+                            <button onClick={toggleOpen} aria-label="Minimize support chat" style={{ background: 'none', border: 'none', color: '#6B584C', cursor: 'pointer', padding: '8px' }}><Minus size={18} /></button>
+                            <button onClick={toggleOpen} aria-label="Close support chat" style={{ background: 'none', border: 'none', color: '#6B584C', cursor: 'pointer', padding: '8px' }}><X size={18} /></button>
                         </div>
                     </div>
 
@@ -228,7 +231,7 @@ const ChatWidget = () => {
                     ) : (
                         <>
                             {/* Messages List */}
-                            <div ref={scrollRef} style={{ flex: 1, padding: '24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            <div ref={scrollRef} className="chat-widget-messages" style={{ flex: 1, padding: '24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                                 <div style={{ textAlign: 'center', marginBottom: '16px' }}>
                                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', backgroundColor: '#F7F2EC', padding: '6px 12px', borderRadius: '20px', fontSize: '10px', color: '#6B584C' }}>
                                         <div style={{ width: '6px', height: '6px', backgroundColor: '#8D5B36', borderRadius: '50%' }} />
@@ -265,16 +268,18 @@ const ChatWidget = () => {
                             </div>
 
                             {/* Input Area */}
-                            <form onSubmit={handleSendMessage} style={{ padding: '24px', backgroundColor: cardColor, borderTop: `1px solid ${borderColor}` }}>
+                            <form onSubmit={handleSendMessage} className="chat-widget-composer" style={{ padding: '24px', backgroundColor: cardColor, borderTop: `1px solid ${borderColor}` }}>
+                                {sendError && <div role="alert" style={{ color: '#B42318', fontSize: '11px', marginBottom: '8px', textAlign: 'center' }}>{sendError}</div>}
                                 <div style={{ backgroundColor: bgColor, border: `1px solid ${borderColor}`, borderRadius: '30px', display: 'flex', alignItems: 'center', padding: '8px 12px 8px 20px', gap: '8px' }}>
                                     <input
                                         type="text"
+                                        aria-label="Support message"
                                         placeholder="Type your message..."
                                         value={message}
                                         onChange={(e) => setMessage(e.target.value)}
                                         style={{ flex: 1, backgroundColor: 'transparent', border: 'none', color: '#221510', fontSize: '13px', outline: 'none' }}
                                     />
-                                    <button type="button" style={{ background: 'none', border: 'none', color: '#6B584C', cursor: 'pointer' }}><Paperclip size={18} /></button>
+                                    <button type="button" aria-label="Attachments coming soon" title="Attachments coming soon" style={{ background: 'none', border: 'none', color: '#6B584C', cursor: 'not-allowed', padding: '8px' }}><Paperclip size={18} /></button>
                                     <button
                                         type="submit"
                                         disabled={loading || !message.trim()}
@@ -291,7 +296,7 @@ const ChatWidget = () => {
                                             opacity: (loading || !message.trim()) ? 0.5 : 1
                                         }}
                                     >
-                                        <Send size={16} color="#FFF" />
+                                        <Send size={16} color="#FFF" aria-hidden="true" />
                                     </button>
                                 </div>
                                 <div style={{ fontSize: '9px', color: '#8D5B36', textAlign: 'center', marginTop: '12px', letterSpacing: '0.05em' }}>
@@ -305,6 +310,8 @@ const ChatWidget = () => {
 
             {/* Floating Icon */}
             <button
+                className="chat-widget-launcher"
+                aria-label={isOpen ? 'Close support chat' : 'Open customer support chat'}
                 onClick={toggleOpen}
                 onPointerDown={handleFloatingPointerDown}
                 onPointerMove={handleFloatingPointerMove}
@@ -352,6 +359,17 @@ const ChatWidget = () => {
             </button>
 
             <style>{`
+                .chat-widget-window { position: relative; }
+                @media (max-width: 640px) {
+                    .chat-widget-root { bottom: 12px !important; right: 12px !important; left: 12px !important; }
+                    .chat-widget-root.chat-is-open { inset: 8px !important; width: auto !important; height: auto !important; }
+                    .chat-widget-window { position: fixed !important; inset: 8px !important; width: auto !important; height: auto !important; max-height: none !important; margin: 0 !important; border-radius: 18px !important; }
+                    .chat-widget-root.chat-is-open .chat-widget-launcher { display: none !important; }
+                    .chat-widget-header { padding: 16px 18px !important; }
+                    .chat-widget-messages { padding: 16px !important; gap: 12px !important; }
+                    .chat-widget-composer { padding: 12px !important; padding-bottom: max(12px, env(safe-area-inset-bottom)) !important; }
+                    .chat-widget-composer input { min-width: 0; }
+                }
                 @keyframes slideUp {
                     from { transform: translateY(20px); opacity: 0; }
                     to { transform: translateY(0); opacity: 1; }

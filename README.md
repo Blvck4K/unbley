@@ -22,6 +22,18 @@ npm run dev
 npm run build
 ```
 
+## Customer Support Notifications
+
+Run `src/db/concierge_chat_migration.sql` in the Supabase SQL Editor. The final query in that file confirms that `public.concierge_messages` exists. Enable the table in Supabase Realtime so customer and support replies appear live in the widget and Support inbox.
+
+Configure these server-side environment variables for notifications:
+
+- `RESEND_API_KEY` and `RESEND_FROM_EMAIL` for email delivery.
+- `CONTACT_FORM_EMAIL` for the Unbley support recipient. It defaults to `support@unbley.com`.
+- `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` for Telegram alerts.
+
+Keep these values server-only. Do not expose the Resend key or Telegram bot token through `VITE_` variables in production.
+
 ## Read-only Store Owner Spreadsheet
 
 The endpoint `/api/store-owners` exposes a token-protected, read-only export of every column in `brand_profiles`, including banking fields. It never exposes passwords, session tokens, the Supabase service key, or other authentication credentials, and it has no write operation.

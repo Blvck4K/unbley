@@ -36,7 +36,7 @@ export default async function handler(req, res) {
   const chatId = process.env.TELEGRAM_CHAT_ID || process.env.VITE_TELEGRAM_CHAT_ID;
   if (botToken && chatId) {
     const telegramMessage = [
-      'New Concierge Message',
+      'New Unbley Concierge Message',
       `From: ${email}`,
       `Type: ${userId ? 'Logged User' : 'Guest'}`,
       '',
