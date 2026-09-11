@@ -3,7 +3,7 @@ import { useAuth } from '../hooks/useAuth';
 
 export default function FloatingWhatsApp() {
   const { user } = useAuth();
-  const whatsappUrl = "https://wa.link/bg2bpg";
+  const whatsappUrl = "https://wa.me/2348078399410";
 
   if (user) return null;
 

@@ -691,7 +691,7 @@ Your digital store is securely verified.
           <div style={{ marginTop: '56px', fontSize: '12px', color: '#6B584C', textAlign: 'center' }}>
             Need guidance or assistance? Contact our{' '}
             <a
-              href="https://wa.me/2349000000000?text=Hello%20Unbley%20Support%2C%20I%20have%20a%20question%20about%20my%20store"
+              href="https://wa.me/2348078399410?text=Hello%20Unbley%20Support%2C%20I%20have%20a%20question%20about%20my%20store"
               target="_blank"
               rel="noopener noreferrer"
               style={{ color: brandColor, fontWeight: '700', textDecoration: 'underline' }}

@@ -25,7 +25,7 @@ import { motion } from 'framer-motion';
 import EditTour from '../components/EditTour';
 import { storeFontOptions } from '../lib/storeFonts';
 
-const customDomainRequestUrl = 'https://wa.link/bg2bpg?text=Hello%20Unbley%2C%20I%20would%20like%20to%20request%20a%20custom%20domain%20for%20my%20store.';
+const customDomainRequestUrl = 'https://wa.me/2348078399410?text=Hello%20Unbley%2C%20I%20would%20like%20to%20request%20a%20custom%20domain%20for%20my%20store.';
 
 const FacebookIcon = ({ size = 16, color = "currentColor" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke="none">

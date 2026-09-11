@@ -359,7 +359,7 @@ ${formData.message}
                     <div>
                       <h4>WhatsApp Support</h4>
                       <p style={{ marginBottom: '12px' }}>Need quick help? Chat with us instantly on WhatsApp.</p>
-                      <a href="https://wa.link/bg2bpg" target="_blank" rel="noopener noreferrer">👉 Click here to chat with Support</a>
+                      <a href="https://wa.me/2348078399410" target="_blank" rel="noopener noreferrer">👉 Click here to chat with Support</a>
                     </div>
                   </div>
 

@@ -56,7 +56,7 @@ export const ACTIVATION_CONFIG = {
     ],
     suffixText: "on Unbley and skyrocket your growth at 30% off !",
     helpButtonText: "Need Help?",
-    helpActionUrl: "https://wa.me/2349000000000?text=Hello%20Unbley%2C%20I%20need%20help%20activating%20my%20store",
+    helpActionUrl: "https://wa.me/2348078399410?text=Hello%20Unbley%2C%20I%20need%20help%20activating%20my%20store",
     logoutButtonText: "Log Out",
     trialButtonText: "Start 14-days free trial",
   },
