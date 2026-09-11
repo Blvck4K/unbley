@@ -12,7 +12,8 @@ import {
   Palette,
   Truck,
   Globe,
-  Plus
+  Plus,
+  MessageCircle
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
@@ -23,6 +24,8 @@ import PageTransition from '../components/PageTransition';
 import { motion } from 'framer-motion';
 import EditTour from '../components/EditTour';
 import { storeFontOptions } from '../lib/storeFonts';
+
+const customDomainRequestUrl = 'https://wa.link/bg2bpg?text=Hello%20Unbley%2C%20I%20would%20like%20to%20request%20a%20custom%20domain%20for%20my%20store.';
 
 const FacebookIcon = ({ size = 16, color = "currentColor" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke="none">
@@ -568,19 +571,6 @@ export default function Edit() {
                       />
                     </div>
 
-                    <div className="unbley-form-group">
-                      <label className="unbley-form-label">
-                        Website / Storefront URL
-                      </label>
-                      <input 
-                        type="text" 
-                        name="website_url"
-                        value={formData.website_url}
-                        onChange={handleChange}
-                        placeholder="e.g. www.zizzystores.com"
-                        className="unbley-form-input"
-                      />
-                    </div>
                   </div>
 
                   <div className="unbley-form-group" style={{ marginTop: '8px' }}>
@@ -643,7 +633,17 @@ export default function Edit() {
                       placeholder="e.g. shop.yourbrand.com"
                       className="unbley-form-input"
                     />
-                    <p className="unbley-domain-help">Point your custom domain to this deployment after saving. Your Unbley URL will keep working as a backup.</p>
+                    <p className="unbley-domain-help">Enter the domain you want to use, then request setup so our team can connect and verify it. Your Unbley URL will keep working as a backup.</p>
+                    <a
+                      href={customDomainRequestUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="unbley-button unbley-button-secondary"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginTop: '12px', textDecoration: 'none' }}
+                    >
+                      <MessageCircle size={16} />
+                      Request Custom Domain
+                    </a>
                   </div>
                 </div>
 

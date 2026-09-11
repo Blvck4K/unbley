@@ -44,7 +44,7 @@ WHERE store_slug IS NULL OR store_slug = '';
 
 UPDATE public.brand_profiles
 SET unbley_domain = coalesce(nullif(unbley_domain, ''), store_slug || '.unbley.com')
-WHERE store_slug IS NULL OR store_slug = '' OR unbley_domain IS NULL OR unbley_domain = '';
+WHERE unbley_domain IS NULL OR unbley_domain = '';
 
 CREATE UNIQUE INDEX IF NOT EXISTS brand_profiles_unbley_domain_key
   ON public.brand_profiles (unbley_domain);

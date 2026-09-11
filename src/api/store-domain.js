@@ -3,7 +3,12 @@ import { createClient } from '@supabase/supabase-js';
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
-  const host = String(req.query?.host || '').toLowerCase().trim();
+  const host = String(req.query?.host || '')
+    .toLowerCase()
+    .trim()
+    .replace(/^https?:\/\//, '')
+    .replace(/:\d+$/, '')
+    .replace(/\.$/, '');
   if (!host || host.length > 253 || /[^a-z0-9.-]/.test(host)) {
     return res.status(400).json({ error: 'A valid host is required.' });
   }
@@ -18,7 +23,7 @@ export default async function handler(req, res) {
   const { data, error } = await supabase
     .from('brand_profiles')
     .select('id')
-    .or(`unbley_domain.eq.${host},custom_domain.eq.${host}`)
+    .or(`unbley_domain.eq.${host},and(custom_domain.eq.${host},custom_domain_verified.eq.true)`)
     .eq('store_active', true)
     .maybeSingle();
 

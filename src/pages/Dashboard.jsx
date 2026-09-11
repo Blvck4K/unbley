@@ -286,6 +286,7 @@ export default function Dashboard() {
       website_url: user?.user_metadata?.website_url || '',
       unbley_domain: user?.user_metadata?.unbley_domain || '',
       custom_domain: user?.user_metadata?.custom_domain || '',
+      custom_domain_verified: Boolean(user?.user_metadata?.custom_domain_verified),
       logo_url: user?.user_metadata?.logo_url || '',
       bank_name: user?.user_metadata?.bank_name || '',
       account_number: user?.user_metadata?.account_number || '',
@@ -821,8 +822,12 @@ export default function Dashboard() {
     return domain.startsWith('http') ? domain : `https://${domain}`;
   };
 
+  const activeStoreDomain = profileData.custom_domain_verified
+    ? profileData.custom_domain
+    : profileData.unbley_domain || profileData.website_url;
+
   const handleShareStore = () => {
-    const storeDomain = profileData.custom_domain || profileData.unbley_domain || profileData.website_url;
+    const storeDomain = activeStoreDomain;
     const storeUrl = storeDomain ? toStoreUrl(storeDomain) : `${window.location.origin}/shop-brand/${user?.id || 'demo'}`;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(storeUrl);
@@ -1116,8 +1121,8 @@ export default function Dashboard() {
                 </div>
                 <div className="unbley-storefront-box">
                   <span className="unbley-storefront-label">LIVE STOREFRONT</span>
-                  <a href={toStoreUrl(profileData.custom_domain || profileData.unbley_domain || profileData.website_url)} target="_blank" rel="noreferrer" className="unbley-storefront-link">
-                    <span>{profileData.custom_domain || profileData.unbley_domain || profileData.website_url || 'Your store domain is being prepared'}</span>
+                  <a href={toStoreUrl(activeStoreDomain)} target="_blank" rel="noreferrer" className="unbley-storefront-link">
+                    <span>{activeStoreDomain || 'Your store domain is being prepared'}</span>
                     <ArrowUpRight size={14} color="#6B7280" />
                   </a>
                 </div>
