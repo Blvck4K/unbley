@@ -94,55 +94,20 @@ const ChatWidget = () => {
         e.preventDefault();
         if (!message.trim() || !email) return;
 
-        const botToken = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
-        const chatId = import.meta.env.VITE_TELEGRAM_CHAT_ID;
-
-        const newMessage = {
-            user_email: email,
-            sender: 'user',
-            message: message.trim(),
-            user_id: user?.id || null
-        };
-
         setLoading(true);
         try {
-            // 1. Save to Supabase (this triggers Realtime for other tabs)
-            const { error: dbError } = await supabase
-                .from('concierge_messages')
-                .insert([newMessage]);
-
-            if (dbError) throw dbError;
-
-            // 2. Send to Telegram
-            if (botToken && chatId) {
-                const tgMsg = `
-📬 *New Concierge Message*
-*From:* ${email}
-*Type:* ${user ? 'Logged User' : 'Guest'}
-
-*Content:* 
-${message.trim()}
-
----
-_Reply to this message with 'Reply: <your message>' to send back to the user._
-                `;
-
-                await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        chat_id: chatId,
-                        text: tgMsg,
-                        parse_mode: 'Markdown',
-                        disable_notification: false
-                    })
-                });
-            }
+            const response = await fetch('/api/concierge', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, message: message.trim(), userId: user?.id || null })
+            });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(result.error || 'Failed to send message.');
 
             setMessage('');
         } catch (err) {
             console.error("Error sending message:", err);
-            alert("Failed to send message. Please try again.");
+            alert(err.message || "Failed to send message. Please try again.");
         } finally {
             setLoading(false);
         }

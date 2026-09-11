@@ -267,38 +267,14 @@ export default function Contact() {
     setSuccess(false);
 
     try {
-      const botToken = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
-      const chatId = import.meta.env.VITE_TELEGRAM_CHAT_ID;
-
-      if (!botToken || !chatId) {
-        console.error("Telegram bot config is missing.");
-        toast.error("Contact form configuration is incomplete, but our team is reachable via WhatsApp!");
-        setLoading(false);
-        return;
-      }
-
-      const tgMsg = `
-📬 *New Contact Form Submission*
-*Name:* ${formData.name}
-*Email:* ${formData.email}
-*Business Name:* ${formData.businessName || 'N/A'}
-
-*Message:* 
-${formData.message}
-        `;
-
-      const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      const response = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: tgMsg,
-          parse_mode: 'Markdown',
-          disable_notification: false
-        })
+        body: JSON.stringify(formData)
       });
 
-      if (!response.ok) throw new Error("Failed to send message to Telegram");
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || 'Failed to send your message.');
 
       setSuccess(true);
       toast.success("Thank you! Your message has been sent successfully.");
