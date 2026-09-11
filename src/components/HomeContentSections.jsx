@@ -13,8 +13,8 @@ const points = [
 ];
 
 const categories = [
-  'Fashion & Clothing', 'Beauty & Skincare', 'Electronics & Gadgets', 'Food & Drinks',
-  'Jewelry & Accessories', 'Home & Lifestyle', 'Digital Products', 'Growing Local Brands'
+  'Fashion & Clothing', 'Beauty & Cosmetics', 'Electronics & Gadgets', 'Food & Beverages',
+  'Digital Products', 'Services & More'
 ];
 
 const experienceBenefits = [
@@ -47,8 +47,8 @@ export default function HomeContentSections() {
       <section style={{ ...sectionStyle, backgroundColor: 'var(--bg-light)' }}>
         <div className="container">
           <div className="section-head">
-            <h2>Built for Different Types of Businesses</h2>
-            <p className="text-secondary">Whether you're selling products, building a fashion brand or running a growing business, Unbley gives you the tools to sell online.</p>
+            <h2>Sell What Your Business Offers</h2>
+            <p className="text-secondary">Whether you sell physical products, digital products, services, or run a growing brand, Unbley gives you a professional online storefront to reach your customers.</p>
           </div>
           <div className="grid grid-cols-3 gap-6">
             {categories.map((category) => <div className="feature-card" key={category}><h3>{category}</h3></div>)}

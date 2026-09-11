@@ -109,7 +109,7 @@ export default function Footer() {
               <span>Unbley.</span>
             </div>
             <p style={{ maxWidth: '320px', margin: '16px auto 0', lineHeight: '1.6', fontSize: '15px' }}>
-              Unbley helps businesses build professional online stores and turn their brands into businesses that can sell online.
+              Unbley helps businesses create professional online stores, accept payments, manage orders, and grow their businesses online.
             </p>
             <Link to="/create-online-store" className="footer-cta">Start Selling Online</Link>
           </div>

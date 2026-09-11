@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { motion } from 'framer-motion';
 
-const typedWords = ['brand', 'store', 'atelier', 'business', 'studio'];
+const typedWords = ['store', 'business', 'brand'];
 const partnerItems = [
   <img src="https://upload.wikimedia.org/wikipedia/commons/1/1f/Paystack.png" alt="Paystack" />,
   <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Flutterwave_Logo.png/1280px-Flutterwave_Logo.png" alt="Flutterwave" />,
@@ -93,14 +93,14 @@ export default function Hero() {
             variants={itemVariants}
             className="hero-title"
           >
-            Launch Your <strong className="hero-typing-word">{displayWord}<i className="hero-typing-cursor" aria-hidden="true" /></strong> Online
+            Build Your Store. Sell Online. Grow Your Business.
           </motion.h1>
 
           <motion.p
             variants={itemVariants}
             className="hero-subtitle"
           >
-            Build a professional online store for your business without the technical stress. Unbley gives you everything you need to sell online — your own storefront, custom domain, payments, product management and the tools to grow your brand.
+            Unbley gives businesses everything they need to create a professional online store, accept payments, manage orders, and sell to customers online — without needing to build a website from scratch.
           </motion.p>
 
           <motion.div
@@ -124,11 +124,11 @@ export default function Hero() {
                   whileTap={{ scale: 0.98 }}
                   className="btn btn-primary hero-btn"
                 >
-                    Get Started <ArrowRight size={18} />
+                    Start Selling Now <ArrowRight size={18} />
                 </motion.button>
               </Link>
             )}
-            <a href="#solutions" className="btn btn-outline hero-btn">Explore Unbley</a>
+            <a href="#solutions" className="btn btn-outline hero-btn">Explore Features</a>
           </motion.div>
 
           <motion.div
