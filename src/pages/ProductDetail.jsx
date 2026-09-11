@@ -8,7 +8,7 @@ import { isDarkColor, getContrastColor, getMutedColor, getBorderColor } from '..
 import PageTransition from '../components/PageTransition';
 import StoreAttribution from '../components/StoreAttribution';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getStoreFont } from '../lib/storeFonts';
+import { getBrandNameCaseStyle, getStoreFont } from '../lib/storeFonts';
 
 export default function ProductDetail() {
   const navigate = useNavigate();
@@ -40,6 +40,7 @@ export default function ProductDetail() {
   }, []);
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [productModalMode, setProductModalMode] = useState('edit');
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
 
@@ -48,6 +49,9 @@ export default function ProductDetail() {
     price: '',
     description: '',
     tag: '',
+    category: '',
+    gender: 'unisex',
+    productType: '',
     sizes: '',
     colors: '',
     imageFile: null,
@@ -258,6 +262,9 @@ export default function ProductDetail() {
       price: product.price,
       description: product.description || '',
       tag: product.tag || '',
+      category: product.category || '',
+      gender: product.gender || 'unisex',
+      productType: product.product_type || '',
       sizes: product.sizes || '',
       colors: product.colors || '',
       imageFile: null,
@@ -266,6 +273,13 @@ export default function ProductDetail() {
         ? product.image_url.split(',').slice(1).map(url => ({ file: null, preview: url }))
         : []
     });
+    setProductModalMode('edit');
+    setIsEditModalOpen(true);
+  };
+
+  const handleAddClick = () => {
+    setEditForm({ title: '', price: '', description: '', tag: '', category: '', gender: 'unisex', productType: '', sizes: '', colors: '', imageFile: null, imagePreview: null, additionalImages: [] });
+    setProductModalMode('add');
     setIsEditModalOpen(true);
   };
 
@@ -307,21 +321,31 @@ export default function ProductDetail() {
       
       const finalImageUrl = [imageUrls[0], ...newExtrasDraft].filter(Boolean).join(',');
 
-      const { error: updateError } = await supabase.from('products').update({
+      const productPayload = {
         title: editForm.title,
         price: parseFloat(editForm.price) || 0,
         description: editForm.description,
         tag: editForm.tag,
+        category: editForm.category || null,
+        gender: editForm.gender,
+        product_type: editForm.productType || null,
         sizes: editForm.sizes,
         colors: editForm.colors,
         image_url: finalImageUrl
-      }).eq('id', product.id).eq('brand_id', brand.id);
+      };
 
-      if (updateError) throw updateError;
-      
-      setProduct({ ...product, title: editForm.title, price: editForm.price, description: editForm.description, tag: editForm.tag, image_url: finalImageUrl });
+      if (productModalMode === 'add') {
+        const { data: createdProduct, error: insertError } = await supabase.from('products').insert({ ...productPayload, brand_id: brand.id, status: 'active' }).select().single();
+        if (insertError) throw insertError;
+        setProduct(createdProduct);
+        toast.success('Product added successfully!');
+      } else {
+        const { error: updateError } = await supabase.from('products').update(productPayload).eq('id', product.id).eq('brand_id', brand.id);
+        if (updateError) throw updateError;
+        setProduct({ ...product, ...productPayload, price: editForm.price });
+        toast.success('Product updated successfully!');
+      }
       setIsEditModalOpen(false);
-      toast.success('Product updated successfully!');
     } catch (err) {
       console.error(err);
       toast.error('Error updating product: ' + (err.message || 'Unknown error'));
@@ -375,6 +399,7 @@ export default function ProductDetail() {
 
   const selectedFont = getStoreFont(brand.store_font);
   const brandNameFont = getStoreFont(brand.brand_name_font || brand.store_font);
+  const brandNameCase = getBrandNameCaseStyle(brand.brand_name_case);
   const fontConfig = { heading: selectedFont.family, body: selectedFont.family, brandName: brandNameFont.family };
 
   const s = {
@@ -382,7 +407,7 @@ export default function ProductDetail() {
 
     // Header Matcher
     header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '24px 48px', borderBottom: `1px solid ${borderColor}`, backgroundColor: 'transparent', position: 'sticky', top: 0, zIndex: 100, backdropFilter: 'blur(12px)' },
-    logo: { fontFamily: fontConfig.brandName, fontSize: '20px', fontWeight: 'bold', letterSpacing: '0.05em', color: accentColor, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px', textTransform: 'uppercase' },
+    logo: { fontFamily: fontConfig.brandName, fontSize: '20px', fontWeight: 'bold', letterSpacing: '0.05em', color: accentColor, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px', textTransform: brandNameCase },
     logoImage: { height: '32px', width: '32px', borderRadius: '50%', objectFit: 'cover' },
     headerRight: { display: 'flex', alignItems: 'center', gap: '24px' },
     iconButton: { cursor: 'pointer', display: 'flex', alignItems: 'center', color: textColor, transition: 'color 0.2s', '&:hover': { color: accentColor } },
@@ -529,6 +554,16 @@ export default function ProductDetail() {
 
                 {isOwner && (
                   <div style={{ position: 'absolute', top: '16px', right: '16px', display: 'flex', gap: '8px', zIndex: 20 }}>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      type="button"
+                      onClick={handleAddClick}
+                      style={{ ...s.editBtn, display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 12px', border: `1px solid ${accentColor}` }}
+                      title="Add a new product"
+                    >
+                      <Plus size={16} /> Add Product
+                    </motion.button>
                     <motion.div 
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
@@ -697,7 +732,7 @@ export default function ProductDetail() {
           <div style={{ backgroundColor: secondaryColor, width: '100%', maxWidth: isMobile ? '100%' : '850px', borderRadius: '8px', border: `1px solid ${borderColor}`, overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: '95vh' }}>
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '24px', borderBottom: `1px solid ${borderColor}` }}>
-              <h3 style={{ fontFamily: fontConfig.heading, fontSize: '20px', margin: 0, color: textColor }}>Edit Asset Configuration</h3>
+              <h3 style={{ fontFamily: fontConfig.heading, fontSize: '20px', margin: 0, color: textColor }}>{productModalMode === 'add' ? 'Add Product' : 'Edit Asset Configuration'}</h3>
               <button onClick={() => setIsEditModalOpen(false)} style={{ background: 'none', border: 'none', color: mutedColor, cursor: 'pointer' }}><X size={24} /></button>
             </div>
             
@@ -775,6 +810,24 @@ export default function ProductDetail() {
                       <input type="text" value={editForm.sizes} onChange={e => setEditForm({...editForm, sizes: e.target.value})} style={{ width: '100%', padding: '12px', backgroundColor: '#111', border: `1px solid ${borderColor}`, borderRadius: '4px', color: '#FFF', fontSize: '14px', outline: 'none' }} placeholder="S, M, L" />
                     </div>
                   </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '16px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '10px', color: mutedColor, marginBottom: '8px', fontWeight: 'bold', letterSpacing: '0.1em' }}>CATEGORY</label>
+                      <input type="text" value={editForm.category} onChange={e => setEditForm({...editForm, category: e.target.value})} style={{ width: '100%', padding: '12px', backgroundColor: '#111', border: `1px solid ${borderColor}`, borderRadius: '4px', color: '#FFF', fontSize: '14px', outline: 'none' }} placeholder="New Arrivals" />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '10px', color: mutedColor, marginBottom: '8px', fontWeight: 'bold', letterSpacing: '0.1em' }}>GENDER</label>
+                      <select value={editForm.gender} onChange={e => setEditForm({...editForm, gender: e.target.value})} style={{ width: '100%', padding: '12px', backgroundColor: '#111', border: `1px solid ${borderColor}`, borderRadius: '4px', color: '#FFF', fontSize: '14px', outline: 'none' }}>
+                        <option value="unisex">Unisex</option><option value="male">Male</option><option value="female">Female</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '10px', color: mutedColor, marginBottom: '8px', fontWeight: 'bold', letterSpacing: '0.1em' }}>PRODUCT TYPE</label>
+                      <select value={editForm.productType} onChange={e => setEditForm({...editForm, productType: e.target.value})} style={{ width: '100%', padding: '12px', backgroundColor: '#111', border: `1px solid ${borderColor}`, borderRadius: '4px', color: '#FFF', fontSize: '14px', outline: 'none' }}>
+                        <option value="">Select product type</option><option value="shirt">Shirt</option><option value="trouser">Trouser</option><option value="dress">Dress</option><option value="skirt">Skirt</option><option value="jacket">Jacket</option><option value="shoes">Shoes</option><option value="accessories">Accessories</option><option value="other">Other</option>
+                      </select>
+                    </div>
+                  </div>
                   <div>
                     <label style={{ display: 'block', fontSize: '10px', color: mutedColor, marginBottom: '8px', fontWeight: 'bold', letterSpacing: '0.1em' }}>COLOURS</label>
                     <input type="text" value={editForm.colors} onChange={e => setEditForm({...editForm, colors: e.target.value})} style={{ width: '100%', padding: '12px', backgroundColor: '#111', border: `1px solid ${borderColor}`, borderRadius: '4px', color: '#FFF', fontSize: '14px', outline: 'none' }} placeholder="Red, Black, Blue" />
@@ -790,7 +843,7 @@ export default function ProductDetail() {
               <div style={{ display: 'flex', gap: '16px', marginTop: '32px' }}>
                 <button type="button" onClick={() => setIsEditModalOpen(false)} style={{ flex: 1, padding: '16px', border: `1px solid ${borderColor}`, backgroundColor: 'transparent', color: textColor, fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer' }}>CANCEL</button>
                 <button type="submit" disabled={uploading} style={{ flex: 1, padding: '16px', border: 'none', backgroundColor: accentColor, color: '#000', fontWeight: 'bold', borderRadius: '4px', cursor: uploading ? 'not-allowed' : 'pointer', opacity: uploading ? 0.7 : 1 }}>
-                  {uploading ? 'UPDATING...' : 'UPDATE ASSET'}
+                  {uploading ? (productModalMode === 'add' ? 'ADDING...' : 'UPDATING...') : (productModalMode === 'add' ? 'ADD PRODUCT' : 'UPDATE ASSET')}
                 </button>
               </div>
             </form>

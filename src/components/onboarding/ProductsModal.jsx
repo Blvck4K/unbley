@@ -5,7 +5,18 @@ import { createPortal } from 'react-dom';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 
-const createEmptyForm = () => ({ title: '', price: '', description: '', image_urls: ['', '', '', '', ''] });
+const createEmptyForm = () => ({
+  title: '',
+  price: '',
+  description: '',
+  tag: '',
+  category: '',
+  gender: 'unisex',
+  productType: '',
+  sizes: '',
+  colors: '',
+  image_urls: ['', '', '', '', '']
+});
 
 export default function ProductsModal({ isOpen = false, onClose, onComplete, editProduct = null }) {
   const { user } = useAuth();
@@ -32,6 +43,12 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete, edi
         title: editProduct.title || editProduct.name || '',
         price: editProduct.price !== undefined ? String(editProduct.price) : '',
         description: editProduct.description || '',
+        tag: editProduct.tag || '',
+        category: editProduct.category || '',
+        gender: editProduct.gender || 'unisex',
+        productType: editProduct.product_type || '',
+        sizes: editProduct.sizes || '',
+        colors: editProduct.colors || '',
         image_urls: imageUrlsArray
       });
       setError(null);
@@ -132,6 +149,12 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete, edi
             title: formData.title.trim(),
             price: parsedPrice,
             description: formData.description?.trim() || '',
+            tag: formData.tag?.trim() || '',
+            category: formData.category?.trim() || null,
+            gender: formData.gender || 'unisex',
+            product_type: formData.productType?.trim() || null,
+            sizes: formData.sizes?.trim() || '',
+            colors: formData.colors?.trim() || '',
             image_url: image_url
           })
           .eq('id', editProduct.id)
@@ -148,6 +171,12 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete, edi
               title: formData.title.trim(),
               price: parsedPrice,
               description: formData.description?.trim() || '',
+              tag: formData.tag?.trim() || '',
+              category: formData.category?.trim() || null,
+              gender: formData.gender || 'unisex',
+              product_type: formData.productType?.trim() || null,
+              sizes: formData.sizes?.trim() || '',
+              colors: formData.colors?.trim() || '',
               image_url: image_url,
               status: 'active'
             }
@@ -175,14 +204,18 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete, edi
 
   const inputStyle = {
     width: '100%',
-    padding: '11px 14px',
+    padding: '12px',
     border: '1px solid #D1D5DB',
-    borderRadius: '8px',
-    fontSize: '13.5px',
+    borderRadius: '4px',
+    fontSize: '14px',
     fontFamily: 'inherit',
     boxSizing: 'border-box',
-    transition: 'all 0.15s ease'
+    transition: 'all 0.15s ease',
+    backgroundColor: '#FFFFFF',
+    color: '#111827',
+    outline: 'none'
   };
+  const selectStyle = { ...inputStyle, cursor: 'pointer' };
 
   const modalContent = (
     <AnimatePresence>
@@ -212,22 +245,23 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete, edi
           transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
           style={{
             backgroundColor: '#FFFFFF',
-            borderRadius: '16px',
+            borderRadius: '8px',
             border: '1px solid #EAE3D9',
             boxShadow: '0 20px 50px rgba(34, 21, 16, 0.2)',
-            maxWidth: '560px',
+            maxWidth: '850px',
             width: '100%',
-            maxHeight: '90vh',
+            maxHeight: '95vh',
             display: 'flex',
             flexDirection: 'column',
             overflow: 'hidden',
-            fontFamily: '"Inter", sans-serif'
+            fontFamily: 'inherit',
+            color: '#111827'
           }}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
           <div style={{
-            padding: '24px 28px 18px',
+            padding: '24px',
             borderBottom: '1px solid #EAE3D9',
             display: 'flex',
             justifyContent: 'space-between',
@@ -246,13 +280,9 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete, edi
                 gap: '10px'
               }}>
                 {isEditMode ? <Pencil size={22} color="#6A3E1F" /> : <Tag size={22} color="#6A3E1F" />}
-                {isEditMode ? 'Edit Product' : 'Add New Product'}
+                {isEditMode ? 'Edit Asset Configuration' : 'Catalog New Asset'}
               </h2>
-              <p style={{ fontSize: '13px', color: '#6B7280', margin: 0 }}>
-                {isEditMode
-                  ? 'Update your product details below and save when done.'
-                  : 'Enter your product details, upload photos, write your description and submit.'}
-              </p>
+              <p style={{ fontSize: '13px', color: '#6B7280', margin: '6px 0 0' }}>Define the details, imagery, and variants for this catalog asset.</p>
             </div>
             <button
               type="button"
@@ -279,7 +309,7 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete, edi
           </div>
 
           {/* Scrollable Content Body */}
-          <div style={{ padding: '24px 28px', overflowY: 'auto', flex: 1 }}>
+          <div style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
             {error && (
               <div style={{
                 backgroundColor: '#FEE2E2',
@@ -303,10 +333,11 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete, edi
                   e.preventDefault();
                 }
               }}
-              style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}
+              className="products-modal-form"
+              style={{ display: 'grid', gridTemplateColumns: '200px minmax(0, 1fr)', gap: '24px' }}
             >
               {/* Product Name & Price Row */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 140px', gap: '14px' }}>
+              <div className="products-modal-title-price" style={{ display: 'grid', gridTemplateColumns: '1fr 140px', gap: '14px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#111827', marginBottom: '6px' }}>
                     Product Name *
@@ -344,8 +375,90 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete, edi
                 </div>
               </div>
 
+              {/* Catalog details */}
+              <div className="products-modal-catalog-details" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#111827', marginBottom: '6px' }}>
+                    Category
+                  </label>
+                  <input
+                    type="text"
+                    name="category"
+                    value={formData.category}
+                    onChange={handleInputChange}
+                    placeholder="e.g., Dresses, Shoes, Accessories"
+                    style={inputStyle}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#111827', marginBottom: '6px' }}>
+                    Product Type
+                  </label>
+                  <select name="productType" value={formData.productType} onChange={handleInputChange} style={selectStyle}>
+                    <option value="">Select product type</option>
+                    <option value="shirt">Shirt</option>
+                    <option value="trouser">Trouser</option>
+                    <option value="dress">Dress</option>
+                    <option value="skirt">Skirt</option>
+                    <option value="jacket">Jacket</option>
+                    <option value="shoes">Shoes</option>
+                    <option value="accessories">Accessories</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#111827', marginBottom: '6px' }}>
+                    Gender
+                  </label>
+                  <select name="gender" value={formData.gender} onChange={handleInputChange} style={selectStyle}>
+                    <option value="unisex">Unisex</option>
+                    <option value="female">Female</option>
+                    <option value="male">Male</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#111827', marginBottom: '6px' }}>
+                    Tags
+                  </label>
+                  <input
+                    type="text"
+                    name="tag"
+                    value={formData.tag}
+                    onChange={handleInputChange}
+                    placeholder="e.g., New arrival, Bestseller"
+                    style={inputStyle}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#111827', marginBottom: '6px' }}>
+                    Sizes
+                  </label>
+                  <input
+                    type="text"
+                    name="sizes"
+                    value={formData.sizes}
+                    onChange={handleInputChange}
+                    placeholder="e.g., S, M, L, XL"
+                    style={inputStyle}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#111827', marginBottom: '6px' }}>
+                    Colors
+                  </label>
+                  <input
+                    type="text"
+                    name="colors"
+                    value={formData.colors}
+                    onChange={handleInputChange}
+                    placeholder="e.g., Black, Cream, Red"
+                    style={inputStyle}
+                  />
+                </div>
+              </div>
+
               {/* Product Images Grid */}
-              <div>
+              <div className="products-modal-images">
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#111827', marginBottom: '8px' }}>
                   Product Images (up to 5)
                 </label>
@@ -482,7 +595,7 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete, edi
               </div>
 
               {/* Product Description */}
-              <div>
+              <div className="products-modal-description">
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#111827', marginBottom: '6px' }}>
                   Product Description
                 </label>
@@ -510,7 +623,7 @@ export default function ProductsModal({ isOpen = false, onClose, onComplete, edi
               </div>
 
               {/* Action Buttons */}
-              <div style={{ display: 'flex', gap: '12px', marginTop: '8px', paddingTop: '16px', borderTop: '1px solid #F3F4F6' }}>
+              <div className="products-modal-actions" style={{ display: 'flex', gap: '12px', marginTop: '8px', paddingTop: '16px', borderTop: '1px solid #F3F4F6' }}>
                 <button
                   type="button"
                   onClick={handleClose}

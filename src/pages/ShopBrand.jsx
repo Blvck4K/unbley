@@ -8,7 +8,7 @@ import { useToast } from '../context/ToastContext';
 import { isDarkColor, getContrastColor, getMutedColor, getBorderColor } from '../lib/colors';
 import PageTransition from '../components/PageTransition';
 import StoreAttribution from '../components/StoreAttribution';
-import { getStoreFont } from '../lib/storeFonts';
+import { getBrandNameCaseStyle, getStoreFont } from '../lib/storeFonts';
 
 const useWindowWidth = () => {
   const [width, setWidth] = useState(window.innerWidth);
@@ -432,6 +432,7 @@ export default function ShopBrand({ customId }) {
 
   const selectedFont = getStoreFont(brand.store_font);
   const brandNameFont = getStoreFont(brand.brand_name_font || brand.store_font);
+  const brandNameCase = getBrandNameCaseStyle(brand.brand_name_case);
   const fontConfig = { heading: selectedFont.family, body: selectedFont.family };
 
   const getGridCols = () => {
@@ -457,7 +458,7 @@ export default function ShopBrand({ customId }) {
 
     // Header
     header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: isMobile ? '20px 24px' : '24px 48px', borderBottom: `1px solid ${borderColor}`, backgroundColor: 'transparent', position: 'sticky', top: 0, zIndex: 100, backdropFilter: 'blur(12px)' },
-    logo: { fontFamily: brandNameFont.family, fontSize: '20px', fontWeight: 'bold', letterSpacing: '0.05em', color: accentColor, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px', textTransform: 'uppercase' },
+    logo: { fontFamily: brandNameFont.family, fontSize: '20px', fontWeight: 'bold', letterSpacing: '0.05em', color: accentColor, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px', textTransform: brandNameCase },
     logoImage: { height: '32px', width: '32px', borderRadius: '50%', objectFit: 'cover' },
     headerRight: { display: 'flex', alignItems: 'center', gap: isMobile ? '16px' : '24px' },
     searchBox: { display: isMobile ? 'none' : 'flex', alignItems: 'center', gap: '8px', backgroundColor: secondaryColor, padding: '10px 16px', borderRadius: '4px', width: '240px' },
@@ -468,7 +469,7 @@ export default function ShopBrand({ customId }) {
     hero: { position: 'relative', width: '100%', height: isMobile ? '40vh' : '65vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: secondaryColor, overflow: 'hidden' },
     heroImage: { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6 },
     heroContent: { position: 'relative', zIndex: 1, textAlign: 'center', padding: '0 24px', maxWidth: '800px' },
-    heroTitle: { fontFamily: fontConfig.heading, fontSize: isMobile ? '28px' : '56px', fontWeight: '800', color: '#FFF', marginBottom: '12px', textShadow: '0 4px 20px rgba(0,0,0,0.5)' },
+    heroTitle: { fontFamily: brandNameFont.family, textTransform: brandNameCase, fontSize: isMobile ? '28px' : '56px', fontWeight: '800', color: '#FFF', marginBottom: '12px', textShadow: '0 4px 20px rgba(0,0,0,0.5)' },
     heroSubtitle: { fontFamily: fontConfig.body, fontSize: isMobile ? '13px' : '18px', color: '#FFF', fontWeight: '500', textShadow: '0 2px 10px rgba(0,0,0,0.5)', lineHeight: '1.4' },
 
     // Trust Signals
@@ -513,7 +514,7 @@ export default function ShopBrand({ customId }) {
     footer: { borderTop: `1px solid ${borderColor}`, paddingTop: '64px', paddingBottom: '32px', backgroundColor: secondaryColor },
     footerTop: { display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', padding: isMobile ? '0 24px' : '0 48px', marginBottom: '64px', gap: isMobile ? '48px' : '0' },
     footerLeft: { maxWidth: '300px' },
-    footerLogo: { fontFamily: fontConfig.heading, fontSize: '18px', fontWeight: '700', color: accentColor, marginBottom: '24px' },
+    footerLogo: { fontFamily: brandNameFont.family, textTransform: brandNameCase, fontSize: '18px', fontWeight: '700', color: accentColor, marginBottom: '24px' },
     footerDesc: { fontSize: '12px', color: mutedColor, lineHeight: '1.6' },
 
     infoSection: { display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, minmax(0, 1fr))', gap: isMobile ? '20px' : '24px', marginTop: '32px', marginBottom: '8px' },

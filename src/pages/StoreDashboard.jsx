@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import PageTransition from '../components/PageTransition';
 import StoreAttribution from '../components/StoreAttribution';
-import { getStoreFont } from '../lib/storeFonts';
+import { getBrandNameCaseStyle, getStoreFont } from '../lib/storeFonts';
 import { getContrastColor } from '../lib/colors';
 
 const titleCase = (value) => String(value || '').replace(/[-_]/g, ' ').replace(/\b\w/g, (character) => character.toUpperCase());
@@ -85,6 +85,7 @@ export default function StoreDashboard() {
   const accentColor = brand.accent_color || '#06acf8';
   const selectedFont = getStoreFont(brand.store_font);
   const brandNameFont = getStoreFont(brand.brand_name_font || brand.store_font);
+  const brandNameCase = getBrandNameCaseStyle(brand.brand_name_case);
   const textColor = '#FFFFFF';
   const mutedColor = 'rgba(255,255,255,0.72)';
   const accentTextColor = getContrastColor(accentColor);
@@ -151,7 +152,7 @@ export default function StoreDashboard() {
           {banner ? <motion.img key={banner} initial={{ opacity: 0 }} animate={{ opacity: 0.48 }} transition={{ duration: 1.2 }} src={banner} alt="Store banner" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg, ${secondaryColor}, ${primaryColor})` }} />}
           <div style={{ position: 'relative', zIndex: 1, maxWidth: '760px', textAlign: 'center' }}>
             <p style={{ margin: '0 0 14px', color: accentColor, fontSize: '11px', fontWeight: '800', letterSpacing: '0.14em', textTransform: 'uppercase' }}>The collection</p>
-            <h1 style={{ margin: 0, fontFamily: brandNameFont.family, fontSize: isMobile ? 'clamp(34px, 11vw, 52px)' : 'clamp(36px, 7vw, 76px)', lineHeight: 1.05, fontWeight: '800', textShadow: '0 4px 18px rgba(0,0,0,0.45)' }}>{brand.brand_name || 'Our Store'}</h1>
+            <h1 style={{ margin: 0, fontFamily: brandNameFont.family, textTransform: brandNameCase, fontSize: isMobile ? 'clamp(34px, 11vw, 52px)' : 'clamp(36px, 7vw, 76px)', lineHeight: 1.05, fontWeight: '800', textShadow: '0 4px 18px rgba(0,0,0,0.45)' }}>{brand.brand_name || 'Our Store'}</h1>
             {brand.brand_narrative && <p style={{ maxWidth: '560px', margin: '20px auto 0', color: textColor, fontSize: isMobile ? '13px' : '16px', lineHeight: 1.65, textShadow: '0 2px 10px rgba(0,0,0,0.45)' }}>{brand.brand_narrative}</p>}
           </div>
         </section>

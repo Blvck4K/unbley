@@ -1251,7 +1251,7 @@ export default function Dashboard() {
                           {isProductsDone ? `${metrics.activeStock} product${metrics.activeStock !== 1 ? 's' : ''} listed in your catalog.` : 'Upload your first product to get started.'}
                         </p>
                       </div>
-                      <button onClick={() => { setActiveOnboardingStep('products'); setShowOnboardingModal(true); }} className={isProductsDone ? 'unbley-step-btn-done' : 'unbley-step-btn-share'}>
+                      <button onClick={() => { setEditingProduct(null); setShowEditProductModal(true); }} className={isProductsDone ? 'unbley-step-btn-done' : 'unbley-step-btn-share'}>
                         {isProductsDone ? 'DONE' : 'ADD NOW'}
                       </button>
                     </div>
@@ -1432,7 +1432,7 @@ export default function Dashboard() {
                       <p style={{ fontSize: '12px', color: '#6B7280', margin: '2px 0 0' }}>Common tasks for your store</p>
                     </div>
                     <div>
-                      <div onClick={() => { setActiveOnboardingStep('products'); setShowOnboardingModal(true); }} className="unbley-action-row">
+                      <div onClick={() => { setEditingProduct(null); setShowEditProductModal(true); }} className="unbley-action-row">
                         <div className="unbley-action-left">
                           <div className="unbley-action-icon"><Plus size={16} strokeWidth={2.5} /></div>
                           <div>
@@ -1575,7 +1575,7 @@ export default function Dashboard() {
                       {productsLoading ? 'Loading…' : `${productsTotal} product${productsTotal !== 1 ? 's' : ''} in your store`}
                     </p>
                   </div>
-                  <button onClick={() => { setActiveOnboardingStep('products'); setShowOnboardingModal(true); }} className="unbley-btn-black" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <button onClick={() => { setEditingProduct(null); setShowEditProductModal(true); }} className="unbley-btn-black" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <Plus size={14} /><span>Add Product</span>
                   </button>
                 </div>
@@ -1587,7 +1587,7 @@ export default function Dashboard() {
                     <Package size={40} color="#D1CBC2" style={{ marginBottom: '12px' }} />
                     <div style={{ fontWeight: '700', color: '#374151', marginBottom: '6px' }}>No products yet</div>
                     <p style={{ fontSize: '13px', color: '#6B7280', marginBottom: '20px' }}>Add your first product to start selling.</p>
-                    <button onClick={() => { setActiveOnboardingStep('products'); setShowOnboardingModal(true); }} className="unbley-btn-black">
+                    <button onClick={() => { setEditingProduct(null); setShowEditProductModal(true); }} className="unbley-btn-black">
                       Add First Product
                     </button>
                   </div>

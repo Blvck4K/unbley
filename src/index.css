@@ -1,6 +1,48 @@
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&family=Josefin+Sans:wght@400;500;600;700&family=Libre+Baskerville:wght@400;700&family=Lora:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Merriweather:wght@400;700;900&family=Oswald:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&family=Raleway:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800&family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500;6..96,600;6..96,700&family=Bungee&family=Cabin:wght@400;500;600;700&family=Caveat:wght@400;500;600;700&family=Dancing+Script:wght@400;500;600;700&family=DM+Serif+Display&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Great+Vibes&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@400;500;600;700&family=Karla:wght@400;500;600;700&family=League+Spartan:wght@400;500;600;700;800&family=Libre+Franklin:wght@400;500;600;700;800&family=Marcellus&family=Montserrat:wght@400;500;600;700;800&family=Pacifico&family=Poppins:wght@400;500;600;700;800&family=Prata&family=Quicksand:wght@400;500;600;700&family=Righteous&family=Rubik:wght@400;500;600;700;800&family=Source+Sans+3:wght@400;500;600;700&family=Syne:wght@400;500;600;700;800&family=Tenor+Sans&family=Unbounded:wght@400;500;600;700&family=Work+Sans:wght@400;500;600;700;800&family=Young+Serif&display=swap');
 @import "tailwindcss";
 @import "./styles/dashboard-theme.css";
+
+.products-modal-form > .products-modal-title-price,
+.products-modal-form > .products-modal-catalog-details {
+  grid-column: 2;
+}
+
+.products-modal-form > .products-modal-images {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+}
+
+.products-modal-form > .products-modal-description,
+.products-modal-form > .products-modal-actions {
+  grid-column: 1 / -1;
+}
+
+.products-modal-form .products-modal-images > div:last-child {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+
+@media (max-width: 640px) {
+  .products-modal-form {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .products-modal-form > .products-modal-images,
+  .products-modal-form > .products-modal-title-price,
+  .products-modal-form > .products-modal-catalog-details,
+  .products-modal-form > .products-modal-description,
+  .products-modal-form > .products-modal-actions {
+    width: 100%;
+  }
+
+  .products-modal-form > .products-modal-images { order: 0; }
+  .products-modal-form > .products-modal-title-price { order: 1; }
+  .products-modal-form > .products-modal-catalog-details { order: 2; }
+  .products-modal-form > .products-modal-description { order: 3; }
+  .products-modal-form > .products-modal-actions { order: 4; }
+}
 
 :root {
   --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;

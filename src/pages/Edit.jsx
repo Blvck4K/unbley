@@ -87,6 +87,7 @@ export default function Edit() {
     accent_color: '#06acf8',
     store_font: 'inter',
     brand_name_font: 'inter',
+    brand_name_case: 'original',
     logo_url: '',
     banner_url: '',
     banner_url_2: '',
@@ -980,28 +981,62 @@ export default function Edit() {
                     <p style={{ fontSize: '12px', color: '#6B7280', margin: '6px 0 0' }}>
                       This font will be used across your public storefront.
                     </p>
-                    {isBusinessPlan && (
-                      <div style={{ marginTop: '18px' }}>
-                        <label className="unbley-form-label" htmlFor="brand-name-font">Brand Name Font</label>
-                        <select
-                          id="brand-name-font"
-                          name="brand_name_font"
-                          value={formData.brand_name_font || formData.store_font}
-                          onChange={handleChange}
-                          className="unbley-form-input"
-                          style={{ fontFamily: storeFontOptions.find(font => font.value === (formData.brand_name_font || formData.store_font))?.family || 'inherit' }}
-                        >
-                          {storeFontOptions.map(font => (
-                            <option key={font.value} value={font.value} style={{ fontFamily: font.family }}>
-                              {font.label}
-                            </option>
-                          ))}
-                        </select>
-                        <p style={{ fontSize: '12px', color: '#6B7280', margin: '6px 0 0' }}>
-                          Used for your brand name in the public store.
-                        </p>
+                    <div style={{ marginTop: '18px' }}>
+                      <label className="unbley-form-label" htmlFor="brand-name-font">Brand Name Style</label>
+                      <select
+                        id="brand-name-font"
+                        name="brand_name_font"
+                        value={formData.brand_name_font || formData.store_font}
+                        onChange={handleChange}
+                        className="unbley-form-input"
+                        style={{ fontFamily: storeFontOptions.find(font => font.value === (formData.brand_name_font || formData.store_font))?.family || 'inherit' }}
+                      >
+                        {storeFontOptions.map(font => (
+                          <option key={font.value} value={font.value} style={{ fontFamily: font.family }}>
+                            {font.label}
+                          </option>
+                        ))}
+                      </select>
+                      <div
+                        style={{
+                          marginTop: '10px',
+                          padding: '14px 16px',
+                          borderRadius: '8px',
+                          backgroundColor: '#FBF9F5',
+                          border: '1px solid #EAE3D9',
+                          fontFamily: storeFontOptions.find(font => font.value === (formData.brand_name_font || formData.store_font))?.family || 'inherit',
+                          fontSize: '18px',
+                          fontWeight: '700',
+                          letterSpacing: '0.08em',
+                          textTransform: formData.brand_name_case === 'uppercase'
+                            ? 'uppercase'
+                            : formData.brand_name_case === 'lowercase'
+                              ? 'lowercase'
+                              : formData.brand_name_case === 'title'
+                                ? 'capitalize'
+                                : 'none',
+                          color: '#221510'
+                        }}
+                      >
+                        {formData.brand_name || 'Your Brand'}
                       </div>
-                    )}
+                      <label className="unbley-form-label" htmlFor="brand-name-case" style={{ marginTop: '14px' }}>Brand Name Case</label>
+                      <select
+                        id="brand-name-case"
+                        name="brand_name_case"
+                        value={formData.brand_name_case || 'original'}
+                        onChange={handleChange}
+                        className="unbley-form-input"
+                      >
+                        <option value="original">Original Case</option>
+                        <option value="uppercase">UPPERCASE</option>
+                        <option value="lowercase">lowercase</option>
+                        <option value="title">Title Case</option>
+                      </select>
+                      <p style={{ fontSize: '12px', color: '#6B7280', margin: '6px 0 0' }}>
+                        Choose how your brand name appears across your storefront.
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
