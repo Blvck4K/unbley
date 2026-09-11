@@ -122,13 +122,16 @@ const sendOrderEmails = async ({ order, brandRecord, provider }) => {
   const orderNumber = escapeHtml(order.order_number);
   const reference = escapeHtml(order.transaction_id);
   const total = formatAmount(order.total_amount);
+  const orderNote = order.customer_note ? escapeHtml(order.customer_note) : '';
+  const orderNoteHtml = orderNote ? `<p style="margin:18px 0 0;padding:12px 14px;background:#f8f4ef;border-radius:8px;color:#75675e;font-size:13px;"><strong>Order note:</strong><br />${orderNote}</p>` : '';
+  const orderNoteText = order.customer_note ? ` Order note: ${order.customer_note}.` : '';
   const customerHtml = `<h1 style="margin:0 0 12px;color:#2b211c;font-size:26px;line-height:1.2;">Order confirmed</h1>
     <p style="margin:0 0 22px;">Hi ${customerName}, your payment was successful and your order is now confirmed.</p>
     <div style="background:#f8f4ef;border-radius:10px;padding:16px 18px;margin-bottom:24px;"><strong>Order ${orderNumber}</strong><br /><span style="color:#75675e;">${escapeHtml(brandRecord.brand_name || 'Unbley store')}</span></div>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:18px;">${itemRows}</table>
-    <p style="margin:0;text-align:right;font-size:18px;"><strong>Total: ${total}</strong></p>
+    <p style="margin:0;text-align:right;font-size:18px;"><strong>Total: ${total}</strong></p>${orderNoteHtml}
     <p style="margin:24px 0 0;color:#75675e;font-size:13px;">Payment reference: ${reference}<br />Payment method: ${escapeHtml(provider)}</p>`;
-  const customerText = `Hi ${order.customer_name || 'there'}, your payment was successful and order ${order.order_number} is confirmed. Total: ${total}. Payment reference: ${order.transaction_id}.`;
+  const customerText = `Hi ${order.customer_name || 'there'}, your payment was successful and order ${order.order_number} is confirmed. Total: ${total}.${orderNoteText} Payment reference: ${order.transaction_id}.`;
   const customerSubject = `Order confirmed: ${order.order_number}`;
 
   const sendAndLog = async ({ to, subject, html, text, eventType }) => {
@@ -164,9 +167,9 @@ const sendOrderEmails = async ({ order, brandRecord, provider }) => {
     const merchantSubject = `New order received: ${order.order_number}`;
     const merchantHtml = `<h1 style="margin:0 0 12px;color:#2b211c;font-size:26px;line-height:1.2;">New order received</h1>
       <p style="margin:0 0 22px;">Hi ${merchantName}, a customer has completed payment for an order on your store.</p>
-      <div style="background:#f8f4ef;border-radius:10px;padding:16px 18px;"><strong>${orderNumber}</strong><br />Customer: ${escapeHtml(order.customer_name)}<br />Email: ${escapeHtml(order.customer_email)}<br />Total: <strong>${total}</strong></div>
+      <div style="background:#f8f4ef;border-radius:10px;padding:16px 18px;"><strong>${orderNumber}</strong><br />Customer: ${escapeHtml(order.customer_name)}<br />Email: ${escapeHtml(order.customer_email)}<br />Total: <strong>${total}</strong>${orderNoteHtml}</div>
       <p style="margin:22px 0 0;color:#75675e;font-size:13px;">Payment reference: ${reference}</p>`;
-    const merchantText = `New paid order ${order.order_number}. Customer: ${order.customer_name} (${order.customer_email}). Total: ${total}. Payment reference: ${order.transaction_id}.`;
+    const merchantText = `New paid order ${order.order_number}. Customer: ${order.customer_name} (${order.customer_email}). Total: ${total}.${orderNoteText} Payment reference: ${order.transaction_id}.`;
     await sendAndLog({ to: brandRecord.email_address, subject: merchantSubject, html: merchantHtml, text: merchantText, eventType: 'order_confirmed_merchant' });
   }
 };

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { CheckCircle2, Download, ArrowLeft, ShieldCheck, Mail, Phone, MapPin, Package } from 'lucide-react';
+import { CheckCircle2, Download, ArrowLeft, ShieldCheck, Mail, Phone, MapPin, Package, FileText } from 'lucide-react';
 import PageTransition from '../components/PageTransition';
 import StoreAttribution from '../components/StoreAttribution';
 import { motion } from 'framer-motion';
@@ -37,6 +37,7 @@ NAME:         ${order.customer_name}
 EMAIL:        ${order.customer_email}
 PHONE:        ${order.customer_phone}
 ADDRESS:      ${order.customer_address}
+${order.customer_note ? `ORDER NOTE:    ${order.customer_note}` : ''}
 
 ----------------------------------------
 ORDER SUMMARY:
@@ -169,6 +170,15 @@ Your order is being processed.
                       <div style={{ fontSize: '14px', color: '#221510', lineHeight: '1.4' }}>{order.customer_address}</div>
                     </div>
                   </div>
+                  {order.customer_note && (
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      <FileText size={16} color="#8D5B36" />
+                      <div>
+                        <div style={{ fontSize: '10px', color: '#6B584C', fontWeight: '700', textTransform: 'uppercase' }}>Order Note</div>
+                        <div style={{ fontSize: '14px', color: '#221510', lineHeight: '1.4', whiteSpace: 'pre-wrap' }}>{order.customer_note}</div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
