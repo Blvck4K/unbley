@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS public.orders (
   total_amount NUMERIC(15, 2) NOT NULL DEFAULT 0.00,
   status TEXT DEFAULT 'processing',
   product_name_snapshot TEXT NOT NULL,
+  customer_note TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 

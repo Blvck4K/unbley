@@ -292,6 +292,7 @@ export default async function handler(req, res) {
       customer_state: clean(customer.state),
       customer_city: clean(customer.city),
       customer_zip: clean(customer.zip),
+      customer_note: clean(customer.note),
       items: normalizedItems,
       transaction_id: verifiedReference,
       payment_method: provider,
@@ -330,6 +331,7 @@ export default async function handler(req, res) {
       delete legacyOrder.delivery_duration;
       delete legacyOrder.customer_state;
       delete legacyOrder.customer_address_line;
+      delete legacyOrder.customer_note;
       delete legacyOrder.confirmation_status;
       delete legacyOrder.confirmation_error;
       delete legacyOrder.confirmed_at;

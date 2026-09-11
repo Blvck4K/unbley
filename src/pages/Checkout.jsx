@@ -137,6 +137,7 @@ export default function Checkout() {
     address: '',
     state: '',
     city: '',
+    note: '',
   });
 
   const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.qty), 0);
@@ -656,38 +657,38 @@ View in Dashboard.
               {/* Contact Info (New) */}
               <div style={s.inputGroupFull} className={errors.email ? 'has-error' : ''}>
                 <label htmlFor="checkout-email" style={s.label}>Email Address *</label>
-                <input id="checkout-email" type="email" name="email" value={formData.email} onChange={handleInputChange} style={getInputStyle('email')} placeholder="For order confirmation" autoComplete="email" />
+                <input id="checkout-email" type="email" name="email" value={formData.email} onChange={handleInputChange} style={getInputStyle('email')} placeholder="For order confirmation" autoComplete="email" required />
                 {errors.email && <div style={s.errorText}>{errors.email}</div>}
               </div>
               
               <div style={s.inputGroupFull} className={errors.phone ? 'has-error' : ''}>
                 <label htmlFor="checkout-phone" style={s.label}>Phone Number *</label>
-                <input id="checkout-phone" type="tel" name="phone" value={formData.phone} onChange={handleInputChange} style={getInputStyle('phone')} placeholder="For delivery updates" autoComplete="tel" />
+                <input id="checkout-phone" type="tel" name="phone" value={formData.phone} onChange={handleInputChange} style={getInputStyle('phone')} placeholder="For delivery updates" autoComplete="tel" required />
                 {errors.phone && <div style={s.errorText}>{errors.phone}</div>}
               </div>
 
               {/* Shipping Details */}
               <div style={s.inputGroup} className={errors.firstName ? 'has-error' : ''}>
                 <label htmlFor="checkout-first-name" style={s.label}>First Name *</label>
-                <input id="checkout-first-name" type="text" name="firstName" value={formData.firstName} onChange={handleInputChange} style={getInputStyle('firstName')} autoComplete="given-name" />
+                <input id="checkout-first-name" type="text" name="firstName" value={formData.firstName} onChange={handleInputChange} style={getInputStyle('firstName')} autoComplete="given-name" required />
                 {errors.firstName && <div style={s.errorText}>{errors.firstName}</div>}
               </div>
               
               <div style={s.inputGroup} className={errors.lastName ? 'has-error' : ''}>
                 <label htmlFor="checkout-last-name" style={s.label}>Last Name *</label>
-                <input id="checkout-last-name" type="text" name="lastName" value={formData.lastName} onChange={handleInputChange} style={getInputStyle('lastName')} autoComplete="family-name" />
+                <input id="checkout-last-name" type="text" name="lastName" value={formData.lastName} onChange={handleInputChange} style={getInputStyle('lastName')} autoComplete="family-name" required />
                 {errors.lastName && <div style={s.errorText}>{errors.lastName}</div>}
               </div>
               
               <div style={s.inputGroupFull} className={errors.address ? 'has-error' : ''}>
                 <label htmlFor="checkout-address" style={s.label}>Address *</label>
-                <textarea id="checkout-address" name="address" value={formData.address} onChange={handleInputChange} style={{ ...getInputStyle('address'), minHeight: '112px', resize: 'vertical', fontFamily: 'inherit' }} placeholder="House number, street, area" autoComplete="street-address" />
+                <textarea id="checkout-address" name="address" value={formData.address} onChange={handleInputChange} style={{ ...getInputStyle('address'), minHeight: '112px', resize: 'vertical', fontFamily: 'inherit' }} placeholder="House number, street, area" autoComplete="street-address" required />
                 {errors.address && <div style={s.errorText}>{errors.address}</div>}
               </div>
               
               <div style={s.inputGroup} className={errors.state ? 'has-error' : ''}>
                 <label htmlFor="checkout-state" style={s.label}>State *</label>
-                <select id="checkout-state" name="state" value={formData.state} onChange={handleInputChange} style={getSelectStyle('state')} autoComplete="address-level1">
+                <select id="checkout-state" name="state" value={formData.state} onChange={handleInputChange} style={getSelectStyle('state')} autoComplete="address-level1" required>
                   <option value="" style={{ color: '#111827', backgroundColor: '#FFFFFF' }}>Select a state</option>
                   {nigeriaStates.map(state => <option key={state} value={state} style={{ color: '#111827', backgroundColor: '#FFFFFF' }}>{state}</option>)}
                 </select>
@@ -696,11 +697,16 @@ View in Dashboard.
 
               <div style={s.inputGroup} className={errors.city ? 'has-error' : ''}>
                 <label htmlFor="checkout-city" style={s.label}>City *</label>
-                <select id="checkout-city" name="city" value={formData.city} onChange={handleInputChange} style={{ ...getSelectStyle('city'), color: formData.city ? textColor : mutedColor, opacity: formData.state ? 1 : 0.65 }} autoComplete="address-level2" disabled={!formData.state}>
+                <select id="checkout-city" name="city" value={formData.city} onChange={handleInputChange} style={{ ...getSelectStyle('city'), color: formData.city ? textColor : mutedColor, opacity: formData.state ? 1 : 0.65 }} autoComplete="address-level2" disabled={!formData.state} required>
                   <option value="" style={{ color: '#111827', backgroundColor: '#FFFFFF' }}>{formData.state ? 'Select a city' : 'Select a state first'}</option>
                   {(nigeriaLocations[formData.state] || []).map(city => <option key={city} value={city} style={{ color: '#111827', backgroundColor: '#FFFFFF' }}>{city}</option>)}
                 </select>
                 {errors.city && <div style={s.errorText}>{errors.city}</div>}
+              </div>
+
+              <div style={s.inputGroupFull}>
+                <label htmlFor="checkout-note" style={s.label}>Order Note <span style={{ color: mutedColor, fontWeight: '500' }}>(Optional)</span></label>
+                <textarea id="checkout-note" name="note" value={formData.note} onChange={handleInputChange} style={{ ...getInputStyle('note'), minHeight: '88px', resize: 'vertical', fontFamily: 'inherit' }} placeholder="Add a note for the store, such as delivery instructions" maxLength={500} />
               </div>
             </div>
 
