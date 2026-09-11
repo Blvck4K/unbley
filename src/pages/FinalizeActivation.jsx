@@ -18,14 +18,24 @@ export default function FinalizeActivation() {
   const selectedAmount = location.state?.amount !== undefined ? location.state.amount : 30000;
   const selectedUsdAmount = location.state?.usdAmount !== undefined ? location.state.usdAmount : 30;
   const isFreeTrial = selectedAmount === 0 || selectedPlanId === 'free-trial';
+  const isAnnualPlan = String(selectedPeriod).toLowerCase().includes('annual') || String(selectedPeriod).toLowerCase().includes('year');
+  const includesDomain = selectedPlanId === 'starter' && isAnnualPlan;
+  const planBenefits = selectedPlanId === 'business'
+    ? ['Everything in Unbley Starter', 'Staff accounts for growing teams', 'Automated logistics rate calculator', 'Custom receipts and invoices', 'Priority concierge assistance']
+    : selectedPlanId === 'starter'
+      ? ['Unlimited product listings', 'Direct Paystack bank settlements', 'Zero commission on direct sales', 'Standard creator support']
+      : ['Full storefront access', 'List up to 10 products', 'Accept local and card payments', 'Direct WhatsApp integration', 'Standard store analytics'];
 
   const [processing, setProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [paidReference, setPaidReference] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('paystack'); // 'paystack' or 'flutterwave'
 
   const onSuccess = async (transaction) => {
     setProcessing(true);
     setErrorMsg('');
+    const reference = transaction?.reference || transaction?.transaction_id || transaction?.tx_ref;
+    if (reference) setPaidReference(reference);
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData.session?.access_token;
@@ -41,7 +51,7 @@ export default function FinalizeActivation() {
           planId: selectedPlanId,
           interval: location.state?.interval || 'monthly',
           provider: paymentMethod,
-          reference: transaction.reference,
+          reference,
           trial: isFreeTrial
         })
       });
@@ -58,7 +68,7 @@ export default function FinalizeActivation() {
       navigate('/success', { 
         state: { 
           type: isFreeTrial ? 'free_trial' : 'paid_plan',
-          reference: transaction.reference, 
+          reference,
           amount: finalAmount,
           currency: finalCurrency,
           email: user?.email,
@@ -72,9 +82,15 @@ export default function FinalizeActivation() {
       
     } catch (err) {
       console.error("Critical Post-Payment DB failure:", err);
-      setErrorMsg(err.message || "Activation could not be completed. Reference: " + transaction.reference);
+      setErrorMsg(`${err.message || 'Activation could not be completed.'}${reference ? ` Reference: ${reference}` : ''}`);
       setProcessing(false);
     }
+  };
+
+  const retryActivation = () => {
+    if (!paidReference || processing) return;
+    setErrorMsg('Retrying activation confirmation...');
+    onSuccess({ reference: paidReference });
   };
 
   const onClose = () => {
@@ -206,7 +222,7 @@ export default function FinalizeActivation() {
         <style>{`
           @media (max-width: 768px) {
             .fin-page { flex-direction: column !important; height: auto !important; min-height: 100vh; overflow-y: auto !important; }
-            .fin-left { padding: 80px 24px 48px !important; border-right: none !important; border-bottom: 1px solid #3D261A !important; }
+            .fin-left { display: none !important; }
             .fin-right { padding: 48px 24px !important; }
           }
         `}</style>
@@ -216,13 +232,20 @@ export default function FinalizeActivation() {
           <div style={s.logo}>Unbley.</div>
           <div style={{ marginTop: 'auto', marginBottom: '10vh' }}>
             <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '42px', fontWeight: '800', letterSpacing: '-0.02em', lineHeight: '1.2', marginBottom: '48px', color: '#FDFBF7' }}>
-              Crafting <span style={{ color: '#E8DCCF' }}>distinction</span> in the digital marketplace.
+              Everything you need to <span style={{ color: '#E8DCCF' }}>sell beautifully</span> online.
             </h1>
-            <div style={{ display: 'flex', gap: '24px', marginBottom: '32px' }}>
-              <div style={{ color: '#E8DCCF' }}><Globe size={20} /></div>
-              <div>
-                <div style={{ fontSize: '15px', fontWeight: '600', marginBottom: '8px', color: '#FDFBF7' }}>Custom Domain Inclusion</div>
-                <div style={{ fontSize: '13px', color: '#C9BFB5' }}>Establish authority with a professional .store domain.</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {planBenefits.map(benefit => (
+                <div key={benefit} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <CheckCircle2 size={17} color="#E8DCCF" />
+                  <span style={{ fontSize: '13px', color: '#FDFBF7' }}>{benefit}</span>
+                </div>
+              ))}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '8px' }}>
+                <Globe size={17} color="#E8DCCF" />
+                <span style={{ fontSize: '13px', color: '#C9BFB5' }}>
+                  {includesDomain ? 'Complimentary .store domain included for the first year.' : 'Connect your own domain whenever you are ready.'}
+                </span>
               </div>
             </div>
           </div>
@@ -230,12 +253,12 @@ export default function FinalizeActivation() {
 
         {/* RIGHT PANE */}
         <div style={s.rightPane} className="fin-right">
-          <div style={{ alignSelf: 'flex-end', fontSize: '11px', color: '#6B584C', letterSpacing: '0.05em' }}>SUPPORT</div>
+          <button onClick={() => navigate('/support')} style={{ alignSelf: 'flex-end', border: 'none', background: 'transparent', padding: 0, fontSize: '11px', color: '#6B584C', letterSpacing: '0.05em', cursor: 'pointer' }}>SUPPORT</button>
           <div style={{ display: 'flex', flexDirection: 'column', margin: 'auto', maxWidth: '480px', width: '100%' }}>
             <div style={{ color: brandColor, fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', marginBottom: '16px', letterSpacing: '0.05em' }}>FINALIZE ACTIVATION</div>
-            <h2 style={s.mainTitle}>Unlock Your Brand's Potential</h2>
+            <h2 style={s.mainTitle}>Activate your Unbley store</h2>
             <p style={{ color: '#6B584C', fontSize: '14px', lineHeight: '1.6', marginBottom: '48px' }}>
-              Activate your professional store and secure your complimentary domain for the first year.
+              Start selling online with a storefront, payments, products, and tools built for modern Nigerian businesses.
             </p>
 
             {!isFreeTrial ? (
@@ -309,7 +332,16 @@ export default function FinalizeActivation() {
               </div>
             </div>
 
-            {errorMsg && <div style={s.errorBox}>{errorMsg}</div>}
+            {errorMsg && (
+              <div style={s.errorBox}>
+                <div>{errorMsg}</div>
+                {paidReference && (
+                  <button onClick={retryActivation} disabled={processing} style={{ marginTop: '12px', border: '1px solid #DC2626', background: 'transparent', color: '#DC2626', padding: '8px 12px', borderRadius: '4px', fontWeight: '700', cursor: processing ? 'not-allowed' : 'pointer' }}>
+                    {processing ? 'Confirming activation...' : 'Retry activation without paying again'}
+                  </button>
+                )}
+              </div>
+            )}
 
             <button style={s.payBtn} onClick={handleActionClick} disabled={processing}>
               <span>

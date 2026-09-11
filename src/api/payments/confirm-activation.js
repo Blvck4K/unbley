@@ -109,8 +109,17 @@ export default async function handler(req, res) {
       }
     }
 
-    const { error: updateError } = await supabase.from('brand_profiles').update(profileUpdate).eq('id', authData.user.id);
-    if (updateError) return json(res, 500, { error: 'Activation was verified but the store could not be updated.' });
+    let { error: updateError } = await supabase.from('brand_profiles').update(profileUpdate).eq('id', authData.user.id);
+    if (updateError && /column .* does not exist|schema cache/i.test(updateError.message || '')) {
+      const fallbackUpdate = {
+        store_active: true,
+        last_transaction_id: reference || null,
+        updated_at: new Date().toISOString()
+      };
+      const fallbackResult = await supabase.from('brand_profiles').update(fallbackUpdate).eq('id', authData.user.id);
+      updateError = fallbackResult.error;
+    }
+    if (updateError) return json(res, 500, { error: `Activation was verified but the store could not be updated: ${updateError.message}` });
 
     const email = authData.user.email;
     const planName = trial ? 'Unbley Free Trial' : (plans[planId]?.name || planId);

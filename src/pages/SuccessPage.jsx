@@ -123,6 +123,11 @@ export default function SuccessPage() {
   const formattedAmount = (amount || 0).toLocaleString(undefined, {
     minimumFractionDigits: currency === 'USD' ? 2 : 0
   });
+  const normalizedPlanName = String(planName || '').toLowerCase();
+  const isAnnualPaidPlan = String(period || '').toLowerCase().includes('annual') || String(period || '').toLowerCase().includes('year');
+  const isBusinessPlan = normalizedPlanName.includes('business');
+  const hasIncludedDomain = isAnnualPaidPlan && (normalizedPlanName.includes('starter') || isBusinessPlan);
+  const includedDomainName = isBusinessPlan ? '.com.ng' : '.store';
 
   // Scenario-specific texts & configurations
   const pageConfigs = {
@@ -185,8 +190,10 @@ export default function SuccessPage() {
       steps: [
         {
           icon: <ShieldCheck size={18} color={brandColor} />,
-          title: 'Custom Domain Included',
-          desc: 'Claim your professional .store / .com.ng domain on your plan.'
+          title: hasIncludedDomain ? 'Custom Domain Included' : 'Custom Domain Ready',
+          desc: hasIncludedDomain
+            ? `Claim your complimentary ${includedDomainName} domain for the first year.`
+            : 'Connect your own domain whenever you are ready to grow your brand.'
         },
         {
           icon: <Package size={18} color={brandColor} />,
@@ -629,6 +636,7 @@ Your digital store is securely verified.
           </motion.div>
 
           {/* Action Pathways / Steps */}
+          {type !== 'paid_plan' && (
           <div style={{ width: '100%', marginBottom: '16px' }}>
             <div style={{ fontSize: '11px', fontWeight: '800', color: '#6B584C', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '16px', textAlign: 'left' }}>
               {current.stepsTitle}
@@ -663,6 +671,7 @@ Your digital store is securely verified.
               ))}
             </div>
           </div>
+          )}
 
           {/* Bottom Action Buttons */}
           <div className="success-actions-row" style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap', width: '100%' }}>
