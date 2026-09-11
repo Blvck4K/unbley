@@ -8,6 +8,7 @@ import { useToast } from '../context/ToastContext';
 import { isDarkColor, getContrastColor, getMutedColor, getBorderColor } from '../lib/colors';
 import PageTransition from '../components/PageTransition';
 import StoreAttribution from '../components/StoreAttribution';
+import { getStoreFont } from '../lib/storeFonts';
 
 const useWindowWidth = () => {
   const [width, setWidth] = useState(window.innerWidth);
@@ -383,10 +384,8 @@ export default function ShopBrand({ customId }) {
   const borderColor = getBorderColor(primaryColor);
   const accentTextColor = isDarkColor(accentColor) ? '#FFFFFF' : '#000000';
 
-  const fontConfig = {
-    heading: '"Playfair Display", serif',
-    body: '"Inter", sans-serif'
-  };
+  const selectedFont = getStoreFont(brand.store_font);
+  const fontConfig = { heading: selectedFont.family, body: selectedFont.family };
 
   const getGridCols = () => {
     if (isMobile) return 'repeat(2, 1fr)';

@@ -52,6 +52,7 @@ ALTER TABLE public.brand_profiles
   ADD COLUMN IF NOT EXISTS primary_color text,
   ADD COLUMN IF NOT EXISTS secondary_color text,
   ADD COLUMN IF NOT EXISTS accent_color text,
+  ADD COLUMN IF NOT EXISTS store_font text DEFAULT 'inter',
   ADD COLUMN IF NOT EXISTS logo_url text,
   ADD COLUMN IF NOT EXISTS banner_url text,
   ADD COLUMN IF NOT EXISTS product_1_url text,

@@ -8,6 +8,7 @@ import { isDarkColor, getContrastColor, getMutedColor, getBorderColor } from '..
 import PageTransition from '../components/PageTransition';
 import StoreAttribution from '../components/StoreAttribution';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getStoreFont } from '../lib/storeFonts';
 
 export default function ProductDetail() {
   const navigate = useNavigate();
@@ -372,10 +373,8 @@ export default function ProductDetail() {
   const mutedColor = getMutedColor(primaryColor);
   const borderColor = getBorderColor(primaryColor);
 
-  const fontConfig = {
-    heading: '"Playfair Display", serif',
-    body: '"Inter", sans-serif'
-  };
+  const selectedFont = getStoreFont(brand.store_font);
+  const fontConfig = { heading: selectedFont.family, body: selectedFont.family };
 
   const s = {
     page: { backgroundColor: primaryColor, color: textColor, minHeight: '100vh', fontFamily: fontConfig.body, overflowX: 'hidden' },

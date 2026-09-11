@@ -22,6 +22,7 @@ import Sidebar from '../components/Sidebar';
 import PageTransition from '../components/PageTransition';
 import { motion } from 'framer-motion';
 import EditTour from '../components/EditTour';
+import { storeFontOptions } from '../lib/storeFonts';
 
 const FacebookIcon = ({ size = 16, color = "currentColor" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke="none">
@@ -83,6 +84,7 @@ export default function Edit() {
     primary_color: '#0A0A0A',
     secondary_color: '#1A1A1A',
     accent_color: '#06acf8',
+    store_font: 'inter',
     logo_url: '',
     banner_url: '',
     product_1_url: '',
@@ -912,8 +914,28 @@ export default function Edit() {
                       />
                     </div>
                   </div>
-                </div>
 
+                  <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #EAE3D9' }}>
+                    <label className="unbley-form-label" htmlFor="store-font">Store Font</label>
+                    <select
+                      id="store-font"
+                      name="store_font"
+                      value={formData.store_font}
+                      onChange={handleChange}
+                      className="unbley-form-input"
+                      style={{ fontFamily: storeFontOptions.find(font => font.value === formData.store_font)?.family || 'inherit' }}
+                    >
+                      {storeFontOptions.map(font => (
+                        <option key={font.value} value={font.value} style={{ fontFamily: font.family }}>
+                          {font.label}
+                        </option>
+                      ))}
+                    </select>
+                    <p style={{ fontSize: '12px', color: '#6B7280', margin: '6px 0 0' }}>
+                      This font will be used across your public storefront.
+                    </p>
+                  </div>
+                </div>
               </div>
 
             </div>

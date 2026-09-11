@@ -348,10 +348,6 @@ export default function Cart() {
                 <span>Subtotal</span>
                 <span style={{ color: textColor, fontWeight: '500' }}>{formatPrice(subtotal)}</span>
               </div>
-              <div style={s.summaryRow}>
-                <span>Delivery Info</span>
-                <span style={{ fontWeight: '600', color: textColor }}>Free delivery nationwide</span>
-              </div>
 
               <div style={s.divider}></div>
 
