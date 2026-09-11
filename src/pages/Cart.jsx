@@ -7,6 +7,7 @@ import { useToast } from '../context/ToastContext';
 import { isDarkColor, getContrastColor, getMutedColor, getBorderColor } from '../lib/colors';
 import PageTransition from '../components/PageTransition';
 import StoreAttribution from '../components/StoreAttribution';
+import StoreProductTypeSidebar from '../components/StoreProductTypeSidebar';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Cart() {
@@ -236,6 +237,7 @@ export default function Cart() {
           </div>
         </div>
         <div style={s.headerRight}>
+          {brand?.id && <StoreProductTypeSidebar brandId={brand.id} accentColor={accentColor} textColor={textColor} mutedColor={mutedColor} borderColor={borderColor} />}
           <div style={s.iconButton} onClick={() => navigate('/cart')}>
             <ShoppingCart size={18} />
             <div style={s.cartBadge}>{cartItems.length}</div>
@@ -244,12 +246,13 @@ export default function Cart() {
       </div>
 
       <div style={{...s.content, padding: '48px 80px'}} className="cart-content">
-        <h1 style={s.pageTitle} className="page-title">Your Selection</h1>
-        <p style={s.pageSubtitle}>
+        <div>
+            <h1 style={s.pageTitle} className="page-title">Your Selection</h1>
+            <p style={s.pageSubtitle}>
           A curated collection of pieces refined for your digital lifestyle. Review your atelier items before finalizing your acquisition.
-        </p>
+            </p>
 
-        <div style={s.layout} className="cart-layout">
+            <div style={s.layout} className="cart-layout">
           {/* Left Column: Items */}
             <div style={s.itemsContainer}>
               <AnimatePresence>
@@ -380,10 +383,10 @@ export default function Cart() {
               </div>
             </div>
           </div>
-        </div>
+          </div>
 
-        {/* You may also desire */}
-        <div style={s.recommendations}>
+          {/* You may also desire */}
+          <div style={s.recommendations}>
           <h2 style={s.recTitle}>You may also desire</h2>
 
           <div style={s.recGrid} className="rec-grid">
@@ -418,6 +421,7 @@ export default function Cart() {
             })}
             {recommendedProducts.length === 0 && <div style={{ color: mutedColor }}>No other assets available.</div>}
           </div>
+            </div>
         </div>
       </div>
 

@@ -374,14 +374,15 @@ export default function ProductDetail() {
   const borderColor = getBorderColor(primaryColor);
 
   const selectedFont = getStoreFont(brand.store_font);
-  const fontConfig = { heading: selectedFont.family, body: selectedFont.family };
+  const brandNameFont = getStoreFont(brand.brand_name_font || brand.store_font);
+  const fontConfig = { heading: selectedFont.family, body: selectedFont.family, brandName: brandNameFont.family };
 
   const s = {
     page: { backgroundColor: primaryColor, color: textColor, minHeight: '100vh', fontFamily: fontConfig.body, overflowX: 'hidden' },
 
     // Header Matcher
     header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '24px 48px', borderBottom: `1px solid ${borderColor}`, backgroundColor: 'transparent', position: 'sticky', top: 0, zIndex: 100, backdropFilter: 'blur(12px)' },
-    logo: { fontFamily: fontConfig.heading, fontSize: '20px', fontWeight: 'bold', letterSpacing: '0.05em', color: accentColor, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px', textTransform: 'uppercase' },
+    logo: { fontFamily: fontConfig.brandName, fontSize: '20px', fontWeight: 'bold', letterSpacing: '0.05em', color: accentColor, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px', textTransform: 'uppercase' },
     logoImage: { height: '32px', width: '32px', borderRadius: '50%', objectFit: 'cover' },
     headerRight: { display: 'flex', alignItems: 'center', gap: '24px' },
     iconButton: { cursor: 'pointer', display: 'flex', alignItems: 'center', color: textColor, transition: 'color 0.2s', '&:hover': { color: accentColor } },

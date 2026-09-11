@@ -11,7 +11,15 @@ export const storeFontOptions = [
   { value: 'lora', label: 'Lora', family: '"Lora", serif' },
   { value: 'merriweather', label: 'Merriweather', family: '"Merriweather", serif' },
   { value: 'libre-baskerville', label: 'Libre Baskerville', family: '"Libre Baskerville", serif' },
-  { value: 'josefin-sans', label: 'Josefin Sans', family: '"Josefin Sans", sans-serif' }
+  { value: 'josefin-sans', label: 'Josefin Sans', family: '"Josefin Sans", sans-serif' },
+  { value: 'sora', label: 'Sora', family: '"Sora", sans-serif' },
+  { value: 'plus-jakarta-sans', label: 'Plus Jakarta Sans', family: '"Plus Jakarta Sans", sans-serif' },
+  { value: 'nunito-sans', label: 'Nunito Sans', family: '"Nunito Sans", sans-serif' },
+  { value: 'barlow-condensed', label: 'Barlow Condensed', family: '"Barlow Condensed", sans-serif' },
+  { value: 'bebas-neue', label: 'Bebas Neue', family: '"Bebas Neue", sans-serif' },
+  { value: 'cinzel', label: 'Cinzel', family: '"Cinzel", serif' },
+  { value: 'abril-fatface', label: 'Abril Fatface', family: '"Abril Fatface", serif' },
+  { value: 'figtree', label: 'Figtree', family: '"Figtree", sans-serif' }
 ];
 
 export const getStoreFont = (value) => {

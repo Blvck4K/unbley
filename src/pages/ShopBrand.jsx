@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, ShoppingCart, User, ChevronDown, ShieldCheck, Truck, Headphones, Filter, Plus, Trash2, X, Image as ImageIcon, Edit2 } from 'lucide-react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
@@ -22,6 +22,7 @@ const useWindowWidth = () => {
 
 export default function ShopBrand({ customId }) {
   const { id: urlId, slug } = useParams(); // URL parameter targeting the brand ID or slug
+  const [searchParams] = useSearchParams();
   const id = customId || urlId;
   const { user } = useAuth();
   const { toast, confirmDialog } = useToast();
@@ -38,11 +39,21 @@ export default function ShopBrand({ customId }) {
   // Real-time State
   const [brand, setBrand] = useState(null);
   const [products, setProducts] = useState([]);
+  const [selectedProductType, setSelectedProductType] = useState(() => searchParams.get('productType') || 'all');
+  const [selectedGender] = useState(() => searchParams.get('gender') || 'all');
+  const [selectedSize, setSelectedSize] = useState('all');
+  const [activeBannerIndex, setActiveBannerIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
   // Admin State
   const isOwner = user?.id === id;
+  const isBusinessPlan = Boolean(
+    user?.plan_id === 'business' &&
+    user?.plan_ends_at &&
+    new Date(user.plan_ends_at) > new Date()
+  );
+
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingProductId, setEditingProductId] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -54,6 +65,9 @@ export default function ShopBrand({ customId }) {
     price: '',
     description: '',
     tag: '',
+    category: '',
+    gender: 'unisex',
+    productType: '',
     sizes: '',
     colors: '',
     imageFile: null,
@@ -130,6 +144,17 @@ export default function ShopBrand({ customId }) {
         if (brandError) throw brandError;
         if (!resolvedBrand) throw new Error("Brand not found.");
 
+        const isBusinessStore = Boolean(
+          resolvedBrand.plan_id === 'business' &&
+          resolvedBrand.plan_ends_at &&
+          new Date(resolvedBrand.plan_ends_at) > new Date()
+        );
+
+        if (resolvedBrand.id && isBusinessStore && searchParams.get('view') !== 'products') {
+          navigate(`/store-dashboard/${resolvedBrand.id}`, { replace: true });
+          return;
+        }
+
         setBrand(resolvedBrand);
 
         const targetBrandId = resolvedBrand.id || user?.id;
@@ -154,7 +179,19 @@ export default function ShopBrand({ customId }) {
     }
 
     fetchStoreData();
-  }, [id, slug, user, navigate]);
+  }, [id, slug, user, navigate, searchParams]);
+
+  const bannerUrls = [brand?.banner_url, brand?.banner_url_2, brand?.banner_url_3, brand?.banner_url_4].filter(Boolean);
+  const bannerCount = bannerUrls.length;
+  const bannerSignature = bannerUrls.join('|');
+
+  useEffect(() => {
+    if (bannerCount < 2) return undefined;
+    const interval = setInterval(() => {
+      setActiveBannerIndex((current) => (current + 1) % bannerCount);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [bannerCount, bannerSignature]);
 
   // Admin Product Creation Logic
   const handleImageSelect = (e) => {
@@ -175,6 +212,9 @@ export default function ShopBrand({ customId }) {
       price: product.price,
       description: product.description || '',
       tag: product.tag || '',
+      category: product.category || '',
+      gender: product.gender || 'unisex',
+      productType: product.product_type || '',
       sizes: product.sizes || '',
       colors: product.colors || '',
       imageFile: null,
@@ -233,6 +273,9 @@ export default function ShopBrand({ customId }) {
             price: parseFloat(newProduct.price) || 0,
             description: newProduct.description,
             tag: newProduct.tag,
+            category: isBusinessPlan ? newProduct.category : null,
+            gender: newProduct.gender,
+            product_type: newProduct.productType || null,
             sizes: newProduct.sizes,
             image_url: finalImageUrl
           })
@@ -241,7 +284,7 @@ export default function ShopBrand({ customId }) {
 
         if (updateError) throw updateError;
         
-        setProducts(prev => prev.map(p => p.id === editingProductId ? { ...p, title: newProduct.title, price: newProduct.price, description: newProduct.description, tag: newProduct.tag, sizes: newProduct.sizes, colors: newProduct.colors, image_url: finalImageUrl } : p));
+        setProducts(prev => prev.map(p => p.id === editingProductId ? { ...p, title: newProduct.title, price: newProduct.price, description: newProduct.description, tag: newProduct.tag, category: isBusinessPlan ? newProduct.category : null, gender: newProduct.gender, product_type: newProduct.productType || null, sizes: newProduct.sizes, colors: newProduct.colors, image_url: finalImageUrl } : p));
         toast.success('Asset updated successfully!');
       } else {
         const { data: newProd, error: insertError } = await supabase
@@ -252,6 +295,9 @@ export default function ShopBrand({ customId }) {
             price: parseFloat(newProduct.price) || 0,
             description: newProduct.description,
             tag: newProduct.tag,
+            category: isBusinessPlan ? newProduct.category : null,
+            gender: newProduct.gender,
+            product_type: newProduct.productType || null,
             sizes: newProduct.sizes,
             colors: newProduct.colors,
             image_url: finalImageUrl,
@@ -265,7 +311,7 @@ export default function ShopBrand({ customId }) {
         toast.success('Asset deployed successfully!');
       }
       
-      setNewProduct({ title: '', price: '', description: '', tag: '', sizes: '', colors: '', imageFile: null, imagePreview: null, additionalImages: [] });
+      setNewProduct({ title: '', price: '', description: '', tag: '', category: '', gender: 'unisex', productType: '', sizes: '', colors: '', imageFile: null, imagePreview: null, additionalImages: [] });
       setIsAddModalOpen(false);
       setEditingProductId(null);
 
@@ -385,6 +431,7 @@ export default function ShopBrand({ customId }) {
   const accentTextColor = isDarkColor(accentColor) ? '#FFFFFF' : '#000000';
 
   const selectedFont = getStoreFont(brand.store_font);
+  const brandNameFont = getStoreFont(brand.brand_name_font || brand.store_font);
   const fontConfig = { heading: selectedFont.family, body: selectedFont.family };
 
   const getGridCols = () => {
@@ -393,12 +440,24 @@ export default function ShopBrand({ customId }) {
     return 'repeat(3, 1fr)';
   };
 
+  const productTypes = [...new Set(products.map((product) => product.product_type).filter(Boolean))];
+  const availableSizes = [...new Set(
+    products.flatMap((product) => String(product.sizes || '').split(',').map((size) => size.trim()).filter(Boolean))
+  )];
+  const visibleProducts = products.filter((product) => {
+    const productSizes = String(product.sizes || '').split(',').map((size) => size.trim()).filter(Boolean);
+    const matchesProductType = selectedProductType === 'all' || product.product_type === selectedProductType;
+    const matchesGender = selectedGender === 'all' || product.gender === selectedGender;
+    const matchesSize = selectedSize === 'all' || productSizes.includes(selectedSize);
+    return matchesProductType && matchesGender && matchesSize;
+  });
+
   const s = {
     page: { backgroundColor: primaryColor, color: textColor, minHeight: '100vh', fontFamily: fontConfig.body, overflowX: 'hidden' },
 
     // Header
     header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: isMobile ? '20px 24px' : '24px 48px', borderBottom: `1px solid ${borderColor}`, backgroundColor: 'transparent', position: 'sticky', top: 0, zIndex: 100, backdropFilter: 'blur(12px)' },
-    logo: { fontFamily: fontConfig.heading, fontSize: '20px', fontWeight: 'bold', letterSpacing: '0.05em', color: accentColor, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px', textTransform: 'uppercase' },
+    logo: { fontFamily: brandNameFont.family, fontSize: '20px', fontWeight: 'bold', letterSpacing: '0.05em', color: accentColor, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px', textTransform: 'uppercase' },
     logoImage: { height: '32px', width: '32px', borderRadius: '50%', objectFit: 'cover' },
     headerRight: { display: 'flex', alignItems: 'center', gap: isMobile ? '16px' : '24px' },
     searchBox: { display: isMobile ? 'none' : 'flex', alignItems: 'center', gap: '8px', backgroundColor: secondaryColor, padding: '10px 16px', borderRadius: '4px', width: '240px' },
@@ -488,6 +547,7 @@ export default function ShopBrand({ customId }) {
           {brand.brand_name || 'Digital Atelier'}
         </div>
         <div style={s.headerRight}>
+          {isOwner && <button type="button" onClick={() => navigate('/dashboard')} style={{ ...s.iconButton, border: `1px solid ${borderColor}`, background: 'transparent', padding: '9px 12px', borderRadius: '4px', fontSize: '11px', fontWeight: '700' }}>Back to Dashboard</button>}
           <div style={s.searchBox}>
             <Search size={14} color={mutedColor} />
             <input type="text" placeholder={isMobile ? "SEARCH..." : "Search curated goods..."} style={s.searchInput} />
@@ -509,12 +569,13 @@ export default function ShopBrand({ customId }) {
       </div>
 
       <div style={s.hero}>
-        {brand.banner_url ? (
+        {bannerUrls.length > 0 ? (
           <motion.img 
-            initial={{ scale: 1.1, opacity: 0 }}
-            animate={{ scale: 1, opacity: 0.6 }}
-            transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
-            src={brand.banner_url} 
+            key={bannerUrls[activeBannerIndex]}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.6 }}
+            transition={{ duration: 1.2 }}
+            src={bannerUrls[activeBannerIndex]} 
             alt="Hero Banner" 
             style={s.heroImage} 
           />
@@ -556,7 +617,7 @@ export default function ShopBrand({ customId }) {
               <strong style={{ display: 'block', fontSize: '12px', color: textColor }}>Store Owner Mode</strong>
               <span style={{ display: 'block', marginTop: '4px', fontSize: '10px', color: mutedColor }}>Manage your storefront and products</span>
             </div>
-            <button onClick={() => { setEditingProductId(null); setNewProduct({ title: '', price: '', description: '', tag: '', sizes: '', colors: '', imageFile: null, imagePreview: null, additionalImages: [] }); setIsAddModalOpen(true); }} style={{ backgroundColor: accentColor, color: accentTextColor, padding: '12px 24px', border: 'none', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button onClick={() => { setEditingProductId(null); setNewProduct({ title: '', price: '', description: '', tag: '', category: '', gender: 'unisex', productType: '', sizes: '', colors: '', imageFile: null, imagePreview: null, additionalImages: [] }); setIsAddModalOpen(true); }} style={{ backgroundColor: accentColor, color: accentTextColor, padding: '12px 24px', border: 'none', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Plus size={16} /> Add Product
             </button>
           </div>
@@ -565,21 +626,33 @@ export default function ShopBrand({ customId }) {
         <div style={s.mainHeader}>
           <h2 style={s.mainTitle}>All Products</h2>
           <div style={{ display: 'flex', gap: '16px' }}>
-            <span style={{ fontSize: '12px', color: mutedColor, border: `1px solid ${borderColor}`, padding: '10px 16px', borderRadius: '4px' }}>Filter</span>
-            <span style={{ fontSize: '12px', color: mutedColor, border: `1px solid ${borderColor}`, padding: '10px 16px', borderRadius: '4px' }}>Sort <ChevronDown size={14} style={{ display: 'inline', verticalAlign: 'middle' }} /></span>
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: mutedColor, border: `1px solid ${borderColor}`, padding: '0 12px', borderRadius: '4px' }}>
+              <Filter size={14} />
+              <select value={selectedProductType} onChange={(event) => setSelectedProductType(event.target.value)} style={{ border: 'none', background: 'transparent', color: textColor, padding: '10px 0', outline: 'none', cursor: 'pointer' }}>
+                <option value="all">All product types</option>
+                {productTypes.map((productType) => <option key={productType} value={productType}>{productType}</option>)}
+              </select>
+            </label>
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: mutedColor, border: `1px solid ${borderColor}`, padding: '0 12px', borderRadius: '4px' }}>
+              <span>Size</span>
+              <select value={selectedSize} onChange={(event) => setSelectedSize(event.target.value)} style={{ border: 'none', background: 'transparent', color: textColor, padding: '10px 0', outline: 'none', cursor: 'pointer' }}>
+                <option value="all">All sizes</option>
+                {availableSizes.map((size) => <option key={size} value={size}>{size}</option>)}
+              </select>
+            </label>
           </div>
         </div>
 
-        {products.length === 0 ? (
+        {visibleProducts.length === 0 ? (
           <div style={s.emptyState}>
             <h3 style={s.emptyTitle}>{isOwner ? "Your Gallery is Empty" : "Gallery Updating"}</h3>
             <p style={s.emptyDesc}>{isOwner ? "Inject your first digital artifact into the ecosystem to begin processing sales." : "The curator is currently updating this digital space."}</p>
-            {isOwner && <button onClick={() => { setEditingProductId(null); setNewProduct({ title: '', price: '', description: '', tag: '', sizes: '', colors: '', imageFile: null, imagePreview: null, additionalImages: [] }); setIsAddModalOpen(true); }} style={s.buttonGroup.addToCartBtn}>Launch Initial Product</button>}
+            {isOwner && <button onClick={() => { setEditingProductId(null); setNewProduct({ title: '', price: '', description: '', tag: '', category: '', gender: 'unisex', productType: '', sizes: '', colors: '', imageFile: null, imagePreview: null, additionalImages: [] }); setIsAddModalOpen(true); }} style={s.buttonGroup.addToCartBtn}>Launch Initial Product</button>}
           </div>
         ) : (
           <div style={s.productGrid}>
              {/* Map Live Products */}
-             {products.map((product, idx) => (
+             {visibleProducts.map((product, idx) => (
               <motion.div 
                 key={product.id} 
                 initial={{ opacity: 0, y: 20 }}
@@ -648,17 +721,17 @@ export default function ShopBrand({ customId }) {
         <div style={s.infoSection}>
           <div style={s.infoCard}>
             <div style={s.infoBadge}>Refund Policy</div>
-            <h3 style={s.infoTitle}>Simple and fair returns</h3>
+            <h3 style={s.infoTitle}>Returns and refunds</h3>
             <p style={s.infoText}>
-              We offer support for damaged, incorrect, or missing items reported within 7 days of delivery. We’ll review your order and make a quick resolution to keep your shopping experience smooth and trustworthy.
+              {brand.refund_policy || 'The store owner has not added a refund policy yet. Please contact the store for assistance.'}
             </p>
           </div>
 
           <div style={s.infoCard}>
             <div style={s.infoBadge}>Shipping Policy</div>
-            <h3 style={s.infoTitle}>Fast, reliable delivery</h3>
+            <h3 style={s.infoTitle}>Delivery information</h3>
             <p style={s.infoText}>
-              Orders are usually processed within 24–72 hours and shipped with trusted delivery partners. Delivery timelines and fees are shown clearly at checkout so customers know exactly what to expect.
+              {brand.shipping_policy || 'The store owner has not added a shipping policy yet. Delivery details will be confirmed at checkout.'}
             </p>
           </div>
 
@@ -793,6 +866,32 @@ export default function ShopBrand({ customId }) {
                   <div>
                     <label style={{ display: 'block', fontSize: '10px', color: mutedColor, marginBottom: '8px', fontWeight: 'bold', letterSpacing: '0.1em' }}>HIGHLIGHT TAG (OPTIONAL)</label>
                     <input type="text" value={newProduct.tag} onChange={e => setNewProduct({...newProduct, tag: e.target.value})} style={{ width: '100%', padding: '12px', backgroundColor: '#111', border: `1px solid ${borderColor}`, borderRadius: '4px', color: '#FFF', fontSize: '14px', outline: 'none' }} placeholder="E.g. LIMITED EDITION" />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '10px', color: mutedColor, marginBottom: '8px', fontWeight: 'bold', letterSpacing: '0.1em' }}>CATEGORY {isBusinessPlan ? '(BUSINESS)' : '(BUSINESS PLAN ONLY)'}</label>
+                    <input type="text" value={newProduct.category} disabled={!isBusinessPlan} onChange={e => setNewProduct({...newProduct, category: e.target.value})} style={{ width: '100%', padding: '12px', backgroundColor: '#111', border: `1px solid ${borderColor}`, borderRadius: '4px', color: '#FFF', fontSize: '14px', outline: 'none', opacity: isBusinessPlan ? 1 : 0.55 }} placeholder={isBusinessPlan ? 'E.g. New Arrivals' : 'Upgrade to Business to add categories'} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '10px', color: mutedColor, marginBottom: '8px', fontWeight: 'bold', letterSpacing: '0.1em' }}>GENDER</label>
+                    <select value={newProduct.gender} onChange={e => setNewProduct({...newProduct, gender: e.target.value})} style={{ width: '100%', padding: '12px', backgroundColor: '#111', border: `1px solid ${borderColor}`, borderRadius: '4px', color: '#FFF', fontSize: '14px', outline: 'none' }}>
+                      <option value="unisex">Unisex</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '10px', color: mutedColor, marginBottom: '8px', fontWeight: 'bold', letterSpacing: '0.1em' }}>PRODUCT TYPE</label>
+                    <select value={newProduct.productType} onChange={e => setNewProduct({...newProduct, productType: e.target.value})} style={{ width: '100%', padding: '12px', backgroundColor: '#111', border: `1px solid ${borderColor}`, borderRadius: '4px', color: '#FFF', fontSize: '14px', outline: 'none' }}>
+                      <option value="">Select product type</option>
+                      <option value="shirt">Shirt</option>
+                      <option value="trouser">Trouser</option>
+                      <option value="dress">Dress</option>
+                      <option value="skirt">Skirt</option>
+                      <option value="jacket">Jacket</option>
+                      <option value="shoes">Shoes</option>
+                      <option value="accessories">Accessories</option>
+                      <option value="other">Other</option>
+                    </select>
                   </div>
                   <div>
                     <label style={{ display: 'block', fontSize: '10px', color: mutedColor, marginBottom: '8px', fontWeight: 'bold', letterSpacing: '0.1em' }}>AVAILABLE SIZES (E.G. S, M, L, XL)</label>

@@ -19,7 +19,7 @@ import {
   Package,
   BarChart3
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import PageTransition from '../components/PageTransition';
 import Sidebar from '../components/Sidebar';
@@ -211,6 +211,7 @@ export const ACTIVATION_CONFIG = {
 export default function Activation() {
   const { signOut, user, profileReady, isAdmin } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // State condition to toggle pop-up visibility and active interval
@@ -222,8 +223,34 @@ export default function Activation() {
     user?.trial_ends_at &&
     new Date(user.trial_ends_at) > new Date()
   );
+  const isBusinessUpgrade = location.state?.upgradeTo === 'business' && (user?.plan_id === 'starter' || isOnActiveTrial);
+
+  const getUpgradePricing = (interval) => {
+    const starterPlan = ACTIVATION_CONFIG.plans.find((plan) => plan.id === 'starter');
+    const businessPlan = ACTIVATION_CONFIG.plans.find((plan) => plan.id === 'business');
+    const starterPricing = starterPlan?.pricing?.[user?.plan_interval || 'monthly'];
+    const businessPricing = businessPlan?.pricing?.[interval];
+    if (!isBusinessUpgrade || isOnActiveTrial || !starterPricing || !businessPricing || !user?.plan_ends_at) return businessPricing;
+
+    const totalDays = user.plan_interval === 'yearly' ? 365 : 30;
+    const planEndsAt = new Date(user.plan_ends_at).getTime();
+    const planStartedAt = planEndsAt - totalDays * 86400000;
+    const daysUsed = Math.min(totalDays, Math.max(0, Math.ceil((Date.now() - planStartedAt) / 86400000)));
+    const remainingDays = totalDays - daysUsed;
+    const credit = Math.round(starterPricing.numericPrice * remainingDays / totalDays);
+    const numericPrice = Math.max(0, businessPricing.numericPrice - credit);
+    const usdPrice = Math.max(0, businessPricing.usdPrice - (starterPricing.usdPrice * remainingDays / totalDays));
+
+    return {
+      ...businessPricing,
+      numericPrice,
+      usdPrice: Number(usdPrice.toFixed(2)),
+      displayPrice: `₦${numericPrice.toLocaleString()}`,
+      billingDetail: `${businessPricing.billingDetail} (Starter credit applied)`
+    };
+  };
   const trialPlanVisible = trialAvailable || isOnActiveTrial;
-  const visiblePlans = ACTIVATION_CONFIG.plans.filter(plan => plan.id !== 'free-trial' || trialPlanVisible);
+  const visiblePlans = ACTIVATION_CONFIG.plans.filter(plan => (isBusinessUpgrade ? plan.id === 'business' : plan.id !== 'free-trial' || trialPlanVisible));
 
   const hasActivePaidPlan = Boolean(
     user?.store_active &&
@@ -231,7 +258,7 @@ export default function Activation() {
     user?.plan_ends_at &&
     new Date(user.plan_ends_at) > new Date()
   );
-  const shouldShowPlans = profileReady && (isAdmin || !hasActivePaidPlan);
+  const shouldShowPlans = profileReady && (isAdmin || isBusinessUpgrade || !hasActivePaidPlan);
 
   const handleBackToDashboard = () => {
     if (isOnActiveTrial) {
@@ -243,7 +270,7 @@ export default function Activation() {
   // Handle plan selection -> forwards plan details to finalize activation
   const handleSelectPlan = (plan) => {
     if (!plan) return;
-    const currentPriceInfo = plan.pricing?.[activeInterval]
+    const currentPriceInfo = (isBusinessUpgrade ? getUpgradePricing(activeInterval) : plan.pricing?.[activeInterval])
       || plan.pricing?.monthly
       || plan.pricing?.yearly
       || (plan.pricing ? Object.values(plan.pricing)[0] : null)
@@ -258,6 +285,7 @@ export default function Activation() {
         usdAmount: currentPriceInfo.usdPrice ?? 0,
         period: currentPriceInfo.billingDetail || 'Selected Period',
         displayPrice: currentPriceInfo.displayPrice || 'Free'
+        , upgradeFrom: isBusinessUpgrade ? 'starter' : null
       }
     });
   };
@@ -873,7 +901,7 @@ export default function Activation() {
                   }}
                 >
                   {visiblePlans.map((plan) => {
-                    const pricing = plan.pricing?.[activeInterval]
+                    const pricing = (isBusinessUpgrade ? getUpgradePricing(activeInterval) : plan.pricing?.[activeInterval])
                       || plan.pricing?.monthly
                       || plan.pricing?.yearly
                       || (plan.pricing ? Object.values(plan.pricing)[0] : null)

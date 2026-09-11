@@ -65,7 +65,7 @@ export default async function handler(req, res) {
 
     const { data: existingProfile, error: profileLookupError } = await supabase
       .from('brand_profiles')
-      .select('trial_used, trial_ends_at, store_active')
+      .select('trial_used, trial_ends_at, store_active, plan_id, plan_interval, plan_ends_at')
       .eq('id', authData.user.id)
       .maybeSingle();
 
@@ -93,7 +93,26 @@ export default async function handler(req, res) {
         return json(res, 409, { error: 'Your free trial is already active.' });
       }
     } else {
-      const price = plans[planId]?.[interval];
+      const basePrice = plans[planId]?.[interval];
+      let price = basePrice;
+      const isActiveStarter = existingProfile?.store_active && existingProfile?.plan_id === 'starter' && existingProfile?.plan_ends_at && new Date(existingProfile.plan_ends_at) > new Date();
+      const isActiveTrial = existingProfile?.store_active && existingProfile?.trial_ends_at && new Date(existingProfile.trial_ends_at) > new Date();
+
+      if (planId === 'business' && isActiveStarter) {
+        const starterPrice = plans.starter[existingProfile.plan_interval || 'monthly'];
+        const totalDays = existingProfile.plan_interval === 'yearly' ? 365 : 30;
+        const planEndsAt = new Date(existingProfile.plan_ends_at).getTime();
+        const planStartedAt = planEndsAt - totalDays * 86400000;
+        const daysUsed = Math.min(totalDays, Math.max(0, Math.ceil((Date.now() - planStartedAt) / 86400000)));
+        const remainingDays = totalDays - daysUsed;
+        price = {
+          ngn: Math.max(0, Math.round(basePrice.ngn - (starterPrice.ngn * remainingDays / totalDays))),
+          usd: Math.max(0, Number((basePrice.usd - (starterPrice.usd * remainingDays / totalDays)).toFixed(2)))
+        };
+      } else if (planId === 'business' && isActiveTrial) {
+        price = basePrice;
+      }
+
       if (!price || !reference || !['paystack', 'flutterwave'].includes(provider)) return json(res, 400, { error: 'Invalid activation plan or payment details.' });
 
       if (provider === 'paystack') {

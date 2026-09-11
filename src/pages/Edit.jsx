@@ -60,11 +60,7 @@ export default function Edit() {
 
   // Refs for hidden file inputs
   const logoRef = useRef(null);
-  const bannerRef = useRef(null);
-  const p1Ref = useRef(null);
-  const p2Ref = useRef(null);
-  const p3Ref = useRef(null);
-  const p4Ref = useRef(null);
+  const bannerRefs = [useRef(null), useRef(null), useRef(null), useRef(null)];
 
   const [formData, setFormData] = useState({
     brand_name: '',
@@ -73,6 +69,8 @@ export default function Edit() {
     phone_number: '',
     brand_category: '',
     delivery_duration: '',
+    refund_policy: '',
+    shipping_policy: '',
     same_city_delivery_fee: '',
     same_state_delivery_fee: '',
     outside_state_delivery_fee: '',
@@ -88,8 +86,12 @@ export default function Edit() {
     secondary_color: '#1A1A1A',
     accent_color: '#06acf8',
     store_font: 'inter',
+    brand_name_font: 'inter',
     logo_url: '',
     banner_url: '',
+    banner_url_2: '',
+    banner_url_3: '',
+    banner_url_4: '',
     product_1_url: '',
     product_2_url: '',
     product_3_url: '',
@@ -108,6 +110,12 @@ export default function Edit() {
     flutterwave_subaccount_code: ''
   });
 
+  const isBusinessPlan = Boolean(
+    user?.plan_id === 'business' &&
+    user?.plan_ends_at &&
+    new Date(user.plan_ends_at) > new Date()
+  );
+
   const [themeColors, setThemeColors] = useState({
     primary: '#0A0A0A',
     secondary: '#1A1A1A',
@@ -125,8 +133,7 @@ export default function Edit() {
       formData.delivery_duration,
       formData.brand_narrative,
       formData.logo_url,
-      formData.banner_url,
-      formData.product_1_url
+      formData.banner_url
     ];
     const filled = fields.filter(f => Boolean(f && f !== 'Your Brand' && f !== 'Brand Owner')).length;
     return Math.round((filled / fields.length) * 100);
@@ -320,11 +327,9 @@ export default function Edit() {
         
         {/* Hidden inputs for uploads */}
         <input type="file" ref={logoRef} style={{ display: 'none' }} accept="image/*" onChange={(e) => handleFileUpload(e, 'logo_url')} />
-        <input type="file" ref={bannerRef} style={{ display: 'none' }} accept="image/*" onChange={(e) => handleFileUpload(e, 'banner_url')} />
-        <input type="file" ref={p1Ref} style={{ display: 'none' }} accept="image/*" onChange={(e) => handleFileUpload(e, 'product_1_url')} />
-        <input type="file" ref={p2Ref} style={{ display: 'none' }} accept="image/*" onChange={(e) => handleFileUpload(e, 'product_2_url')} />
-        <input type="file" ref={p3Ref} style={{ display: 'none' }} accept="image/*" onChange={(e) => handleFileUpload(e, 'product_3_url')} />
-        <input type="file" ref={p4Ref} style={{ display: 'none' }} accept="image/*" onChange={(e) => handleFileUpload(e, 'product_4_url')} />
+        {['banner_url', 'banner_url_2', 'banner_url_3', 'banner_url_4'].map((fieldName, index) => (
+          <input key={fieldName} type="file" ref={bannerRefs[index]} style={{ display: 'none' }} accept="image/*" onChange={(e) => handleFileUpload(e, fieldName)} />
+        ))}
 
         {/* Unified Collapsible Sidebar */}
         <Sidebar 
@@ -437,33 +442,29 @@ export default function Edit() {
                   </h3>
                 </div>
                 <button
-                  onClick={() => bannerRef.current?.click()}
+                  onClick={() => bannerRefs[0].current?.click()}
                   className="unbley-btn-black"
                   style={{ padding: '6px 14px' }}
                 >
                   <Upload size={13} />
-                  <span>Upload Banner</span>
+                  <span>{formData.banner_url ? 'Change Banner' : 'Upload Banner'}</span>
                 </button>
               </div>
 
-              <div 
-                className="unbley-banner-dropzone"
-                style={{ backgroundImage: formData.banner_url ? `url(${formData.banner_url})` : 'none' }}
-                onClick={() => bannerRef.current?.click()}
-              >
-                {!formData.banner_url && (
-                  <div style={{ textAlign: 'center', color: '#8C827A', padding: '16px' }}>
-                    <ImageIcon size={32} style={{ margin: '0 auto 8px', opacity: 0.5 }} />
-                    <p style={{ fontSize: '13px', fontWeight: '700', margin: 0 }}>
-                      Click to upload brand hero banner (2400x800 recommended)
-                    </p>
+              {!isBusinessPlan && <p style={{ color: '#8C827A', fontSize: '12px', margin: '0 0 16px' }}>Your plan includes one hero banner. Upgrade to Business to add up to four rotating hero banners.</p>}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
+                {['banner_url', ...(isBusinessPlan ? ['banner_url_2', 'banner_url_3', 'banner_url_4'] : [])].map((fieldName, index) => (
+                  <div key={fieldName}>
+                    <div
+                      className="unbley-banner-dropzone"
+                      style={{ minHeight: '120px', backgroundImage: formData[fieldName] ? `url(${formData[fieldName]})` : 'none' }}
+                      onClick={() => bannerRefs[index].current?.click()}
+                    >
+                      {!formData[fieldName] && <div style={{ textAlign: 'center', color: '#8C827A', padding: '16px' }}><ImageIcon size={24} style={{ margin: '0 auto 8px', opacity: 0.5 }} /><p style={{ fontSize: '11px', fontWeight: '700', margin: 0 }}>Banner {index + 1}</p></div>}
+                      {formData[fieldName] && <div className="unbley-dropzone-overlay">Change Banner {index + 1}</div>}
+                    </div>
                   </div>
-                )}
-                {formData.banner_url && (
-                  <div className="unbley-dropzone-overlay">
-                    Change Banner
-                  </div>
-                )}
+                ))}
               </div>
             </div>
 
@@ -600,6 +601,34 @@ export default function Edit() {
                       className="unbley-form-textarea"
                     />
                   </div>
+
+                  <div className="unbley-form-group" style={{ marginBottom: 0 }}>
+                    <label className="unbley-form-label">
+                      Refund Policy
+                    </label>
+                    <textarea
+                      name="refund_policy"
+                      rows={4}
+                      value={formData.refund_policy}
+                      onChange={handleChange}
+                      placeholder="Explain your return and refund terms for customers..."
+                      className="unbley-form-textarea"
+                    />
+                  </div>
+
+                  <div className="unbley-form-group" style={{ marginBottom: 0 }}>
+                    <label className="unbley-form-label">
+                      Shipping Policy
+                    </label>
+                    <textarea
+                      name="shipping_policy"
+                      rows={4}
+                      value={formData.shipping_policy}
+                      onChange={handleChange}
+                      placeholder="Explain your delivery timelines, fees, and shipping process..."
+                      className="unbley-form-textarea"
+                    />
+                  </div>
                 </div>
 
                 {/* Store Domains */}
@@ -623,28 +652,45 @@ export default function Edit() {
                     </div>
                   </div>
 
-                  <div className="unbley-form-group" style={{ marginBottom: 0 }}>
-                    <label className="unbley-form-label">Custom Domain</label>
-                    <input
-                      type="text"
-                      name="custom_domain"
-                      value={formData.custom_domain}
-                      onChange={handleChange}
-                      placeholder="e.g. shop.yourbrand.com"
-                      className="unbley-form-input"
-                    />
-                    <p className="unbley-domain-help">Enter the domain you want to use, then request setup so our team can connect and verify it. Your Unbley URL will keep working as a backup.</p>
-                    <a
-                      href={customDomainRequestUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="unbley-button unbley-button-secondary"
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginTop: '12px', textDecoration: 'none' }}
-                    >
-                      <MessageCircle size={16} />
-                      Request Custom Domain
-                    </a>
-                  </div>
+                  {isBusinessPlan && (
+                    <div className="unbley-form-group" style={{ marginBottom: 0 }}>
+                      <label className="unbley-form-label">Custom Domain</label>
+                      <input
+                        type="text"
+                        name="custom_domain"
+                        value={formData.custom_domain}
+                        onChange={handleChange}
+                        placeholder="e.g. shop.yourbrand.com"
+                        className="unbley-form-input"
+                      />
+                      <p className="unbley-domain-help">Enter the domain you want to use, then request setup so our team can connect and verify it. Your Unbley URL will keep working as a backup.</p>
+                      <a
+                        href={customDomainRequestUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="unbley-button unbley-button-secondary"
+                        style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '12px', padding: '11px 16px', backgroundColor: '#111827', color: '#FFFFFF', border: '1px solid #111827', borderRadius: '6px', textDecoration: 'none', fontSize: '12px', fontWeight: '700', cursor: 'pointer', boxShadow: '0 2px 5px rgba(17, 24, 39, 0.18)' }}
+                      >
+                        <MessageCircle size={16} />
+                        Request Custom Domain
+                      </a>
+                    </div>
+                  )}
+                  {!isBusinessPlan && (
+                    <div style={{ marginTop: '16px', padding: '14px 16px', border: '1px solid #E8D8C8', borderRadius: '6px', backgroundColor: '#FFF9F2' }}>
+                      <p style={{ margin: '0 0 10px', color: '#6B4A35', fontSize: '12px', lineHeight: 1.5 }}>
+                        Upgrade to the Business Plan to connect a custom domain to your store.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => navigate('/activation', { state: { upgradeTo: 'business' } })}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 14px', border: 'none', borderRadius: '6px', backgroundColor: '#6A3E1F', color: '#FFFFFF', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
+                      >
+                        Upgrade to Business
+                        <ExternalLink size={14} />
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Social Channels */}
@@ -934,51 +980,32 @@ export default function Edit() {
                     <p style={{ fontSize: '12px', color: '#6B7280', margin: '6px 0 0' }}>
                       This font will be used across your public storefront.
                     </p>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-
-            {/* Featured Product Images Showcase */}
-            <div id="tour-edit-inventory" className="unbley-card">
-              <div className="unbley-card-title-row">
-                <div>
-                  <span className="unbley-card-pretitle">
-                    Visual Showcase
-                  </span>
-                  <h3 className="unbley-card-title">
-                    Featured Showcase Images (4 Slots)
-                  </h3>
-                </div>
-              </div>
-
-              <div className="unbley-showcase-grid">
-                {[
-                  { ref: p1Ref, field: 'product_1_url', label: 'Primary Feature' },
-                  { ref: p2Ref, field: 'product_2_url', label: 'Feature 2' },
-                  { ref: p3Ref, field: 'product_3_url', label: 'Feature 3' },
-                  { ref: p4Ref, field: 'product_4_url', label: 'Feature 4' },
-                ].map((slot, idx) => (
-                  <div 
-                    key={idx}
-                    onClick={() => slot.ref.current?.click()}
-                    className="unbley-showcase-slot"
-                  >
-                    {formData[slot.field] ? (
-                      <img src={formData[slot.field]} alt={slot.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : (
-                      <div style={{ textAlign: 'center', color: '#8C827A', padding: '12px' }}>
-                        <Plus size={22} style={{ margin: '0 auto 4px', opacity: 0.5 }} />
-                        <span style={{ fontSize: '11px', fontWeight: '700', display: 'block' }}>{slot.label}</span>
+                    {isBusinessPlan && (
+                      <div style={{ marginTop: '18px' }}>
+                        <label className="unbley-form-label" htmlFor="brand-name-font">Brand Name Font</label>
+                        <select
+                          id="brand-name-font"
+                          name="brand_name_font"
+                          value={formData.brand_name_font || formData.store_font}
+                          onChange={handleChange}
+                          className="unbley-form-input"
+                          style={{ fontFamily: storeFontOptions.find(font => font.value === (formData.brand_name_font || formData.store_font))?.family || 'inherit' }}
+                        >
+                          {storeFontOptions.map(font => (
+                            <option key={font.value} value={font.value} style={{ fontFamily: font.family }}>
+                              {font.label}
+                            </option>
+                          ))}
+                        </select>
+                        <p style={{ fontSize: '12px', color: '#6B7280', margin: '6px 0 0' }}>
+                          Used for your brand name in the public store.
+                        </p>
                       </div>
                     )}
-                    <div className="unbley-dropzone-overlay">
-                      Change Photo
-                    </div>
                   </div>
-                ))}
+                </div>
               </div>
+
             </div>
 
             {/* Personal Settlement Account */}

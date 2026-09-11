@@ -7,6 +7,7 @@ import { useToast } from '../context/ToastContext';
 import { isDarkColor, getContrastColor, getMutedColor, getBorderColor } from '../lib/colors';
 import PageTransition from '../components/PageTransition';
 import StoreAttribution from '../components/StoreAttribution';
+import StoreProductTypeSidebar from '../components/StoreProductTypeSidebar';
 import PaymentFailureModal from '../components/PaymentFailureModal';
 import { nigeriaLocations, nigeriaStates } from '../lib/nigeriaLocations';
 import { motion } from 'framer-motion';
@@ -618,6 +619,7 @@ View in Dashboard.
       <div style={s.header} className="checkout-header">
         <div style={s.logo}>{brand?.brand_name ? brand.brand_name.toUpperCase() : 'DIGITAL ATELIER'}</div>
         <div style={s.headerRight}>
+          {brand?.id && <StoreProductTypeSidebar brandId={brand.id} accentColor={accentColor} textColor={textColor} mutedColor={mutedColor} borderColor={borderColor} />}
           <Lock size={14} />
           SECURE CHECKOUT
           <ShoppingCart size={18} style={{ marginLeft: '16px', color: textColor }} cursor="pointer" onClick={() => navigate('/cart')} />
@@ -625,7 +627,8 @@ View in Dashboard.
       </div>
 
       {/* Content */}
-      <div style={s.contentWrap} className="checkout-content">
+      <div style={{ ...s.contentWrap, alignItems: 'stretch' }} className="checkout-content">
+        <div>
         
         {/* Stepper */}
         <div style={s.stepper} className="stepper-wrap">
@@ -857,6 +860,7 @@ View in Dashboard.
           </div>
 
         </div>
+      </div>
       </div>
 
       {/* Footer */}

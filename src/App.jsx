@@ -33,6 +33,7 @@ const FinalizeActivation = lazyWithRetry(() => import('./pages/FinalizeActivatio
 const SuccessPage = lazyWithRetry(() => import('./pages/SuccessPage'));
 const CheckoutSuccess = lazyWithRetry(() => import('./pages/CheckoutSuccess'));
 const ShopBrand = lazyWithRetry(() => import('./pages/ShopBrand'));
+const StoreDashboard = lazyWithRetry(() => import('./pages/StoreDashboard'));
 const Cart = lazyWithRetry(() => import('./pages/Cart'));
 const Checkout = lazyWithRetry(() => import('./pages/Checkout'));
 const ProductDetail = lazyWithRetry(() => import('./pages/ProductDetail'));
@@ -89,6 +90,7 @@ function App() {
                 <Route path="/explore-brand/:id" element={<ExploreBrand />} />
                 <Route path="/shop-brand" element={<ShopBrand />} />
                 <Route path="/shop-brand/:id" element={<ShopBrand />} />
+                <Route path="/store-dashboard/:id" element={<StoreDashboard />} />
                 <Route path="/@:slug" element={<ShopBrand />} />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/all-blogs" element={<AllBlog />} />
