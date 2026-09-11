@@ -38,6 +38,9 @@ CREATE TABLE IF NOT EXISTS public.brand_profiles (
 ALTER TABLE public.brand_profiles
   ADD COLUMN IF NOT EXISTS owner_name text,
   ADD COLUMN IF NOT EXISTS delivery_duration text,
+  ADD COLUMN IF NOT EXISTS same_city_delivery_fee numeric(15, 2) NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS same_state_delivery_fee numeric(15, 2) NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS outside_state_delivery_fee numeric(15, 2) NOT NULL DEFAULT 0,
   ADD COLUMN IF NOT EXISTS brand_narrative text,
   ADD COLUMN IF NOT EXISTS manifesto text,
   ADD COLUMN IF NOT EXISTS country text,

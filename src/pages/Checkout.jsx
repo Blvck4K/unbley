@@ -13,6 +13,35 @@ import { motion } from 'framer-motion';
 
 const normalizePublicKey = (value) => String(value || '').trim().replace(/^['"]|['"]$/g, '');
 const normalizeSubaccountCode = (value) => String(value || '').trim().replace(/^['"]|['"]$/g, '');
+const normalizeLocation = (value) => String(value || '').trim().toLowerCase();
+
+const getDeliveryFee = (brandProfile, customer) => {
+  const legacyFee = Number(brandProfile?.local_shipping ?? brandProfile?.shipping_fee ?? 0);
+  const sameCityFee = Number(brandProfile?.same_city_delivery_fee);
+  const sameStateFee = Number(brandProfile?.same_state_delivery_fee);
+  const outsideStateFee = Number(brandProfile?.outside_state_delivery_fee);
+  const customerCity = normalizeLocation(customer?.city);
+  const customerState = normalizeLocation(customer?.state);
+  const brandCity = normalizeLocation(brandProfile?.city);
+  const brandState = normalizeLocation(brandProfile?.state_province);
+
+  if (customerCity && brandCity && customerCity === brandCity && Number.isFinite(sameCityFee)) return Math.max(0, sameCityFee);
+  if (customerState && brandState && customerState === brandState && Number.isFinite(sameStateFee)) return Math.max(0, sameStateFee);
+  if (Number.isFinite(outsideStateFee)) return Math.max(0, outsideStateFee);
+  return Math.max(0, Number.isFinite(legacyFee) ? legacyFee : 0);
+};
+
+const getDeliveryZoneLabel = (brandProfile, customer) => {
+  const customerCity = normalizeLocation(customer?.city);
+  const customerState = normalizeLocation(customer?.state);
+  const brandCity = normalizeLocation(brandProfile?.city);
+  const brandState = normalizeLocation(brandProfile?.state_province);
+
+  if (customerCity && brandCity && customerCity === brandCity) return `Within ${brandProfile.city}`;
+  if (customerState && brandState && customerState === brandState) return `Within ${brandProfile.state_province}`;
+  if (customerState) return `Outside ${brandProfile?.state_province || 'store state'}`;
+  return 'Select your delivery location';
+};
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -100,10 +129,6 @@ export default function Checkout() {
   const dangerColor = '#D83A3A';
   const inputBg = isDark ? 'rgba(255,255,255,0.06)' : '#FFFFFF';
 
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.qty), 0);
-  const shippingFee = Math.max(0, Number(brand?.local_shipping || brand?.shipping_fee || 0));
-  const total = subtotal + shippingFee;
-
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -113,6 +138,12 @@ export default function Checkout() {
     state: '',
     city: '',
   });
+
+  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.qty), 0);
+  const shippingFee = getDeliveryFee(brand, formData);
+  const deliveryZoneLabel = getDeliveryZoneLabel(brand, formData);
+  const hasDeliveryLocation = Boolean(formData.state && formData.city);
+  const total = subtotal + shippingFee;
 
   const [errors, setErrors] = useState({});
   const [isProcessing, setIsProcessing] = useState(false);
@@ -787,16 +818,11 @@ View in Dashboard.
                 <span style={s.summaryRowValue}>{formatCurrency(subtotal)}</span>
               </div>
               <div style={s.summaryRow}>
-                <span>Shipping</span>
-                <span style={s.summaryRowValue}>{shippingFee > 0 ? formatCurrency(shippingFee) : 'Free'}</span>
-              </div>
-              
-              <div style={s.summaryRow}>
-                <span>Shipping</span>
-                <span style={{color: textColor, fontWeight: '600'}}>Complimentary</span>
+                <span>Delivery fee <small style={{ color: mutedColor }}>({deliveryZoneLabel})</small></span>
+                <span style={s.summaryRowValue}>{hasDeliveryLocation ? (shippingFee > 0 ? formatCurrency(shippingFee) : 'Free') : 'Select location first'}</span>
               </div>
               <div style={s.deliveryImportant}>
-                Delivery: 2–5 business days
+                Delivery fee included in total
               </div>
 
               <div style={s.divider}></div>
@@ -808,7 +834,7 @@ View in Dashboard.
 
               <div style={s.guaranteeBox}>
                 <CheckCircle2 size={16} color="#10503D" style={{ flexShrink: 0, marginTop: '2px' }} />
-                <div style={s.guaranteeText}>ATELIER GUARANTEE: AUTHENTICITY & SECURE LOCAL SHIPPING INCLUDED.</div>
+                <div style={s.guaranteeText}>ATELIER GUARANTEE: AUTHENTICITY & SECURE DELIVERY.</div>
               </div>
             </div>
 

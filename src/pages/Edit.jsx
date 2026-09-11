@@ -69,6 +69,9 @@ export default function Edit() {
     phone_number: '',
     brand_category: '',
     delivery_duration: '',
+    same_city_delivery_fee: '',
+    same_state_delivery_fee: '',
+    outside_state_delivery_fee: '',
     brand_narrative: '',
     manifesto: '',
     country: '',
@@ -787,6 +790,32 @@ export default function Edit() {
                       placeholder="Apartment, suite, unit, etc."
                       className="unbley-form-input"
                     />
+                  </div>
+
+                  <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #EAE3D9' }}>
+                    <div style={{ marginBottom: '14px' }}>
+                      <span className="unbley-card-pretitle">Delivery Fees</span>
+                      <p style={{ fontSize: '12px', color: '#6B7280', margin: '4px 0 0' }}>
+                        Fees are selected automatically from the buyer's city and state at checkout.
+                      </p>
+                    </div>
+
+                    <div className="unbley-form-grid-2">
+                      <div className="unbley-form-group">
+                        <label className="unbley-form-label">Within {formData.city || 'your city'}</label>
+                        <input type="number" name="same_city_delivery_fee" value={formData.same_city_delivery_fee} onChange={handleChange} min="0" step="0.01" placeholder="e.g. 1500" className="unbley-form-input" />
+                      </div>
+
+                      <div className="unbley-form-group">
+                        <label className="unbley-form-label">Within {formData.state_province || 'your state'} (outside your city)</label>
+                        <input type="number" name="same_state_delivery_fee" value={formData.same_state_delivery_fee} onChange={handleChange} min="0" step="0.01" placeholder="e.g. 2500" className="unbley-form-input" />
+                      </div>
+
+                      <div className="unbley-form-group" style={{ marginBottom: 0 }}>
+                        <label className="unbley-form-label">Outside {formData.state_province || 'your state'}</label>
+                        <input type="number" name="outside_state_delivery_fee" value={formData.outside_state_delivery_fee} onChange={handleChange} min="0" step="0.01" placeholder="e.g. 4000" className="unbley-form-input" />
+                      </div>
+                    </div>
                   </div>
                 </div>
 

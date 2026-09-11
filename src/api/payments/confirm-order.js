@@ -4,6 +4,23 @@ import { recordNotification } from '../../../lib/notifications/notificationStore
 
 const json = (res, status, body) => res.status(status).json(body);
 const serverClient = () => createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+const normalizeLocation = (value) => String(value || '').trim().toLowerCase();
+
+const getDeliveryFee = (brandProfile, customer) => {
+  const legacyFee = Number(brandProfile?.shipping_fee || 0);
+  const sameCityFee = Number(brandProfile?.same_city_delivery_fee);
+  const sameStateFee = Number(brandProfile?.same_state_delivery_fee);
+  const outsideStateFee = Number(brandProfile?.outside_state_delivery_fee);
+  const customerCity = normalizeLocation(customer?.city);
+  const customerState = normalizeLocation(customer?.state);
+  const brandCity = normalizeLocation(brandProfile?.city);
+  const brandState = normalizeLocation(brandProfile?.state_province);
+
+  if (customerCity && brandCity && customerCity === brandCity && Number.isFinite(sameCityFee)) return Math.max(0, sameCityFee);
+  if (customerState && brandState && customerState === brandState && Number.isFinite(sameStateFee)) return Math.max(0, sameStateFee);
+  if (Number.isFinite(outsideStateFee)) return Math.max(0, outsideStateFee);
+  return Math.max(0, Number.isFinite(legacyFee) ? legacyFee : 0);
+};
 
 const getPlatformFeeConfig = () => {
   const percentage = Number(process.env.PLATFORM_FEE_PERCENTAGE ?? '0');
@@ -209,7 +226,7 @@ export default async function handler(req, res) {
     const supabase = serverClient();
     const { data: brandRecord, error: brandError } = await supabase
       .from('brand_profiles')
-      .select('id, brand_name, logo_url, email_address, owner_name')
+      .select('id, brand_name, logo_url, email_address, owner_name, city, state_province, shipping_fee, same_city_delivery_fee, same_state_delivery_fee, outside_state_delivery_fee')
       .eq('id', brandId)
       .maybeSingle();
     if (brandError) return json(res, 500, { error: 'Could not load the store for this order.' });
@@ -223,17 +240,7 @@ export default async function handler(req, res) {
       .maybeSingle();
     if (deliveryProfile?.delivery_duration) deliveryDuration = deliveryProfile.delivery_duration;
 
-    // Keep checkout usable before the optional shipping_fee migration is applied.
-    let configuredShippingFee = 0;
-    const { data: shippingProfile } = await supabase
-      .from('brand_profiles')
-      .select('shipping_fee')
-      .eq('id', brandId)
-      .maybeSingle();
-    if (shippingProfile?.shipping_fee !== undefined && shippingProfile?.shipping_fee !== null) {
-      configuredShippingFee = Number(shippingProfile.shipping_fee);
-    }
-    const shippingFee = Math.max(0, Number.isFinite(configuredShippingFee) ? configuredShippingFee : 0);
+    const shippingFee = getDeliveryFee(brandRecord, customer);
     const productIds = [...new Set(items.map(item => item?.id).filter(Boolean))];
     if (productIds.length !== items.length) return json(res, 400, { error: 'Cart contains invalid products.' });
 
