@@ -312,7 +312,7 @@ button {
   font-weight: 800;
 }
 
-.hero-typing-cursor {
+.hero-title .hero-typing-cursor {
   display: inline-block;
   width: 3px;
   height: 0.8em;

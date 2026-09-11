@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { motion } from 'framer-motion';
 
-const typedWords = ['store', 'business', 'brand'];
+const typedWords = ['Store', 'Brand', 'Studio'];
 const partnerItems = [
   <img src="https://upload.wikimedia.org/wikipedia/commons/1/1f/Paystack.png" alt="Paystack" />,
   <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Flutterwave_Logo.png/1280px-Flutterwave_Logo.png" alt="Flutterwave" />,
@@ -93,7 +93,7 @@ export default function Hero() {
             variants={itemVariants}
             className="hero-title"
           >
-            Build Your Store. Sell Online. Grow Your Business.
+            Build Your <span className="hero-typing-word">{displayWord}</span><span className="hero-typing-cursor" aria-hidden="true" />. Sell Online. Grow Your Business.
           </motion.h1>
 
           <motion.p
