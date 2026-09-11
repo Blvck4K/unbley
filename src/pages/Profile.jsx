@@ -61,11 +61,11 @@ export default function Profile() {
     secondary_color: '#111111',
     accent_color: '#06acf8',
     logo_url: '',
-    banner_url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1200&q=80',
-    product_1_url: 'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=800&q=80',
-    product_2_url: 'https://images.unsplash.com/photo-1584916201218-f4242ceb4809?w=600&q=80',
-    product_3_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&q=80',
-    product_4_url: 'https://images.unsplash.com/photo-1516280440502-617513511eb4?w=300&q=80',
+    banner_url: '',
+    product_1_url: '',
+    product_2_url: '',
+    product_3_url: '',
+    product_4_url: '',
     instagram_url: '',
     twitter_url: '',
     facebook_url: '',
@@ -271,7 +271,7 @@ ${feedbackMsg}
               {/* Banner Backdrop */}
               <div 
                 className="unbley-profile-banner"
-                style={{ backgroundImage: `url(${profileData.banner_url || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1200&q=80'})` }}
+                style={profileData.banner_url ? { backgroundImage: `url(${profileData.banner_url})` } : undefined}
               >
                 <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.45) 0%, transparent 60%)' }} />
               </div>
@@ -449,11 +449,11 @@ ${feedbackMsg}
               {/* Product Visual Showcase Grid */}
               <div className="unbley-showcase-grid">
                 {[
-                  profileData.product_1_url || 'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=800&q=80',
-                  profileData.product_2_url || 'https://images.unsplash.com/photo-1584916201218-f4242ceb4809?w=600&q=80',
-                  profileData.product_3_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&q=80',
-                  profileData.product_4_url || 'https://images.unsplash.com/photo-1516280440502-617513511eb4?w=300&q=80'
-                ].map((url, idx) => (
+                  profileData.product_1_url,
+                  profileData.product_2_url,
+                  profileData.product_3_url,
+                  profileData.product_4_url
+                ].filter(Boolean).map((url, idx) => (
                   <div 
                     key={idx}
                     className="unbley-showcase-slot"
