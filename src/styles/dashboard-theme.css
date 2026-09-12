@@ -3319,3 +3319,157 @@
     pointer-events: auto !important;
   }
 }
+
+/* Mobile navigation uses the same left sidebar model as desktop. */
+@media (max-width: 768px) {
+  .unbley-sidebar {
+    position: fixed !important;
+    inset: 0 auto 0 0 !important;
+    z-index: 1200 !important;
+    width: min(292px, 86vw) !important;
+    min-width: min(292px, 86vw) !important;
+    max-width: min(292px, 86vw) !important;
+    height: 100dvh !important;
+    max-height: none !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    transform: translate3d(-105%, 0, 0) !important;
+    border: 0 !important;
+    border-right: 1px solid #EAE6DF !important;
+    background: #FFFFFF !important;
+    box-shadow: 8px 0 28px rgba(0, 0, 0, 0.18) !important;
+    transition: transform 0.22s ease !important;
+    pointer-events: auto !important;
+  }
+
+  .unbley-sidebar.mobile-open {
+    inset: 0 auto 0 0 !important;
+    width: min(292px, 86vw) !important;
+    min-width: min(292px, 86vw) !important;
+    max-width: min(292px, 86vw) !important;
+    height: 100dvh !important;
+    max-height: none !important;
+    transform: translate3d(0, 0, 0) !important;
+  }
+
+  .unbley-sidebar-header {
+    display: flex !important;
+    height: 72px !important;
+    min-height: 72px !important;
+    padding: 0 16px !important;
+  }
+
+  .unbley-sidebar-mobile-close {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+    padding: 10px !important;
+    pointer-events: auto !important;
+    touch-action: manipulation !important;
+  }
+
+  .unbley-sidebar-nav {
+    display: block !important;
+    width: 100% !important;
+    height: calc(100dvh - 72px - 92px) !important;
+    max-height: calc(100dvh - 72px - 92px) !important;
+    padding: 14px 12px !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+  }
+
+  .unbley-sidebar-nav > div,
+  .unbley-sidebar-nav > div > div {
+    display: block !important;
+  }
+
+  .unbley-nav-group-title,
+  .unbley-nav-divider,
+  .sidebar-tooltip {
+    display: none !important;
+  }
+
+  .unbley-nav-item,
+  .unbley-sidebar.is-collapsed .unbley-nav-item,
+  .unbley-sidebar.is-collapsed.is-hover-expanded .unbley-nav-item {
+    display: flex !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    min-height: 46px !important;
+    height: auto !important;
+    margin: 2px 0 !important;
+    padding: 12px !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 10px !important;
+    font-size: 13px !important;
+    line-height: 1.2 !important;
+    text-align: left !important;
+    pointer-events: auto !important;
+    touch-action: manipulation !important;
+  }
+
+  .unbley-nav-item > *,
+  .unbley-sidebar-mobile-close > * {
+    pointer-events: none !important;
+  }
+
+  .unbley-sidebar .sidebar-label,
+  .unbley-sidebar.is-collapsed .sidebar-label,
+  .unbley-sidebar.is-collapsed.is-hover-expanded .sidebar-label {
+    display: inline !important;
+    width: auto !important;
+    max-width: none !important;
+    opacity: 1 !important;
+    overflow: visible !important;
+    white-space: nowrap !important;
+    pointer-events: none !important;
+  }
+
+  .unbley-sidebar-footer {
+    display: block !important;
+    min-height: 92px !important;
+    padding: 12px !important;
+  }
+
+  .unbley-main-content {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  .unbley-top-header {
+    height: auto !important;
+    min-height: 76px !important;
+    padding: 12px 16px !important;
+    z-index: 30 !important;
+  }
+
+  .unbley-mobile-menu-btn {
+    display: inline-flex !important;
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+    padding: 10px !important;
+    pointer-events: auto !important;
+    touch-action: manipulation !important;
+  }
+
+  .unbley-mobile-overlay {
+    z-index: 1150 !important;
+    pointer-events: none !important;
+    display: none !important;
+  }
+
+  .unbley-mobile-overlay.active {
+    display: block !important;
+    pointer-events: auto !important;
+  }
+}
