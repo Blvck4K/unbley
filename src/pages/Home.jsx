@@ -15,7 +15,7 @@ import SEO from '../components/SEO';
 
 export default function Home() {
   return (
-    <>
+    <div className="home-page">
       <SEO 
         title="Unbley | Online Store Builder for Nigerian Businesses"
         description="Launch a professional online store in Nigeria with Unbley. Sell products online, manage orders, accept payments, and grow your ecommerce brand with an easy storefront platform."
@@ -36,7 +36,7 @@ export default function Home() {
       <Footer />
 
     </PageTransition>
-    </>
+    </div>
   );
 }
 

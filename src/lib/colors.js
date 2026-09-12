@@ -50,7 +50,11 @@ function contrastRatio(firstColor, secondColor) {
 }
 
 export function getMutedColor(bgColor) {
-  return isDarkColor(bgColor) ? '#A39992' : '#6B584C';
+  return getReadableMutedColor(bgColor);
+}
+
+export function getReadableMutedColor(bgColor) {
+  return getContrastColor(bgColor, '#5B4638', '#D9CEC5');
 }
 
 export function getBorderColor(bgColor) {

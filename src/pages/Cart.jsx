@@ -5,9 +5,11 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../context/ToastContext';
 import { isDarkColor } from '../lib/colors';
-import { resolveStoreTheme } from '../lib/storeTheme';
+import { getRememberedStoreBrand, rememberStoreBrand, resolveStoreTheme } from '../lib/storeTheme';
 import PageTransition from '../components/PageTransition';
 import StoreAttribution from '../components/StoreAttribution';
+import StoreFooter from '../components/StoreFooter';
+import StoreCategorySidebar from '../components/StoreCategorySidebar';
 import CheckoutProgress from '../components/CheckoutProgress';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -24,9 +26,10 @@ export default function Cart() {
     }
   });
 
-  const [brand, setBrand] = useState(null);
+  const [brand, setBrand] = useState(() => getRememberedStoreBrand());
   const [brandReady, setBrandReady] = useState(cartItems.length === 0);
   const [recommendedProducts, setRecommendedProducts] = useState([]);
+  const [storeCategories, setStoreCategories] = useState([]);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
@@ -43,18 +46,25 @@ export default function Cart() {
         setBrandReady(false);
         const id = cartItems[0].brand_id;
         const { data: bData } = await supabase.from('brand_profiles').select('*').eq('id', id).single();
-        if (bData) setBrand(bData);
+        if (bData) {
+          setBrand(bData);
+          rememberStoreBrand(bData);
+        }
         setBrandReady(true);
         
         const cartIds = cartItems.map(i => i.id);
         const { data: pData } = await supabase.from('products').select('*').eq('brand_id', id).limit(6);
         if (pData) {
+            setStoreCategories([...new Map(pData.flatMap((product) => [
+              product.gender && { key: `gender:${product.gender}`, label: product.gender, eyebrow: 'Shop by gender' },
+              product.product_type && { key: `type:${product.product_type}`, label: product.product_type, eyebrow: 'Shop by type' }
+            ]).filter(Boolean).map((category) => [category.key, category])).values()]);
             setRecommendedProducts(pData.filter(p => !cartIds.includes(p.id)).slice(0, 3));
         }
       } else if (cartItems.length === 0) {
-        setBrand(null);
         setBrandReady(true);
         setRecommendedProducts([]);
+        setStoreCategories([]);
       }
     }
     fetchData();
@@ -63,10 +73,16 @@ export default function Cart() {
   const [removedItems, setRemovedItems] = useState([]);
   
   const theme = resolveStoreTheme(brand || {});
-  const { primaryColor: bgMain, accentColor, secondaryColor: secondaryBg, textColor, mutedColor, borderColor, storeFont, brandNameFont, brandNameCase } = theme;
+  const { primaryColor: bgMain, accentColor, secondaryColor: secondaryBg, textColor, secondaryTextColor, mutedColor, secondaryMutedColor, borderColor, storeFont, brandNameFont, brandNameCase } = theme;
   const dangerColor = '#D83A3A';
 
   const formatPrice = (price) => `₦${price.toLocaleString()}`;
+
+  const handleCategorySelect = (category) => {
+    const categoryValue = category.key.split(':').slice(1).join(':');
+    const filterName = category.key.startsWith('type:') ? 'productType' : 'gender';
+    navigate(`/shop-brand/${brand?.id || ''}?${filterName}=${encodeURIComponent(categoryValue)}`);
+  };
 
   const handleRemove = (id) => {
     const item = cartItems.find(i => i.id === id);
@@ -111,7 +127,6 @@ export default function Cart() {
     logo: { fontFamily: brandNameFont, textTransform: brandNameCase, fontSize: '18px', fontWeight: 'bold', letterSpacing: '0.05em', color: textColor },
     headerRight: { display: 'flex', alignItems: 'center', gap: '24px' },
     iconButton: { cursor: 'pointer', display: 'flex', alignItems: 'center', color: textColor, position: 'relative' },
-    cartBadge: { position: 'absolute', top: '-6px', right: '-8px', backgroundColor: accentColor, color: isDarkColor(accentColor) ? '#FFFFFF' : '#111111', fontSize: '9px', fontWeight: 'bold', width: '14px', height: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%' },
 
     // Main Content
     content: { maxWidth: '1400px', margin: '0 auto' },
@@ -131,32 +146,32 @@ export default function Cart() {
     itemDetails: { flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' },
     itemNameRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' },
     itemName: { fontSize: '18px', fontWeight: '700', color: accentColor },
-    itemPrice: { fontSize: '15px', fontWeight: '700', color: textColor },
-    itemVariant: { fontSize: '11px', color: mutedColor, marginBottom: '24px', textTransform: 'uppercase', letterSpacing: '0.05em' },
+    itemPrice: { fontSize: '15px', fontWeight: '700', color: secondaryTextColor },
+    itemVariant: { fontSize: '11px', color: secondaryMutedColor, marginBottom: '24px', textTransform: 'uppercase', letterSpacing: '0.05em' },
 
     itemActions: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', flexWrap: 'wrap', gap: '16px' },
-    qtyControl: { display: 'flex', alignItems: 'center', backgroundColor: bgMain, border: `1px solid ${borderColor}`, borderRadius: '4px' },
-    qtyBtn: { width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', border: 'none', background: 'transparent', color: textColor, fontSize: '16px' },
-    qtyValue: { fontSize: '13px', fontWeight: '600', width: '24px', textAlign: 'center', color: textColor },
-    itemTotalCalc: { fontSize: '13px', color: mutedColor, fontWeight: '500', display: 'flex', alignItems: 'center', gap: '6px' },
+    qtyControl: { display: 'flex', alignItems: 'center', backgroundColor: secondaryBg, border: `1px solid ${borderColor}`, borderRadius: '4px' },
+    qtyBtn: { width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', border: 'none', background: 'transparent', color: secondaryTextColor, fontSize: '16px' },
+    qtyValue: { fontSize: '13px', fontWeight: '700', width: '24px', textAlign: 'center', color: secondaryTextColor },
+    itemTotalCalc: { fontSize: '13px', color: secondaryMutedColor, fontWeight: '500', display: 'flex', alignItems: 'center', gap: '6px' },
     removeBtn: { display: 'flex', alignItems: 'center', gap: '6px', color: dangerColor, fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', cursor: 'pointer', background: 'transparent', border: 'none', letterSpacing: '0.05em' },
 
     // Order Summary
     summaryBox: { backgroundColor: secondaryBg, padding: '40px', borderRadius: '4px', border: `1px solid ${borderColor}` },
-    summaryTitle: { fontSize: '18px', fontWeight: '600', color: textColor, marginBottom: '32px' },
-    summaryRow: { display: 'flex', justifyContent: 'space-between', marginBottom: '16px', fontSize: '13px', color: mutedColor },
+    summaryTitle: { fontSize: '18px', fontWeight: '600', color: secondaryTextColor, marginBottom: '32px' },
+    summaryRow: { display: 'flex', justifyContent: 'space-between', marginBottom: '16px', fontSize: '13px', color: secondaryMutedColor },
 
     divider: { height: '1px', backgroundColor: borderColor, margin: '24px 0' },
     totalRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' },
-    totalLabel: { fontSize: '14px', fontWeight: '700', color: textColor },
+    totalLabel: { fontSize: '14px', fontWeight: '700', color: secondaryTextColor },
     totalValue: { fontSize: '20px', fontWeight: '700', color: accentColor },
 
     checkoutBtn: { width: '100%', padding: '16px', backgroundColor: accentColor, color: isDarkColor(accentColor) ? '#FFFFFF' : '#111111', fontSize: '13px', fontWeight: '700', border: 'none', borderRadius: '4px', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '16px', transition: 'opacity 0.2s', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' },
-    continueLink: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: textColor, backgroundColor: 'transparent', border: `1px solid ${borderColor}`, padding: '14px', borderRadius: '4px', fontSize: '11px', textDecoration: 'none', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', transition: 'background-color 0.2s', fontWeight: '600' },
+    continueLink: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: secondaryTextColor, backgroundColor: 'transparent', border: `1px solid ${borderColor}`, padding: '14px', borderRadius: '4px', fontSize: '11px', textDecoration: 'none', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', transition: 'background-color 0.2s', fontWeight: '600' },
 
     trustBadges: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginTop: '24px' },
     trustBadge: { backgroundColor: secondaryBg, padding: '16px', border: `1px solid ${borderColor}`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px', borderRadius: '4px' },
-    trustBadgeLabel: { fontSize: '8px', fontWeight: '700', color: mutedColor, letterSpacing: '0.1em', textTransform: 'uppercase', textAlign: 'center' },
+    trustBadgeLabel: { fontSize: '8px', fontWeight: '700', color: secondaryMutedColor, letterSpacing: '0.1em', textTransform: 'uppercase', textAlign: 'center' },
 
     undoToast: { backgroundColor: accentColor, color: isDarkColor(accentColor) ? '#FFFFFF' : '#111111', padding: '14px 24px', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' },
     undoBtn: { background: 'transparent', border: 'none', color: isDarkColor(accentColor) ? '#FFFFFF' : '#111111', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' },
@@ -168,16 +183,16 @@ export default function Cart() {
 
     featureCard: { backgroundColor: secondaryBg, padding: '40px', border: `1px solid ${borderColor}`, borderRadius: '4px', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden', minHeight: '300px', cursor: 'pointer' },
     featureTag: { fontSize: '8px', fontWeight: '700', color: accentColor, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '16px' },
-    featureTitle: { fontSize: '24px', fontWeight: '600', color: textColor, marginBottom: '8px' },
-    featureDesc: { fontSize: '12px', color: mutedColor, maxWidth: '200px', lineHeight: '1.6' },
-    featureLink: { marginTop: 'auto', fontSize: '11px', fontWeight: '700', color: textColor, textDecoration: 'underline', cursor: 'pointer' },
+    featureTitle: { fontSize: '24px', fontWeight: '600', color: secondaryTextColor, marginBottom: '8px' },
+    featureDesc: { fontSize: '12px', color: secondaryMutedColor, maxWidth: '200px', lineHeight: '1.6' },
+    featureLink: { marginTop: 'auto', fontSize: '11px', fontWeight: '700', color: secondaryTextColor, textDecoration: 'underline', cursor: 'pointer' },
     featureImageWrap: { position: 'absolute', bottom: '24px', right: '24px', width: '120px', height: '120px', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' },
     featureImg: { width: '100%', height: '100%', objectFit: 'cover' },
 
     smallCard: { backgroundColor: secondaryBg, padding: '24px', border: `1px solid ${borderColor}`, borderRadius: '4px', display: 'flex', flexDirection: 'column', cursor: 'pointer' },
     smallImgWrap: { width: '100%', height: '180px', backgroundColor: '#111', marginBottom: '16px', overflow: 'hidden', borderRadius: '4px' },
     smallImg: { width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.3s' },
-    smallTitle: { fontSize: '12px', fontWeight: '600', color: textColor, marginBottom: '4px' },
+    smallTitle: { fontSize: '12px', fontWeight: '600', color: secondaryTextColor, marginBottom: '4px' },
     smallPrice: { fontSize: '11px', color: accentColor, fontWeight: 'bold' },
 
     // Footer
@@ -232,6 +247,7 @@ export default function Cart() {
 
       {/* Header */}
       <div style={{...s.header, padding: '24px 48px'}} className="cart-header">
+      <StoreCategorySidebar categories={storeCategories} onSelect={handleCategorySelect} theme={theme} />
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <button type="button" aria-label="Go back" style={{ ...s.iconButton, fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', padding: '10px', minWidth: '44px', minHeight: '44px' }} onClick={() => navigate(-1)}>
             <ArrowLeft size={16} />
@@ -239,12 +255,6 @@ export default function Cart() {
           <div style={s.logo}>
             {brand ? brand.brand_name.toUpperCase() : 'DIGITAL ATELIER'}
           </div>
-        </div>
-        <div style={s.headerRight}>
-          <button type="button" aria-label="Open cart" style={{ ...s.iconButton, background: 'transparent', padding: '10px', minWidth: '44px', minHeight: '44px' }} onClick={() => navigate('/cart')}>
-            <ShoppingCart size={18} />
-            <div style={s.cartBadge}>{cartItems.length}</div>
-          </button>
         </div>
       </div>
 
@@ -330,8 +340,8 @@ export default function Cart() {
                             
                             {item.qty >= 1 && (
                               <div style={s.itemTotalCalc}>
-                                Total: <span style={{ color: textColor, fontWeight: '700' }}>{formatPrice(item.price * item.qty)}</span>
-                                <span style={{ fontSize: '11px', color: mutedColor, marginLeft: '4px' }}>({formatPrice(item.price)} &times; {item.qty})</span>
+                                Total: <span style={{ color: secondaryTextColor, fontWeight: '700' }}>{formatPrice(item.price * item.qty)}</span>
+                                <span style={{ fontSize: '11px', color: secondaryMutedColor, marginLeft: '4px' }}>({formatPrice(item.price)} &times; {item.qty})</span>
                               </div>
                             )}
                           </div>
@@ -354,7 +364,7 @@ export default function Cart() {
 
               <div style={s.summaryRow}>
                 <span>Subtotal</span>
-                <span style={{ color: textColor, fontWeight: '500' }}>{formatPrice(subtotal)}</span>
+                <span style={{ color: secondaryTextColor, fontWeight: '500' }}>{formatPrice(subtotal)}</span>
               </div>
 
               <div style={s.divider}></div>
@@ -430,26 +440,7 @@ export default function Cart() {
         </div>
       </div>
 
-      {/* Footer */}
-      <div style={{...s.footer, padding: '0 80px'}} className="cart-footer">
-        <div style={s.footerLeft}>
-          <div style={s.footerLogo}>{brand ? brand.brand_name : 'Digital Atelier'}</div>
-          <div style={s.copyright}>© {new Date().getFullYear()} {brand ? brand.brand_name : 'Digital Atelier'}. All rights reserved.</div>
-        </div>
-        <div style={s.footerLinks} className="footer-links">
-          <a style={s.footerLinkItem}>Privacy Policy</a>
-          <a style={s.footerLinkItem}>Terms of Service</a>
-          <a style={s.footerLinkItem}>Shipping & Returns</a>
-          <a style={s.footerLinkItem}>Sustainability</a>
-        </div>
-        <div style={s.footerIcons}>
-          <Globe size={16} />
-          <div style={{ width: '16px', height: '16px', borderRadius: '50%', border: '1.5px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ borderBottom: '1.5px solid #333', width: '100%' }}></div>
-          </div>
-        </div>
-        <StoreAttribution color={mutedColor} />
-      </div>
+      <StoreFooter brand={brand || {}} theme={theme} />
       </div>
     </PageTransition>
   );

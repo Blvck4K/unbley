@@ -4,7 +4,9 @@ export const isStoreRoute = (pathname) => (
   pathname.startsWith('/shop-brand/') ||
   pathname.startsWith('/@') ||
   pathname === '/product' ||
-  pathname.startsWith('/store-dashboard/')
+  pathname.startsWith('/store-dashboard/') ||
+  pathname === '/cart' ||
+  pathname === '/checkout'
 );
 
 export const normalizeWhatsAppNumber = (value) => {
@@ -41,6 +43,22 @@ export async function fetchStoreContact(location) {
       .eq('id', productId)
       .maybeSingle();
     brandId = product?.brand_id || null;
+  } else if (pathname === '/cart' || pathname === '/checkout') {
+    try {
+      const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+      brandId = cart[0]?.brand_id || null;
+    } catch {
+      brandId = null;
+    }
+
+    if (!brandId) {
+      try {
+        const rememberedBrand = JSON.parse(localStorage.getItem('unbley:last-store-brand') || 'null');
+        brandId = rememberedBrand?.id || null;
+      } catch {
+        brandId = null;
+      }
+    }
   }
 
   if (!brandId && !brandSlug) return null;

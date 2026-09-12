@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowRight, Image as ImageIcon, ShoppingBag } from 'lucide-react';
+import { ArrowRight, Image as ImageIcon, ShoppingBag, Menu } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import PageTransition from '../components/PageTransition';
 import StoreAttribution from '../components/StoreAttribution';
-import { resolveStoreTheme } from '../lib/storeTheme';
+import StoreFooter from '../components/StoreFooter';
+import Sidebar from '../components/Sidebar';
+import StoreCategorySidebar from '../components/StoreCategorySidebar';
+import { rememberStoreBrand, resolveStoreTheme } from '../lib/storeTheme';
 
 const titleCase = (value) => String(value || '').replace(/[-_]/g, ' ').replace(/\b\w/g, (character) => character.toUpperCase());
 
@@ -21,12 +24,32 @@ export default function StoreDashboard() {
   const [viewportWidth, setViewportWidth] = useState(() => window.innerWidth);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
   const isMobile = viewportWidth < 640;
 
   useEffect(() => {
     const handleResize = () => setViewportWidth(window.innerWidth);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    const updateCartCount = () => {
+      try {
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        setCartCount(cart.reduce((total, item) => total + Number(item.qty || 0), 0));
+      } catch {
+        setCartCount(0);
+      }
+    };
+    updateCartCount();
+    window.addEventListener('storage', updateCartCount);
+    window.addEventListener('cartUpdated', updateCartCount);
+    return () => {
+      window.removeEventListener('storage', updateCartCount);
+      window.removeEventListener('cartUpdated', updateCartCount);
+    };
   }, []);
   useEffect(() => {
     async function fetchStoreDashboard() {
@@ -80,7 +103,8 @@ export default function StoreDashboard() {
   if (error || !brand) return <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#0A0A0A', color: '#FFF' }}>{error || 'Store not found.'}</div>;
 
   const theme = resolveStoreTheme(brand);
-  const { primaryColor, secondaryColor, accentColor, textColor, mutedColor, accentTextColor, storeFont, brandNameFont: brandNameFontFamily, brandNameCase } = theme;
+  rememberStoreBrand(brand);
+  const { primaryColor, secondaryColor, accentColor, textColor, mutedColor, borderColor, accentTextColor, storeFont, brandNameFont: brandNameFontFamily, brandNameCase } = theme;
   const selectedFont = { family: storeFont };
   const brandNameFont = { family: brandNameFontFamily };
   const banner = bannerUrls[activeBannerIndex];
@@ -109,6 +133,11 @@ export default function StoreDashboard() {
     navigate(`/shop-brand/${id}${search}`);
   };
 
+  const customerCategories = [
+    ...genderCategories,
+    ...productTypeCategories
+  ];
+
   const renderCategoryCard = (category) => {
     const image = category.product.image_url?.split(',')[0];
     return (
@@ -134,12 +163,24 @@ export default function StoreDashboard() {
 
   return (
     <PageTransition>
-      <div style={{ minHeight: '100vh', backgroundColor: primaryColor, color: textColor, fontFamily: selectedFont.family, overflowX: 'hidden' }}>
-        <header style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', minHeight: isMobile ? '76px' : '88px', padding: isMobile ? '14px 20px' : '18px 6vw', borderBottom: '1px solid rgba(255,255,255,0.18)', backgroundColor: 'rgba(0,0,0,0.12)', backdropFilter: 'blur(14px)' }}>
-          {isOwner && <button type="button" onClick={() => navigate('/dashboard')} style={{ position: 'absolute', left: isMobile ? '20px' : '6vw', padding: '9px 12px', border: '1px solid rgba(255,255,255,0.35)', borderRadius: '4px', background: 'transparent', color: textColor, fontFamily: 'inherit', fontSize: '11px', fontWeight: '700', cursor: 'pointer' }}>Back to Dashboard</button>}
+      <div className={isOwner ? 'unbley-app-layout store-dashboard-owner-layout' : undefined} style={{ '--store-dashboard-bg': primaryColor, minHeight: '100vh', backgroundColor: primaryColor, color: textColor, fontFamily: selectedFont.family, overflowX: 'hidden' }}>
+        {isOwner && <Sidebar profileData={brand} isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />}
+        <div className={isOwner ? 'unbley-main-content store-dashboard-owner-content' : undefined}>
+        <header className={isOwner ? 'store-dashboard-owner-header' : 'store-dashboard-customer-header'} style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: isOwner ? 'space-between' : 'flex-end', minHeight: isMobile ? '76px' : '88px', padding: isMobile ? '14px 20px' : '18px 6vw', borderBottom: '1px solid rgba(255,255,255,0.18)', backgroundColor: 'rgba(0,0,0,0.12)', backdropFilter: 'blur(14px)' }}>
+          {!isOwner && <StoreCategorySidebar categories={customerCategories} onSelect={openCategory} theme={theme} />}
+          {isOwner && <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <button type="button" onClick={() => setIsSidebarOpen(true)} className="unbley-mobile-menu-btn store-dashboard-menu-trigger" aria-label="Open store navigation" title="Open store navigation">
+              <Menu size={19} />
+            </button>
+            <button type="button" onClick={() => navigate('/dashboard')} style={{ padding: '9px 12px', border: '1px solid rgba(255,255,255,0.35)', borderRadius: '4px', background: 'transparent', color: textColor, fontFamily: 'inherit', fontSize: '11px', fontWeight: '700', cursor: 'pointer' }}>Back to Dashboard</button>
+          </div>}
           <button type="button" onClick={() => navigate(`/shop-brand/${id}?view=products`)} aria-label="View all products" style={{ position: 'absolute', top: '50%', left: '50%', width: isMobile ? '60px' : '68px', height: isMobile ? '60px' : '68px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: 0, transform: 'translate(-50%, -50%)', border: 'none', background: 'transparent', color: textColor, fontFamily: 'inherit', cursor: 'pointer' }}>
             {brand.logo_url ? <img src={brand.logo_url} alt={`${brand.brand_name} logo`} style={{ width: isMobile ? '52px' : '58px', height: isMobile ? '52px' : '58px', borderRadius: '50%', objectFit: 'cover', boxShadow: `0 0 0 4px ${primaryColor}` }} /> : <ShoppingBag size={isMobile ? 32 : 36} color={accentColor} />}
           </button>
+          {!isOwner && <button type="button" onClick={() => navigate('/cart')} aria-label="Open cart" title="Cart" style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '44px', height: '44px', marginLeft: 'auto', border: `1px solid ${borderColor}`, borderRadius: '8px', background: 'transparent', color: textColor, cursor: 'pointer' }}>
+            <ShoppingBag size={20} />
+            {cartCount > 0 && <span style={{ position: 'absolute', top: '-4px', right: '-4px', display: 'grid', minWidth: '17px', height: '17px', placeItems: 'center', padding: '0 4px', borderRadius: '999px', background: accentColor, color: accentTextColor, fontSize: '9px', fontWeight: '800' }}>{cartCount}</span>}
+          </button>}
         </header>
 
         <section style={{ position: 'relative', minHeight: isMobile ? '58vh' : '52vh', display: 'grid', placeItems: 'center', padding: isMobile ? '56px 24px' : '64px 7vw', backgroundColor: secondaryColor, overflow: 'hidden' }}>
@@ -151,7 +192,8 @@ export default function StoreDashboard() {
           </div>
         </section>
 
-        <main style={{ maxWidth: '1320px', margin: '0 auto', padding: isMobile ? '48px 20px 64px' : '72px 6vw 96px' }}>
+        <div className={!isOwner ? 'store-customer-shopping-layout' : undefined}>
+          <main style={{ maxWidth: '1320px', margin: '0 auto', padding: isMobile ? '48px 20px 64px' : '72px 6vw 96px' }}>
           <div style={{ display: 'flex', alignItems: isMobile ? 'stretch' : 'flex-end', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', gap: isMobile ? '18px' : '24px', marginBottom: isMobile ? '34px' : '28px', flexWrap: 'wrap' }}>
             <div style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'center' : 'left' }}>
               <p style={{ margin: 0, color: accentColor, fontFamily: selectedFont.family, fontSize: '11px', fontWeight: '800', letterSpacing: '0.14em', textTransform: 'uppercase' }}>Explore the collection</p>
@@ -204,12 +246,11 @@ export default function StoreDashboard() {
               )}
             </div>
           )}
-        </main>
+          </main>
+        </div>
 
-        <footer style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', gap: '20px', padding: isMobile ? '24px 20px' : '24px 6vw', borderTop: '1px solid rgba(255,255,255,0.18)', color: mutedColor, fontSize: '12px' }}>
-          <span>{brand.manifesto || brand.brand_name}</span>
-          <StoreAttribution color={mutedColor} />
-        </footer>
+        <StoreFooter brand={brand} theme={theme} />
+        </div>
       </div>
     </PageTransition>
   );

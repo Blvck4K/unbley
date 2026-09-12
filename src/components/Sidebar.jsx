@@ -17,7 +17,6 @@ import {
   LogOut,
   CreditCard,
   Users,
-  Menu as MenuIcon
 } from 'lucide-react';
 import logoImg from '../assets/logogo.png';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -52,6 +51,12 @@ export default function Sidebar({ profileData, isSidebarOpen, setIsSidebarOpen }
       return next;
     });
     setIsHoverExpanded(false);
+  };
+
+  const handleMobileLogout = async () => {
+    await signOut();
+    if (setIsSidebarOpen) setIsSidebarOpen(false);
+    navigate('/');
   };
 
   const handleMouseEnter = () => {
@@ -224,6 +229,89 @@ export default function Sidebar({ profileData, isSidebarOpen, setIsSidebarOpen }
           justify-content: center;
         }
       `}</style>
+
+      <div
+        className={`unbley-mobile-sidebar-overlay ${isSidebarOpen ? 'active' : ''}`}
+        onClick={() => setIsSidebarOpen && setIsSidebarOpen(false)}
+        aria-hidden="true"
+      />
+
+      <nav className={`unbley-mobile-sidebar ${isSidebarOpen ? 'open' : ''}`} aria-label="Mobile store navigation">
+        <div className="unbley-mobile-sidebar-header">
+          <Link to="/" className="unbley-mobile-sidebar-brand" onClick={() => setIsSidebarOpen(false)}>
+            <span className="unbley-mobile-sidebar-logo">
+              <img src={logoImg} alt="Unbley logo" />
+            </span>
+            <span>
+              <strong>Unbley</strong>
+              <small>DIGITAL STORE</small>
+            </span>
+          </Link>
+          <button
+            type="button"
+            className="unbley-mobile-sidebar-close"
+            onClick={() => setIsSidebarOpen && setIsSidebarOpen(false)}
+            aria-label="Close sidebar"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="unbley-mobile-sidebar-scroll">
+          <div className="unbley-mobile-sidebar-section">
+            <span className="unbley-mobile-sidebar-section-title">Store management</span>
+            <Link to="/dashboard" className={`unbley-mobile-sidebar-item ${isActive('/dashboard') ? 'active' : ''}`}>
+              <LayoutGrid size={19} /><span>Dashboard</span>
+            </Link>
+            <Link to="/profile" className={`unbley-mobile-sidebar-item ${isActive('/profile') ? 'active' : ''}`}>
+              <Tag size={19} /><span>Store Profile</span>
+            </Link>
+            <Link to="/dashboard?tab=products" className={`unbley-mobile-sidebar-item ${isActive('/dashboard?tab=products') ? 'active' : ''}`}>
+              <FileText size={19} /><span>Products</span>
+            </Link>
+            <Link to="/dashboard?tab=orders" className={`unbley-mobile-sidebar-item ${isActive('/dashboard?tab=orders') ? 'active' : ''}`}>
+              <ShoppingBag size={19} /><span>Orders</span>
+            </Link>
+            <Link to="/dashboard?tab=wallet" className={`unbley-mobile-sidebar-item ${isActive('/dashboard?tab=wallet') ? 'active' : ''}`}>
+              <Wallet size={19} /><span>Wallet</span>
+            </Link>
+            {!hasActivePlan && (
+              <Link to="/activation" className={`unbley-mobile-sidebar-item ${isActive('/activation') ? 'active' : ''}`}>
+                <CreditCard size={19} /><span>Unbley Plans</span>
+              </Link>
+            )}
+            <Link to="/dashboard?tab=insights" className={`unbley-mobile-sidebar-item ${isActive('/dashboard?tab=insights') ? 'active' : ''}`}>
+              <BarChart2 size={19} /><span>Store Insights</span>
+            </Link>
+            <Link to="/edit" className={`unbley-mobile-sidebar-item ${isActive('/edit') ? 'active' : ''}`}>
+              <Sliders size={19} /><span>Settings</span>
+            </Link>
+          </div>
+
+          <div className="unbley-mobile-sidebar-section">
+            <span className="unbley-mobile-sidebar-section-title">Help & support</span>
+            <Link to="/contact" className={`unbley-mobile-sidebar-item ${isActive('/contact') ? 'active' : ''}`}>
+              <HelpCircle size={19} /><span>FAQ</span>
+            </Link>
+            {isAdmin && (
+              <>
+                <Link to="/support" className={`unbley-mobile-sidebar-item ${isActive('/support') ? 'active' : ''}`}>
+                  <Headphones size={19} /><span>Admin Support</span>
+                  {(unreadCount + pendingPaymentCount) > 0 && <b>{unreadCount + pendingPaymentCount > 99 ? '99+' : unreadCount + pendingPaymentCount}</b>}
+                </Link>
+                <Link to="/admin/store-owners" className={`unbley-mobile-sidebar-item ${isActive('/admin/store-owners') ? 'active' : ''}`}>
+                  <Users size={19} /><span>Store Owners</span>
+                </Link>
+              </>
+            )}
+          </div>
+
+          <button type="button" className="unbley-mobile-sidebar-logout" onClick={handleMobileLogout}>
+            <LogOut size={19} />
+            <span>Log out</span>
+          </button>
+        </div>
+      </nav>
 
       {/* Mobile Overlay */}
       <div 
@@ -435,38 +523,6 @@ export default function Sidebar({ profileData, isSidebarOpen, setIsSidebarOpen }
             </div>
           </div>
 
-          <Link
-            id="tour-mobile-menu"
-            to="/menu"
-            className={`unbley-nav-item mobile-menu-link ${isActive('/menu') ? 'active' : ''}`}
-            aria-label="Open menu"
-          >
-            <MenuIcon size={18} />
-            <span className="sidebar-label">Menu</span>
-            {(unreadCount + pendingPaymentCount) > 0 && (
-              <span
-                aria-label={`${unreadCount + pendingPaymentCount} admin notifications`}
-                style={{
-                  position: 'absolute',
-                  top: '3px',
-                  right: 'calc(50% - 20px)',
-                  minWidth: '16px',
-                  height: '16px',
-                  padding: '0 4px',
-                  borderRadius: '9999px',
-                  background: '#DC2626',
-                  color: '#FFFFFF',
-                  fontSize: '9px',
-                  fontWeight: '800',
-                  lineHeight: '16px',
-                  textAlign: 'center',
-                  boxSizing: 'border-box'
-                }}
-              >
-                {(unreadCount + pendingPaymentCount) > 99 ? '99+' : unreadCount + pendingPaymentCount}
-              </span>
-            )}
-          </Link>
         </div>
 
         {/* Expand button shown at bottom when truly collapsed + not hovering */}

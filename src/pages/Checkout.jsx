@@ -5,9 +5,11 @@ import { supabase } from '../lib/supabase';
 import PaystackPop from '@paystack/inline-js';
 import { useToast } from '../context/ToastContext';
 import { isDarkColor } from '../lib/colors';
-import { resolveStoreTheme } from '../lib/storeTheme';
+import { getRememberedStoreBrand, rememberStoreBrand, resolveStoreTheme } from '../lib/storeTheme';
 import PageTransition from '../components/PageTransition';
 import StoreAttribution from '../components/StoreAttribution';
+import StoreFooter from '../components/StoreFooter';
+import StoreCategorySidebar from '../components/StoreCategorySidebar';
 import CheckoutProgress from '../components/CheckoutProgress';
 import PaymentFailureModal from '../components/PaymentFailureModal';
 import { nigeriaLocations, nigeriaStates } from '../lib/nigeriaLocations';
@@ -74,7 +76,8 @@ export default function Checkout() {
   const [cartValidated, setCartValidated] = useState(false);
   const paymentHandledRef = useRef(false);
 
-  const [brand, setBrand] = useState(null);
+  const [brand, setBrand] = useState(() => getRememberedStoreBrand());
+  const [storeCategories, setStoreCategories] = useState([]);
   const [brandReady, setBrandReady] = useState(cartItems.length === 0);
 
   useEffect(() => {
@@ -82,7 +85,15 @@ export default function Checkout() {
       if (cartItems.length > 0 && cartItems[0].brand_id) {
         setBrandReady(false);
         const { data } = await supabase.from('brand_profiles').select('*').eq('id', cartItems[0].brand_id).single();
-        if (data) setBrand(data);
+        if (data) {
+          setBrand(data);
+          rememberStoreBrand(data);
+          const { data: products } = await supabase.from('products').select('gender, product_type').eq('brand_id', data.id).limit(100);
+          setStoreCategories([...new Map((products || []).flatMap((product) => [
+            product.gender && { key: `gender:${product.gender}`, label: product.gender, eyebrow: 'Shop by gender' },
+            product.product_type && { key: `type:${product.product_type}`, label: product.product_type, eyebrow: 'Shop by type' }
+          ]).filter(Boolean).map((category) => [category.key, category])).values()]);
+        }
         setBrandReady(true);
       } else {
         setBrandReady(true);
@@ -139,7 +150,7 @@ export default function Checkout() {
   }, []);
 
   const theme = resolveStoreTheme(brand || {});
-  const { primaryColor: bgMain, isDark, accentColor, secondaryColor: secondaryBg, textColor, mutedColor, borderColor, inputBackground: inputBg, storeFont, brandNameFont, brandNameCase } = theme;
+  const { primaryColor: bgMain, isDark, accentColor, secondaryColor: secondaryBg, textColor, secondaryTextColor, mutedColor, secondaryMutedColor, borderColor, inputBackground: inputBg, storeFont, brandNameFont, brandNameCase } = theme;
   const dangerColor = '#D83A3A';
 
   const [formData, setFormData] = useState({
@@ -174,6 +185,12 @@ export default function Checkout() {
   });
 
   const formatCurrency = (amount) => `₦${amount.toLocaleString()}`;
+
+  const handleCategorySelect = (category) => {
+    const categoryValue = category.key.split(':').slice(1).join(':');
+    const filterName = category.key.startsWith('type:') ? 'productType' : 'gender';
+    navigate(`/shop-brand/${brand?.id || ''}?${filterName}=${encodeURIComponent(categoryValue)}`);
+  };
 
   const showPaymentFailure = (reason) => {
     setIsProcessing(false);
@@ -499,7 +516,7 @@ View in Dashboard.
     stepper: { display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '64px' },
     step: { display: 'flex', alignItems: 'center', gap: '8px' },
     stepNumActive: { width: '24px', height: '24px', borderRadius: '50%', backgroundColor: accentColor, color: isDarkColor(accentColor) ? '#FFFFFF' : '#111111', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '700' },
-    stepNumIdle: { width: '24px', height: '24px', borderRadius: '50%', backgroundColor: secondaryBg, border: `1px solid ${borderColor}`, color: mutedColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '700' },
+    stepNumIdle: { width: '24px', height: '24px', borderRadius: '50%', backgroundColor: secondaryBg, border: `1px solid ${borderColor}`, color: secondaryMutedColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '700' },
     stepTextActive: { fontSize: '13px', fontWeight: '700', color: accentColor },
     stepTextIdle: { fontSize: '13px', fontWeight: '500', color: mutedColor },
     stepLine: { width: '48px', height: '1px', backgroundColor: borderColor },
@@ -528,31 +545,31 @@ View in Dashboard.
     // Right Col
     rightCol: { display: 'flex', flexDirection: 'column', gap: '24px' },
     summaryBox: { backgroundColor: secondaryBg, padding: '32px', borderRadius: '4px', border: `1px solid ${borderColor}` },
-    summaryTitle: { fontSize: '20px', fontWeight: '600', color: textColor, marginBottom: '32px' },
+    summaryTitle: { fontSize: '20px', fontWeight: '600', color: secondaryTextColor, marginBottom: '32px' },
     
     summaryItem: { display: 'flex', gap: '16px', marginBottom: '24px' },
     summaryItemImg: { width: '64px', height: '64px', borderRadius: '4px', backgroundColor: '#111', overflow: 'hidden' },
     summaryItemDetails: { flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' },
-    summaryItemName: { fontSize: '14px', fontWeight: '600', color: textColor, marginBottom: '4px' },
-    summaryItemVariant: { fontSize: '12px', color: mutedColor, marginBottom: '8px' },
+    summaryItemName: { fontSize: '14px', fontWeight: '600', color: secondaryTextColor, marginBottom: '4px' },
+    summaryItemVariant: { fontSize: '12px', color: secondaryMutedColor, marginBottom: '8px' },
     summaryItemPriceRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-    summaryItemQty: { fontSize: '12px', color: mutedColor },
+    summaryItemQty: { fontSize: '12px', color: secondaryMutedColor },
     summaryItemPrice: { fontSize: '14px', fontWeight: '700', color: accentColor },
 
-    summaryRow: { display: 'flex', justifyContent: 'space-between', marginBottom: '16px', fontSize: '13px', color: mutedColor },
-    summaryRowValue: { color: textColor, fontWeight: '500' },
+    summaryRow: { display: 'flex', justifyContent: 'space-between', marginBottom: '16px', fontSize: '13px', color: secondaryMutedColor },
+    summaryRowValue: { color: secondaryTextColor, fontWeight: '500' },
     deliveryImportant: { fontSize: '11px', color: accentColor, fontWeight: '600', textAlign: 'right', marginTop: '-12px', marginBottom: '16px' },
 
     divider: { height: '1px', backgroundColor: borderColor, margin: '24px 0' },
     totalRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' },
-    totalLabel: { fontSize: '16px', fontWeight: '700', color: textColor },
+    totalLabel: { fontSize: '16px', fontWeight: '700', color: secondaryTextColor },
     totalValue: { fontSize: '24px', fontWeight: '800', color: accentColor },
 
     guaranteeBox: { backgroundColor: inputBg, padding: '16px', borderRadius: '4px', border: `1px solid ${borderColor}`, display: 'flex', alignItems: 'flex-start', gap: '12px' },
-    guaranteeText: { fontSize: '9px', fontWeight: '700', color: mutedColor, letterSpacing: '0.05em', lineHeight: '1.5' },
+    guaranteeText: { fontSize: '9px', fontWeight: '700', color: secondaryMutedColor, letterSpacing: '0.05em', lineHeight: '1.5' },
 
     encryptionBox: { backgroundColor: secondaryBg, border: `1px solid ${borderColor}`, padding: '16px', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '24px' },
-    encryptionIcons: { display: 'flex', gap: '16px', color: mutedColor },
+    encryptionIcons: { display: 'flex', gap: '16px', color: secondaryMutedColor },
     encryptionText: { fontSize: '10px', fontWeight: '700', color: textColor, letterSpacing: '0.05em' },
 
     // Footer
@@ -585,8 +602,14 @@ View in Dashboard.
     return (
       <PageTransition>
         <div style={s.page}>
-          <div style={s.header} className="checkout-header">
-            <div style={s.logo}>{brand?.brand_name ? brand.brand_name.toUpperCase() : 'DIGITAL ATELIER'}</div>
+          <div style={s.header} className="checkout-header checkout-mobile-style-header">
+          <StoreCategorySidebar categories={storeCategories} onSelect={handleCategorySelect} theme={theme} />
+            <div className="checkout-header-right-mobile">
+              <button type="button" className="checkout-back-icon" onClick={() => navigate('/cart')} aria-label="Back to cart">
+                <ArrowLeft size={18} />
+              </button>
+              <div style={s.logo}>{brand?.brand_name ? brand.brand_name.toUpperCase() : 'DIGITAL ATELIER'}</div>
+            </div>
             <div style={s.headerRight}>
               <Lock size={14} />
               SECURE CHECKOUT
@@ -645,8 +668,14 @@ View in Dashboard.
       `}</style>
 
       {/* Header */}
-      <div style={s.header} className="checkout-header">
-        <div style={s.logo}>{brand?.brand_name ? brand.brand_name.toUpperCase() : 'DIGITAL ATELIER'}</div>
+      <div style={s.header} className="checkout-header checkout-mobile-style-header">
+        <StoreCategorySidebar categories={storeCategories} onSelect={handleCategorySelect} theme={theme} />
+        <div className="checkout-header-right-mobile">
+          <button type="button" className="checkout-back-icon" onClick={() => navigate('/cart')} aria-label="Back to cart">
+            <ArrowLeft size={18} />
+          </button>
+          <div style={s.logo}>{brand?.brand_name ? brand.brand_name.toUpperCase() : 'DIGITAL ATELIER'}</div>
+        </div>
         <div style={s.headerRight}>
           <Lock size={14} />
           SECURE CHECKOUT
@@ -886,20 +915,7 @@ View in Dashboard.
       </div>
       </div>
 
-      {/* Footer */}
-      <div style={s.footer} className="checkout-footer">
-        <div style={s.footerLogo}>{brand ? brand.brand_name : 'Digital Atelier'}</div>
-        
-        <div style={s.footerLinks} className="footer-links">
-          <a style={s.footerLinkItem}>Privacy Policy</a>
-          <a style={s.footerLinkItem}>Terms of Service</a>
-          <a style={s.footerLinkItem}>Shipping & Returns</a>
-          <a style={s.footerLinkItem}>Sustainability</a>
-        </div>
-        
-        <div style={s.copyright}>© {new Date().getFullYear()} {brand ? brand.brand_name : 'Digital Atelier'}. All rights reserved.</div>
-        <StoreAttribution color={mutedColor} />
-      </div>
+      <StoreFooter brand={brand || {}} theme={theme} />
 
       <PaymentFailureModal
         error={paymentError}

@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, ShoppingCart, User, ChevronDown, ShieldCheck, Truck, Headphones, Filter, Plus, Trash2, X, Image as ImageIcon, Edit2 } from 'lucide-react';
+import { Search, ShoppingBag, ShieldCheck, Truck, Headphones, Filter, Plus, Trash2, X, Image as ImageIcon, Edit2 } from 'lucide-react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../context/ToastContext';
 import PageTransition from '../components/PageTransition';
-import StoreAttribution from '../components/StoreAttribution';
-import { resolveStoreTheme } from '../lib/storeTheme';
+import StoreFooter from '../components/StoreFooter';
+import StoreCategorySidebar from '../components/StoreCategorySidebar';
+import { rememberStoreBrand, resolveStoreTheme } from '../lib/storeTheme';
 
 const useWindowWidth = () => {
   const [width, setWidth] = useState(window.innerWidth);
@@ -33,7 +34,6 @@ export default function ShopBrand({ customId }) {
   
   const [hoveredProduct, setHoveredProduct] = useState(null);
   const [cartCount, setCartCount] = useState(0);
-  const isCustomer = user?.user_metadata?.role === 'customer' || user?.user_metadata?.userType === 'customer';
   
   // Real-time State
   const [brand, setBrand] = useState(null);
@@ -44,12 +44,6 @@ export default function ShopBrand({ customId }) {
   const [activeBannerIndex, setActiveBannerIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [expandedInfoCards, setExpandedInfoCards] = useState({});
-
-  const toggleInfoCard = (cardName) => {
-    setExpandedInfoCards((current) => ({ ...current, [cardName]: !current[cardName] }));
-  };
-  
   // Admin State
   const isOwner = user?.id === id;
   const isBusinessPlan = Boolean(
@@ -160,6 +154,7 @@ export default function ShopBrand({ customId }) {
         }
 
         setBrand(resolvedBrand);
+        rememberStoreBrand(resolvedBrand);
 
         const targetBrandId = resolvedBrand.id || user?.id;
         if (targetBrandId) {
@@ -447,6 +442,18 @@ export default function ShopBrand({ customId }) {
     return matchesProductType && matchesGender && matchesSize;
   });
 
+  const shopCategories = [
+    ...[...new Set(products.map((product) => product.gender).filter(Boolean))].map((gender) => ({ key: `gender:${gender}`, label: gender.replace(/[-_]/g, ' ').replace(/\b\w/g, (character) => character.toUpperCase()), eyebrow: 'Shop by gender' })),
+    ...productTypes.map((productType) => ({ key: `type:${productType}`, label: productType.replace(/[-_]/g, ' ').replace(/\b\w/g, (character) => character.toUpperCase()), eyebrow: 'Shop by type' }))
+  ];
+
+  const openShopCategory = (category) => {
+    const search = category.key.startsWith('type:')
+      ? `?productType=${encodeURIComponent(category.key.slice(5))}`
+      : `?gender=${encodeURIComponent(category.key.slice(7))}`;
+    navigate(`/shop-brand/${id}${search}`);
+  };
+
   const s = {
     page: { backgroundColor: primaryColor, color: textColor, minHeight: '100vh', fontFamily: fontConfig.body, overflowX: 'hidden' },
 
@@ -512,7 +519,7 @@ export default function ShopBrand({ customId }) {
     footerTop: { display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', padding: isMobile ? '0 24px' : '0 48px', marginBottom: '64px', gap: isMobile ? '48px' : '0' },
     footerLeft: { maxWidth: '300px' },
     footerLogo: { fontFamily: brandNameFont.family, textTransform: brandNameCase, fontSize: '18px', fontWeight: '700', color: accentColor, marginBottom: '24px' },
-    footerDesc: { fontSize: '12px', color: mutedColor, lineHeight: '1.6' },
+    footerDesc: { fontSize: '12px', color: secondaryMutedColor, lineHeight: '1.6' },
 
     infoSection: { display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, minmax(0, 1fr))', gap: isMobile ? '20px' : '24px', marginTop: '32px', marginBottom: '8px' },
     infoCard: { backgroundColor: secondaryColor, border: `1px solid ${borderColor}`, borderRadius: '16px', padding: isMobile ? '20px 18px' : '22px 20px', boxShadow: '0 10px 30px rgba(0,0,0,0.04)' },
@@ -525,22 +532,23 @@ export default function ShopBrand({ customId }) {
 
     footerMenus: { display: 'flex', flexWrap: 'wrap', gap: isMobile ? '48px' : '80px' },
     footerCol: { display: 'flex', flexDirection: 'column', gap: '16px' },
-    footerColTitle: { fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: textColor, textTransform: 'uppercase', marginBottom: '8px' },
-    footerLink: { fontSize: '12px', color: mutedColor, textDecoration: 'none', cursor: 'pointer' },
+    footerColTitle: { fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: secondaryTextColor, textTransform: 'uppercase', marginBottom: '8px' },
+    footerLink: { fontSize: '12px', color: secondaryMutedColor, textDecoration: 'none', cursor: 'pointer' },
 
     newsletterInputGroup: { display: 'flex', borderBottom: `1px solid ${borderColor}`, paddingBottom: '8px', marginTop: '16px' },
     newsletterInput: { flex: 1, border: 'none', background: 'transparent', outline: 'none', fontSize: '12px', color: textColor },
     newsletterBtn: { background: 'none', border: 'none', fontSize: '10px', fontWeight: '700', cursor: 'pointer', color: accentColor, letterSpacing: '0.1em' },
     
     footerBottom: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: isMobile ? '0 24px' : '0 48px', borderTop: `1px solid ${borderColor}`, paddingTop: '24px' },
-    copyright: { fontSize: '10px', color: mutedColor }
+    copyright: { fontSize: '10px', color: secondaryMutedColor }
   };
 
   return (
     <PageTransition>
       <div style={s.page}>
       {/* Header */}
-      <div style={s.header}>
+      <div style={s.header} className="shop-brand-customer-header">
+        {!isOwner && <StoreCategorySidebar categories={shopCategories} onSelect={openShopCategory} theme={theme} />}
         <div style={s.logo} onClick={() => navigate('/')}>
           {brand.logo_url && <img src={brand.logo_url} style={s.logoImage} alt="Brand Logo" />}
           {brand.brand_name || 'Digital Atelier'}
@@ -552,18 +560,13 @@ export default function ShopBrand({ customId }) {
             <input type="text" placeholder={isMobile ? "SEARCH..." : "Search curated goods..."} style={s.searchInput} />
           </div>
           <button type="button" aria-label="Open cart" style={{ ...s.iconButton, position: 'relative', display: 'flex', background: 'transparent', padding: '10px', minWidth: '44px', minHeight: '44px' }} onClick={() => navigate('/cart')} title="Cart">
-            <ShoppingCart size={isMobile ? 22 : 18} />
+            <ShoppingBag size={isMobile ? 22 : 18} />
             {cartCount > 0 && (
               <span style={{ position: 'absolute', top: '-8px', right: '-8px', backgroundColor: accentColor, color: accentTextColor, fontSize: '10px', fontWeight: 'bold', width: '18px', height: '18px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `2px solid ${primaryColor}` }}>
                 {cartCount}
               </span>
             )}
           </button>
-          {!isCustomer && (
-            <button type="button" aria-label="Open account" style={{ ...s.iconButton, background: 'transparent', padding: '10px', minWidth: '44px', minHeight: '44px' }} onClick={() => navigate('/profile')} title="My Account">
-              <User size={isMobile ? 20 : 18} />
-            </button>
-          )}
         </div>
       </div>
 
@@ -717,106 +720,7 @@ export default function ShopBrand({ customId }) {
           </div>
         )}
 
-        <div style={s.infoSection}>
-          <div style={s.infoCard}>
-            <button
-              type="button"
-              aria-expanded={Boolean(expandedInfoCards.refund)}
-              aria-controls="refund-policy-content"
-              onClick={() => toggleInfoCard('refund')}
-              style={s.infoToggle}
-            >
-              <span>
-                <span style={s.infoBadge}>Refund Policy</span>
-                <span style={s.infoTitle}>Returns and refunds</span>
-              </span>
-              <ChevronDown size={18} style={{ transform: expandedInfoCards.refund ? 'rotate(180deg)' : 'none', flexShrink: 0 }} />
-            </button>
-            {expandedInfoCards.refund && (
-              <p id="refund-policy-content" style={s.infoText}>
-                {brand.refund_policy || 'The store owner has not added a refund policy yet. Please contact the store for assistance.'}
-              </p>
-            )}
-          </div>
-
-          <div style={s.infoCard}>
-            <button
-              type="button"
-              aria-expanded={Boolean(expandedInfoCards.shipping)}
-              aria-controls="shipping-policy-content"
-              onClick={() => toggleInfoCard('shipping')}
-              style={s.infoToggle}
-            >
-              <span>
-                <span style={s.infoBadge}>Shipping Policy</span>
-                <span style={s.infoTitle}>Delivery information</span>
-              </span>
-              <ChevronDown size={18} style={{ transform: expandedInfoCards.shipping ? 'rotate(180deg)' : 'none', flexShrink: 0 }} />
-            </button>
-            {expandedInfoCards.shipping && (
-              <p id="shipping-policy-content" style={s.infoText}>
-                {brand.shipping_policy || 'The store owner has not added a shipping policy yet. Delivery details will be confirmed at checkout.'}
-              </p>
-            )}
-          </div>
-
-          <div style={s.infoCard}>
-            <button
-              type="button"
-              aria-expanded={Boolean(expandedInfoCards.contact)}
-              aria-controls="contact-content"
-              onClick={() => toggleInfoCard('contact')}
-              style={s.infoToggle}
-            >
-              <span>
-                <span style={s.infoBadge}>Contact</span>
-                <span style={s.infoTitle}>We’re here to help</span>
-              </span>
-              <ChevronDown size={18} style={{ transform: expandedInfoCards.contact ? 'rotate(180deg)' : 'none', flexShrink: 0 }} />
-            </button>
-            {expandedInfoCards.contact && (
-              <div id="contact-content" style={s.contactList}>
-                {brand?.phone_number && <a href={`tel:${brand.phone_number}`} style={s.contactLink}>{brand.phone_number}</a>}
-                {brand?.email_address && <a href={`mailto:${brand.email_address}`} style={s.contactLink}>{brand.email_address}</a>}
-                {brand?.website_url && <a href={brand.website_url.startsWith('http') ? brand.website_url : `https://${brand.website_url}`} target="_blank" rel="noreferrer" style={s.contactLink}>{brand.website_url}</a>}
-                {!brand?.phone_number && !brand?.email_address && !brand?.website_url && <span style={s.contactLink}>Customer support details will appear here.</span>}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Footer */}
-      <div style={s.footer}>
-        <div style={s.footerTop}>
-          <div style={s.footerLeft}>
-            <div style={s.footerLogo}>{brand.brand_name || 'Digital Atelier'}</div>
-            <p style={s.footerDesc}>{brand.manifesto || "Mastering the architecture of modern commerce through monolithic design and unparalleled curation."}</p>
-          </div>
-
-          <div style={s.footerMenus}>
-            <div style={s.footerCol}>
-              <div style={s.footerColTitle}>Social Footprint</div>
-              {brand.instagram_url && <a href={brand.instagram_url} target="_blank" rel="noreferrer" style={s.footerLink}>Instagram</a>}
-              {brand.twitter_url && <a href={brand.twitter_url} target="_blank" rel="noreferrer" style={s.footerLink}>X / Twitter</a>}
-              {brand.tiktok_url && <a href={brand.tiktok_url} target="_blank" rel="noreferrer" style={s.footerLink}>TikTok</a>}
-              {!brand.instagram_url && !brand.twitter_url && !brand.tiktok_url && <span style={s.footerLink}>Link Matrix Syncing...</span>}
-            </div>
-
-            <div style={{ width: isMobile ? '100%' : '280px' }}>
-              <div style={s.footerColTitle}>The Insider Newsletter</div>
-              <div style={s.newsletterInputGroup}>
-                <input type="email" placeholder="EMAIL ADDRESS" style={s.newsletterInput} />
-                <button style={s.newsletterBtn}>JOIN THE CIRCLE</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div style={s.footerBottom}>
-          <div style={s.copyright}>© {new Date().getFullYear()} {brand.brand_name || 'BRAND'}.</div>
-          <StoreAttribution color={mutedColor} />
-        </div>
+        <StoreFooter brand={brand} theme={theme} />
       </div>
 
       {/* Admin Add Product Modal Layer */}
