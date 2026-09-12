@@ -394,8 +394,10 @@ export default function ProductDetail() {
   const accentColor = brand.accent_color || '#6A3E1F';
   
   const textColor = getContrastColor(primaryColor);
+  const secondaryTextColor = getContrastColor(secondaryColor);
   const mutedColor = getMutedColor(primaryColor);
   const borderColor = getBorderColor(primaryColor);
+  const accentTextColor = getContrastColor(accentColor);
 
   const selectedFont = getStoreFont(brand.store_font);
   const brandNameFont = getStoreFont(brand.brand_name_font || brand.store_font);
@@ -437,8 +439,8 @@ export default function ProductDetail() {
     qtyBtn: { width: '40px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', border: 'none', background: 'transparent', color: textColor },
     qtyValue: { fontSize: '14px', fontWeight: '600', width: '32px', textAlign: 'center', color: textColor },
     
-    addBtn: { flex: 1, backgroundColor: 'transparent', color: textColor, border: `1px solid ${borderColor}`, borderRadius: '4px', fontSize: '12px', fontWeight: '700', letterSpacing: '0.05em', textTransform: 'uppercase', cursor: 'pointer', transition: 'background-color 0.2s', '&:hover': { backgroundColor: secondaryColor } },
-    buyBtn: { width: '100%', backgroundColor: accentColor, color: '#000', border: 'none', borderRadius: '4px', padding: '16px', fontSize: '12px', fontWeight: '700', letterSpacing: '0.05em', textTransform: 'uppercase', cursor: 'pointer', marginBottom: '32px', transition: 'opacity 0.2s', '&:hover': { opacity: 0.9 } },
+    addBtn: { flex: 1, backgroundColor: 'transparent', color: secondaryTextColor, border: `1px solid ${borderColor}`, borderRadius: '4px', fontSize: '12px', fontWeight: '700', letterSpacing: '0.05em', textTransform: 'uppercase', cursor: 'pointer', transition: 'background-color 0.2s', '&:hover': { backgroundColor: secondaryColor } },
+    buyBtn: { width: '100%', backgroundColor: accentColor, color: accentTextColor, border: 'none', borderRadius: '4px', padding: '16px', fontSize: '12px', fontWeight: '700', letterSpacing: '0.05em', textTransform: 'uppercase', cursor: 'pointer', marginBottom: '32px', transition: 'opacity 0.2s', '&:hover': { opacity: 0.9 } },
 
     trustRow: { display: 'flex', gap: '24px', paddingTop: '24px', borderTop: `1px solid ${borderColor}` },
     trustItem: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: mutedColor, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold' },
@@ -449,7 +451,7 @@ export default function ProductDetail() {
     recCard: { display: 'flex', flexDirection: 'column', cursor: 'pointer', backgroundColor: secondaryColor, borderRadius: '8px', overflow: 'hidden', paddingBottom: '16px' },
     recImgWrap: { width: '100%', aspectRatio: '1', backgroundColor: '#111', overflow: 'hidden', marginBottom: '16px' },
     recImg: { width: '100%', height: '100%', objectFit: 'cover' },
-    recTitle: { fontSize: '13px', fontWeight: '600', color: textColor, marginBottom: '4px', padding: '0 16px' },
+    recTitle: { fontSize: '13px', fontWeight: '600', color: secondaryTextColor, marginBottom: '4px', padding: '0 16px' },
     recPrice: { fontSize: '12px', color: accentColor, fontWeight: 'bold', padding: '0 16px' }
   };
 
@@ -473,27 +475,27 @@ export default function ProductDetail() {
       {/* Header Match */}
       <div style={s.header} className="detail-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-          <div style={{ ...s.iconButton, fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em' }} onClick={() => navigate(-1)}>
+          <button type="button" aria-label="Go back" style={{ ...s.iconButton, fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', padding: '10px', minWidth: '44px', minHeight: '44px' }} onClick={() => navigate(-1)}>
             <ArrowLeft size={16} style={{ marginRight: '8px' }} />
-          </div>
+          </button>
           <div style={s.logo} onClick={() => navigate(`/shop-brand/${brand.id}`)}>
             {brand.logo_url && <img src={brand.logo_url} style={s.logoImage} alt="Brand Logo" />}
             {brand.brand_name || 'Digital Atelier'}
           </div>
         </div>
         <div style={s.headerRight}>
-          <div style={{ ...s.iconButton, position: 'relative', display: 'flex' }} onClick={() => navigate('/cart')} title="Cart">
+          <button type="button" aria-label="Open cart" style={{ ...s.iconButton, position: 'relative', display: 'flex', background: 'transparent', padding: '10px', minWidth: '44px', minHeight: '44px' }} onClick={() => navigate('/cart')} title="Cart">
             <ShoppingCart size={isMobile ? 22 : 20} />
             {cartCount > 0 && (
               <span style={{ position: 'absolute', top: '-8px', right: '-8px', backgroundColor: accentColor, color: '#000', fontSize: '10px', fontWeight: 'bold', width: '18px', height: '18px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `2px solid ${primaryColor}` }}>
                 {cartCount}
               </span>
             )}
-          </div>
+          </button>
           {!isCustomer && (
-            <div style={s.iconButton} onClick={() => navigate('/profile')} title="Account">
+            <button type="button" aria-label="Open account" style={{ ...s.iconButton, background: 'transparent', padding: '10px', minWidth: '44px', minHeight: '44px' }} onClick={() => navigate('/profile')} title="Account">
               <User size={20} />
-            </div>
+            </button>
           )}
         </div>
       </div>

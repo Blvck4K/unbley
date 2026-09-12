@@ -6,8 +6,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import PageTransition from '../components/PageTransition';
 import StoreAttribution from '../components/StoreAttribution';
-import { getBrandNameCaseStyle, getStoreFont } from '../lib/storeFonts';
-import { getContrastColor } from '../lib/colors';
+import { resolveStoreTheme } from '../lib/storeTheme';
 
 const titleCase = (value) => String(value || '').replace(/[-_]/g, ' ').replace(/\b\w/g, (character) => character.toUpperCase());
 
@@ -80,15 +79,10 @@ export default function StoreDashboard() {
   if (loading) return <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#0A0A0A', color: '#FFF' }}>Loading store...</div>;
   if (error || !brand) return <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#0A0A0A', color: '#FFF' }}>{error || 'Store not found.'}</div>;
 
-  const primaryColor = brand.primary_color || '#0A0A0A';
-  const secondaryColor = brand.secondary_color || '#1A1A1A';
-  const accentColor = brand.accent_color || '#06acf8';
-  const selectedFont = getStoreFont(brand.store_font);
-  const brandNameFont = getStoreFont(brand.brand_name_font || brand.store_font);
-  const brandNameCase = getBrandNameCaseStyle(brand.brand_name_case);
-  const textColor = '#FFFFFF';
-  const mutedColor = 'rgba(255,255,255,0.72)';
-  const accentTextColor = getContrastColor(accentColor);
+  const theme = resolveStoreTheme(brand);
+  const { primaryColor, secondaryColor, accentColor, textColor, mutedColor, accentTextColor, storeFont, brandNameFont: brandNameFontFamily, brandNameCase } = theme;
+  const selectedFont = { family: storeFont };
+  const brandNameFont = { family: brandNameFontFamily };
   const banner = bannerUrls[activeBannerIndex];
 
   const categoryMap = new Map();

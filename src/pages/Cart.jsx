@@ -233,18 +233,18 @@ export default function Cart() {
       {/* Header */}
       <div style={{...s.header, padding: '24px 48px'}} className="cart-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ ...s.iconButton, fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em' }} onClick={() => navigate(-1)}>
+          <button type="button" aria-label="Go back" style={{ ...s.iconButton, fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', padding: '10px', minWidth: '44px', minHeight: '44px' }} onClick={() => navigate(-1)}>
             <ArrowLeft size={16} />
-          </div>
+          </button>
           <div style={s.logo}>
             {brand ? brand.brand_name.toUpperCase() : 'DIGITAL ATELIER'}
           </div>
         </div>
         <div style={s.headerRight}>
-          <div style={s.iconButton} onClick={() => navigate('/cart')}>
+          <button type="button" aria-label="Open cart" style={{ ...s.iconButton, background: 'transparent', padding: '10px', minWidth: '44px', minHeight: '44px' }} onClick={() => navigate('/cart')}>
             <ShoppingCart size={18} />
             <div style={s.cartBadge}>{cartItems.length}</div>
-          </div>
+          </button>
         </div>
       </div>
 

@@ -1,32 +1,90 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { fetchStoreContact, isStoreRoute } from '../lib/storeContact';
 
 export default function FloatingWhatsApp() {
   const { user } = useAuth();
-  const whatsappUrl = "https://wa.me/2348078399410";
+  const location = useLocation();
+  const routeKey = `${location.pathname}${location.search}`;
+  const [phoneState, setPhoneState] = useState({ key: '', number: null });
+  const [position, setPosition] = useState(null);
+  const dragRef = useRef(null);
+  const movedRef = useRef(false);
+  const isStoreCustomerView = isStoreRoute(location.pathname) && (
+    !user || user?.user_metadata?.role === 'customer' || user?.user_metadata?.userType === 'customer'
+  );
 
-  if (user) return null;
+  useEffect(() => {
+    let cancelled = false;
+    if (!isStoreCustomerView) return undefined;
+    fetchStoreContact(location).then((number) => {
+      if (!cancelled) setPhoneState({ key: routeKey, number });
+    });
+    return () => { cancelled = true; };
+  }, [isStoreCustomerView, location, routeKey]);
+
+  if (!isStoreCustomerView || phoneState.key !== routeKey || !phoneState.number) return null;
+
+  const handlePointerDown = (event) => {
+    const bounds = event.currentTarget.getBoundingClientRect();
+    dragRef.current = { startX: event.clientX, startY: event.clientY, left: bounds.left, top: bounds.top };
+    movedRef.current = false;
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+  };
+
+  const handlePointerMove = (event) => {
+    if (!dragRef.current) return;
+    const deltaX = event.clientX - dragRef.current.startX;
+    const deltaY = event.clientY - dragRef.current.startY;
+    if (Math.abs(deltaX) < 4 && Math.abs(deltaY) < 4) return;
+    movedRef.current = true;
+    const size = 46;
+    const padding = 12;
+    setPosition({
+      key: routeKey,
+      left: Math.max(padding, Math.min(window.innerWidth - size - padding, dragRef.current.left + deltaX)),
+      top: Math.max(padding, Math.min(window.innerHeight - size - padding, dragRef.current.top + deltaY))
+    });
+  };
+
+  const handlePointerUp = (event) => {
+    dragRef.current = null;
+    event.currentTarget.releasePointerCapture?.(event.pointerId);
+  };
+
+  const handleClick = (event) => {
+    if (movedRef.current) {
+      event.preventDefault();
+      movedRef.current = false;
+    }
+  };
 
   return (
     <a
-      href={whatsappUrl}
+      href={`https://wa.me/${phoneState.number}`}
       target="_blank"
       rel="noopener noreferrer"
       className="floating-whatsapp"
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+      onClick={handleClick}
       style={{
         position: 'fixed',
-        bottom: '30px',
-        right: '104px', // Places it just to the left of the main ChatWidget (which is at right 32px + 56px width + 16px gap)
+        ...(position?.key === routeKey ? { left: position.left, top: position.top } : { bottom: '24px', right: '20px' }),
         backgroundColor: '#25D366',
         color: '#FFF',
-        width: '56px', // Matching the ChatWidget size
-        height: '56px',
+        width: '46px',
+        height: '46px',
         borderRadius: '50%',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
         boxShadow: '0 4px 10px rgba(0, 0, 0, 0.3)',
-        zIndex: 1000,
+        zIndex: 10001,
+        touchAction: 'none',
         transition: 'transform 0.3s ease, box-shadow 0.3s ease',
       }}
       onMouseEnter={(e) => {
@@ -37,12 +95,12 @@ export default function FloatingWhatsApp() {
         e.currentTarget.style.transform = 'scale(1)';
         e.currentTarget.style.boxShadow = '0 4px 10px rgba(0, 0, 0, 0.3)';
       }}
-      aria-label="Contact us on WhatsApp"
+      aria-label="Chat with this store on WhatsApp"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        width="34"
-        height="34"
+        width="25"
+        height="25"
         viewBox="0 0 24 24"
         fill="currentColor"
       >

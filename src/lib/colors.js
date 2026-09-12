@@ -26,7 +26,27 @@ export function isDarkColor(color) {
 }
 
 export function getContrastColor(bgColor, darkColor = '#18120E', lightColor = '#FDFBF7') {
-  return isDarkColor(bgColor) ? lightColor : darkColor;
+  const darkContrast = contrastRatio(darkColor, bgColor);
+  const lightContrast = contrastRatio(lightColor, bgColor);
+  return lightContrast >= darkContrast ? lightColor : darkColor;
+}
+
+function channelLuminance(channel) {
+  const value = channel / 255;
+  return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+}
+
+function relativeLuminance(color) {
+  const [r, g, b] = parseHex(color);
+  return (0.2126 * channelLuminance(r)) + (0.7152 * channelLuminance(g)) + (0.0722 * channelLuminance(b));
+}
+
+function contrastRatio(firstColor, secondColor) {
+  const first = relativeLuminance(firstColor);
+  const second = relativeLuminance(secondColor);
+  const lighter = Math.max(first, second);
+  const darker = Math.min(first, second);
+  return (lighter + 0.05) / (darker + 0.05);
 }
 
 export function getMutedColor(bgColor) {

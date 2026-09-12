@@ -324,6 +324,20 @@ button {
   border: none;
   font-family: inherit;
   transition: var(--transition);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+a,
+button,
+[role="button"] {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (max-width: 768px) {
+  .btn {
+    min-height: 44px;
+  }
 }
 
 .container {
@@ -432,6 +446,24 @@ button {
   .grid-cols-3,
   .grid-cols-2 {
     grid-template-columns: 1fr;
+  }
+
+  .glass,
+  .glass-dark,
+  .navbar {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 

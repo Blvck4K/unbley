@@ -44,6 +44,11 @@ export default function ShopBrand({ customId }) {
   const [activeBannerIndex, setActiveBannerIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [expandedInfoCards, setExpandedInfoCards] = useState({});
+
+  const toggleInfoCard = (cardName) => {
+    setExpandedInfoCards((current) => ({ ...current, [cardName]: !current[cardName] }));
+  };
   
   // Admin State
   const isOwner = user?.id === id;
@@ -421,8 +426,7 @@ export default function ShopBrand({ customId }) {
 
   // Dynamic Theme Generation tied directly to DB variables
   const theme = resolveStoreTheme(brand);
-  const { primaryColor, secondaryColor, accentColor, textColor, mutedColor, borderColor, storeFont, brandNameFont, brandNameCase } = theme;
-  const accentTextColor = theme.isDark ? '#FFFFFF' : '#000000';
+  const { primaryColor, secondaryColor, accentColor, textColor, mutedColor, borderColor, secondaryTextColor, secondaryMutedColor, accentTextColor, storeFont, brandNameFont, brandNameCase } = theme;
   const fontConfig = { heading: storeFont, body: storeFont };
 
   const getGridCols = () => {
@@ -470,8 +474,11 @@ export default function ShopBrand({ customId }) {
 
     // Main Content
     mainContainer: { display: 'flex', flexDirection: 'column', padding: isMobile ? '32px 24px 80px 24px' : '64px 48px 80px 48px', maxWidth: '1440px', margin: '0 auto', position: 'relative' },
-    mainHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '48px', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? '24px' : '0', width: '100%' },
+    mainHeader: { display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '48px', flexDirection: 'column', gap: '20px', width: '100%', textAlign: 'center' },
     mainTitle: { fontFamily: fontConfig.heading, fontSize: isMobile ? '28px' : '32px', fontWeight: '700', color: textColor },
+    filterGroup: { display: 'flex', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap', gap: '12px' },
+    filterLabel: { display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: textColor, border: `1px solid ${borderColor}`, backgroundColor: secondaryColor, padding: '0 12px', borderRadius: '4px' },
+    filterSelect: { border: 'none', background: secondaryColor, color: secondaryTextColor, padding: '10px 0', outline: 'none', cursor: 'pointer' },
     
     ownerBar: { backgroundColor: 'rgba(6, 172, 248, 0.1)', border: `1px solid ${accentColor}`, padding: '16px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px' },
     
@@ -486,14 +493,14 @@ export default function ShopBrand({ customId }) {
     deleteBtn: { padding: '8px', backgroundColor: 'rgba(0,0,0,0.6)', color: '#FFF', borderRadius: '4px', zIndex: 20, border: '1px solid #333', cursor: 'pointer', transition: 'background 0.2s', '&:hover': { backgroundColor: '#D44040' } },
 
     productInfo: { display: 'flex', flexDirection: 'column', alignItems: 'flex-start', padding: '20px' },
-    productName: { fontFamily: fontConfig.heading, fontSize: '18px', fontWeight: '600', color: textColor, marginBottom: '8px' },
+    productName: { fontFamily: fontConfig.heading, fontSize: '18px', fontWeight: '600', color: secondaryTextColor, marginBottom: '8px' },
     productPrice: { fontSize: '15px', fontWeight: '700', color: accentColor, marginBottom: '16px' },
-    productDesc: { fontSize: '12px', color: mutedColor, lineHeight: '1.5', marginBottom: '16px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' },
+    productDesc: { fontSize: '12px', color: secondaryMutedColor, lineHeight: '1.5', marginBottom: '16px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' },
     
     // Buttons
     buttonGroup: { display: 'flex', gap: '8px', width: '100%', marginTop: 'auto' },
     addToCartBtn: { flex: 1, backgroundColor: accentColor, color: accentTextColor, padding: '12px', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.1em', border: 'none', borderRadius: '4px', cursor: 'pointer', transition: 'opacity 0.2s' },
-    viewBtn: { flex: 1, backgroundColor: 'transparent', color: textColor, padding: '12px', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.1em', border: `1px solid ${borderColor}`, borderRadius: '4px', cursor: 'pointer', transition: 'background-color 0.2s' },
+    viewBtn: { flex: 1, backgroundColor: 'transparent', color: secondaryTextColor, padding: '12px', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.1em', border: `1px solid ${borderColor}`, borderRadius: '4px', cursor: 'pointer', transition: 'background-color 0.2s' },
 
     // Empty State
     emptyState: { width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backgroundColor: secondaryColor, border: `1px dashed ${borderColor}`, borderRadius: '8px', padding: isMobile ? '48px 24px' : '80px 24px', textAlign: 'center' },
@@ -509,11 +516,12 @@ export default function ShopBrand({ customId }) {
 
     infoSection: { display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, minmax(0, 1fr))', gap: isMobile ? '20px' : '24px', marginTop: '32px', marginBottom: '8px' },
     infoCard: { backgroundColor: secondaryColor, border: `1px solid ${borderColor}`, borderRadius: '16px', padding: isMobile ? '20px 18px' : '22px 20px', boxShadow: '0 10px 30px rgba(0,0,0,0.04)' },
+    infoToggle: { width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '14px', padding: 0, border: 'none', background: 'transparent', textAlign: 'left', cursor: 'pointer', color: secondaryTextColor },
     infoBadge: { display: 'inline-flex', alignItems: 'center', backgroundColor: 'rgba(6, 172, 248, 0.08)', color: accentColor, fontSize: '10px', fontWeight: '800', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '6px 10px', borderRadius: '999px', marginBottom: '12px' },
-    infoTitle: { fontFamily: fontConfig.heading, fontSize: '22px', margin: '0 0 10px', color: textColor },
-    infoText: { fontSize: '13px', lineHeight: '1.7', color: mutedColor, margin: 0 },
+    infoTitle: { display: 'block', fontFamily: fontConfig.heading, fontSize: '22px', margin: '0 0 0', color: secondaryTextColor },
+    infoText: { fontSize: '13px', lineHeight: '1.7', color: secondaryMutedColor, margin: 0 },
     contactList: { display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '8px' },
-    contactLink: { fontSize: '13px', color: textColor, textDecoration: 'none', wordBreak: 'break-word' },
+    contactLink: { fontSize: '13px', color: secondaryTextColor, textDecoration: 'none', wordBreak: 'break-word' },
 
     footerMenus: { display: 'flex', flexWrap: 'wrap', gap: isMobile ? '48px' : '80px' },
     footerCol: { display: 'flex', flexDirection: 'column', gap: '16px' },
@@ -543,18 +551,18 @@ export default function ShopBrand({ customId }) {
             <Search size={14} color={mutedColor} />
             <input type="text" placeholder={isMobile ? "SEARCH..." : "Search curated goods..."} style={s.searchInput} />
           </div>
-          <div style={{ ...s.iconButton, position: 'relative', display: 'flex' }} onClick={() => navigate('/cart')} title="Cart">
+          <button type="button" aria-label="Open cart" style={{ ...s.iconButton, position: 'relative', display: 'flex', background: 'transparent', padding: '10px', minWidth: '44px', minHeight: '44px' }} onClick={() => navigate('/cart')} title="Cart">
             <ShoppingCart size={isMobile ? 22 : 18} />
             {cartCount > 0 && (
               <span style={{ position: 'absolute', top: '-8px', right: '-8px', backgroundColor: accentColor, color: accentTextColor, fontSize: '10px', fontWeight: 'bold', width: '18px', height: '18px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `2px solid ${primaryColor}` }}>
                 {cartCount}
               </span>
             )}
-          </div>
+          </button>
           {!isCustomer && (
-            <div style={s.iconButton} onClick={() => navigate('/profile')} title="My Account">
+            <button type="button" aria-label="Open account" style={{ ...s.iconButton, background: 'transparent', padding: '10px', minWidth: '44px', minHeight: '44px' }} onClick={() => navigate('/profile')} title="My Account">
               <User size={isMobile ? 20 : 18} />
-            </div>
+            </button>
           )}
         </div>
       </div>
@@ -616,17 +624,17 @@ export default function ShopBrand({ customId }) {
 
         <div style={s.mainHeader}>
           <h2 style={s.mainTitle}>All Products</h2>
-          <div style={{ display: 'flex', gap: '16px' }}>
-            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: mutedColor, border: `1px solid ${borderColor}`, padding: '0 12px', borderRadius: '4px' }}>
+          <div style={s.filterGroup}>
+            <label style={s.filterLabel}>
               <Filter size={14} />
-              <select value={selectedProductType} onChange={(event) => setSelectedProductType(event.target.value)} style={{ border: 'none', background: 'transparent', color: textColor, padding: '10px 0', outline: 'none', cursor: 'pointer' }}>
+              <select value={selectedProductType} onChange={(event) => setSelectedProductType(event.target.value)} style={s.filterSelect}>
                 <option value="all">All product types</option>
                 {productTypes.map((productType) => <option key={productType} value={productType}>{productType}</option>)}
               </select>
             </label>
-            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: mutedColor, border: `1px solid ${borderColor}`, padding: '0 12px', borderRadius: '4px' }}>
+            <label style={s.filterLabel}>
               <span>Size</span>
-              <select value={selectedSize} onChange={(event) => setSelectedSize(event.target.value)} style={{ border: 'none', background: 'transparent', color: textColor, padding: '10px 0', outline: 'none', cursor: 'pointer' }}>
+              <select value={selectedSize} onChange={(event) => setSelectedSize(event.target.value)} style={s.filterSelect}>
                 <option value="all">All sizes</option>
                 {availableSizes.map((size) => <option key={size} value={size}>{size}</option>)}
               </select>
@@ -711,38 +719,69 @@ export default function ShopBrand({ customId }) {
 
         <div style={s.infoSection}>
           <div style={s.infoCard}>
-            <div style={s.infoBadge}>Refund Policy</div>
-            <h3 style={s.infoTitle}>Returns and refunds</h3>
-            <p style={s.infoText}>
-              {brand.refund_policy || 'The store owner has not added a refund policy yet. Please contact the store for assistance.'}
-            </p>
+            <button
+              type="button"
+              aria-expanded={Boolean(expandedInfoCards.refund)}
+              aria-controls="refund-policy-content"
+              onClick={() => toggleInfoCard('refund')}
+              style={s.infoToggle}
+            >
+              <span>
+                <span style={s.infoBadge}>Refund Policy</span>
+                <span style={s.infoTitle}>Returns and refunds</span>
+              </span>
+              <ChevronDown size={18} style={{ transform: expandedInfoCards.refund ? 'rotate(180deg)' : 'none', flexShrink: 0 }} />
+            </button>
+            {expandedInfoCards.refund && (
+              <p id="refund-policy-content" style={s.infoText}>
+                {brand.refund_policy || 'The store owner has not added a refund policy yet. Please contact the store for assistance.'}
+              </p>
+            )}
           </div>
 
           <div style={s.infoCard}>
-            <div style={s.infoBadge}>Shipping Policy</div>
-            <h3 style={s.infoTitle}>Delivery information</h3>
-            <p style={s.infoText}>
-              {brand.shipping_policy || 'The store owner has not added a shipping policy yet. Delivery details will be confirmed at checkout.'}
-            </p>
+            <button
+              type="button"
+              aria-expanded={Boolean(expandedInfoCards.shipping)}
+              aria-controls="shipping-policy-content"
+              onClick={() => toggleInfoCard('shipping')}
+              style={s.infoToggle}
+            >
+              <span>
+                <span style={s.infoBadge}>Shipping Policy</span>
+                <span style={s.infoTitle}>Delivery information</span>
+              </span>
+              <ChevronDown size={18} style={{ transform: expandedInfoCards.shipping ? 'rotate(180deg)' : 'none', flexShrink: 0 }} />
+            </button>
+            {expandedInfoCards.shipping && (
+              <p id="shipping-policy-content" style={s.infoText}>
+                {brand.shipping_policy || 'The store owner has not added a shipping policy yet. Delivery details will be confirmed at checkout.'}
+              </p>
+            )}
           </div>
 
           <div style={s.infoCard}>
-            <div style={s.infoBadge}>Contact</div>
-            <h3 style={s.infoTitle}>We’re here to help</h3>
-            <div style={s.contactList}>
-              {brand?.phone_number && (
-                <a href={`tel:${brand.phone_number}`} style={s.contactLink}>{brand.phone_number}</a>
-              )}
-              {brand?.email_address && (
-                <a href={`mailto:${brand.email_address}`} style={s.contactLink}>{brand.email_address}</a>
-              )}
-              {brand?.website_url && (
-                <a href={brand.website_url.startsWith('http') ? brand.website_url : `https://${brand.website_url}`} target="_blank" rel="noreferrer" style={s.contactLink}>{brand.website_url}</a>
-              )}
-              {!brand?.phone_number && !brand?.email_address && !brand?.website_url && (
-                <span style={s.contactLink}>Customer support details will appear here.</span>
-              )}
-            </div>
+            <button
+              type="button"
+              aria-expanded={Boolean(expandedInfoCards.contact)}
+              aria-controls="contact-content"
+              onClick={() => toggleInfoCard('contact')}
+              style={s.infoToggle}
+            >
+              <span>
+                <span style={s.infoBadge}>Contact</span>
+                <span style={s.infoTitle}>We’re here to help</span>
+              </span>
+              <ChevronDown size={18} style={{ transform: expandedInfoCards.contact ? 'rotate(180deg)' : 'none', flexShrink: 0 }} />
+            </button>
+            {expandedInfoCards.contact && (
+              <div id="contact-content" style={s.contactList}>
+                {brand?.phone_number && <a href={`tel:${brand.phone_number}`} style={s.contactLink}>{brand.phone_number}</a>}
+                {brand?.email_address && <a href={`mailto:${brand.email_address}`} style={s.contactLink}>{brand.email_address}</a>}
+                {brand?.website_url && <a href={brand.website_url.startsWith('http') ? brand.website_url : `https://${brand.website_url}`} target="_blank" rel="noreferrer" style={s.contactLink}>{brand.website_url}</a>}
+                {!brand?.phone_number && !brand?.email_address && !brand?.website_url && <span style={s.contactLink}>Customer support details will appear here.</span>}
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -3,9 +3,12 @@ import { MessageCircle, X, Send, Paperclip, MoreHorizontal, User, Minus } from '
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import logoImg from '../assets/logogo.png';
+import { isStoreRoute } from '../lib/storeContact';
+import { useLocation } from 'react-router-dom';
 
 const ChatWidget = () => {
     const { user } = useAuth();
+    const location = useLocation();
     const [isOpen, setIsOpen] = useState(false);
     const [isIdentified, setIsIdentified] = useState(false);
     const [email, setEmail] = useState('');
@@ -16,9 +19,9 @@ const ChatWidget = () => {
     const [sendError, setSendError] = useState('');
     const scrollRef = useRef(null);
     const isOpenRef = useRef(isOpen);
-    const dragStateRef = useRef(null);
-    const draggedRef = useRef(false);
-    const [floatingPosition, setFloatingPosition] = useState(null);
+    const isStoreCustomerView = isStoreRoute(location.pathname) && (
+        !user || user?.user_metadata?.role === 'customer' || user?.user_metadata?.userType === 'customer'
+    );
 
     useEffect(() => {
         isOpenRef.current = isOpen;
@@ -117,48 +120,8 @@ const ChatWidget = () => {
     };
 
     const toggleOpen = () => {
-        if (draggedRef.current) {
-            draggedRef.current = false;
-            return;
-        }
         if (!isOpen) setUnreadCount(0);
         setIsOpen(!isOpen);
-    };
-
-    const handleFloatingPointerDown = (event) => {
-        if (window.innerWidth > 768) return;
-        const element = event.currentTarget;
-        const bounds = element.parentElement.getBoundingClientRect();
-        dragStateRef.current = {
-            startX: event.clientX,
-            startY: event.clientY,
-            left: bounds.left,
-            top: bounds.top,
-            moved: false
-        };
-        element.setPointerCapture?.(event.pointerId);
-    };
-
-    const handleFloatingPointerMove = (event) => {
-        const drag = dragStateRef.current;
-        if (!drag) return;
-        const deltaX = event.clientX - drag.startX;
-        const deltaY = event.clientY - drag.startY;
-        if (Math.abs(deltaX) > 4 || Math.abs(deltaY) > 4) {
-            drag.moved = true;
-            draggedRef.current = true;
-        }
-        if (!drag.moved) return;
-
-        const size = 56;
-        const padding = 8;
-        const left = Math.max(padding, Math.min(window.innerWidth - size - padding, drag.left + deltaX));
-        const top = Math.max(padding, Math.min(window.innerHeight - size - padding, drag.top + deltaY));
-        setFloatingPosition({ left, top });
-    };
-
-    const handleFloatingPointerUp = () => {
-        dragStateRef.current = null;
     };
 
     // Styling constants
@@ -167,10 +130,13 @@ const ChatWidget = () => {
     const cardColor = '#FBF9F5';
     const borderColor = '#EAE3D9';
 
+    if (isStoreCustomerView) return null;
+
     return (
         <div className={`chat-widget-root${isOpen ? ' chat-is-open' : ''}`} style={{
             position: 'fixed',
-            ...(floatingPosition ? { left: floatingPosition.left, top: floatingPosition.top } : { bottom: '24px', right: '24px' }),
+            bottom: '24px',
+            right: '24px',
             zIndex: 10000,
             fontFamily: '"Inter", sans-serif'
         }}>
@@ -313,10 +279,6 @@ const ChatWidget = () => {
                 className="chat-widget-launcher"
                 aria-label={isOpen ? 'Close support chat' : 'Open customer support chat'}
                 onClick={toggleOpen}
-                onPointerDown={handleFloatingPointerDown}
-                onPointerMove={handleFloatingPointerMove}
-                onPointerUp={handleFloatingPointerUp}
-                onPointerCancel={handleFloatingPointerUp}
                 style={{
                     width: '56px',
                     height: '56px',
@@ -329,7 +291,7 @@ const ChatWidget = () => {
                     border: 'none',
                     cursor: 'pointer',
                     position: 'relative',
-                    touchAction: 'none',
+                    touchAction: 'manipulation',
                     transition: 'transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
                 }}
                 onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
