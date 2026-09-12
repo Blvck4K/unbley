@@ -17,8 +17,11 @@ const ChatWidget = () => {
     const [loading, setLoading] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
     const [sendError, setSendError] = useState('');
+    const [launcherPosition, setLauncherPosition] = useState(null);
     const scrollRef = useRef(null);
     const isOpenRef = useRef(isOpen);
+    const dragRef = useRef({ startX: 0, startY: 0, startLeft: 0, startTop: 0, moved: false });
+    const suppressClickRef = useRef(false);
     const isStoreCustomerView = isStoreRoute(location.pathname) && (
         !user || user?.user_metadata?.role === 'customer' || user?.user_metadata?.userType === 'customer'
     );
@@ -124,6 +127,52 @@ const ChatWidget = () => {
         setIsOpen(!isOpen);
     };
 
+    const handleLauncherPointerDown = (event) => {
+        const launcher = event.currentTarget.getBoundingClientRect();
+        dragRef.current = {
+            startX: event.clientX,
+            startY: event.clientY,
+            startLeft: launcher.left,
+            startTop: launcher.top,
+            moved: false
+        };
+        event.currentTarget.setPointerCapture?.(event.pointerId);
+    };
+
+    const handleLauncherPointerMove = (event) => {
+        if (!event.currentTarget.hasPointerCapture?.(event.pointerId)) return;
+
+        const drag = dragRef.current;
+        const deltaX = event.clientX - drag.startX;
+        const deltaY = event.clientY - drag.startY;
+        if (Math.abs(deltaX) < 4 && Math.abs(deltaY) < 4) return;
+
+        drag.moved = true;
+        const size = event.currentTarget.getBoundingClientRect();
+        const maxLeft = Math.max(8, window.innerWidth - size.width - 8);
+        const maxTop = Math.max(8, window.innerHeight - size.height - 8);
+        setLauncherPosition({
+            left: Math.min(Math.max(8, drag.startLeft + deltaX), maxLeft),
+            top: Math.min(Math.max(8, drag.startTop + deltaY), maxTop)
+        });
+        event.preventDefault();
+    };
+
+    const handleLauncherPointerUp = (event) => {
+        if (dragRef.current.moved) {
+            suppressClickRef.current = true;
+        }
+        event.currentTarget.releasePointerCapture?.(event.pointerId);
+    };
+
+    const handleLauncherClick = () => {
+        if (suppressClickRef.current) {
+            suppressClickRef.current = false;
+            return;
+        }
+        toggleOpen();
+    };
+
     // Styling constants
     const brandColor = '#6A3E1F';
     const bgColor = '#FFFFFF';
@@ -135,8 +184,7 @@ const ChatWidget = () => {
     return (
         <div className={`chat-widget-root${isOpen ? ' chat-is-open' : ''}`} style={{
             position: 'fixed',
-            bottom: '24px',
-            right: '24px',
+            ...(launcherPosition ? launcherPosition : { bottom: '24px', right: '24px' }),
             zIndex: 10000,
             fontFamily: '"Inter", sans-serif'
         }}>
@@ -278,10 +326,13 @@ const ChatWidget = () => {
             <button
                 className="chat-widget-launcher"
                 aria-label={isOpen ? 'Close support chat' : 'Open customer support chat'}
-                onClick={toggleOpen}
+                onClick={handleLauncherClick}
+                onPointerDown={handleLauncherPointerDown}
+                onPointerMove={handleLauncherPointerMove}
+                onPointerUp={handleLauncherPointerUp}
                 style={{
-                    width: '56px',
-                    height: '56px',
+                    width: '46px',
+                    height: '46px',
                     backgroundColor: brandColor,
                     borderRadius: '50%',
                     boxShadow: '0 8px 24px rgba(106, 62, 31, 0.35)',
@@ -291,13 +342,14 @@ const ChatWidget = () => {
                     border: 'none',
                     cursor: 'pointer',
                     position: 'relative',
-                    touchAction: 'manipulation',
+                    touchAction: 'none',
+                    userSelect: 'none',
                     transition: 'transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
                 }}
                 onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
                 onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
             >
-                {isOpen ? <X color="#FFF" size={24} /> : <MessageCircle color="#FFF" size={24} />}
+                {isOpen ? <X color="#FFF" size={20} /> : <MessageCircle color="#FFF" size={20} />}
                 {unreadCount > 0 && !isOpen && (
                     <div style={{
                         position: 'absolute',
@@ -307,8 +359,8 @@ const ChatWidget = () => {
                         color: '#FFF',
                         fontSize: '10px',
                         fontWeight: '700',
-                        width: '20px',
-                        height: '20px',
+                        width: '18px',
+                        height: '18px',
                         borderRadius: '50%',
                         display: 'flex',
                         alignItems: 'center',
@@ -323,7 +375,7 @@ const ChatWidget = () => {
             <style>{`
                 .chat-widget-window { position: relative; }
                 @media (max-width: 640px) {
-                    .chat-widget-root { bottom: 12px !important; right: 12px !important; left: 12px !important; }
+                    .chat-widget-root { bottom: 12px; right: 12px; }
                     .chat-widget-root.chat-is-open { inset: 8px !important; width: auto !important; height: auto !important; }
                     .chat-widget-window { position: fixed !important; inset: 8px !important; width: auto !important; height: auto !important; max-height: none !important; margin: 0 !important; border-radius: 18px !important; }
                     .chat-widget-root.chat-is-open .chat-widget-launcher { display: none !important; }
