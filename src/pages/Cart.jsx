@@ -4,10 +4,11 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../context/ToastContext';
-import { isDarkColor, getContrastColor, getMutedColor, getBorderColor } from '../lib/colors';
+import { isDarkColor } from '../lib/colors';
+import { resolveStoreTheme } from '../lib/storeTheme';
 import PageTransition from '../components/PageTransition';
 import StoreAttribution from '../components/StoreAttribution';
-import StoreProductTypeSidebar from '../components/StoreProductTypeSidebar';
+import CheckoutProgress from '../components/CheckoutProgress';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Cart() {
@@ -24,6 +25,7 @@ export default function Cart() {
   });
 
   const [brand, setBrand] = useState(null);
+  const [brandReady, setBrandReady] = useState(cartItems.length === 0);
   const [recommendedProducts, setRecommendedProducts] = useState([]);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
@@ -38,9 +40,11 @@ export default function Cart() {
 
     async function fetchData() {
       if (cartItems.length > 0 && cartItems[0].brand_id) {
+        setBrandReady(false);
         const id = cartItems[0].brand_id;
         const { data: bData } = await supabase.from('brand_profiles').select('*').eq('id', id).single();
         if (bData) setBrand(bData);
+        setBrandReady(true);
         
         const cartIds = cartItems.map(i => i.id);
         const { data: pData } = await supabase.from('products').select('*').eq('brand_id', id).limit(6);
@@ -49,6 +53,7 @@ export default function Cart() {
         }
       } else if (cartItems.length === 0) {
         setBrand(null);
+        setBrandReady(true);
         setRecommendedProducts([]);
       }
     }
@@ -57,13 +62,8 @@ export default function Cart() {
 
   const [removedItems, setRemovedItems] = useState([]);
   
-  const bgMain = brand?.primary_color || '#FAFAFA';
-  const isDark = isDarkColor(bgMain);
-  const accentColor = brand?.accent_color || '#6A3E1F';
-  const secondaryBg = brand?.secondary_color || (isDark ? '#141414' : '#FFFFFF');
-  const textColor = getContrastColor(bgMain);
-  const mutedColor = getMutedColor(bgMain);
-  const borderColor = getBorderColor(bgMain);
+  const theme = resolveStoreTheme(brand || {});
+  const { primaryColor: bgMain, accentColor, secondaryColor: secondaryBg, textColor, mutedColor, borderColor, storeFont, brandNameFont, brandNameCase } = theme;
   const dangerColor = '#D83A3A';
 
   const formatPrice = (price) => `₦${price.toLocaleString()}`;
@@ -104,11 +104,11 @@ export default function Cart() {
   const total = subtotal;
 
   const s = {
-    page: { backgroundColor: bgMain, color: textColor, minHeight: '100vh', fontFamily: '"Inter", sans-serif', overflowX: 'hidden' },
+    page: { backgroundColor: bgMain, color: textColor, minHeight: '100vh', fontFamily: storeFont, overflowX: 'hidden' },
 
     // Header
     header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: bgMain },
-    logo: { fontFamily: '"Inter", sans-serif', fontSize: '18px', fontWeight: 'bold', letterSpacing: '0.05em', color: textColor },
+    logo: { fontFamily: brandNameFont, textTransform: brandNameCase, fontSize: '18px', fontWeight: 'bold', letterSpacing: '0.05em', color: textColor },
     headerRight: { display: 'flex', alignItems: 'center', gap: '24px' },
     iconButton: { cursor: 'pointer', display: 'flex', alignItems: 'center', color: textColor, position: 'relative' },
     cartBadge: { position: 'absolute', top: '-6px', right: '-8px', backgroundColor: accentColor, color: isDarkColor(accentColor) ? '#FFFFFF' : '#111111', fontSize: '9px', fontWeight: 'bold', width: '14px', height: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%' },
@@ -190,6 +190,10 @@ export default function Cart() {
     footerIcons: { display: 'flex', gap: '12px', color: textColor }
   };
 
+  if (!brandReady) {
+    return <div style={{ minHeight: '100vh', backgroundColor: '#FBF9F5' }} aria-label="Loading store theme" />;
+  }
+
   const isOwner = user && brand && user.id === brand.id;
 
   if (isOwner) {
@@ -237,13 +241,14 @@ export default function Cart() {
           </div>
         </div>
         <div style={s.headerRight}>
-          {brand?.id && <StoreProductTypeSidebar brandId={brand.id} accentColor={accentColor} textColor={textColor} mutedColor={mutedColor} borderColor={borderColor} />}
           <div style={s.iconButton} onClick={() => navigate('/cart')}>
             <ShoppingCart size={18} />
             <div style={s.cartBadge}>{cartItems.length}</div>
           </div>
         </div>
       </div>
+
+      <CheckoutProgress currentStep={0} />
 
       <div style={{...s.content, padding: '48px 80px'}} className="cart-content">
         <div>
@@ -254,7 +259,7 @@ export default function Cart() {
 
             <div style={s.layout} className="cart-layout">
           {/* Left Column: Items */}
-            <div style={s.itemsContainer}>
+            <div style={s.itemsContainer} className="cart-items-panel">
               <AnimatePresence>
                 {removedItems.length > 0 && (
                   <motion.div 
@@ -294,7 +299,7 @@ export default function Cart() {
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, scale: 0.95 }}
                       transition={{ delay: idx * 0.05 }}
-                      style={s.cartItem} 
+                      style={s.cartItem}
                       className="cart-item"
                     >
                       <div style={s.itemImageWrap} className="cart-item-image-wrap">
@@ -344,8 +349,8 @@ export default function Cart() {
 
           {/* Right Column: Summary */}
           <div className="cart-summary-col">
-            <div style={s.summaryBox} className="cart-summary-box">
-              <div style={s.summaryTitle}>Order Summary</div>
+            <div style={s.summaryBox} className="cart-summary-box cart-summary-card">
+              <div style={s.summaryTitle} className="cart-summary-title">Order Summary</div>
 
               <div style={s.summaryRow}>
                 <span>Subtotal</span>
@@ -368,16 +373,16 @@ export default function Cart() {
               </div>
             </div>
 
-            <div style={s.trustBadges}>
-              <div style={s.trustBadge}>
+            <div style={s.trustBadges} className="cart-trust-badges">
+              <div style={s.trustBadge} className="trust-badge">
                 <ShieldCheck size={18} color="#555" />
                 <div style={s.trustBadgeLabel}>Secure<br />Payment</div>
               </div>
-              <div style={s.trustBadge}>
+              <div style={s.trustBadge} className="trust-badge">
                 <Truck size={18} color="#555" />
                 <div style={s.trustBadgeLabel}>Fast<br />Delivery</div>
               </div>
-              <div style={s.trustBadge}>
+              <div style={s.trustBadge} className="trust-badge">
                 <CreditCard size={18} color="#555" />
                 <div style={s.trustBadgeLabel}>Multiple<br />Options</div>
               </div>

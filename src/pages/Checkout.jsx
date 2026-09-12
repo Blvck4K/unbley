@@ -4,17 +4,30 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import PaystackPop from '@paystack/inline-js';
 import { useToast } from '../context/ToastContext';
-import { isDarkColor, getContrastColor, getMutedColor, getBorderColor } from '../lib/colors';
+import { isDarkColor } from '../lib/colors';
+import { resolveStoreTheme } from '../lib/storeTheme';
 import PageTransition from '../components/PageTransition';
 import StoreAttribution from '../components/StoreAttribution';
-import StoreProductTypeSidebar from '../components/StoreProductTypeSidebar';
+import CheckoutProgress from '../components/CheckoutProgress';
 import PaymentFailureModal from '../components/PaymentFailureModal';
 import { nigeriaLocations, nigeriaStates } from '../lib/nigeriaLocations';
 import { motion } from 'framer-motion';
+import { FaCcAmex, FaCcApplePay, FaCcMastercard, FaCcVisa, FaGooglePay } from 'react-icons/fa6';
 
 const normalizePublicKey = (value) => String(value || '').trim().replace(/^['"]|['"]$/g, '');
 const normalizeSubaccountCode = (value) => String(value || '').trim().replace(/^['"]|['"]$/g, '');
 const normalizeLocation = (value) => String(value || '').trim().toLowerCase();
+
+const PaymentBrandMarks = ({ provider }) => (
+  <div className="payment-brand-marks" aria-label={`${provider} accepts major cards and digital wallets`}>
+    <span className="payment-provider-mark">{provider}</span>
+    <span className="payment-brand-divider" aria-hidden="true" />
+    <FaCcVisa title="Visa" aria-label="Visa" />
+    <FaCcMastercard title="Mastercard" aria-label="Mastercard" />
+    <FaCcAmex title="American Express" aria-label="American Express" />
+    {provider === 'Paystack' ? <FaGooglePay title="Google Pay" aria-label="Google Pay" /> : <FaCcApplePay title="Apple Pay" aria-label="Apple Pay" />}
+  </div>
+);
 
 const getDeliveryFee = (brandProfile, customer) => {
   const legacyFee = Number(brandProfile?.local_shipping ?? brandProfile?.shipping_fee ?? 0);
@@ -62,12 +75,17 @@ export default function Checkout() {
   const paymentHandledRef = useRef(false);
 
   const [brand, setBrand] = useState(null);
+  const [brandReady, setBrandReady] = useState(cartItems.length === 0);
 
   useEffect(() => {
     async function fetchBrand() {
       if (cartItems.length > 0 && cartItems[0].brand_id) {
+        setBrandReady(false);
         const { data } = await supabase.from('brand_profiles').select('*').eq('id', cartItems[0].brand_id).single();
         if (data) setBrand(data);
+        setBrandReady(true);
+      } else {
+        setBrandReady(true);
       }
     }
     fetchBrand();
@@ -120,15 +138,9 @@ export default function Checkout() {
     validateCart();
   }, []);
 
-  const bgMain = brand?.primary_color || '#FAFAFA';
-  const isDark = isDarkColor(bgMain);
-  const accentColor = brand?.accent_color || '#6A3E1F';
-  const secondaryBg = brand?.secondary_color || (isDark ? '#141414' : '#FFFFFF');
-  const textColor = getContrastColor(bgMain);
-  const mutedColor = getMutedColor(bgMain);
-  const borderColor = getBorderColor(bgMain);
+  const theme = resolveStoreTheme(brand || {});
+  const { primaryColor: bgMain, isDark, accentColor, secondaryColor: secondaryBg, textColor, mutedColor, borderColor, inputBackground: inputBg, storeFont, brandNameFont, brandNameCase } = theme;
   const dangerColor = '#D83A3A';
-  const inputBg = isDark ? 'rgba(255,255,255,0.06)' : '#FFFFFF';
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -473,11 +485,11 @@ View in Dashboard.
   };
 
   const s = {
-    page: { backgroundColor: bgMain, color: textColor, minHeight: '100vh', fontFamily: '"Inter", sans-serif', overflowX: 'hidden', display: 'flex', flexDirection: 'column' },
+    page: { backgroundColor: bgMain, color: textColor, minHeight: '100vh', fontFamily: storeFont, overflowX: 'hidden', display: 'flex', flexDirection: 'column' },
     
     // Header
     header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '24px 48px', backgroundColor: secondaryBg, borderBottom: `1px solid ${borderColor}` },
-    logo: { fontFamily: '"Inter", sans-serif', fontSize: '16px', fontWeight: 'bold', letterSpacing: '0.05em', color: textColor },
+    logo: { fontFamily: brandNameFont, textTransform: brandNameCase, fontSize: '16px', fontWeight: 'bold', letterSpacing: '0.05em', color: textColor },
     headerRight: { display: 'flex', alignItems: 'center', gap: '16px', color: mutedColor, fontSize: '11px', fontWeight: '600', letterSpacing: '0.05em' },
 
     // Content Wrap
@@ -565,6 +577,10 @@ View in Dashboard.
     backgroundColor: errors[fieldName] ? '#FFF5F5' : inputBg
   });
 
+  if (!brandReady) {
+    return <div style={{ minHeight: '100vh', backgroundColor: '#FBF9F5' }} aria-label="Loading store theme" />;
+  }
+
   if (cartItems.length === 0) {
     return (
       <PageTransition>
@@ -605,13 +621,26 @@ View in Dashboard.
           .checkout-header { padding: 16px 24px !important; }
           .checkout-content { padding: 32px 24px !important; }
           .checkout-layout { display: flex !important; flex-direction: column !important; gap: 40px !important; }
+          .checkout-layout > .left-col { order: 1 !important; }
+          .checkout-layout > .right-col { order: 2 !important; }
+          .checkout-layout > .actions-col { order: 3 !important; }
           .form-grid { grid-template-columns: 1fr !important; gap: 20px !important; }
           .actions-col { position: sticky; bottom: 0; background: ${secondaryBg}; padding: 24px; margin: 32px -24px -32px -24px; box-shadow: 0 -10px 30px rgba(0,0,0,0.1); z-index: 100; border-top: 1px solid ${borderColor}; }
-          .right-col { order: -1 !important; margin-bottom: 0 !important; }
+          .right-col { margin-top: 8px !important; margin-bottom: 0 !important; }
+          .right-col .summary-box { padding: 20px !important; }
+          .right-col .summary-title { margin-bottom: 24px !important; }
+          .right-col .encryption-box { padding: 14px !important; }
           .footer-links { display: none !important; }
           .checkout-footer { padding: 24px !important; flex-direction: column; gap: 16px; align-items: center !important; text-align: center; }
           .stepper-wrap { display: none !important; }
           .section-title { font-size: 24px !important; margin-bottom: 24px !important; text-align: center; }
+        }
+        @media (min-width: 769px) {
+          .checkout-content > div { width: 100%; max-width: 1200px; margin: 0 auto; }
+          .checkout-layout { grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr) !important; gap: 80px !important; align-items: start; }
+          .checkout-layout > .left-col,
+          .checkout-layout > .right-col { min-width: 0; }
+          .checkout-layout > .right-col { width: 100%; }
         }
       `}</style>
 
@@ -619,7 +648,6 @@ View in Dashboard.
       <div style={s.header} className="checkout-header">
         <div style={s.logo}>{brand?.brand_name ? brand.brand_name.toUpperCase() : 'DIGITAL ATELIER'}</div>
         <div style={s.headerRight}>
-          {brand?.id && <StoreProductTypeSidebar brandId={brand.id} accentColor={accentColor} textColor={textColor} mutedColor={mutedColor} borderColor={borderColor} />}
           <Lock size={14} />
           SECURE CHECKOUT
           <ShoppingCart size={18} style={{ marginLeft: '16px', color: textColor }} cursor="pointer" onClick={() => navigate('/cart')} />
@@ -630,30 +658,20 @@ View in Dashboard.
       <div style={{ ...s.contentWrap, alignItems: 'stretch' }} className="checkout-content">
         <div>
         
-        {/* Stepper */}
-        <div style={s.stepper} className="stepper-wrap">
-          <div style={s.step}>
-            <div style={s.stepNumActive}>1</div>
-            <div style={s.stepTextActive}>Details</div>
-          </div>
-          <div style={s.stepLine}></div>
-          <div style={s.step}>
-            <div style={s.stepNumIdle}>2</div>
-            <div style={s.stepTextIdle}>Payment</div>
-          </div>
-        </div>
+        <CheckoutProgress currentStep={1} />
 
         {/* Layout Grid */}
         <div style={s.layout} className="checkout-layout">
           
           {/* Left Column (Forms) */}
           <motion.div 
+            className="left-col checkout-form-panel"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
             style={s.leftCol}
           >
-            <h1 style={s.sectionTitle}>Contact & Shipping</h1>
+            <h1 style={s.sectionTitle} className="section-title">Contact & Shipping</h1>
             
             <div style={s.formGrid} className="form-grid">
               
@@ -714,10 +732,11 @@ View in Dashboard.
             </div>
 
             {/* Payment Method Selector */}
-            <div style={{ marginBottom: '48px' }}>
+            <div className="checkout-payment-section" style={{ marginBottom: '48px' }}>
               <h2 style={{ ...s.sectionSubtitle, marginBottom: '16px', color: textColor }}>Payment Method</h2>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="checkout-payment-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <motion.div 
+                  className="payment-method-card"
                   whileHover={{ scale: 1.02, backgroundColor: brand ? 'rgba(255,255,255,0.08)' : 'rgba(15, 44, 89, 0.08)' }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setPaymentMethod('paystack')}
@@ -737,9 +756,11 @@ View in Dashboard.
                     <span style={{ fontSize: '14px', fontWeight: '700', color: paymentMethod === 'paystack' ? accentColor : textColor }}>Local (Paystack)</span>
                   </div>
                   <div style={{ fontSize: '11px', color: mutedColor }}>Best for Nigeria Card, Transfer & USSD</div>
+                  <PaymentBrandMarks provider="Paystack" />
                 </motion.div>
 
                 <motion.div 
+                  className="payment-method-card"
                   whileHover={{ scale: 1.02, backgroundColor: brand ? 'rgba(255,255,255,0.08)' : 'rgba(15, 44, 89, 0.08)' }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setPaymentMethod('flutterwave')}
@@ -759,42 +780,16 @@ View in Dashboard.
                     <span style={{ fontSize: '14px', fontWeight: '700', color: paymentMethod === 'flutterwave' ? accentColor : textColor }}>International (Flutterwave)</span>
                   </div>
                   <div style={{ fontSize: '11px', color: mutedColor }}>Best for International Cards & Mobile Money</div>
+                  <PaymentBrandMarks provider="Flutterwave" />
                 </motion.div>
               </div>
             </div>
 
-            <div style={s.actionsCol} className="actions-col">
-              <motion.button 
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                style={{...s.continueBtn, opacity: isProcessing ? 0.7 : 1}} 
-                onClick={handlePaymentSubmit} 
-                disabled={isProcessing}
-              >
-                {isProcessing ? (
-                  <>Processing...</>
-                ) : (
-                  <>
-                    <ShieldCheck size={18} />
-                    Proceed to Secure Payment
-                  </>
-                )}
-              </motion.button>
-              
-              <div style={s.disclaimerText}>
-                You’ll review your order before final payment
-              </div>
-
-              <button style={s.backBtn} onClick={() => navigate('/cart')}>
-                <ArrowLeft size={14} />
-                Return to Cart
-              </button>
-            </div>
           </motion.div>
 
           {/* Right Column (Summary) */}
           <div style={s.rightCol} className="right-col">
-            <div style={s.summaryBox}>
+            <div style={s.summaryBox} className="checkout-summary-card">
               <h2 style={s.summaryTitle}>Order Summary</h2>
               
               {cartItems.map((item) => (
@@ -857,6 +852,34 @@ View in Dashboard.
                 SECURED BY {paymentMethod === 'paystack' ? 'PAYSTACK' : 'FLUTTERWAVE'} & SSL ENCRYPTION
               </div>
             </div>
+          </div>
+
+          <div style={s.actionsCol} className="actions-col">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              style={{ ...s.continueBtn, opacity: isProcessing ? 0.7 : 1 }}
+              onClick={handlePaymentSubmit}
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <>Processing...</>
+              ) : (
+                <>
+                  <ShieldCheck size={18} />
+                  Proceed to Secure Payment
+                </>
+              )}
+            </motion.button>
+
+            <div style={s.disclaimerText}>
+              You’ll review your order before final payment
+            </div>
+
+            <button style={s.backBtn} onClick={() => navigate('/cart')}>
+              <ArrowLeft size={14} />
+              Return to Cart
+            </button>
           </div>
 
         </div>

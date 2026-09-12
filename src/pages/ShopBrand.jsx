@@ -5,10 +5,9 @@ import { motion } from 'framer-motion';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../context/ToastContext';
-import { isDarkColor, getContrastColor, getMutedColor, getBorderColor } from '../lib/colors';
 import PageTransition from '../components/PageTransition';
 import StoreAttribution from '../components/StoreAttribution';
-import { getBrandNameCaseStyle, getStoreFont } from '../lib/storeFonts';
+import { resolveStoreTheme } from '../lib/storeTheme';
 
 const useWindowWidth = () => {
   const [width, setWidth] = useState(window.innerWidth);
@@ -421,19 +420,10 @@ export default function ShopBrand({ customId }) {
   if (!brand) return null;
 
   // Dynamic Theme Generation tied directly to DB variables
-  const primaryColor = brand.primary_color || '#0A0A0A';
-  const secondaryColor = brand.secondary_color || '#1A1A1A';
-  const accentColor = brand.accent_color || '#06acf8';
-  
-  const textColor = getContrastColor(primaryColor);
-  const mutedColor = getMutedColor(primaryColor);
-  const borderColor = getBorderColor(primaryColor);
-  const accentTextColor = isDarkColor(accentColor) ? '#FFFFFF' : '#000000';
-
-  const selectedFont = getStoreFont(brand.store_font);
-  const brandNameFont = getStoreFont(brand.brand_name_font || brand.store_font);
-  const brandNameCase = getBrandNameCaseStyle(brand.brand_name_case);
-  const fontConfig = { heading: selectedFont.family, body: selectedFont.family };
+  const theme = resolveStoreTheme(brand);
+  const { primaryColor, secondaryColor, accentColor, textColor, mutedColor, borderColor, storeFont, brandNameFont, brandNameCase } = theme;
+  const accentTextColor = theme.isDark ? '#FFFFFF' : '#000000';
+  const fontConfig = { heading: storeFont, body: storeFont };
 
   const getGridCols = () => {
     if (isMobile) return 'repeat(2, 1fr)';

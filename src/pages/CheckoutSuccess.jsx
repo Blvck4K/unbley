@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { CheckCircle2, Download, ArrowLeft, ShieldCheck, Mail, Phone, MapPin, Package, FileText } from 'lucide-react';
 import PageTransition from '../components/PageTransition';
 import StoreAttribution from '../components/StoreAttribution';
+import CheckoutProgress from '../components/CheckoutProgress';
 import { motion } from 'framer-motion';
 
 export default function CheckoutSuccess() {
@@ -76,6 +77,7 @@ Your order is being processed.
     <PageTransition>
       <div style={{ backgroundColor: '#FBF9F5', minHeight: '100vh', padding: '60px 20px', fontFamily: '"Inter", sans-serif', color: '#221510' }}>
         <div className="container" style={{ maxWidth: '800px', margin: '0 auto' }}>
+          <CheckoutProgress currentStep={2} />
           
           <div style={{ textAlign: 'center', marginBottom: '48px' }}>
             <motion.div 
