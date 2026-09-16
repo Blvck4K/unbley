@@ -603,7 +603,7 @@ View in Dashboard.
       <PageTransition>
         <div style={s.page}>
           <div style={s.header} className="checkout-header checkout-mobile-style-header">
-          <StoreCategorySidebar categories={storeCategories} onSelect={handleCategorySelect} theme={theme} />
+          <StoreCategorySidebar categories={storeCategories} onSelect={handleCategorySelect} theme={theme} brand={brand} />
             <div className="checkout-header-right-mobile">
               <button type="button" className="checkout-back-icon" onClick={() => navigate('/cart')} aria-label="Back to cart">
                 <ArrowLeft size={18} />
@@ -669,7 +669,7 @@ View in Dashboard.
 
       {/* Header */}
       <div style={s.header} className="checkout-header checkout-mobile-style-header">
-        <StoreCategorySidebar categories={storeCategories} onSelect={handleCategorySelect} theme={theme} />
+        <StoreCategorySidebar categories={storeCategories} onSelect={handleCategorySelect} theme={theme} brand={brand} />
         <div className="checkout-header-right-mobile">
           <button type="button" className="checkout-back-icon" onClick={() => navigate('/cart')} aria-label="Back to cart">
             <ArrowLeft size={18} />

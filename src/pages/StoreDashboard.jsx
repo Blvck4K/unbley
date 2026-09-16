@@ -167,7 +167,7 @@ export default function StoreDashboard() {
         {isOwner && <Sidebar profileData={brand} isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />}
         <div className={isOwner ? 'unbley-main-content store-dashboard-owner-content' : undefined}>
         <header className={isOwner ? 'store-dashboard-owner-header' : 'store-dashboard-customer-header'} style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: isOwner ? 'space-between' : 'flex-end', minHeight: isMobile ? '76px' : '88px', padding: isMobile ? '14px 20px' : '18px 6vw', borderBottom: '1px solid rgba(255,255,255,0.18)', backgroundColor: 'rgba(0,0,0,0.12)', backdropFilter: 'blur(14px)' }}>
-          {!isOwner && <StoreCategorySidebar categories={customerCategories} onSelect={openCategory} theme={theme} />}
+          {!isOwner && <StoreCategorySidebar categories={customerCategories} onSelect={openCategory} theme={theme} brand={brand} />}
           {isOwner && <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <button type="button" onClick={() => setIsSidebarOpen(true)} className="unbley-mobile-menu-btn store-dashboard-menu-trigger" aria-label="Open store navigation" title="Open store navigation">
               <Menu size={19} />

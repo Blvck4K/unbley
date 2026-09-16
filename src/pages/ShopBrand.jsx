@@ -34,6 +34,7 @@ export default function ShopBrand({ customId }) {
   
   const [hoveredProduct, setHoveredProduct] = useState(null);
   const [cartCount, setCartCount] = useState(0);
+  const [optionModal, setOptionModal] = useState(null);
   
   // Real-time State
   const [brand, setBrand] = useState(null);
@@ -358,48 +359,76 @@ export default function ShopBrand({ customId }) {
     }
   };
 
+  const addProductToCart = ({ product, qty = 1, size = '', color = '' }) => {
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    const existingItemIndex = cart.findIndex(item =>
+      item.id === product.id &&
+      item.size === size &&
+      item.color === color
+    );
+
+    if (cart.length > 0 && cart[0].brand_id !== product.brand_id) {
+      toast.error("Your cart contains items from another brand. Please checkout or clear your cart first.");
+      return;
+    }
+
+    if (existingItemIndex > -1) {
+      cart[existingItemIndex].qty += qty;
+    } else {
+      let variant = product.tag || 'Default';
+      if (size) variant += ` - ${size}`;
+      if (color) variant += ` (${color})`;
+
+      cart.push({
+        id: product.id,
+        name: product.title,
+        price: parseFloat(product.price),
+        img: product.image_url?.split(',')[0] || '',
+        brand_id: product.brand_id,
+        qty,
+        size,
+        color,
+        variant
+      });
+    }
+
+    localStorage.setItem('cart', JSON.stringify(cart));
+    window.dispatchEvent(new Event('cartUpdated'));
+    return true;
+  };
+
   const handleAddToCart = (e, product) => {
     e.stopPropagation();
-    try {
-      const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-      const existingItemIndex = cart.findIndex(item => item.id === product.id);
-      
-      // Prevent ordering from multiple brands in same cart to avoid conflicted split payments
-      if (cart.length > 0 && cart[0].brand_id !== product.brand_id) {
-        toast.error("Your cart contains items from another brand. Please checkout or clear your cart first.");
-        return;
-      }
 
-      if (existingItemIndex > -1) {
-        cart[existingItemIndex].qty += 1;
-      } else {
-        cart.push({
-          id: product.id,
-          name: product.title,
-          price: parseFloat(product.price),
-          img: product.image_url?.split(',')[0] || '',
-          brand_id: product.brand_id,
-          qty: 1,
-          variant: 'Default' // Safely handles any generic size mapping
-        });
-      }
-      
-      localStorage.setItem('cart', JSON.stringify(cart));
-      window.dispatchEvent(new Event('cartUpdated'));
-      
-      // Visual feedback
+    const hasSizeOptions = Boolean(product.sizes && String(product.sizes).trim());
+    const hasColorOptions = Boolean(product.colors && String(product.colors).trim());
+
+    if (hasSizeOptions || hasColorOptions) {
+      setOptionModal({
+        product,
+        size: hasSizeOptions ? String(product.sizes).split(',')[0].trim() : '',
+        color: hasColorOptions ? String(product.colors).split(',')[0].trim() : '',
+        qty: 1
+      });
+      return;
+    }
+
+    try {
+      const added = addProductToCart({ product, qty: 1, size: '', color: '' });
+      if (!added) return;
+
       const btn = e.target;
       const originalText = btn.innerText;
       btn.innerText = 'ADDED!';
       btn.style.backgroundColor = '#10503D';
       btn.style.color = '#FFF';
-      
+
       setTimeout(() => {
         btn.innerText = originalText;
         btn.style.backgroundColor = accentColor;
         btn.style.color = accentTextColor;
       }, 1500);
-      
+
       toast.success(`Added ${product.title} to bag`);
     } catch (err) {
       console.error("Cart error", err);
@@ -456,6 +485,27 @@ export default function ShopBrand({ customId }) {
 
   const s = {
     page: { backgroundColor: primaryColor, color: textColor, minHeight: '100vh', fontFamily: fontConfig.body, overflowX: 'hidden' },
+
+    optionModalBackdrop: { position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: isMobile ? '12px' : '20px' },
+    optionModalCard: { width: '100%', maxWidth: isMobile ? '100%' : '720px', maxHeight: isMobile ? '90vh' : 'auto', overflowY: 'auto', backgroundColor: secondaryColor, border: `1px solid ${borderColor}`, borderRadius: '16px', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' },
+    optionModalHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: isMobile ? '16px 18px' : '20px 24px', borderBottom: `1px solid ${borderColor}` },
+    optionModalTitle: { fontFamily: storeFont, fontSize: isMobile ? '18px' : '20px', fontWeight: '700', color: textColor },
+    optionModalBody: { display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '220px 1fr', gap: isMobile ? '18px' : '24px', padding: isMobile ? '18px' : '24px' },
+    optionImageWrap: { width: '100%', aspectRatio: '1', borderRadius: '12px', overflow: 'hidden', backgroundColor: primaryColor, border: `1px solid ${borderColor}` },
+    optionImage: { width: '100%', height: '100%', objectFit: 'cover' },
+    optionMeta: { display: 'flex', flexDirection: 'column', gap: isMobile ? '14px' : '18px' },
+    optionProductName: { fontSize: isMobile ? '22px' : '24px', fontFamily: storeFont, fontWeight: '700', color: textColor, margin: 0 },
+    optionPrice: { fontSize: isMobile ? '16px' : '18px', fontWeight: '700', color: accentColor },
+    optionSectionLabel: { fontSize: '10px', fontWeight: '800', letterSpacing: '0.12em', textTransform: 'uppercase', color: mutedColor, marginBottom: '10px' },
+    optionChoiceRow: { display: 'flex', flexWrap: 'wrap', gap: '10px' },
+    optionChoice: { padding: isMobile ? '10px 12px' : '10px 14px', borderRadius: '999px', border: `1px solid ${borderColor}`, backgroundColor: 'transparent', color: textColor, cursor: 'pointer', fontSize: '12px', fontWeight: '600', minHeight: isMobile ? '40px' : 'auto' },
+    optionQtyRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', marginTop: '8px', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'flex-start' : 'center' },
+    optionQtyControl: { display: 'flex', alignItems: 'center', border: `1px solid ${borderColor}`, borderRadius: '999px', overflow: 'hidden', backgroundColor: primaryColor },
+    optionQtyBtn: { width: '36px', height: '36px', border: 'none', background: 'transparent', color: textColor, cursor: 'pointer', fontSize: '18px', fontWeight: '700' },
+    optionQtyValue: { width: '28px', textAlign: 'center', color: textColor, fontWeight: '700', fontSize: '14px' },
+    optionFooter: { display: 'flex', justifyContent: 'flex-end', gap: '12px', padding: isMobile ? '0 18px 18px' : '0 24px 24px', flexDirection: isMobile ? 'column' : 'row' },
+    optionSecondaryBtn: { padding: '12px 18px', borderRadius: '8px', border: `1px solid ${borderColor}`, background: 'transparent', color: textColor, fontWeight: '700', cursor: 'pointer', width: isMobile ? '100%' : 'auto' },
+    optionPrimaryBtn: { padding: '12px 20px', borderRadius: '8px', border: 'none', backgroundColor: accentColor, color: accentTextColor, fontWeight: '700', cursor: 'pointer', width: isMobile ? '100%' : 'auto' },
 
     // Header
     header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: isMobile ? '20px 24px' : '24px 48px', borderBottom: `1px solid ${borderColor}`, backgroundColor: 'transparent', position: 'sticky', top: 0, zIndex: 100, backdropFilter: 'blur(12px)' },
@@ -548,7 +598,7 @@ export default function ShopBrand({ customId }) {
       <div style={s.page}>
       {/* Header */}
       <div style={s.header} className="shop-brand-customer-header">
-        {!isOwner && <StoreCategorySidebar categories={shopCategories} onSelect={openShopCategory} theme={theme} />}
+        {!isOwner && <StoreCategorySidebar categories={shopCategories} onSelect={openShopCategory} theme={theme} brand={brand} />}
         <div style={s.logo} onClick={() => navigate('/')}>
           {brand.logo_url && <img src={brand.logo_url} style={s.logoImage} alt="Brand Logo" />}
           {brand.brand_name || 'Digital Atelier'}
@@ -722,6 +772,123 @@ export default function ShopBrand({ customId }) {
 
         <StoreFooter brand={brand} theme={theme} />
       </div>
+
+      {optionModal && (
+        <div style={s.optionModalBackdrop} onClick={() => setOptionModal(null)}>
+          <div style={s.optionModalCard} onClick={(event) => event.stopPropagation()}>
+            <div style={s.optionModalHeader}>
+              <div style={s.optionModalTitle}>Choose your option</div>
+              <button type="button" onClick={() => setOptionModal(null)} style={{ background: 'transparent', border: 'none', color: mutedColor, cursor: 'pointer', padding: 0 }} aria-label="Close option chooser">
+                <X size={22} />
+              </button>
+            </div>
+
+            <div style={s.optionModalBody}>
+              <div style={s.optionImageWrap}>
+                <img src={optionModal.product.image_url?.split(',')[0] || ''} alt={optionModal.product.title} style={s.optionImage} />
+              </div>
+
+              <div style={s.optionMeta}>
+                <div>
+                  <div style={s.optionProductName}>{optionModal.product.title}</div>
+                  <div style={s.optionPrice}>₦{parseFloat(optionModal.product.price).toLocaleString()}</div>
+                </div>
+
+                {optionModal.product.sizes && (
+                  <div>
+                    <div style={s.optionSectionLabel}>Size</div>
+                    <div style={s.optionChoiceRow}>
+                      {String(optionModal.product.sizes).split(',').map((size) => size.trim()).filter(Boolean).map((size) => (
+                        <button
+                          key={size}
+                          type="button"
+                          onClick={() => setOptionModal((prev) => ({ ...prev, size }))}
+                          style={{
+                            ...s.optionChoice,
+                            backgroundColor: optionModal.size === size ? accentColor : 'transparent',
+                            borderColor: optionModal.size === size ? accentColor : borderColor,
+                            color: optionModal.size === size ? accentTextColor : textColor
+                          }}
+                        >
+                          {size}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {optionModal.product.colors && (
+                  <div>
+                    <div style={s.optionSectionLabel}>Colour</div>
+                    <div style={s.optionChoiceRow}>
+                      {String(optionModal.product.colors).split(',').map((color) => color.trim()).filter(Boolean).map((color) => (
+                        <button
+                          key={color}
+                          type="button"
+                          onClick={() => setOptionModal((prev) => ({ ...prev, color }))}
+                          style={{
+                            ...s.optionChoice,
+                            backgroundColor: optionModal.color === color ? accentColor : 'transparent',
+                            borderColor: optionModal.color === color ? accentColor : borderColor,
+                            color: optionModal.color === color ? accentTextColor : textColor
+                          }}
+                        >
+                          {color}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div style={s.optionQtyRow}>
+                  <div style={s.optionSectionLabel}>Quantity</div>
+                  <div style={s.optionQtyControl}>
+                    <button type="button" style={s.optionQtyBtn} onClick={() => setOptionModal((prev) => ({ ...prev, qty: Math.max(1, prev.qty - 1) }))}>-</button>
+                    <div style={s.optionQtyValue}>{optionModal.qty}</div>
+                    <button type="button" style={s.optionQtyBtn} onClick={() => setOptionModal((prev) => ({ ...prev, qty: prev.qty + 1 }))}>+</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style={s.optionFooter}>
+              <button type="button" style={s.optionSecondaryBtn} onClick={() => setOptionModal(null)}>Cancel</button>
+              <button
+                type="button"
+                style={s.optionPrimaryBtn}
+                onClick={() => {
+                  const hasSizeOptions = Boolean(optionModal.product.sizes && String(optionModal.product.sizes).trim());
+                  const hasColorOptions = Boolean(optionModal.product.colors && String(optionModal.product.colors).trim());
+
+                  if (hasSizeOptions && !optionModal.size) {
+                    toast.info('Please choose a size before adding to bag.');
+                    return;
+                  }
+
+                  if (hasColorOptions && !optionModal.color) {
+                    toast.info('Please choose a colour before adding to bag.');
+                    return;
+                  }
+
+                  const added = addProductToCart({
+                    product: optionModal.product,
+                    qty: optionModal.qty,
+                    size: optionModal.size || '',
+                    color: optionModal.color || ''
+                  });
+
+                  if (added) {
+                    setOptionModal(null);
+                    toast.success(`Added ${optionModal.product.title} to bag`);
+                  }
+                }}
+              >
+                Add to bag
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Admin Add Product Modal Layer */}
       {isOwner && isAddModalOpen && (

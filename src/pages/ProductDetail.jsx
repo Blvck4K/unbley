@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ShoppingCart, Star, Plus, Minus, Truck, ShieldCheck, ArrowRight, ArrowLeft, User, Trash2, Edit2, X, Image as ImageIcon } from 'lucide-react';
+import { ShoppingBag, Star, Plus, Minus, Truck, ShieldCheck, ArrowRight, ArrowLeft, Trash2, Edit2, X, Image as ImageIcon } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
@@ -435,11 +435,11 @@ export default function ProductDetail() {
     sectionLabel: { fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase', color: textColor, marginBottom: '16px' },
     
     qtyRow: { display: 'flex', gap: '16px', marginBottom: '16px' },
-    qtyControl: { display: 'flex', alignItems: 'center', backgroundColor: secondaryColor, borderRadius: '4px', border: `1px solid ${borderColor}` },
-    qtyBtn: { width: '40px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', border: 'none', background: 'transparent', color: textColor },
-    qtyValue: { fontSize: '14px', fontWeight: '600', width: '32px', textAlign: 'center', color: textColor },
+    qtyControl: { display: 'flex', alignItems: 'center', backgroundColor: secondaryColor, borderRadius: '4px', border: `1px solid ${accentColor}`, boxShadow: `inset 0 0 0 1px ${accentColor}1A` },
+    qtyBtn: { width: '40px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', border: 'none', background: 'transparent', color: accentColor, fontWeight: '700' },
+    qtyValue: { fontSize: '14px', fontWeight: '700', width: '32px', textAlign: 'center', color: textColor },
     
-    addBtn: { flex: 1, backgroundColor: 'transparent', color: secondaryTextColor, border: `1px solid ${borderColor}`, borderRadius: '4px', fontSize: '12px', fontWeight: '700', letterSpacing: '0.05em', textTransform: 'uppercase', cursor: 'pointer', transition: 'background-color 0.2s', '&:hover': { backgroundColor: secondaryColor } },
+    addBtn: { flex: 1, backgroundColor: accentColor, color: accentTextColor, border: `1px solid ${accentColor}`, borderRadius: '4px', fontSize: '12px', fontWeight: '700', letterSpacing: '0.05em', textTransform: 'uppercase', cursor: 'pointer', transition: 'opacity 0.2s', '&:hover': { opacity: 0.9 } },
     buyBtn: { width: '100%', backgroundColor: accentColor, color: accentTextColor, border: 'none', borderRadius: '4px', padding: '16px', fontSize: '12px', fontWeight: '700', letterSpacing: '0.05em', textTransform: 'uppercase', cursor: 'pointer', marginBottom: '32px', transition: 'opacity 0.2s', '&:hover': { opacity: 0.9 } },
 
     trustRow: { display: 'flex', gap: '24px', paddingTop: '24px', borderTop: `1px solid ${borderColor}` },
@@ -485,18 +485,13 @@ export default function ProductDetail() {
         </div>
         <div style={s.headerRight}>
           <button type="button" aria-label="Open cart" style={{ ...s.iconButton, position: 'relative', display: 'flex', background: 'transparent', padding: '10px', minWidth: '44px', minHeight: '44px' }} onClick={() => navigate('/cart')} title="Cart">
-            <ShoppingCart size={isMobile ? 22 : 20} />
+            <ShoppingBag size={isMobile ? 22 : 20} />
             {cartCount > 0 && (
-              <span style={{ position: 'absolute', top: '-8px', right: '-8px', backgroundColor: accentColor, color: '#000', fontSize: '10px', fontWeight: 'bold', width: '18px', height: '18px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `2px solid ${primaryColor}` }}>
+              <span style={{ position: 'absolute', top: '-8px', right: '-8px', backgroundColor: accentColor, color: accentTextColor, fontSize: '10px', fontWeight: 'bold', width: '18px', height: '18px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `2px solid ${primaryColor}` }}>
                 {cartCount}
               </span>
             )}
           </button>
-          {!isCustomer && (
-            <button type="button" aria-label="Open account" style={{ ...s.iconButton, background: 'transparent', padding: '10px', minWidth: '44px', minHeight: '44px' }} onClick={() => navigate('/profile')} title="Account">
-              <User size={20} />
-            </button>
-          )}
         </div>
       </div>
 

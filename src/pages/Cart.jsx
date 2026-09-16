@@ -247,7 +247,7 @@ export default function Cart() {
 
       {/* Header */}
       <div style={{...s.header, padding: '24px 48px'}} className="cart-header">
-      <StoreCategorySidebar categories={storeCategories} onSelect={handleCategorySelect} theme={theme} />
+      <StoreCategorySidebar categories={storeCategories} onSelect={handleCategorySelect} theme={theme} brand={brand} />
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <button type="button" aria-label="Go back" style={{ ...s.iconButton, fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', padding: '10px', minWidth: '44px', minHeight: '44px' }} onClick={() => navigate(-1)}>
             <ArrowLeft size={16} />
