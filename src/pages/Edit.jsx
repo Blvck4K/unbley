@@ -74,6 +74,7 @@ export default function Edit() {
     same_city_delivery_fee: '',
     same_state_delivery_fee: '',
     outside_state_delivery_fee: '',
+    payment_fee_responsibility: 'customer',
     brand_narrative: '',
     manifesto: '',
     country: '',
@@ -865,6 +866,26 @@ export default function Edit() {
                         <input type="number" name="outside_state_delivery_fee" value={formData.outside_state_delivery_fee} onChange={handleChange} min="0" step="0.01" placeholder="e.g. 4000" className="unbley-form-input" />
                       </div>
                     </div>
+                  </div>
+
+                  <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #EAE3D9' }}>
+                    <div style={{ marginBottom: '14px' }}>
+                      <span className="unbley-card-pretitle">Payment Processing</span>
+                      <p style={{ fontSize: '12px', color: '#6B7280', margin: '4px 0 0' }}>
+                        Choose who covers the Paystack or Flutterwave processing fee.
+                      </p>
+                    </div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={formData.payment_fee_responsibility !== 'merchant'}
+                        onChange={(e) => handleChange({ target: { name: 'payment_fee_responsibility', value: e.target.checked ? 'customer' : 'merchant' } })}
+                      />
+                      <span className="unbley-form-label" style={{ margin: 0 }}>Customer pays payment processing fee</span>
+                    </label>
+                    <p style={{ fontSize: '12px', color: '#6B7280', margin: '10px 0 0 28px' }}>
+                      {formData.payment_fee_responsibility === 'merchant' ? 'Your store will absorb the payment processing fee.' : 'The payment processing fee will be added to the customer checkout total.'}
+                    </p>
                   </div>
                 </div>
 

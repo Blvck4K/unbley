@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { calculatePlatformRevenue } from '../../../src/lib/commerceFees.js';
 
 export const serverClient = () => createClient(
   process.env.VITE_SUPABASE_URL,
@@ -19,20 +20,14 @@ export const fromMinorUnits = (value) => {
 };
 
 export const getPlatformFeeConfig = () => {
-  const percentage = Number(process.env.PLATFORM_FEE_PERCENTAGE ?? '0');
-  const fixedAmount = Number(process.env.PLATFORM_FEE_FIXED_AMOUNT ?? '0');
   return {
-    percentage: Number.isFinite(percentage) ? percentage : 0,
-    fixedAmount: Number.isFinite(fixedAmount) ? fixedAmount : 0
+    model: 'tiered-subtotal',
+    maximum: 10000
   };
 };
 
-export const calculatePlatformFee = (grossMinorAmount) => {
-  const { percentage, fixedAmount } = getPlatformFeeConfig();
-  const gross = Number(grossMinorAmount ?? 0);
-  const percentageFee = Math.floor((gross * percentage) / 100);
-  const fixedFeeMinor = Math.round(fixedAmount * 100);
-  return Math.max(0, percentageFee + fixedFeeMinor);
+export const calculatePlatformFee = (subtotalMinorAmount) => {
+  return Math.round(calculatePlatformRevenue(Number(subtotalMinorAmount || 0) / 100) * 100);
 };
 
 export const getSettlementOffsetDays = () => {

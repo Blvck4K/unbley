@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { sendEmail } from '../../../lib/notifications/resend.js';
 import { recordNotification } from '../../../lib/notifications/notificationStore.js';
+import { calculateCommerceFees, CUSTOMER_PAYS_PAYMENT_FEE } from '../../../src/lib/commerceFees.js';
 
 const json = (res, status, body) => res.status(status).json(body);
 const serverClient = () => createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
@@ -22,23 +23,7 @@ const getDeliveryFee = (brandProfile, customer) => {
   return Math.max(0, Number.isFinite(legacyFee) ? legacyFee : 0);
 };
 
-const getPlatformFeeConfig = () => {
-  const percentage = Number(process.env.PLATFORM_FEE_PERCENTAGE ?? '0');
-  const fixedAmount = Number(process.env.PLATFORM_FEE_FIXED_AMOUNT ?? '0');
-  return {
-    percentage: Number.isFinite(percentage) ? percentage : 0,
-    fixedAmount: Number.isFinite(fixedAmount) ? fixedAmount : 0
-  };
-};
-
-const calculatePlatformFeeMinor = (grossMinorAmount) => {
-  const { percentage, fixedAmount } = getPlatformFeeConfig();
-  const percentageFee = Math.floor((Number(grossMinorAmount || 0) * percentage) / 100);
-  const fixedFeeMinor = Math.round(fixedAmount * 100);
-  return Math.max(0, percentageFee + fixedFeeMinor);
-};
-
-const createLedgerEntries = async ({ supabase, merchantId, orderId, provider, reference, grossMinorAmount, settlementOffsetDays = 1 }) => {
+const createLedgerEntries = async ({ supabase, merchantId, orderId, provider, reference, grossMinorAmount, platformFeeMinor, gatewayFeeMinor, settlementOffsetDays = 1 }) => {
   const { data: existingPayment, error: existingError } = await supabase
     .from('merchant_financial_transactions')
     .select('id')
@@ -50,8 +35,7 @@ const createLedgerEntries = async ({ supabase, merchantId, orderId, provider, re
   if (existingError) throw existingError;
   if (existingPayment?.id) return;
 
-  const platformFeeMinor = calculatePlatformFeeMinor(grossMinorAmount);
-  const netMinorAmount = Math.max(0, Number(grossMinorAmount || 0) - platformFeeMinor);
+  const netMinorAmount = Math.max(0, Number(grossMinorAmount || 0) - platformFeeMinor - gatewayFeeMinor);
   const now = new Date();
   const availableAt = new Date(now.getTime() + settlementOffsetDays * 24 * 60 * 60 * 1000).toISOString();
 
@@ -68,6 +52,7 @@ const createLedgerEntries = async ({ supabase, merchantId, orderId, provider, re
     metadata: {
       grossAmountMinor: Number(grossMinorAmount || 0),
       platformFeeMinor: platformFeeMinor,
+      gatewayFeeMinor,
       settlementOffsetDays
     }
   };
@@ -82,7 +67,7 @@ const createLedgerEntries = async ({ supabase, merchantId, orderId, provider, re
     currency: 'NGN',
     status: 'POSTED',
     available_at: null,
-    metadata: { grossAmountMinor: Number(grossMinorAmount || 0) }
+    metadata: { grossAmountMinor: Number(grossMinorAmount || 0), gatewayFeeMinor }
   };
 
   const { error: paymentLedgerError } = await supabase.from('merchant_financial_transactions').insert(paymentInsert);
@@ -229,7 +214,7 @@ export default async function handler(req, res) {
     const supabase = serverClient();
     const { data: brandRecord, error: brandError } = await supabase
       .from('brand_profiles')
-      .select('id, brand_name, logo_url, email_address, owner_name, city, state_province, shipping_fee, same_city_delivery_fee, same_state_delivery_fee, outside_state_delivery_fee')
+      .select('id, brand_name, logo_url, email_address, owner_name, city, state_province, shipping_fee, same_city_delivery_fee, same_state_delivery_fee, outside_state_delivery_fee, payment_fee_responsibility')
       .eq('id', brandId)
       .maybeSingle();
     if (brandError) return json(res, 500, { error: 'Could not load the store for this order.' });
@@ -268,7 +253,14 @@ export default async function handler(req, res) {
       normalizedItems.push({ id: product.id, name: product.title, title: product.title, price, qty: quantity, image_url: getProductImage(product.image_url) || null, size: item.size || null, color: item.color || null, fulfillment_status: 'paid' });
     }
 
-    const total = subtotal + shippingFee;
+    const commerceFees = calculateCommerceFees({
+      subtotal,
+      deliveryFee: shippingFee,
+      provider,
+      responsibility: brandRecord.payment_fee_responsibility || CUSTOMER_PAYS_PAYMENT_FEE,
+      env: process.env
+    });
+    const total = commerceFees.customerTotal;
     const verifiedReference = await verifyPayment(provider, transactionReference, total);
     const { data: existingOrder } = await supabase
       .from('orders')
@@ -283,7 +275,11 @@ export default async function handler(req, res) {
       brand_id: brandId,
       order_number: orderNumber,
       total_amount: total,
+      subtotal: commerceFees.subtotal,
       shipping_fee: shippingFee,
+      gateway_payment_fee: commerceFees.providerFee,
+      platform_revenue: commerceFees.platformRevenue,
+      payment_fee_responsibility: brandRecord.payment_fee_responsibility || CUSTOMER_PAYS_PAYMENT_FEE,
       delivery_duration: deliveryDuration,
       status: 'paid',
       product_name_snapshot: normalizedItems.map(item => `${item.qty}x ${item.title}`).join(', '),
@@ -313,6 +309,8 @@ export default async function handler(req, res) {
         provider,
         reference: verifiedReference,
         grossMinorAmount: Math.round(Number(total) * 100),
+        platformFeeMinor: Math.round(commerceFees.platformRevenue * 100),
+        gatewayFeeMinor: Math.round(commerceFees.providerFee * 100),
         settlementOffsetDays: Number(process.env.SETTLEMENT_OFFSET_DAYS ?? '1')
       });
     }
@@ -331,6 +329,10 @@ export default async function handler(req, res) {
     if (orderError && /column .* does not exist|schema cache/i.test(orderError.message || '')) {
       const legacyOrder = { ...order };
       delete legacyOrder.shipping_fee;
+      delete legacyOrder.subtotal;
+      delete legacyOrder.gateway_payment_fee;
+      delete legacyOrder.platform_revenue;
+      delete legacyOrder.payment_fee_responsibility;
       delete legacyOrder.delivery_duration;
       delete legacyOrder.customer_state;
       delete legacyOrder.customer_address_line;

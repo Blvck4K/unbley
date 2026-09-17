@@ -16,6 +16,7 @@ import PaymentFailureModal from '../components/PaymentFailureModal';
 import { nigeriaLocations, nigeriaStates } from '../lib/nigeriaLocations';
 import { motion } from 'framer-motion';
 import { FaCcAmex, FaCcApplePay, FaCcMastercard, FaCcVisa, FaGooglePay } from 'react-icons/fa6';
+import { calculateCommerceFees, CUSTOMER_PAYS_PAYMENT_FEE } from '../lib/commerceFees';
 
 const normalizePublicKey = (value) => String(value || '').trim().replace(/^['"]|['"]$/g, '');
 const normalizeSubaccountCode = (value) => String(value || '').trim().replace(/^['"]|['"]$/g, '');
@@ -165,12 +166,6 @@ export default function Checkout() {
     note: '',
   });
 
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.qty), 0);
-  const shippingFee = getDeliveryFee(brand, formData);
-  const deliveryZoneLabel = getDeliveryZoneLabel(brand, formData);
-  const hasDeliveryLocation = Boolean(formData.state && formData.city);
-  const total = subtotal + shippingFee;
-
   const [errors, setErrors] = useState({});
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentError, setPaymentError] = useState('');
@@ -184,6 +179,19 @@ export default function Checkout() {
     if (hasFlutterwave) return 'flutterwave';
     return 'paystack';
   });
+
+  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.qty), 0);
+  const shippingFee = getDeliveryFee(brand, formData);
+  const deliveryZoneLabel = getDeliveryZoneLabel(brand, formData);
+  const hasDeliveryLocation = Boolean(formData.state && formData.city);
+  const commerceFees = calculateCommerceFees({
+    subtotal,
+    deliveryFee: shippingFee,
+    provider: paymentMethod,
+    responsibility: brand?.payment_fee_responsibility || CUSTOMER_PAYS_PAYMENT_FEE,
+    env: import.meta.env
+  });
+  const total = commerceFees.customerTotal;
 
   const formatCurrency = (amount) => `₦${amount.toLocaleString()}`;
 
@@ -858,6 +866,20 @@ View in Dashboard.
               <div style={s.deliveryImportant}>
                 Delivery fee included in total
               </div>
+
+              {commerceFees.gatewayFee > 0 && (
+                <div style={s.summaryRow}>
+                  <span>Payment processing fee</span>
+                  <span style={s.summaryRowValue}>{formatCurrency(commerceFees.gatewayFee)}</span>
+                </div>
+              )}
+
+              {commerceFees.platformRevenue > 0 && (
+                <div style={s.summaryRow}>
+                  <span>Unbley service fee</span>
+                  <span style={s.summaryRowValue}>{formatCurrency(commerceFees.platformRevenue)}</span>
+                </div>
+              )}
 
               <div style={s.divider}></div>
               

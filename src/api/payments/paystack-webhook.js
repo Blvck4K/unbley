@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
+import { calculateCommerceFees, CUSTOMER_PAYS_PAYMENT_FEE } from '../../../src/lib/commerceFees.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -20,14 +21,22 @@ export default async function handler(req, res) {
   const now = new Date().toISOString();
   await supabase.from('payment_records').update({ status: 'paid', paid_at: now, updated_at: now }).eq('id', payment.id).eq('status', 'pending');
   if (payment.order_id) {
-    const { data: orderRecord } = await supabase.from('orders').select('brand_id, total_amount').eq('id', payment.order_id).maybeSingle();
+    const { data: orderRecord } = await supabase.from('orders').select('brand_id, total_amount, subtotal, shipping_fee, gateway_payment_fee, platform_revenue, payment_fee_responsibility').eq('id', payment.order_id).maybeSingle();
     await supabase.from('orders').update({ status: 'paid', transaction_id: reference, payment_method: 'paystack' }).eq('id', payment.order_id);
 
     if (orderRecord?.brand_id) {
       const settlementOffsetDays = Number(process.env.SETTLEMENT_OFFSET_DAYS ?? '1');
       const grossMinorAmount = Math.round(Number(orderRecord.total_amount || 0) * 100);
-      const platformFeeMinor = Math.floor((grossMinorAmount * Number(process.env.PLATFORM_FEE_PERCENTAGE ?? '0')) / 100) + Math.round((Number(process.env.PLATFORM_FEE_FIXED_AMOUNT ?? '0') || 0) * 100);
-      const netMinorAmount = Math.max(0, grossMinorAmount - platformFeeMinor);
+      const commerceFees = calculateCommerceFees({
+        subtotal: orderRecord.subtotal ?? Math.max(0, Number(orderRecord.total_amount || 0) - Number(orderRecord.shipping_fee || 0)),
+        deliveryFee: orderRecord.shipping_fee,
+        provider: 'paystack',
+        responsibility: orderRecord.payment_fee_responsibility || CUSTOMER_PAYS_PAYMENT_FEE,
+        env: process.env
+      });
+      const platformFeeMinor = Math.round((Number(orderRecord.platform_revenue ?? commerceFees.platformRevenue) || 0) * 100);
+      const gatewayFeeMinor = Math.round((Number(orderRecord.gateway_payment_fee ?? commerceFees.gatewayFee) || 0) * 100);
+      const netMinorAmount = Math.max(0, grossMinorAmount - platformFeeMinor - gatewayFeeMinor);
       const availableAt = new Date(Date.now() + settlementOffsetDays * 24 * 60 * 60 * 1000).toISOString();
 
       const { data: existingLedger } = await supabase
@@ -49,7 +58,7 @@ export default async function handler(req, res) {
           currency: 'NGN',
           status: 'PENDING',
           available_at: availableAt,
-          metadata: { grossAmountMinor: grossMinorAmount, platformFeeMinor, settlementOffsetDays }
+          metadata: { grossAmountMinor: grossMinorAmount, platformFeeMinor, gatewayFeeMinor, settlementOffsetDays }
         });
 
         if (platformFeeMinor > 0) {
@@ -62,7 +71,7 @@ export default async function handler(req, res) {
             amount: -Math.abs(platformFeeMinor),
             currency: 'NGN',
             status: 'POSTED',
-            metadata: { grossAmountMinor: grossMinorAmount }
+            metadata: { grossAmountMinor: grossMinorAmount, gatewayFeeMinor }
           });
         }
       }
