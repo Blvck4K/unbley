@@ -28,6 +28,7 @@ import { motion } from 'framer-motion';
 import EditTour from '../components/EditTour';
 import { storeFontOptions } from '../lib/storeFonts';
 import StaffManagement from '../components/StaffManagement';
+import AccountManagement from '../components/AccountManagement';
 
 const customDomainRequestUrl = 'https://wa.me/2348078399410?text=Hello%20Unbley%2C%20I%20would%20like%20to%20request%20a%20custom%20domain%20for%20my%20store.';
 
@@ -1255,6 +1256,18 @@ export default function Edit() {
                     </button>
                   </>
                 )}
+              </div>
+            </SettingsSection>
+
+            <SettingsSection title="Account" description="Store status, ownership, and permanent account actions">
+              <div className="unbley-card edit-account-card">
+                <div className="unbley-card-title-row">
+                  <div>
+                    <span className="unbley-card-pretitle">Account controls</span>
+                    <h3 className="unbley-card-title">Store account</h3>
+                  </div>
+                </div>
+                <AccountManagement storeActive={Boolean(formData.store_active ?? user?.store_active)} onStatusChange={(active) => setFormData((current) => ({ ...current, store_active: active }))} />
               </div>
             </SettingsSection>
 

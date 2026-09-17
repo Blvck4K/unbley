@@ -75,6 +75,19 @@
 .staff-action-button { display: inline-grid; place-items: center; width: 30px; height: 30px; border: 1px solid #EAE3D9; border-radius: 6px; color: #6A3E1F; background: #FFFFFF; cursor: pointer; }
 .staff-table-actions { display: flex; gap: 6px; }
 .staff-action-button--danger { color: #B91C1C; }
+.account-management-panel { margin-top: 4px; }
+.account-management-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding: 18px 0; border-bottom: 1px solid #F0ECE4; }
+.account-management-row:first-child { padding-top: 0; }
+.account-management-row:last-child { padding-bottom: 0; border-bottom: 0; }
+.account-management-row strong { color: #221510; font-size: 13px; }
+.account-management-row p { max-width: 620px; margin: 6px 0 0; color: #6B7280; font-size: 12px; line-height: 1.6; }
+.account-transfer-form, .account-delete-form { display: flex; align-items: center; gap: 8px; min-width: min(420px, 100%); }
+.account-transfer-form .unbley-form-input, .account-delete-form .unbley-form-input { min-width: 0; }
+.account-danger-button { border: 1px solid #FCA5A5; border-radius: 6px; padding: 10px 14px; color: #991B1B; background: #FEF2F2; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.account-management-message, .account-management-error { display: flex; align-items: center; gap: 6px; margin: 0 0 14px; padding: 10px 12px; border-radius: 6px; font-size: 12px; }
+.account-management-message { color: #166534; background: #F0FDF4; border: 1px solid #BBF7D0; }
+.account-management-error { color: #991B1B; background: #FEF2F2; border: 1px solid #FECACA; }
+.account-management-row--danger { margin-top: 4px; }
 .staff-table-muted, .staff-table-empty { color: #8C827A; }
 .staff-table-empty { padding: 28px 12px !important; text-align: center; }
 .staff-spin { animation: staff-spin 0.8s linear infinite; }
@@ -90,6 +103,9 @@
   .staff-management-panel__actions { width: 100%; }
   .staff-management-panel__actions button { flex: 1; justify-content: center; }
   .staff-permission-groups { grid-template-columns: 1fr; }
+  .account-management-row { flex-direction: column; }
+  .account-transfer-form, .account-delete-form { width: 100%; min-width: 0; flex-direction: column; align-items: stretch; }
+  .account-transfer-form button, .account-delete-form button { justify-content: center; }
 }
 
 .store-loading-screen {
