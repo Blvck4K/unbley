@@ -123,6 +123,7 @@ export default function Edit() {
     new Date(user.plan_ends_at) > new Date()
   );
   const isActiveTrial = Boolean(
+    !user?.plan_id &&
     user?.trial_ends_at &&
     new Date(user.trial_ends_at) > new Date()
   );
