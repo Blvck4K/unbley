@@ -1019,7 +1019,7 @@ export default function Edit() {
                         onClick={() => navigate('/activation')}
                         style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginTop: '12px', padding: '10px 14px', border: 'none', borderRadius: '6px', backgroundColor: '#6A3E1F', color: '#FFFFFF', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
                       >
-                        Upgrade to customize fonts
+                        Upgrade to a plan to customize fonts
                       </button>
                     )}
                     {canCustomizeFonts && (
@@ -1081,9 +1081,18 @@ export default function Edit() {
                     </div>
                     )}
                     {isStarterPlan && (
-                      <p style={{ fontSize: '12px', color: '#6B7280', margin: '14px 0 0' }}>
-                        Your Starter plan uses the selected store font throughout the storefront, including your logo.
-                      </p>
+                      <div style={{ marginTop: '18px', padding: '14px 16px', borderRadius: '8px', backgroundColor: '#FBF9F5', border: '1px solid #EAE3D9' }}>
+                        <p style={{ fontSize: '12px', color: '#6B7280', margin: 0, lineHeight: 1.5 }}>
+                          Your Starter plan uses the selected store font throughout your storefront, including your logo. Brand-name font and letter-case customization is available on the Business plan.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => navigate('/activation')}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginTop: '12px', padding: '10px 14px', border: 'none', borderRadius: '6px', backgroundColor: '#6A3E1F', color: '#FFFFFF', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
+                        >
+                          Upgrade to Business
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>
