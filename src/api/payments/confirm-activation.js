@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { sendEmail } from '../../../lib/notifications/resend.js';
 import { recordNotification } from '../../../lib/notifications/notificationStore.js';
+import { calculateBusinessUpgradePrice } from '../../../src/lib/planPricing.js';
 
 const plans = {
   starter: { monthly: { ngn: 5000, usd: 5 }, yearly: { ngn: 50000, usd: 40 } },
@@ -100,15 +101,14 @@ export default async function handler(req, res) {
 
       if (planId === 'business' && isActiveStarter) {
         const starterPrice = plans.starter[existingProfile.plan_interval || 'monthly'];
-        const totalDays = existingProfile.plan_interval === 'yearly' ? 365 : 30;
-        const planEndsAt = new Date(existingProfile.plan_ends_at).getTime();
-        const planStartedAt = planEndsAt - totalDays * 86400000;
-        const daysUsed = Math.min(totalDays, Math.max(0, Math.ceil((Date.now() - planStartedAt) / 86400000)));
-        const remainingDays = totalDays - daysUsed;
-        price = {
-          ngn: Math.max(0, Math.round(basePrice.ngn - (starterPrice.ngn * remainingDays / totalDays))),
-          usd: Math.max(0, Number((basePrice.usd - (starterPrice.usd * remainingDays / totalDays)).toFixed(2)))
-        };
+        price = calculateBusinessUpgradePrice({
+          businessPrice: basePrice.ngn,
+          businessUsdPrice: basePrice.usd,
+          starterPrice: starterPrice.ngn,
+          starterUsdPrice: starterPrice.usd,
+          starterInterval: existingProfile.plan_interval || 'monthly',
+          planEndsAt: existingProfile.plan_ends_at
+        });
       } else if (planId === 'business' && isActiveTrial) {
         price = basePrice;
       }

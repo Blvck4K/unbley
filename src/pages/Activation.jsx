@@ -24,6 +24,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import PageTransition from '../components/PageTransition';
 import Sidebar from '../components/Sidebar';
 import { useAuth } from '../hooks/useAuth';
+import { calculateBusinessUpgradePrice } from '../lib/planPricing';
 
 // =========================================================================================
 // 🛠️ ACTIVATION CONFIGURATION - TWEAK AND WRITE WHAT YOU WANT HERE
@@ -232,14 +233,16 @@ export default function Activation() {
     const businessPricing = businessPlan?.pricing?.[interval];
     if (!isBusinessUpgrade || isOnActiveTrial || !starterPricing || !businessPricing || !user?.plan_ends_at) return businessPricing;
 
-    const totalDays = user.plan_interval === 'yearly' ? 365 : 30;
-    const planEndsAt = new Date(user.plan_ends_at).getTime();
-    const planStartedAt = planEndsAt - totalDays * 86400000;
-    const daysUsed = Math.min(totalDays, Math.max(0, Math.ceil((Date.now() - planStartedAt) / 86400000)));
-    const remainingDays = totalDays - daysUsed;
-    const credit = Math.round(starterPricing.numericPrice * remainingDays / totalDays);
-    const numericPrice = Math.max(0, businessPricing.numericPrice - credit);
-    const usdPrice = Math.max(0, businessPricing.usdPrice - (starterPricing.usdPrice * remainingDays / totalDays));
+    const upgradePrice = calculateBusinessUpgradePrice({
+      businessPrice: businessPricing.numericPrice,
+      businessUsdPrice: businessPricing.usdPrice,
+      starterPrice: starterPricing.numericPrice,
+      starterUsdPrice: starterPricing.usdPrice,
+      starterInterval: user.plan_interval,
+      planEndsAt: user.plan_ends_at
+    });
+    const numericPrice = upgradePrice.ngn;
+    const usdPrice = upgradePrice.usd;
 
     return {
       ...businessPricing,
