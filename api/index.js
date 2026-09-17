@@ -16,8 +16,9 @@ export default async function handler(req, res) {
   }
 
   const routeParts = normalized.split('/').filter(Boolean);
-  const filePath = path.join(__dirname, '..', 'src', 'api', ...routeParts) + '.js';
-  const routeFile = path.resolve(filePath);
+  const srcApiFile = path.join(__dirname, '..', 'src', 'api', ...routeParts) + '.js';
+  const rootApiFile = path.join(__dirname, ...routeParts) + '.js';
+  const routeFile = path.resolve(existsSync(srcApiFile) ? srcApiFile : rootApiFile);
 
   if (!existsSync(routeFile)) {
     return res.status(404).json({ error: `API route not found: /api/${normalized}` });

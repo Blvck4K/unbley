@@ -51,6 +51,7 @@ const AdminStoreOwners = lazyWithRetry(() => import('./pages/AdminStoreOwners'))
 const About = lazyWithRetry(() => import('./pages/About'));
 const Contact = lazyWithRetry(() => import('./pages/Contact'));
 const Support = lazyWithRetry(() => import('./pages/Support'));
+const StaffInvite = lazyWithRetry(() => import('./pages/StaffInvite'));
 
 import ChatWidget from './components/ChatWidget';
 import FloatingWhatsApp from './components/FloatingWhatsApp';
@@ -107,6 +108,7 @@ function App() {
                 <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                 <Route path="/edit" element={<ProtectedRoute><Edit /></ProtectedRoute>} />
                 <Route path="/support" element={<ProtectedRoute><Support /></ProtectedRoute>} />
+                <Route path="/staff-invite" element={<StaffInvite />} />
                 <Route path="/activation" element={<ProtectedRoute><Activation /></ProtectedRoute>} />
                 <Route path="/finalize-activation" element={<ProtectedRoute><FinalizeActivation /></ProtectedRoute>} />
                 <Route path="/success" element={<ProtectedRoute><SuccessPage /></ProtectedRoute>} />

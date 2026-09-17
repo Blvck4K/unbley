@@ -10,6 +10,8 @@ import {
   ExternalLink,
   Store,
   ChevronDown,
+  Users,
+  UserPlus,
   Palette,
   Truck,
   Globe,
@@ -25,11 +27,12 @@ import PageTransition from '../components/PageTransition';
 import { motion } from 'framer-motion';
 import EditTour from '../components/EditTour';
 import { storeFontOptions } from '../lib/storeFonts';
+import StaffManagement from '../components/StaffManagement';
 
 const customDomainRequestUrl = 'https://wa.me/2348078399410?text=Hello%20Unbley%2C%20I%20would%20like%20to%20request%20a%20custom%20domain%20for%20my%20store.';
 
-const SettingsSection = ({ title, description, children, defaultOpen = false }) => (
-  <details className="edit-settings-section" open={defaultOpen}>
+const SettingsSection = ({ title, description, children }) => (
+  <details className="edit-settings-section">
     <summary className="edit-settings-section__summary">
       <span>
         <strong>{title}</strong>
@@ -458,7 +461,7 @@ export default function Edit() {
             </div>}
 
             {/* Storefront Hero Banner Box */}
-            <SettingsSection title="Storefront visuals" description="Banners and storefront presentation" defaultOpen>
+            <SettingsSection title="Storefront visuals" description="Banners and storefront presentation">
             <div id="tour-edit-banner" className="unbley-card">
               <div className="unbley-card-title-row">
                 <div>
@@ -504,7 +507,7 @@ export default function Edit() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                 
                 {/* Core Brand Identity */}
-                <SettingsSection title="Brand information" description="Identity, contact details, copy, and policies" defaultOpen>
+                <SettingsSection title="Brand information" description="Identity, contact details, copy, and policies">
                 <div id="tour-edit-core-identity" className="unbley-card">
                   <div className="unbley-card-title-row">
                     <div>
@@ -1222,6 +1225,37 @@ export default function Edit() {
                 </div>
               </div>
             </div>
+            </SettingsSection>
+
+            <SettingsSection title="Staff management" description="Invite teammates and manage access to your store">
+              <div className="unbley-card edit-staff-card">
+                <div className="unbley-card-title-row">
+                  <div>
+                    <span className="unbley-card-pretitle">Team access</span>
+                    <h3 className="unbley-card-title">Staff &amp; permissions</h3>
+                  </div>
+                  <Users size={20} color="#8D5B36" />
+                </div>
+                {isBusinessPlan ? (
+                  <>
+                    <StaffManagement isBusinessPlan={isBusinessPlan} />
+                  </>
+                ) : (
+                  <>
+                    <p className="edit-staff-card__description">
+                      Staff accounts and role-based permissions are available on the Business plan.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => navigate('/activation', { state: { upgradeTo: 'business' } })}
+                      className="unbley-btn-black"
+                    >
+                      <UserPlus size={14} />
+                      <span>Upgrade to Business</span>
+                    </button>
+                  </>
+                )}
+              </div>
             </SettingsSection>
 
           </main>

@@ -28,8 +28,9 @@ app.use('/api', async (req, res) => {
   }
 
   const routeParts = normalized.split('/').filter(Boolean);
-  const filePath = path.join(__dirname, 'src', 'api', ...routeParts) + '.js';
-  const routeFile = path.resolve(filePath);
+  const srcApiFile = path.join(__dirname, 'src', 'api', ...routeParts) + '.js';
+  const vercelApiFile = path.join(__dirname, 'api', ...routeParts) + '.js';
+  const routeFile = path.resolve(existsSync(srcApiFile) ? srcApiFile : vercelApiFile);
 
   if (!existsSync(routeFile)) {
     return json(res, 404, { error: `API route not found: /api/${normalized}` });
