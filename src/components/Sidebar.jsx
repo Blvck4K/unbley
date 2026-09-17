@@ -22,6 +22,7 @@ import logoImg from '../assets/logogo.png';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
+import { resolveStoreTheme } from '../lib/storeTheme';
 
 export default function Sidebar({ profileData, isSidebarOpen, setIsSidebarOpen }) {
   const location = useLocation();
@@ -97,6 +98,7 @@ export default function Sidebar({ profileData, isSidebarOpen, setIsSidebarOpen }
   const ownerName = profileData?.owner_name || profileData?.brand_name || 'Isaac Akpasu';
   const firstInitial = (ownerName || 'U').charAt(0).toUpperCase();
   const brandLogo = profileData?.logo_url || null;
+  const sidebarFont = resolveStoreTheme(profileData || {}).storeFont;
   const hasActivePlan = Boolean(
     user?.store_active &&
     user?.plan_id &&
@@ -236,7 +238,7 @@ export default function Sidebar({ profileData, isSidebarOpen, setIsSidebarOpen }
         aria-hidden="true"
       />
 
-      <nav className={`unbley-mobile-sidebar ${isSidebarOpen ? 'open' : ''}`} aria-label="Mobile store navigation">
+      <nav className={`unbley-mobile-sidebar ${isSidebarOpen ? 'open' : ''}`} style={{ fontFamily: sidebarFont }} aria-label="Mobile store navigation">
         <div className="unbley-mobile-sidebar-header">
           <Link to="/" className="unbley-mobile-sidebar-brand" onClick={() => setIsSidebarOpen(false)}>
             <span className="unbley-mobile-sidebar-logo">
@@ -323,6 +325,7 @@ export default function Sidebar({ profileData, isSidebarOpen, setIsSidebarOpen }
       <aside 
         ref={sidebarRef}
         className={`unbley-sidebar ${isCollapsed ? 'is-collapsed' : ''} ${isHoverExpanded ? 'is-hover-expanded' : ''} ${isSidebarOpen ? 'mobile-open' : ''}`}
+        style={{ fontFamily: sidebarFont }}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >

@@ -1,7 +1,47 @@
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&family=Josefin+Sans:wght@400;500;600;700&family=Libre+Baskerville:wght@400;700&family=Lora:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Merriweather:wght@400;700;900&family=Oswald:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&family=Raleway:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Barlow+Condensed:wght@400;500;600;700&family=Bebas+Neue&family=Cinzel:wght@400;500;600;700;800&family=Figtree:wght@400;500;600;700;800&family=Nunito+Sans:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700;800&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800&family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500;6..96,600;6..96,700&family=Bungee&family=Cabin:wght@400;500;600;700&family=Caveat:wght@400;500;600;700&family=Dancing+Script:wght@400;500;600;700&family=DM+Serif+Display&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Great+Vibes&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@400;500;600;700&family=Karla:wght@400;500;600;700&family=League+Spartan:wght@400;500;600;700;800&family=Libre+Franklin:wght@400;500;600;700;800&family=Marcellus&family=Montserrat:wght@400;500;600;700;800&family=Pacifico&family=Poppins:wght@400;500;600;700;800&family=Prata&family=Quicksand:wght@400;500;600;700&family=Righteous&family=Rubik:wght@400;500;600;700;800&family=Source+Sans+3:wght@400;500;600;700&family=Syne:wght@400;500;600;700;800&family=Tenor+Sans&family=Unbounded:wght@400;500;600;700&family=Work+Sans:wght@400;500;600;700;800&family=Young+Serif&display=swap');
 @import "tailwindcss";
 @import "./styles/dashboard-theme.css";
+
+.store-loading-screen {
+  --loading-accent: #6a3e1f;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  overflow: hidden;
+  background: var(--loading-background, #fafafa);
+  font-family: var(--loading-font, 'Inter', sans-serif);
+}
+
+.store-loading-bubbles {
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.store-loading-bubbles span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--loading-accent);
+  animation: store-loading-bounce 1.2s ease-in-out infinite;
+}
+
+.store-loading-bubbles span:nth-child(2) { animation-delay: 0.15s; }
+.store-loading-bubbles span:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes store-loading-bounce { 0%, 60%, 100% { transform: translateY(0); opacity: 0.45; } 30% { transform: translateY(-8px); opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .store-loading-bubbles span { animation: none; opacity: 0.75; }
+}
 
 .checkout-progress {
   width: min(560px, calc(100% - 40px));

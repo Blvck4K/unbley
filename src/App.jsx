@@ -56,14 +56,10 @@ import ChatWidget from './components/ChatWidget';
 import FloatingWhatsApp from './components/FloatingWhatsApp';
 import OAuthRedirectHandler from './components/OAuthRedirectHandler';
 import Menu from './pages/Menu.jsx';
+import StoreLoadingScreen from './components/StoreLoadingScreen';
 
 // Loading Component
-const PageLoader = () => (
-  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', width: '100vw', backgroundColor: 'var(--bg-light)', position: 'fixed', top: 0, left: 0, zIndex: 9999 }}>
-    <div className="loader-dots"><div className="dot"></div><div className="dot"></div><div className="dot"></div></div>
-    <style>{`.loader-dots { display: flex; gap: 8px; } .dot { width: 12px; height: 12px; background-color: var(--primary); border-radius: 50%; animation: pulse 1.5s infinite ease-in-out; } .dot:nth-child(2) { animation-delay: 0.2s; } .dot:nth-child(3) { animation-delay: 0.4s; } @keyframes pulse { 0%, 80%, 100% { transform: scale(0); opacity: 0.3; } 40% { transform: scale(1); opacity: 1; } }`}</style>
-  </div>
-);
+const PageLoader = () => <StoreLoadingScreen />;
 
 const TestErrorRoute = () => {
   throw new Error('This is a deliberate test error to preview the custom error fallback screen.');

@@ -9,7 +9,8 @@ import StoreAttribution from '../components/StoreAttribution';
 import StoreFooter from '../components/StoreFooter';
 import Sidebar from '../components/Sidebar';
 import StoreCategorySidebar from '../components/StoreCategorySidebar';
-import { rememberStoreBrand, resolveStoreTheme } from '../lib/storeTheme';
+import { getRememberedStoreBrand, rememberStoreBrand, resolveStoreTheme } from '../lib/storeTheme';
+import StoreLoadingScreen from '../components/StoreLoadingScreen';
 
 const titleCase = (value) => String(value || '').replace(/[-_]/g, ' ').replace(/\b\w/g, (character) => character.toUpperCase());
 
@@ -99,7 +100,7 @@ export default function StoreDashboard() {
     return () => clearInterval(interval);
   }, [bannerCount, bannerSignature]);
 
-  if (loading) return <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#0A0A0A', color: '#FFF' }}>Loading store...</div>;
+  if (loading) return <StoreLoadingScreen theme={resolveStoreTheme(brand || getRememberedStoreBrand() || {})} />;
   if (error || !brand) return <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#0A0A0A', color: '#FFF' }}>{error || 'Store not found.'}</div>;
 
   const theme = resolveStoreTheme(brand);

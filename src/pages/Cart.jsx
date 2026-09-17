@@ -11,6 +11,7 @@ import StoreAttribution from '../components/StoreAttribution';
 import StoreFooter from '../components/StoreFooter';
 import StoreCategorySidebar from '../components/StoreCategorySidebar';
 import CheckoutProgress from '../components/CheckoutProgress';
+import StoreLoadingScreen from '../components/StoreLoadingScreen';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Cart() {
@@ -131,7 +132,7 @@ export default function Cart() {
     // Main Content
     content: { maxWidth: '1400px', margin: '0 auto' },
 
-    pageTitle: { fontFamily: '"Inter", sans-serif', fontSize: isMobile ? '24px' : '44px', fontWeight: '700', letterSpacing: '-0.02em', margin: '0 0 12px 0', color: textColor },
+    pageTitle: { fontFamily: storeFont, fontSize: isMobile ? '24px' : '44px', fontWeight: '700', letterSpacing: '-0.02em', margin: '0 0 12px 0', color: textColor },
     pageSubtitle: { fontSize: '13px', color: mutedColor, lineHeight: '1.6', maxWidth: '400px', marginBottom: isMobile ? '32px' : '48px' },
 
     // Two Col Layout
@@ -206,7 +207,7 @@ export default function Cart() {
   };
 
   if (!brandReady) {
-    return <div style={{ minHeight: '100vh', backgroundColor: '#FBF9F5' }} aria-label="Loading store theme" />;
+    return <StoreLoadingScreen theme={theme} />;
   }
 
   const isOwner = user && brand && user.id === brand.id;
@@ -215,7 +216,7 @@ export default function Cart() {
     return (
       <div style={{...s.page, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backgroundColor: '#0A0A0A', color: '#FFF'}}>
         <ShieldCheck size={48} color={dangerColor} style={{ marginBottom: '24px' }} />
-        <h2 style={{ fontFamily: '"Playfair Display", serif', fontSize: '28px', marginBottom: '16px' }}>Owner Environment Active</h2>
+        <h2 style={{ fontFamily: storeFont, fontSize: '28px', marginBottom: '16px' }}>Owner Environment Active</h2>
         <p style={{ color: '#999', marginBottom: '32px', textAlign: 'center', maxWidth: '400px', lineHeight: '1.6' }}>
           You cannot checkout products from your own brand. Please sign in with a customer account to test the checkout experience.
         </p>

@@ -9,6 +9,8 @@ import PageTransition from '../components/PageTransition';
 import StoreAttribution from '../components/StoreAttribution';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getBrandNameCaseStyle, getStoreFont } from '../lib/storeFonts';
+import { getRememberedStoreBrand, resolveStoreTheme } from '../lib/storeTheme';
+import StoreLoadingScreen from '../components/StoreLoadingScreen';
 
 export default function ProductDetail() {
   const navigate = useNavigate();
@@ -383,7 +385,7 @@ export default function ProductDetail() {
     setEditForm(prev => ({ ...prev, imageFile: file, imagePreview: URL.createObjectURL(file) }));
   };
 
-  if (loading) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#FBF9F5', color: '#221510' }}>Loading product details...</div>;
+  if (loading) return <StoreLoadingScreen theme={resolveStoreTheme(brand || getRememberedStoreBrand() || {})} />;
   if (error) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#FBF9F5', color: '#221510' }}><h2>{error}</h2><button onClick={() => navigate(-1)} style={{ marginLeft: '16px', padding: '8px', cursor: 'pointer' }}>Go Back</button></div>;
   if (!product || !brand) return null;
 

@@ -23,7 +23,7 @@ export default function StoreCategorySidebar({ categories, onSelect, theme, bran
       <aside
         className={`store-category-sidebar ${isOpen ? 'open' : ''}`}
         aria-label="Store categories"
-        style={{ backgroundColor: drawerBackground, color: drawerText, '--store-sidebar-muted': drawerMuted, '--store-sidebar-accent': drawerAccent }}
+        style={{ backgroundColor: drawerBackground, color: drawerText, fontFamily: theme?.storeFont || 'inherit', '--store-sidebar-muted': drawerMuted, '--store-sidebar-accent': drawerAccent }}
       >
         <div className="store-category-sidebar-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>

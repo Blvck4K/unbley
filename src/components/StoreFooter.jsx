@@ -16,6 +16,8 @@ export default function StoreFooter({ brand = {}, theme }) {
   const footerText = surfaceText;
   const footerMuted = surfaceMuted;
   const brandName = brand.brand_name || 'Digital Atelier';
+  const storeFont = theme?.storeFont || 'inherit';
+  const brandNameFont = theme?.brandNameFont || storeFont;
   const toggleCard = (card) => setExpandedCard((current) => current === card ? null : card);
 
   const infoCards = [
@@ -46,7 +48,7 @@ export default function StoreFooter({ brand = {}, theme }) {
     <>
       <section
         className="store-shared-info-section"
-        style={{ backgroundColor: pageBackground, color: pageText, borderTop: `1px solid ${borderColor}` }}
+        style={{ backgroundColor: pageBackground, color: pageText, borderTop: `1px solid ${borderColor}`, fontFamily: storeFont }}
       >
         <div className="store-shared-info-grid">
           {infoCards.map((card) => (
@@ -97,7 +99,7 @@ export default function StoreFooter({ brand = {}, theme }) {
         </div>
       </section>
 
-      <footer className="store-shared-footer" style={{ backgroundColor: surfaceBackground, color: footerText, borderTopColor: borderColor }}>
+      <footer className="store-shared-footer" style={{ backgroundColor: surfaceBackground, color: footerText, borderTopColor: borderColor, fontFamily: storeFont }}>
         <div className="store-shared-footer-top">
           <div className="store-shared-footer-brand">
             {brand.logo_url && (
@@ -107,7 +109,7 @@ export default function StoreFooter({ brand = {}, theme }) {
                 alt={`${brandName} logo`}
               />
             )}
-            <div className="store-shared-footer-logo" style={{ color: accentColor }}>{brandName}</div>
+            <div className="store-shared-footer-logo" style={{ color: accentColor, fontFamily: brandNameFont, textTransform: theme?.brandNameCase }}>{brandName}</div>
             <p style={{ color: footerMuted }}>{brand.manifesto || 'A considered collection, presented with care.'}</p>
           </div>
           <div className="store-shared-footer-menus">

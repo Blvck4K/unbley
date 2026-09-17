@@ -11,6 +11,7 @@ import StoreAttribution from '../components/StoreAttribution';
 import StoreFooter from '../components/StoreFooter';
 import StoreCategorySidebar from '../components/StoreCategorySidebar';
 import CheckoutProgress from '../components/CheckoutProgress';
+import StoreLoadingScreen from '../components/StoreLoadingScreen';
 import PaymentFailureModal from '../components/PaymentFailureModal';
 import { nigeriaLocations, nigeriaStates } from '../lib/nigeriaLocations';
 import { motion } from 'framer-motion';
@@ -595,7 +596,7 @@ View in Dashboard.
   });
 
   if (!brandReady) {
-    return <div style={{ minHeight: '100vh', backgroundColor: '#FBF9F5' }} aria-label="Loading store theme" />;
+    return <StoreLoadingScreen theme={theme} />;
   }
 
   if (cartItems.length === 0) {
