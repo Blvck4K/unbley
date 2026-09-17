@@ -427,7 +427,7 @@ export default function Edit() {
           <main className="unbley-workspace-container">
             
             {/* Completion Meter Card */}
-            <div id="tour-edit-progress" className="unbley-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
+            {progress < 100 && <div id="tour-edit-progress" className="unbley-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                 <div className="unbley-icon-box-cream">
                   <Sparkles size={18} />
@@ -455,7 +455,7 @@ export default function Edit() {
                   />
                 </div>
               </div>
-            </div>
+            </div>}
 
             {/* Storefront Hero Banner Box */}
             <SettingsSection title="Storefront visuals" description="Banners and storefront presentation" defaultOpen>
