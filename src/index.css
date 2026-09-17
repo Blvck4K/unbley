@@ -4,6 +4,38 @@
 @import "tailwindcss";
 @import "./styles/dashboard-theme.css";
 
+.edit-settings-section {
+  margin-bottom: 24px;
+  border: 1px solid #EAE3D9;
+  border-radius: 10px;
+  background: #FFFFFF;
+  overflow: hidden;
+}
+
+.edit-settings-section__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  color: #221510;
+  cursor: pointer;
+  list-style: none;
+}
+
+.edit-settings-section__summary::-webkit-details-marker { display: none; }
+.edit-settings-section__summary > span { display: flex; flex-direction: column; gap: 4px; }
+.edit-settings-section__summary strong { font-size: 14px; font-weight: 800; }
+.edit-settings-section__summary small { color: #8C827A; font-size: 12px; }
+.edit-settings-section__summary svg { color: #8D5B36; transition: transform 0.2s ease; }
+.edit-settings-section[open] > .edit-settings-section__summary { border-bottom: 1px solid #EAE3D9; }
+.edit-settings-section[open] > .edit-settings-section__summary svg { transform: rotate(180deg); }
+.edit-settings-section__content { padding: 20px; }
+.edit-settings-section__content > .unbley-card { margin: 0; box-shadow: none; }
+
+.edit-settings-section__content > .edit-settings-section:last-child,
+.edit-settings-section__content > .unbley-card:last-child { margin-bottom: 0; }
+
 .store-loading-screen {
   --loading-accent: #6a3e1f;
   position: fixed;

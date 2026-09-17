@@ -9,6 +9,7 @@ import {
   CheckCircle2, 
   ExternalLink,
   Store,
+  ChevronDown,
   Palette,
   Truck,
   Globe,
@@ -26,6 +27,19 @@ import EditTour from '../components/EditTour';
 import { storeFontOptions } from '../lib/storeFonts';
 
 const customDomainRequestUrl = 'https://wa.me/2348078399410?text=Hello%20Unbley%2C%20I%20would%20like%20to%20request%20a%20custom%20domain%20for%20my%20store.';
+
+const SettingsSection = ({ title, description, children, defaultOpen = false }) => (
+  <details className="edit-settings-section" open={defaultOpen}>
+    <summary className="edit-settings-section__summary">
+      <span>
+        <strong>{title}</strong>
+        {description && <small>{description}</small>}
+      </span>
+      <ChevronDown size={18} aria-hidden="true" />
+    </summary>
+    <div className="edit-settings-section__content">{children}</div>
+  </details>
+);
 
 const FacebookIcon = ({ size = 16, color = "currentColor" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke="none">
@@ -444,6 +458,7 @@ export default function Edit() {
             </div>
 
             {/* Storefront Hero Banner Box */}
+            <SettingsSection title="Storefront visuals" description="Banners and storefront presentation" defaultOpen>
             <div id="tour-edit-banner" className="unbley-card">
               <div className="unbley-card-title-row">
                 <div>
@@ -480,6 +495,7 @@ export default function Edit() {
                 ))}
               </div>
             </div>
+            </SettingsSection>
 
             {/* 2-Column Grid: Core Details vs Logo & Colors */}
             <div className="unbley-edit-grid">
@@ -488,6 +504,7 @@ export default function Edit() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                 
                 {/* Core Brand Identity */}
+                <SettingsSection title="Brand information" description="Identity, contact details, copy, and policies" defaultOpen>
                 <div id="tour-edit-core-identity" className="unbley-card">
                   <div className="unbley-card-title-row">
                     <div>
@@ -643,8 +660,10 @@ export default function Edit() {
                     />
                   </div>
                 </div>
+                </SettingsSection>
 
                 {/* Store Domains */}
+                <SettingsSection title="Store domains" description="Your Unbley URL and custom domain access">
                 <div id="tour-edit-domains" className="unbley-card">
                   <div className="unbley-card-title-row">
                     <div>
@@ -705,8 +724,10 @@ export default function Edit() {
                     </div>
                   )}
                 </div>
+                </SettingsSection>
 
                 {/* Social Channels */}
+                <SettingsSection title="Social presence" description="Connect your social channels">
                 <div id="tour-edit-socials" className="unbley-card">
                   <div className="unbley-card-title-row">
                     <div>
@@ -765,8 +786,10 @@ export default function Edit() {
                     </div>
                   </div>
                 </div>
+                </SettingsSection>
 
                 {/* Geography & Location */}
+                <SettingsSection title="Location and delivery" description="Store origin, delivery timing, fees, and payment processing">
                 <div className="unbley-card">
                   <div className="unbley-card-title-row">
                     <div>
@@ -900,10 +923,12 @@ export default function Edit() {
                   </div>
                 </div>
 
+                </SettingsSection>
               </div>
 
               {/* Right Column: Logo & Color Palette */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                <SettingsSection title="Store look" description="Logo, colors, fonts, and brand presentation">
                 
                 {/* Logo Upload Card */}
                 <div id="tour-edit-logo" className="unbley-card" style={{ textAlign: 'center' }}>
@@ -1097,11 +1122,13 @@ export default function Edit() {
                     )}
                   </div>
                 </div>
+                </SettingsSection>
               </div>
 
             </div>
 
             {/* Personal Settlement Account */}
+            <SettingsSection title="Settlement account" description="Bank details and managed payout configuration">
             <div className="unbley-card">
               <div className="unbley-card-title-row">
                 <div>
@@ -1195,6 +1222,7 @@ export default function Edit() {
                 </div>
               </div>
             </div>
+            </SettingsSection>
 
           </main>
         </div>
