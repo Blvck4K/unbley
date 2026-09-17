@@ -37,7 +37,9 @@ export const resolveStoreTheme = (brand = {}) => {
   const dark = isDarkColor(primaryColor);
   const secondarySurface = theme.secondary_color || (dark ? '#141414' : '#FFFFFF');
   const selectedFont = getStoreFont(theme.store_font);
-  const brandNameFont = getStoreFont(theme.brand_name_font || theme.store_font);
+  const isStarterPlan = theme.plan_id === 'starter';
+  const isActiveTrial = Boolean(theme.trial_ends_at && new Date(theme.trial_ends_at) > new Date());
+  const brandNameFont = getStoreFont(isStarterPlan || isActiveTrial ? theme.store_font : (theme.brand_name_font || theme.store_font));
 
   return {
     ...theme,
@@ -54,6 +56,6 @@ export const resolveStoreTheme = (brand = {}) => {
     inputBackground: dark ? 'rgba(255,255,255,0.06)' : '#FFFFFF',
     storeFont: selectedFont.family,
     brandNameFont: brandNameFont.family,
-    brandNameCase: getBrandNameCaseStyle(theme.brand_name_case)
+    brandNameCase: isStarterPlan || isActiveTrial ? 'none' : getBrandNameCaseStyle(theme.brand_name_case)
   };
 };

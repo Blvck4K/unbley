@@ -117,6 +117,16 @@ export default function Edit() {
     user?.plan_ends_at &&
     new Date(user.plan_ends_at) > new Date()
   );
+  const isStarterPlan = Boolean(
+    user?.plan_id === 'starter' &&
+    user?.plan_ends_at &&
+    new Date(user.plan_ends_at) > new Date()
+  );
+  const isActiveTrial = Boolean(
+    user?.trial_ends_at &&
+    new Date(user.trial_ends_at) > new Date()
+  );
+  const canCustomizeFonts = isBusinessPlan;
 
   const [themeColors, setThemeColors] = useState({
     primary: '#0A0A0A',
@@ -990,8 +1000,9 @@ export default function Edit() {
                       name="store_font"
                       value={formData.store_font}
                       onChange={handleChange}
+                      disabled={isActiveTrial}
                       className="unbley-form-input"
-                      style={{ fontFamily: storeFontOptions.find(font => font.value === formData.store_font)?.family || 'inherit' }}
+                      style={{ fontFamily: storeFontOptions.find(font => font.value === formData.store_font)?.family || 'inherit', opacity: isActiveTrial ? 0.65 : 1, cursor: isActiveTrial ? 'not-allowed' : 'pointer' }}
                     >
                       {storeFontOptions.map(font => (
                         <option key={font.value} value={font.value} style={{ fontFamily: font.family }}>
@@ -1000,8 +1011,18 @@ export default function Edit() {
                       ))}
                     </select>
                     <p style={{ fontSize: '12px', color: '#6B7280', margin: '6px 0 0' }}>
-                      This font will be used across your public storefront.
+                      {isActiveTrial ? 'Font customization is available after upgrading from the 14-day trial.' : 'This font will be used across your public storefront.'}
                     </p>
+                    {isActiveTrial && (
+                      <button
+                        type="button"
+                        onClick={() => navigate('/activation')}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginTop: '12px', padding: '10px 14px', border: 'none', borderRadius: '6px', backgroundColor: '#6A3E1F', color: '#FFFFFF', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
+                      >
+                        Upgrade to customize fonts
+                      </button>
+                    )}
+                    {canCustomizeFonts && (
                     <div style={{ marginTop: '18px' }}>
                       <label className="unbley-form-label" htmlFor="brand-name-font">Brand Name Style</label>
                       <select
@@ -1058,6 +1079,12 @@ export default function Edit() {
                         Choose how your brand name appears across your storefront.
                       </p>
                     </div>
+                    )}
+                    {isStarterPlan && (
+                      <p style={{ fontSize: '12px', color: '#6B7280', margin: '14px 0 0' }}>
+                        Your Starter plan uses the selected store font throughout the storefront, including your logo.
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
