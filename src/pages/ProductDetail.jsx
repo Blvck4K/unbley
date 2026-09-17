@@ -28,7 +28,6 @@ export default function ProductDetail() {
   const { user } = useAuth();
   const { toast, confirmDialog } = useToast();
   const isOwner = user?.id === brand?.id;
-  const isCustomer = user?.user_metadata?.role === 'customer' || user?.user_metadata?.userType === 'customer';
   const [cartCount, setCartCount] = useState(0);
   const [activeImg, setActiveImg] = useState(0);
   const [selectedSize, setSelectedSize] = useState('');

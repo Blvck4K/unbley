@@ -500,7 +500,7 @@ export default function ShopBrand({ customId }) {
     optionSectionLabel: { fontSize: '10px', fontWeight: '800', letterSpacing: '0.12em', textTransform: 'uppercase', color: mutedColor, marginBottom: '10px' },
     optionChoiceRow: { display: 'flex', flexWrap: 'wrap', gap: '10px' },
     optionChoice: { padding: isMobile ? '10px 12px' : '10px 14px', borderRadius: '999px', border: `1px solid ${borderColor}`, backgroundColor: 'transparent', color: textColor, cursor: 'pointer', fontSize: '12px', fontWeight: '600', minHeight: isMobile ? '40px' : 'auto' },
-    optionQtyRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', marginTop: '8px', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'flex-start' : 'center' },
+    optionQtyRow: { display: 'flex', justifyContent: 'space-between', gap: '16px', marginTop: '8px', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'flex-start' : 'center' },
     optionQtyControl: { display: 'flex', alignItems: 'center', border: `1px solid ${borderColor}`, borderRadius: '999px', overflow: 'hidden', backgroundColor: primaryColor },
     optionQtyBtn: { width: '36px', height: '36px', border: 'none', background: 'transparent', color: textColor, cursor: 'pointer', fontSize: '18px', fontWeight: '700' },
     optionQtyValue: { width: '28px', textAlign: 'center', color: textColor, fontWeight: '700', fontSize: '14px' },
