@@ -553,7 +553,6 @@ export default function ShopBrand({ customId }) {
     productInfo: { display: 'flex', flexDirection: 'column', alignItems: 'flex-start', padding: '20px' },
     productName: { fontFamily: fontConfig.heading, fontSize: '18px', fontWeight: '600', color: secondaryTextColor, marginBottom: '8px' },
     productPrice: { fontSize: '15px', fontWeight: '700', color: accentColor, marginBottom: '16px' },
-    productDesc: { fontSize: '12px', color: secondaryMutedColor, lineHeight: '1.5', marginBottom: '16px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' },
     
     // Buttons
     buttonGroup: { display: 'flex', gap: '8px', width: '100%', marginTop: 'auto' },
@@ -743,7 +742,6 @@ export default function ShopBrand({ customId }) {
                 <div style={s.productInfo}>
                   <div style={s.productName}>{product.title}</div>
                   <div style={s.productPrice}>₦{parseFloat(product.price).toLocaleString()}</div>
-                  {product.description && <div style={s.productDesc}>{product.description}</div>}
                   
                   <div style={{ ...s.buttonGroup, opacity: (hoveredProduct === product.id || isMobile || isOwner) ? 1 : 0.4, transition: 'opacity 0.2s' }}>
                     {!isOwner && (
