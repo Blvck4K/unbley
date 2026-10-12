@@ -80,7 +80,7 @@ export default function AllBlog() {
         title="Unbley Blog | Ecommerce & Growth Tips for Nigerian Brands"
         description="Learn how to build, grow, and scale your business online in Nigeria with Unbley. Explore ecommerce, branding, marketing, and growth insights for modern brands."
         keywords="Unbley blog, ecommerce tips Nigeria, business growth blog, branding insights, online store marketing strategies"
-        canonical="https://unbley.com/all-blogs"
+        canonical="https://unbley.tech/all-blogs"
       />
       <Navbar />
       <PageTransition>

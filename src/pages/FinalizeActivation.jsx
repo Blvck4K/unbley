@@ -137,7 +137,7 @@ export default function FinalizeActivation() {
       const paystack = new PaystackPop();
       paystack.newTransaction({
         key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
-        email: user?.email || "pending@unbley.com",
+        email: user?.email || "pending@unbley.tech",
         amount: selectedAmount * 100,
         currency: 'NGN',
         ref: (new Date()).getTime().toString(),
@@ -169,7 +169,7 @@ export default function FinalizeActivation() {
         amount: selectedUsdAmount,
         currency: "USD",
         customer: {
-          email: user?.email || "pending@unbley.com",
+          email: user?.email || "pending@unbley.tech",
           name: user?.user_metadata?.brand_name || "New Store Owner",
         },
         customizations: {

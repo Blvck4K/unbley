@@ -15,7 +15,7 @@ const SEO = ({
   schema
 }) => {
   const siteName = 'Unbley';
-  const siteUrl = 'https://unbley.com';
+  const siteUrl = 'https://unbley.tech';
   const finalUrl = canonical || siteUrl;
   const fullTitle = title ? `${title} | ${siteName}` : siteName;
 
@@ -27,7 +27,7 @@ const SEO = ({
     return collapsed.length > 160 ? collapsed.substring(0, 157) + "..." : collapsed;
   }, [description]);
 
-  const defaultImage = 'https://unbley.com/og-default.jpg';
+  const defaultImage = 'https://unbley.tech/og-default.jpg';
   const finalImage = ogImage || defaultImage;
 
   const defaultSchema = {
@@ -35,7 +35,7 @@ const SEO = ({
     '@type': 'Organization',
     name: 'Unbley',
     url: siteUrl,
-    logo: 'https://unbley.com/logogo.png',
+    logo: 'https://unbley.tech/logogo.png',
     sameAs: [
       'https://www.facebook.com/unbley',
       'https://www.instagram.com/unbley',

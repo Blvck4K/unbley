@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-const appHosts = new Set(['localhost', '127.0.0.1', 'unbley.com', 'www.unbley.com']);
+const appHosts = new Set(['localhost', '127.0.0.1', 'unbley.tech', 'www.unbley.tech']);
 
 export default function StoreDomainResolver() {
   const location = useLocation();

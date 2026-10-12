@@ -32,7 +32,7 @@ export default function CreateOnlineStore() {
         title="Create Your Online Store in Minutes | Unbley"
         description="Launch a professional online store with Unbley. Add products, accept payments, manage orders, and give customers a simple way to shop online."
         keywords="create online store Nigeria, how to start ecommerce business, online store builder, ecommerce website Nigeria"
-        canonical="https://unbley.com/create-online-store"
+        canonical="https://unbley.tech/create-online-store"
       />
       
       <Navbar />

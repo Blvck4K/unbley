@@ -52,8 +52,8 @@ async function generatePreviews() {
     for (const post of posts) {
       const title = post.title;
       const description = post.meta_description || post.excerpt || '';
-      const image = post.cover_image_url || 'https://unbley.com/og-default.jpg';
-      const url = `https://unbley.com/blog/${post.slug}`;
+      const image = post.cover_image_url || 'https://unbley.tech/og-default.jpg';
+      const url = `https://unbley.tech/blog/${post.slug}`;
       const folderPath = path.join(distDir, 'blog', post.slug);
 
       injectMeta(folderPath, template, { title, description, image, url });

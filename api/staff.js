@@ -71,7 +71,7 @@ export default async function handler(req, res) {
         const expiresAt = new Date(Date.now() + 7 * 86400000).toISOString();
         const { error: updateError } = await supabase.from('staff_invitations').update({ token_hash: hashToken(token), expires_at: expiresAt }).eq('id', invitationId).eq('store_id', storeId);
         if (updateError) throw updateError;
-        const origin = process.env.APP_URL || process.env.VITE_APP_URL || 'https://unbley.com';
+        const origin = process.env.APP_URL || process.env.VITE_APP_URL || 'https://unbley.tech';
         const acceptUrl = `${origin}/staff-invite?token=${token}`;
         await sendEmail({ to: invitation.email, subject: 'Your Unbley staff invitation was resent', html: `<p>Hi ${invitation.full_name},</p><p>Your invitation to join a Unbley store as ${invitation.store_roles?.name || 'staff'} is ready.</p><p><a href="${acceptUrl}">Accept invitation</a></p><p>This invitation expires in 7 days.</p>`, text: `Accept your Unbley staff invitation here: ${acceptUrl}. This invitation expires in 7 days.` }).catch(() => null);
         await logActivity(supabase, { store_id: storeId, actor_user_id: user.id, action: 'staff.invitation_resent', resource_type: 'staff_invitation', resource_id: invitationId });
@@ -105,7 +105,7 @@ export default async function handler(req, res) {
       const token = crypto.randomBytes(32).toString('hex');
       const { data: invitation, error } = await supabase.from('staff_invitations').insert({ store_id: storeId, email, full_name: fullName, role_id: role.id, token_hash: hashToken(token), expires_at: new Date(Date.now() + 7 * 86400000).toISOString(), invited_by: user.id }).select('id, email, full_name, expires_at').single();
       if (error) throw error;
-      const origin = process.env.APP_URL || process.env.VITE_APP_URL || 'https://unbley.com';
+      const origin = process.env.APP_URL || process.env.VITE_APP_URL || 'https://unbley.tech';
       const acceptUrl = `${origin}/staff-invite?token=${token}`;
       await sendEmail({ to: email, subject: 'You have been invited to join a Unbley store', html: `<p>Hi ${fullName},</p><p>You have been invited to join a Unbley store as ${role.name}.</p><p><a href="${acceptUrl}">Accept invitation</a></p><p>This invitation expires in 7 days.</p>`, text: `You have been invited to join a Unbley store as ${role.name}. Accept here: ${acceptUrl}. This invitation expires in 7 days.` }).catch(() => null);
       await logActivity(supabase, { store_id: storeId, actor_user_id: user.id, action: 'staff.invited', resource_type: 'staff_invitation', resource_id: invitation.id, new_value: { email, fullName, role: role.name } });

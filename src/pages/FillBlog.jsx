@@ -598,7 +598,7 @@ export default function FillBlog() {
                         {metaTitle || title || 'Post Title'} | Unbley
                       </div>
                       <div style={{ color: '#8D5B36', fontSize: '13px', marginBottom: '4px', fontFamily: 'arial, sans-serif' }}>
-                        https://unbley.com/blog/{slug || 'post-url'}
+                        https://unbley.tech/blog/{slug || 'post-url'}
                       </div>
                       <div style={{ color: '#6B584C', fontSize: '13px', lineHeight: '1.4', fontFamily: 'arial, sans-serif' }}>
                         {metaDescription || (excerpt ? excerpt.substring(0, 160) : 'Start writing your post content to automatically generate a search description here...')}

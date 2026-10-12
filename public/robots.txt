@@ -25,4 +25,4 @@ Disallow: /checkout
 Disallow: /checkout-success
 Disallow: /admin/
 
-Sitemap: https://unbley.com/sitemap.xml
+Sitemap: https://unbley.tech/sitemap.xml

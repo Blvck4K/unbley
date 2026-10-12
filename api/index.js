@@ -7,7 +7,7 @@ const __dirname = path.dirname(__filename);
 
 export default async function handler(req, res) {
   const incoming = req.originalUrl || req.url || req.path || '/';
-  const url = new URL(incoming, 'https://unbley.com');
+  const url = new URL(incoming, 'https://unbley.tech');
   const clean = url.pathname.replace(/^\/api\/?/, '');
   const normalized = clean.replace(/^\/|\/$/g, '');
 

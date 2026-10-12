@@ -27,7 +27,7 @@ export default function ShopifyAlternative() {
       <SEO 
         title="Affordable Online Store Platform for Nigerian Businesses | Unbley"
         description="Create a professional online store with clear pricing, local payment support, product management, and order tools built for Nigerian businesses."
-        canonical="https://unbley.com/shopify-alternative"
+        canonical="https://unbley.tech/shopify-alternative"
         keywords="Shopify alternative Nigeria, best ecommerce platform Nigeria, affordable shopify alternative, ecommerce for creators"
       />
 

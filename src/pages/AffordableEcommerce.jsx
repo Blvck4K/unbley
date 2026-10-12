@@ -32,7 +32,7 @@ export default function AffordableEcommerce() {
         title="Affordable Online Store Platform for Nigerian Businesses | Unbley"
         description="Looking for a cheap ecommerce website in Nigeria? Unbley offers the most affordable way to launch a professional online store for ₦30,000 a year."
         keywords="cheap ecommerce website Nigeria, affordable online store builder, best value ecommerce platform, website for my business Nigeria"
-        canonical="https://unbley.com/affordable-ecommerce-platform"
+        canonical="https://unbley.tech/affordable-ecommerce-platform"
       />
 
       <Navbar />

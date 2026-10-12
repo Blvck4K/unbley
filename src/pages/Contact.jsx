@@ -296,7 +296,7 @@ export default function Contact() {
         title="Contact Unbley | Ecommerce Help for Nigerian Businesses"
         description="Talk to Unbley about launching your online store, getting your domain, managing sales, and growing your ecommerce business in Nigeria."
         keywords="contact Unbley, ecommerce support Nigeria, online store help, business website support, Unbley customer support"
-        canonical="https://unbley.com/contact"
+        canonical="https://unbley.tech/contact"
       />
       <Navbar />
       <PageTransition>
@@ -344,7 +344,7 @@ export default function Contact() {
                     <div>
                       <h4>Email Support</h4>
                       <p style={{ marginBottom: '12px' }}>For detailed inquiries, partnerships, or business discussions. We typically respond within 24 hours.</p>
-                      <a href="mailto:support@unbley.com">👉 support@unbley.com</a>
+                      <a href="mailto:support@unbley.tech">👉 support@unbley.tech</a>
                     </div>
                   </div>
 
@@ -353,7 +353,7 @@ export default function Contact() {
                     <div>
                       <h4>Website</h4>
                       <p style={{ marginBottom: '12px' }}>Explore our platform and see how it works.</p>
-                      <Link to="/">👉 www.unbley.com</Link>
+                      <Link to="/">👉 www.unbley.tech</Link>
                     </div>
                   </div>
 

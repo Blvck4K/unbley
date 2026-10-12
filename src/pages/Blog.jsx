@@ -211,8 +211,8 @@ export default function Blog() {
         title={post?.meta_title || post?.title || "Unbley Blog"}
         description={post?.meta_description || post?.excerpt || "Read this story on Unbley Blog – Nigerian Ecommerce & Growth."}
         keywords={post?.meta_keywords || post?.tags?.join(', ')}
-        canonical={post ? `https://unbley.com/blog/${post.slug}` : `https://unbley.com/blog`}
-        ogImage={post?.cover_image_url || 'https://unbley.com/og-default.jpg'}
+        canonical={post ? `https://unbley.tech/blog/${post.slug}` : `https://unbley.tech/blog`}
+        ogImage={post?.cover_image_url || 'https://unbley.tech/og-default.jpg'}
         ogType="article"
       />
       <PageTransition>

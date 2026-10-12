@@ -52,7 +52,7 @@ export default function SuccessPage() {
     type: detectType(),
     reference: rawState.reference || '...',
     amount: typeof rawState.amount === 'number' ? rawState.amount : 0,
-    email: rawState.email || user?.email || 'admin@unbley.com',
+    email: rawState.email || user?.email || 'admin@unbley.tech',
     name: rawState.name || user?.user_metadata?.full_name || '',
     brandName: rawState.brandName || user?.user_metadata?.brand_name || 'Your Brand',
     method: rawState.method || 'paystack',

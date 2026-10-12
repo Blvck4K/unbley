@@ -29,7 +29,8 @@ Run `src/db/concierge_chat_migration.sql` in the Supabase SQL Editor. The final 
 Configure these server-side environment variables for notifications:
 
 - `RESEND_API_KEY` and `RESEND_FROM_EMAIL` for email delivery.
-- `CONTACT_FORM_EMAIL` for the Unbley support recipient. It defaults to `support@unbley.com`.
+- `CONTACT_FORM_EMAIL` for the Unbley support recipient. It defaults to `support@unbley.tech`.
+- Set `RESEND_FROM_EMAIL` to a sender address verified in Resend for `unbley.tech`, for example `Unbley <notifications@unbley.tech>`. Set `RESEND_FROM_EMAIL_UNBLEY` likewise if using a separate sender for Unbley support mail.
 - `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` for Telegram alerts.
 
 Keep these values server-only. Do not expose the Resend key or Telegram bot token through `VITE_` variables in production.
@@ -56,6 +57,6 @@ Before using the page, run `src/db/admin_migration.sql` in the Supabase SQL Edit
 
 ## Store Domains
 
-Run `src/db/store_domains_migration.sql` in Supabase SQL Editor. It adds a stable generated domain such as `brand-name-a1b2c3d4.unbley.com` and a `custom_domain` field to each store profile. The Edit page shows the generated URL and lets the owner save a custom domain.
+Run `src/db/store_domains_migration.sql` in Supabase SQL Editor. It adds a stable generated domain such as `brand-name-a1b2c3d4.unbley.tech` and a `custom_domain` field to each store profile. Rerunning the migration changes existing generated `.unbley.com` domains to `.unbley.tech`. The Edit page shows the generated URL and lets the owner save a custom domain.
 
-For generated domains to resolve publicly, configure a wildcard domain for the deployment: add `*.unbley.com` to the Vercel project and create the corresponding wildcard DNS record at the domain provider. For a custom domain, the owner must add that domain to the Vercel project and point its DNS records to Vercel. Once DNS is active, Unbley resolves the hostname to the matching store automatically.
+For generated domains to resolve publicly, add both `unbley.tech` and `*.unbley.tech` to the Vercel project and configure the apex and wildcard DNS records at the domain provider to point to Vercel. For a custom domain, the owner must add that domain to the Vercel project and point its DNS records to Vercel. Once DNS is active, Unbley resolves the hostname to the matching store automatically.

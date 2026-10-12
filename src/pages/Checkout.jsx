@@ -496,7 +496,7 @@ View in Dashboard.
         customizations: {
           title: brand?.brand_name || "Unbley Order",
           description: `Order from ${brand?.brand_name || 'Store'}`,
-          logo: brand?.logo_url || (typeof window !== 'undefined' ? `${window.location.origin}/favicon.svg` : "https://unbley.com/favicon.svg"),
+          logo: brand?.logo_url || (typeof window !== 'undefined' ? `${window.location.origin}/favicon.svg` : "https://unbley.tech/favicon.svg"),
         },
         callback: (data) => {
           console.log("Flutterwave Success:", data);

@@ -47,7 +47,7 @@ export default function CreatorPlatform() {
         title="Ecommerce for Creators & Creative Brands"
         description="Build a professional online store for your creative brand. Unbley helps artisans, designers, and creative entrepreneurs sell online and grow their business."
         keywords="ecommerce for creators, creative brand platform, launch online store, artist shop platform, boutique ecommerce builder"
-        canonical="https://unbley.com/creator-platform"
+        canonical="https://unbley.tech/creator-platform"
       />
       
       <Navbar />

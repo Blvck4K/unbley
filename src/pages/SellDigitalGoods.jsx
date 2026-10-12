@@ -46,7 +46,7 @@ export default function SellDigitalGoods() {
         title="Sell Products and Services Online | Unbley"
         description="Create a professional online store for products, digital goods, or services. Accept payments, manage orders, and sell online with Unbley."
         keywords="sell digital products, sell ebooks online, digital downloads platform, ecommerce for digital creators, sell software online"
-        canonical="https://unbley.com/sell-digital-goods"
+        canonical="https://unbley.tech/sell-digital-goods"
       />
       
       <Navbar />

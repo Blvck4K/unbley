@@ -33,10 +33,10 @@
       "has": [
         {
           "type": "host",
-          "value": "www.unbley.com"
+          "value": "www.unbley.tech"
         }
       ],
-      "destination": "https://unbley.com/:path*",
+      "destination": "https://unbley.tech/:path*",
       "permanent": true
     }
   ],

@@ -18,7 +18,7 @@ BEGIN
   END IF;
 
   IF NEW.unbley_domain IS NULL OR NEW.unbley_domain = '' THEN
-    NEW.unbley_domain := NEW.store_slug || '.unbley.com';
+    NEW.unbley_domain := NEW.store_slug || '.unbley.tech';
   END IF;
 
   IF NEW.custom_domain IS NOT NULL AND NEW.custom_domain <> '' THEN
@@ -43,8 +43,11 @@ SET store_slug = coalesce(
 WHERE store_slug IS NULL OR store_slug = '';
 
 UPDATE public.brand_profiles
-SET unbley_domain = coalesce(nullif(unbley_domain, ''), store_slug || '.unbley.com')
-WHERE unbley_domain IS NULL OR unbley_domain = '';
+SET unbley_domain = CASE
+  WHEN unbley_domain ~ '\.unbley\.com$' THEN regexp_replace(unbley_domain, '\.unbley\.com$', '.unbley.tech')
+  ELSE coalesce(nullif(unbley_domain, ''), store_slug || '.unbley.tech')
+END
+WHERE unbley_domain IS NULL OR unbley_domain = '' OR unbley_domain ~ '\.unbley\.com$';
 
 CREATE UNIQUE INDEX IF NOT EXISTS brand_profiles_unbley_domain_key
   ON public.brand_profiles (unbley_domain);

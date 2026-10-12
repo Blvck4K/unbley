@@ -27,7 +27,7 @@ export default async function handler(req, res) {
     return json(res, 400, { ok: false, error: 'Please provide a valid email address.' });
   }
 
-  const recipient = process.env.CONTACT_FORM_EMAIL || 'support@unbley.com';
+  const recipient = process.env.CONTACT_FORM_EMAIL || 'support@unbley.tech';
   const subject = `New customer service message from ${name}`;
   const html = `
     <h2 style="margin:0 0 18px;">New customer service message</h2>
