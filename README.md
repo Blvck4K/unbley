@@ -57,6 +57,6 @@ Before using the page, run `src/db/admin_migration.sql` in the Supabase SQL Edit
 
 ## Store Domains
 
-Run `src/db/store_domains_migration.sql` in Supabase SQL Editor. It adds a stable generated domain such as `brand-name-a1b2c3d4.unbley.tech` and a `custom_domain` field to each store profile. Rerunning the migration changes existing generated `.unbley.com` domains to `.unbley.tech`. The Edit page shows the generated URL and lets the owner save a custom domain.
+Run `src/db/store_domains_migration.sql` in Supabase SQL Editor. It assigns a generated domain from the brand name, such as `aura.unbley.tech`. If that name is already taken, it adds a number, such as `aura-2.unbley.tech`. Running the migration updates existing generated store URLs to this format. The Edit page shows the generated URL and lets the owner save a custom domain.
 
 For generated domains to resolve publicly, add both `unbley.tech` and `*.unbley.tech` to the Vercel project and configure the apex and wildcard DNS records at the domain provider to point to Vercel. For a custom domain, the owner must add that domain to the Vercel project and point its DNS records to Vercel. Once DNS is active, Unbley resolves the hostname to the matching store automatically.

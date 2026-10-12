@@ -5,16 +5,35 @@ ALTER TABLE public.brand_profiles
   ADD COLUMN IF NOT EXISTS custom_domain text,
   ADD COLUMN IF NOT EXISTS custom_domain_verified boolean DEFAULT false;
 
+DROP TRIGGER IF EXISTS assign_store_domain_before_write ON public.brand_profiles;
+
 CREATE OR REPLACE FUNCTION public.assign_store_domain()
 RETURNS trigger
 LANGUAGE plpgsql
 AS $$
 DECLARE
   base_slug text;
+  candidate_slug text;
+  suffix_number integer := 2;
 BEGIN
   IF NEW.store_slug IS NULL OR NEW.store_slug = '' THEN
     base_slug := trim(both '-' from regexp_replace(lower(coalesce(NEW.brand_name, 'store')), '[^a-z0-9]+', '-', 'g'));
-    NEW.store_slug := coalesce(nullif(base_slug, ''), 'store') || '-' || substr(NEW.id::text, 1, 8);
+    base_slug := coalesce(nullif(base_slug, ''), 'store');
+    candidate_slug := base_slug;
+
+    LOOP
+      PERFORM pg_advisory_xact_lock(hashtext(candidate_slug));
+      EXIT WHEN NOT EXISTS (
+        SELECT 1
+        FROM public.brand_profiles
+        WHERE store_slug = candidate_slug
+          AND id IS DISTINCT FROM NEW.id
+      );
+      candidate_slug := base_slug || '-' || suffix_number;
+      suffix_number := suffix_number + 1;
+    END LOOP;
+
+    NEW.store_slug := candidate_slug;
   END IF;
 
   IF NEW.unbley_domain IS NULL OR NEW.unbley_domain = '' THEN
@@ -29,26 +48,51 @@ BEGIN
 END;
 $$;
 
-DROP TRIGGER IF EXISTS assign_store_domain_before_write ON public.brand_profiles;
+DO $$
+DECLARE
+  store_record record;
+  base_slug text;
+  candidate_slug text;
+  suffix_number integer;
+BEGIN
+  UPDATE public.brand_profiles SET store_slug = NULL, unbley_domain = NULL;
+
+  FOR store_record IN
+    SELECT id, brand_name
+    FROM public.brand_profiles
+    ORDER BY created_at NULLS FIRST, id
+  LOOP
+    base_slug := trim(both '-' from regexp_replace(lower(coalesce(store_record.brand_name, 'store')), '[^a-z0-9]+', '-', 'g'));
+    base_slug := coalesce(nullif(base_slug, ''), 'store');
+    candidate_slug := base_slug;
+    suffix_number := 2;
+
+    LOOP
+      PERFORM pg_advisory_xact_lock(hashtext(candidate_slug));
+      EXIT WHEN NOT EXISTS (
+        SELECT 1
+        FROM public.brand_profiles
+        WHERE store_slug = candidate_slug
+      );
+      candidate_slug := base_slug || '-' || suffix_number;
+      suffix_number := suffix_number + 1;
+    END LOOP;
+
+    UPDATE public.brand_profiles
+    SET store_slug = candidate_slug,
+        unbley_domain = candidate_slug || '.unbley.tech'
+    WHERE id = store_record.id;
+  END LOOP;
+END;
+$$;
+
 CREATE TRIGGER assign_store_domain_before_write
   BEFORE INSERT OR UPDATE OF brand_name, store_slug, unbley_domain, custom_domain
   ON public.brand_profiles
   FOR EACH ROW EXECUTE FUNCTION public.assign_store_domain();
 
-UPDATE public.brand_profiles
-SET store_slug = coalesce(
-  nullif(store_slug, ''),
-  trim(both '-' from regexp_replace(lower(coalesce(brand_name, 'store')), '[^a-z0-9]+', '-', 'g')) || '-' || substr(id::text, 1, 8)
-)
-WHERE store_slug IS NULL OR store_slug = '';
-
-UPDATE public.brand_profiles
-SET unbley_domain = CASE
-  WHEN unbley_domain ~ '\.unbley\.com$' THEN regexp_replace(unbley_domain, '\.unbley\.com$', '.unbley.tech')
-  ELSE coalesce(nullif(unbley_domain, ''), store_slug || '.unbley.tech')
-END
-WHERE unbley_domain IS NULL OR unbley_domain = '' OR unbley_domain ~ '\.unbley\.com$';
-
+CREATE UNIQUE INDEX IF NOT EXISTS brand_profiles_store_slug_key
+  ON public.brand_profiles (store_slug);
 CREATE UNIQUE INDEX IF NOT EXISTS brand_profiles_unbley_domain_key
   ON public.brand_profiles (unbley_domain);
 
