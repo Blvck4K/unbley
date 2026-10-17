@@ -1,7 +1,8 @@
 import React, { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
+import { useAuth } from './hooks/useAuth';
 import ProtectedRoute from './components/ProtectedRoute';
 import ErrorBoundary from './components/ErrorBoundary';
 import ScrollToTop from './components/ScrollToTop';
@@ -66,6 +67,26 @@ const TestErrorRoute = () => {
   throw new Error('This is a deliberate test error to preview the custom error fallback screen.');
 };
 
+function HomeEntry() {
+  const { user, session } = useAuth();
+  const [isMobile, setIsMobile] = React.useState(() =>
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches
+  );
+
+  React.useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 768px)');
+    const updateViewport = (event) => setIsMobile(event.matches);
+    mediaQuery.addEventListener('change', updateViewport);
+    return () => mediaQuery.removeEventListener('change', updateViewport);
+  }, []);
+
+  if (!isMobile) return <Home />;
+  if (!user || !session) return <Navigate to="/auth" replace />;
+
+  const destination = user.user_metadata?.role === 'customer' ? '/store' : '/dashboard';
+  return <Navigate to={destination} replace />;
+}
+
 function App() {
   return (
     <AuthProvider>
@@ -78,7 +99,7 @@ function App() {
           <Suspense fallback={<PageLoader />}>
             <ErrorBoundary>
               <Routes>
-                <Route path="/" element={<Home />} />
+                <Route path="/" element={<HomeEntry />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/auth" element={<Auth />} />
